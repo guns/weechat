@@ -23,6 +23,8 @@ weechat-perl-api.h)
 SET_TARGET_PROPERTIES(perl PROPERTIES PREFIX "")
 
 IF(PERL_FOUND)
+  STRING(REGEX REPLACE "-arch ppc|-arch i386|-arch x86_64" "" PERL_CFLAGS "${PERL_CFLAGS}")
+  STRING(REGEX REPLACE "-arch ppc|-arch i386|-arch x86_64" "" PERL_LFLAGS "${PERL_LFLAGS}")
   ADD_DEFINITIONS(${PERL_CFLAGS})
   INCLUDE_DIRECTORIES(${PERL_INCLUDE_PATH})
   # ugly hack to force linking against Dynaloader.a
