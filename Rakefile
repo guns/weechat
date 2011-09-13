@@ -18,7 +18,8 @@ task :env do
         ENV['CFLAGS' ] += " -I#{cellar}/include "
         ENV['LDFLAGS'] += " -L#{cellar}/lib "
       end
-      ENV['LDFLAGS'] += ' -liconv '
+      ENV['CFLAGS' ] += ' -DHAVE_GNUTLS '
+      ENV['LDFLAGS'] += ' -liconv -lgnutls '
     end
   end
 end
