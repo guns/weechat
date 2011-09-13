@@ -5,7 +5,6 @@
 # http://www.opensource.org/licenses/mit-license.php
 
 task :default => :build
-task :build   => [:cmake, :make]
 
 task :env do
   ENV['CFLAGS' ] ||= ''
@@ -32,12 +31,15 @@ task :cmake => :env do
   end
 end
 
-desc 'Build weechat'
+desc 'Invoke make'
 task :make => :env do
   Dir.chdir 'build' do
     sh *%W[make --jobs=#{ENV['JOBS'] || 2}]
   end
 end
+
+desc 'Build weechat'
+task :build => [:cmake, :make]
 
 desc 'Install weechat'
 task :install => :env do
