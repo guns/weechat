@@ -1159,7 +1159,8 @@ void
 plugin_end ()
 {
     /* write plugins config options */
-    plugin_config_write ();
+    if (CONFIG_BOOLEAN(config_plugin_save_config_on_unload))
+        plugin_config_write ();
     
     /* unload all plugins */
     plugin_unload_all ();

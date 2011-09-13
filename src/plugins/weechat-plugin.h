@@ -1170,7 +1170,9 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 #define weechat_config_write_line(__config, __option, __value...)       \
     weechat_plugin->config_write_line(__config, __option, ##__value)
 #define weechat_config_write(__config)                                  \
-    weechat_plugin->config_write(__config)
+    ((weechat_config_boolean                                            \
+      (weechat_config_get ("weechat.plugin.save_config_on_unload"))) ?  \
+      weechat_plugin->config_write(__config) : WEECHAT_CONFIG_WRITE_OK)
 #define weechat_config_read(__config)                                   \
     weechat_plugin->config_read(__config)
 #define weechat_config_reload(__config)                                 \
