@@ -26,10 +26,13 @@ end
 
 desc 'Invoke cmake'
 task :cmake => :env do
+  cmd = %W[cmake .. -DPREFIX=#{ENV['PREFIX'] || '/opt/weechat'} -DCMAKE_BUILD_TYPE=None -Wno-dev]
+
+  # Arch Linux has boldly moved to Python 3, but nobody's following
+  cmd << '-DPYTHON_EXECUTABLE=/usr/bin/python2' if %x(uname -a) =~ /ARCH/
+
   mkdir_p 'build'
-  Dir.chdir 'build' do
-    sh *%W[cmake .. -DPREFIX=#{ENV['PREFIX'] || '/opt/weechat'} -DCMAKE_BUILD_TYPE=None -Wno-dev]
-  end
+  Dir.chdir('build') { sh *cmd }
 end
 
 desc 'Invoke make'
