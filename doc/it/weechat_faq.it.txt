@@ -571,7 +571,15 @@ utenti assenti, e si viene tempestati di messaggi voice. Perciò, è possibile
 modificare questo comportamento e consentire a WeeChat di utilizzare un
 colore speciale per i nick assenti nella lista nick.
 
-Sul canale '&bitlbee':
+// TRANSLATION MISSING
+For Bitlbee ≥ 3, do that on channel '&bitlbee':
+
+----------------------------------------
+channel set show_users online,away
+----------------------------------------
+
+// TRANSLATION MISSING
+For older version of Bitlbee, do that on channel '&bitlbee':
 
 ----------------------------------------
 set away_devoice false
@@ -650,17 +658,16 @@ Se si verificano errori con i certificati, è possibile disabilitare "ssl_verify
 Come ci si può connettere al server freenode via SSL?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-// TRANSLATION MISSING
-If you are using WeeChat ≤ 0.3.5, you may have to change value of this option:
+Se si sta usando WeeChat ≤ 0.3.5, potrebbe essere necessario cambiare il valore
+di questa opzione:
 
 ----------------------------------------
 /set weechat.network.gnutls_ca_file "/etc/ssl/certs/ca-certificates.crt"
 ----------------------------------------
 
 [NOTE]
-// TRANSLATION MISSING
-Check that you have this file on your system (commonly brought by package
-"ca-certificates").
+Verificare la presenza di questo file sul sistema (solitamente installato dal
+pacchetto "ca-certificates").
 
 Impostare la porta del server, SSL, dhkey_size, poi riconnettersi:
 
