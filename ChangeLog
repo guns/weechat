@@ -1,12 +1,13 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.6-dev, 2011-09-24
+v0.3.6-dev, 2011-09-30
 
 
 Version 0.3.6 (under dev!)
 --------------------------
 
+* core: fix paste detection (problem with end of lines)
 * core: add new option weechat.look.color_basic_force_bold, off by default: bold
   is used only if terminal has less than 16 colors (patch #7621)
 * core: add default key "meta2-[E" (F5) for linux console
@@ -85,6 +86,7 @@ Version 0.3.6 (under dev!)
   description for option when function is called)
 * scripts: fix crash with scripts not auto-loaded having a buffer opened after
   /upgrade (input/close callbacks for buffer not set properly)
+* irc: add missing messages for whois: 223, 264, 343
 * irc: use high priority queue for sending modes and wallchops messages
 * irc: allow reason for command /disconnect
 * irc: allow server name for commands /die and /restart
@@ -103,6 +105,8 @@ Version 0.3.6 (under dev!)
   followed by a digit (bug #33662)
 * irc: add prefix "#" for all channels on join (if no prefix given)
 * irc: switch to buffer on /join #channel if channel buffer already exists
+* irc: set host for nick on each channel message and nick change (if not already
+  set)
 * irc: update host of nicks on manual /who
 * irc: fix memory leak on plugin unload (free ignores)
 * irc: fix memory leak in message parser (when called from other plugins like

@@ -867,6 +867,10 @@ IRC_PROTOCOL_CALLBACK(nick)
                     /* temporary disable hotlist */
                     weechat_buffer_set (NULL, "hotlist", "-");
                     
+                    /* set host for nick if needed */
+                    if (ptr_nick && !ptr_nick->host)
+                        ptr_nick->host = strdup (address);
+                    
                     /* change nick and display message on all channels */
                     old_color = strdup (ptr_nick->color);
                     irc_nick_change (server, ptr_channel, ptr_nick, new_nick);
@@ -1388,6 +1392,9 @@ IRC_PROTOCOL_CALLBACK(privmsg)
             
             /* other message */
             ptr_nick = irc_nick_search (ptr_channel, nick);
+            
+            if (ptr_nick && !ptr_nick->host)
+                ptr_nick->host = strdup (address);
             
             weechat_printf_tags (ptr_channel->buffer,
                                  irc_protocol_tags (command,
@@ -4210,6 +4217,8 @@ irc_protocol_recv_command (struct t_irc_server *server,
           { "001", /* a server message */ 1, &irc_protocol_cb_001 },
           { "005", /* a server message */ 1, &irc_protocol_cb_005 },
           { "221", /* user mode string */ 1, &irc_protocol_cb_221 },
+          { "223", /* whois (charset is) */ 1, &irc_protocol_cb_whois_nick_msg },
+          { "264", /* whois (is using encrypted connection) */ 1, &irc_protocol_cb_whois_nick_msg },
           { "275", /* whois (secure connection) */ 1, &irc_protocol_cb_whois_nick_msg },
           { "276", /* whois (has client certificate fingerprint) */ 1, &irc_protocol_cb_whois_nick_msg },
           { "301", /* away message */ 1, &irc_protocol_cb_301 },
