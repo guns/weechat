@@ -25,7 +25,6 @@ Ses principales fonctionnalités sont les suivantes :
 
 * multi-protocoles (IRC, Jabber)
 * connexion multi-serveurs (avec SSL, IPv6, proxy)
-* plusieurs interfaces : Curses (wxWidgets, Gtk et Qt en développement)
 * petit, rapide et léger
 * paramétrable et extensible avec des extensions et des scripts
 * conforme aux RFCs IRC http://www.ietf.org/rfc/rfc1459.txt[1459],
@@ -88,23 +87,24 @@ Dépendances
 Le tableau suivant liste les paquets qui sont requis ou optionnels pour
 compiler WeeChat.
 
-[width="80%",cols="4,^2,13",options="header"]
+[width="100%",cols="5,^3,^3,13",options="header"]
 |========================================
-| Paquet ^(1)^            | Requis | Fonctionnalité
-| cmake                   | *oui*  | construction (autotools toujours possible, mais cmake est recommandé)
-| libncursesw5-dev ^(2)^  | *oui*  | interface ncurses
-| gettext                 | non    | internationalisation (traduction des messages; la langue de base est l'anglais)
-| libgcrypt11-dev         | non    | authentification SASL avec le serveur IRC, en utilisant le mécanisme DH-BLOWFISH
-| libgnutls-dev (≥ 2.2.0) | non    | connexion SSL au serveur IRC
-| ca-certificates         | no     | certificats pour les connexions SSL
-| libaspell-dev           | non    | extension aspell
-| libperl-dev             | non    | extension perl
-| python-dev              | non    | extension python
-| ruby1.8-dev             | non    | extension ruby
-| liblua5.1-0-dev         | non    | extension lua
-| tcl-dev (≥ 8.5)         | non    | extension tcl
-| asciidoc (≥ 8.5.0)      | non    | construction de la documentation (fichiers HTML)
-| source-highlight        | non    | coloration des sources dans la documentation HTML
+| Paquet ^(1)^           | Version   | Requis | Fonctionnalité
+| cmake                  |           | *oui*  | construction (autotools toujours possible, mais cmake est recommandé)
+| libncursesw5-dev ^(2)^ |           | *oui*  | interface ncurses
+| gettext                |           |        | internationalisation (traduction des messages; la langue de base est l'anglais)
+| libgcrypt11-dev        |           |        | authentification SASL avec le serveur IRC, en utilisant le mécanisme DH-BLOWFISH
+| libgnutls-dev          | ≥ 2.2.0   |        | connexion SSL au serveur IRC
+| ca-certificates        |           |        | certificats pour les connexions SSL
+| libaspell-dev          |           |        | extension aspell
+| python-dev             | 2.5 → 2.7 |        | extension python
+| libperl-dev            |           |        | extension perl
+| ruby1.8-dev            |           |        | extension ruby
+| liblua5.1-0-dev        |           |        | extension lua
+| tcl-dev                | ≥ 8.5     |        | extension tcl
+| guile-1.8-dev          |           |        | extention guile (scheme)
+| asciidoc               | ≥ 8.5.0   |        | construction de la documentation (fichiers HTML)
+| source-highlight       |           |        | coloration des sources dans la documentation HTML
 |========================================
 
 [NOTE]
@@ -538,6 +538,7 @@ Touches pour les tampons / fenêtres
 | @k(A-)@k(z)               | Zoom sur la fenêtre courante (@k(A-)@k(z) de nouveau : restaurer l'état initial des fenêtres, avant le zoom) | /window zoom
 | @k(A-)@k(<)               | Sauter au tampon précédent dans la liste des tampons visités | /input jump_previously_visited_buffer
 | @k(A-)@k(>)               | Sauter au tampon suivant dans la liste des tampons visités | /input jump_next_visited_buffer
+| @k(A-)@k(/)               | Sauter au dernier tampon affiché (avant le dernier saut vers un tampon) | /input jump_last_buffer_displayed
 | @k(A-)@k(=)               | Activer/désactiver les filtres | /filter toggle
 |========================================
 
@@ -674,35 +675,67 @@ Vous pouvez modifier ou ajouter des associations avec la commande `/key` en
 utilisant le contexte "mouse" (pour la syntaxe voir
 <<command_weechat_key,la commande /key>>).
 
-Liste des évènements supportés :
+Un nom d'évènement consiste en un modifieur (facultatif), un bouton/roulette et
+un geste (facultatif). Les différents éléments sont séparés par "-".
 
-[width="80%",cols="3m,4",options="header"]
+Liste des modifieurs :
+
+[width="50%",cols="3m,4",options="header"]
 |========================================
-| Evènement                        | Description
-| button1                          | clic sur le bouton gauche
-| button2                          | clic sur le bouton droit
-| button3                          | clic sur le bouton du milieu (souvent clic sur la roulette)
-| button4 ... button9              | clic sur un bouton additionnel
-| wheelup                          | roulette (haut)
-| wheeldown                        | roulette (bas)
-| buttonX-gesture-up ^(1)^         | geste avec distance entre 3 et 19
-| buttonX-gesture-up-long ^(1)^    | geste avec distance supérieure ou égale à 20
-| buttonX-gesture-down ^(1)^       | geste avec distance entre 3 et 19
-| buttonX-gesture-down-long ^(1)^  | geste avec distance supérieure ou égale à 20
-| buttonX-gesture-left ^(1)^       | geste avec distance entre 3 et 39
-| buttonX-gesture-left-long ^(1)^  | geste avec distance supérieure ou égale à 40
-| buttonX-gesture-right ^(1)^      | geste avec distance entre 3 et 39
-| buttonX-gesture-right-long ^(1)^ | geste avec distance supérieure ou égale à 40
+| Modifieur | Description
+| ctrl      | touche @k(-C-)
+| alt       | touche @k(-A-)
+| ctrl-alt  | touches @k(-C-) et @k(-A-)
 |========================================
 
-[NOTE]
-^(1)^ "X" est le numéro du bouton utilisé pour le geste (1 à 9).
+Liste des boutons/roulette :
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Bouton/roulette     | Description
+| button1             | clic sur le bouton gauche
+| button2             | clic sur le bouton droit
+| button3             | clic sur le bouton du milieu (souvent clic sur la roulette)
+| button4 ... button9 | clic sur un bouton additionnel
+| wheelup             | roulette (haut)
+| wheeldown           | roulette (bas)
+|========================================
+
+Liste des gestes (seulement pour les boutons, pas la roulette) :
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Geste              | Distance
+| gesture-up         | 3 ... 19
+| gesture-up-long    | ≥ 20
+| gesture-down       | 3 ... 19
+| gesture-down-long  | ≥ 20
+| gesture-left       | 3 ... 39
+| gesture-left-long  | ≥ 40
+| gesture-right      | 3 ... 39
+| gesture-right-long | ≥ 40
+|========================================
+
+Exemple d'évènements :
+
+* `button1`
+* `ctrl-button1`
+* `button1-gesture-right`
+* `alt-button2-gesture-down-long`
+* `wheelup`
+* `ctrl-alt-wheeldown`
+* ...
 
 [TIP]
 Lors de l'association d'une touche dans le contexte "mouse", il est possible
 d'adresser plusieurs évènements en utilisant `*` au début ou la fin du nom,
 par exemple `button1-gesture-*` qui correspond à n'importe quel geste effectué
 avec le bouton gauche.
+
+[TIP]
+Vous pouvez trouver le nom de l'évènement avec la commande `/input grab_mouse`
+puis en faisant l'action avec la souris. Cela insèrera le nom de l'évènement
+sur la ligne de commande.
 
 [[command_line]]
 Ligne de commande
@@ -927,6 +960,8 @@ attributs peuvent être ajoutés avant le nom ou le numéro de la couleur :
 * `*` : texte gras
 * `!` : mode vidéo inverse
 * `_` : texte souligné
+* `|` : garder les attributs : ne pas réinitialiser gras/inverse/souligné lors
+  du changement de couleur
 
 Par exemple si vous voulez votre pseudo en blanc souligné, faites :
 
@@ -986,7 +1021,7 @@ WeeChat tourne.
 Il est important de bien faire la différence entre une 'extension' et un
 'script' : une 'extension' est un fichier binaire compilé et chargé avec la
 commande `/plugin`, tandis qu'un 'script' est un fichier texte chargé par une
-extension comme 'perl' par la commande `perl`.
+extension comme 'python' par la commande `/python`.
 
 Vous pouvez utiliser la commande `/plugin` pour charger/décharger une
 extension, ou afficher les extensions chargées.
@@ -1015,11 +1050,12 @@ Les extensions par défaut sont :
 | logger    | Enregistrement des tampons dans des fichiers
 | relay     | Relai de données via le réseau (proxy IRC)
 | rmodifier | Modification des chaînes de "modifier" avec des expressions régulières
-| perl      | Interface (API) pour scripts Perl
 | python    | Interface (API) pour scripts Python
+| perl      | Interface (API) pour scripts Perl
 | ruby      | Interface (API) pour scripts Ruby
 | lua       | Interface (API) pour scripts Lua
 | tcl       | Interface (API) pour scripts Tcl
+| guile     | Interface (API) pour scripts Guile (scheme)
 | xfer      | Transfert de fichier et discussion directe
 |========================================
 
@@ -1224,11 +1260,11 @@ $ echo 'irc.freenode.#weechat *bonjour !' >~/.weechat/weechat_fifo_12345
 $ echo '*bonjour !' >~/.weechat/weechat_fifo_12345
 ----------------------------------------
 
-* envoyer deux commandes pour décharger/recharger les scripts Perl (vous devez
+* envoyer deux commandes pour décharger/recharger les scripts Python (vous devez
   les séparer par "\n") :
 
 ----------------------------------------
-$ echo -e '*/perl unload\n*/perl autoload' >~/.weechat/weechat_fifo_12345
+$ echo -e '*/python unload\n*/python autoload' >~/.weechat/weechat_fifo_12345
 ----------------------------------------
 
 Vous pouvez écrire un script qui envoie les commandes à tous les WeeChat qui
@@ -1329,7 +1365,7 @@ Premier exemple : se connecter à oftc en vérifiant le certificat
 
 ----------------------------------------
 $ mkdir ~/.weechat/ssl
-$ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/secretary/spi-cacert.crt
+$ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/ca/spi-cacert.crt
 ----------------------------------------
 
 Note: il est possible de concaténer plusieurs certificats dans une le fichier
@@ -1373,7 +1409,7 @@ Les options dans le serveur sont :
 
 * 'sasl_mechanism' : mécanisme à utiliser ("plain" ou "dh-blowfish")
 * 'sasl_timeout' : délai d'attente maximum (en secondes) pour l'authentification
-* 'sasl_username' : nom d'utilisateur
+* 'sasl_username' : nom d'utilisateur (pseudo)
 * 'sasl_password' : mot de passe
 
 Si vous voulez utiliser "dh-blowfish" par défaut pour tous les serveurs :
@@ -1937,7 +1973,8 @@ sera : `/oper nick ********`.
 Extensions Scripts
 ~~~~~~~~~~~~~~~~~~
 
-WeeChat fournit 5 extensions pour scripts : Perl, Python, Ruby, Lua et Tcl.
+WeeChat fournit 6 extensions pour scripts : Python, Perl, Ruby, Lua, Tcl et
+Guile (scheme).
 Ces extensions peuvent charger, exécuter et décharger des scripts pour ces
 langages.
 
@@ -1947,17 +1984,17 @@ WeeChat pour les scripts, merci de lire le 'Le Guide pour Scripts WeeChat'.
 Vous pouvez trouver des scripts pour WeeChat ici :
 http://www.weechat.org/scripts
 
-[[perl_commands]]
-Commandes Perl
-^^^^^^^^^^^^^^
-
-include::autogen/user/perl_commands.txt[]
-
 [[python_commands]]
 Commandes Python
 ^^^^^^^^^^^^^^^^
 
 include::autogen/user/python_commands.txt[]
+
+[[perl_commands]]
+Commandes Perl
+^^^^^^^^^^^^^^
+
+include::autogen/user/perl_commands.txt[]
 
 [[ruby_commands]]
 Commandes Ruby
@@ -1976,6 +2013,12 @@ Commandes Tcl
 ^^^^^^^^^^^^^
 
 include::autogen/user/tcl_commands.txt[]
+
+[[guile_commands]]
+Commandes Guile
+^^^^^^^^^^^^^^^
+
+include::autogen/user/guile_commands.txt[]
 
 [[xfer_plugin]]
 Extension Xfer

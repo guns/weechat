@@ -121,7 +121,7 @@ struct t_irc_server
     /* user choices */
     char *name;                             /* internal name of server       */
     struct t_config_option *options[IRC_SERVER_NUM_OPTIONS];
-    
+
     /* internal vars */
     int temp_server;                /* temporary server (not saved)          */
     int reloading_from_config;      /* 1 if reloading from config file       */
@@ -230,7 +230,7 @@ extern char irc_server_get_prefix_mode_for_char (struct t_irc_server *server,
 extern char irc_server_get_prefix_char_for_mode (struct t_irc_server *server,
                                                  char mode);
 extern struct t_irc_server *irc_server_alloc (const char *name);
-extern int irc_server_alloc_with_url (const char *irc_url);
+extern struct t_irc_server *irc_server_alloc_with_url (const char *irc_url);
 extern void irc_server_apply_command_line_options (struct t_irc_server *server,
                                                    int argc, char **argv);
 extern void irc_server_free_all ();
@@ -250,7 +250,7 @@ extern struct t_irc_server *irc_server_search (const char *server_name);
 extern void irc_server_set_buffer_title (struct t_irc_server *server);
 extern struct t_gui_buffer *irc_server_create_buffer (struct t_irc_server *server);
 extern int irc_server_connect (struct t_irc_server *server);
-extern void irc_server_auto_connect ();
+extern void irc_server_auto_connect (int auto_connect);
 extern void irc_server_autojoin_channels ();
 extern int irc_server_recv_cb (void *data, int fd);
 extern int irc_server_timer_sasl_cb (void *data, int remaining_calls);

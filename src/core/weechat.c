@@ -149,7 +149,7 @@ weechat_display_usage (char *exec_name)
                             "                    for example, irc plugin can connect\n"
                             "                    to server with url like:\n"
                             "                    irc[6][s]://[nickname[:password]@]"
-                            "irc.example.org[/port][//#channel1][,#channel2[...]]\n"
+                            "irc.example.org[:port][/#channel1][,#channel2[...]]\n"
                             "                    (look at plugins documentation for more information\n"
                             "                    about possible options)\n"));
     string_iconv_fprintf(stdout, "\n");
@@ -197,14 +197,14 @@ void
 weechat_parse_args (int argc, char *argv[])
 {
     int i;
-    
+
     weechat_argv0 = strdup (argv[0]);
     weechat_upgrading = 0;
     weechat_home = NULL;
     weechat_server_cmd_line = 0;
     weechat_auto_load_plugins = 1;
     weechat_plugin_no_dlclose = 0;
-    
+
     for (i = 1; i < argc; i++)
     {
         if ((strcmp (argv[i], "-c") == 0)
@@ -282,23 +282,47 @@ weechat_parse_args (int argc, char *argv[])
 void
 weechat_create_home_dirs ()
 {
-    char *ptr_home;
+    char *ptr_home, *config_weechat_home = WEECHAT_HOME;
     int dir_length;
     struct stat statinfo;
 
     if (!weechat_home)
     {
-        ptr_home = getenv ("HOME");
-        if (!ptr_home)
+        if (strlen (config_weechat_home) == 0)
         {
             string_iconv_fprintf (stderr,
-                                  _("Error: unable to get HOME directory\n"));
+                                  _("Error: WEECHAT_HOME is undefined, check "
+                                    "build options\n"));
             weechat_shutdown (EXIT_FAILURE, 0);
             /* make C static analyzer happy (never executed) */
             return;
         }
-        dir_length = strlen (ptr_home) + 10;
-        weechat_home = malloc (dir_length);
+
+        if (config_weechat_home[0] == '~')
+        {
+            /* replace leading '~' by $HOME */
+            ptr_home = getenv ("HOME");
+            if (!ptr_home)
+            {
+                string_iconv_fprintf (stderr,
+                                      _("Error: unable to get HOME directory\n"));
+                weechat_shutdown (EXIT_FAILURE, 0);
+                /* make C static analyzer happy (never executed) */
+                return;
+            }
+            dir_length = strlen (ptr_home) + strlen (config_weechat_home + 1) + 1;
+            weechat_home = malloc (dir_length);
+            if (weechat_home)
+            {
+                snprintf (weechat_home, dir_length,
+                          "%s%s", ptr_home, config_weechat_home + 1);
+            }
+        }
+        else
+        {
+            weechat_home = strdup (config_weechat_home);
+        }
+
         if (!weechat_home)
         {
             string_iconv_fprintf (stderr,
@@ -308,8 +332,6 @@ weechat_create_home_dirs ()
             /* make C static analyzer happy (never executed) */
             return;
         }
-        snprintf (weechat_home, dir_length, "%s%s.weechat", ptr_home,
-                  DIR_SEPARATOR);
     }
 
     /* if home already exists, it has to be a directory */
@@ -323,7 +345,7 @@ weechat_create_home_dirs ()
             weechat_shutdown (EXIT_FAILURE, 0);
         }
     }
-    
+
     /* create home directory; error is fatal */
     if (!util_mkdir (weechat_home, 0755))
     {
@@ -383,7 +405,7 @@ weechat_shutdown (int return_code, int crash)
         free (weechat_local_charset);
 
     network_end ();
-    
+
     if (crash)
         abort();
     else
@@ -398,21 +420,21 @@ int
 main (int argc, char *argv[])
 {
     weechat_init_vars ();               /* initialize some variables        */
-    
+
     setlocale (LC_ALL, "");             /* initialize gettext               */
 #ifdef ENABLE_NLS
     bindtextdomain (PACKAGE, LOCALEDIR);
     bind_textdomain_codeset (PACKAGE, "UTF-8");
     textdomain (PACKAGE);
 #endif
-    
+
 #ifdef HAVE_LANGINFO_CODESET
     weechat_local_charset = strdup (nl_langinfo (CODESET));
 #else
     weechat_local_charset = strdup ("");
 #endif
     utf8_init ();
-    
+
     util_catch_signal (SIGINT, SIG_IGN);  /* ignore SIGINT signal           */
     util_catch_signal (SIGQUIT, SIG_IGN); /* ignore SIGQUIT signal          */
     util_catch_signal (SIGPIPE, SIG_IGN); /* ignore SIGPIPE signal          */
@@ -440,6 +462,7 @@ main (int argc, char *argv[])
         weechat_upgrade_count++;        /* increase /upgrade count          */
     }
     weechat_welcome_message ();         /* display WeeChat welcome message  */
+    gui_chat_print_lines_waiting_buffer (); /* print lines waiting for buf. */
     command_startup (0);                /* command executed before plugins  */
     plugin_init (weechat_auto_load_plugins, /* init plugin interface(s)     */
                  argc, argv);
@@ -448,9 +471,9 @@ main (int argc, char *argv[])
         gui_layout_window_apply (gui_layout_windows, -1); /* apply win layout */
     if (weechat_upgrading)
         upgrade_weechat_end ();         /* remove .upgrade files + signal   */
-    
+
     gui_main_loop ();                   /* WeeChat main loop                */
-    
+
     gui_layout_save_on_exit ();         /* save layout                      */
     plugin_end ();                      /* end plugin interface(s)          */
     if (CONFIG_BOOLEAN(config_look_save_config_on_exit))
@@ -462,6 +485,6 @@ main (int argc, char *argv[])
     unhook_all ();                      /* remove all hooks                 */
     hdata_end ();                       /* end hdata                        */
     weechat_shutdown (EXIT_SUCCESS, 0); /* quit WeeChat (oh no, why?)       */
-    
+
     return EXIT_SUCCESS;                /* make C compiler happy            */
 }

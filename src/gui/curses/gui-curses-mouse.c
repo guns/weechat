@@ -46,6 +46,41 @@
 #include "../gui-window.h"
 
 
+#define MOUSE_CODE_BUTTON(code) ((code >= 32) && (code < 64))
+#define MOUSE_CODE_MOTION(code) ((code >= 64) && (code < 96))
+#define MOUSE_CODE_END(code)    ((code == '#') || (code == '3')         \
+                                 || (code == '+') || (code == ';'))
+
+char *gui_mouse_wheel_codes[][2] =
+{ { "`",  "wheelup"            },
+  { "p",  "ctrl-wheelup"       },
+  { "h",  "alt-wheelup"        },
+  { "x",  "ctrl-alt-wheelup"   },
+  { "a",  "wheeldown"          },
+  { "q",  "ctrl-wheeldown"     },
+  { "i",  "alt-wheeldown"      },
+  { "y",  "ctrl-alt-wheeldown" },
+  { NULL, NULL                 } };
+char *gui_mouse_button_codes[][2] =
+{ { " ",  "button1"            },
+  { "\"", "button2"            },
+  { "!",  "button3"            },
+  { "b",  "button4"            },
+  { "c",  "button5"            },
+  { "d",  "button6"            },
+  { "e",  "button7"            },
+  { "f",  "button8"            },
+  { "g",  "button9"            },
+  { "0",  "ctrl-button1"       },
+  { "2",  "ctrl-button2"       },
+  { "1",  "ctrl-button3"       },
+  { "(",  "alt-button1"        },
+  { "*",  "alt-button2"        },
+  { ")",  "alt-button3"        },
+  { "8",  "ctrl-alt-button1"   },
+  { NULL, NULL                 } };
+
+
 /*
  * gui_mouse_enable: enable mouse
  */
@@ -76,7 +111,7 @@ void
 gui_mouse_display_state ()
 {
     gui_chat_printf (NULL,
-                     (CONFIG_BOOLEAN(config_look_mouse)) ?
+                     gui_mouse_enabled ?
                      _("Mouse is enabled") : _("Mouse is disabled"));
 }
 
@@ -104,9 +139,9 @@ gui_mouse_grab_event2input ()
 {
     struct t_gui_focus_info *focus_info;
     static char area[256];
-    
+
     area[0] = '\0';
-    
+
     focus_info = gui_focus_get_info (gui_mouse_event_x[0],
                                      gui_mouse_event_y[0]);
     if (focus_info)
@@ -131,7 +166,7 @@ gui_mouse_grab_event2input ()
         }
         gui_focus_free_info (focus_info);
     }
-    
+
     return area;
 }
 
@@ -143,7 +178,7 @@ void
 gui_mouse_grab_end (const char *mouse_key)
 {
     char mouse_key_input[256];
-    
+
     /* insert mouse key in input */
     if (gui_current_window->buffer->input)
     {
@@ -167,7 +202,7 @@ gui_mouse_grab_end (const char *mouse_key)
             gui_completion_stop (gui_current_window->buffer->completion, 1);
         gui_input_text_changed_modifier_and_signal (gui_current_window->buffer, 1);
     }
-    
+
     gui_mouse_grab = 0;
 }
 
@@ -181,9 +216,9 @@ gui_mouse_event_timer_cb (void *data, int remaining_calls)
     /* make C compiler happy */
     (void) data;
     (void) remaining_calls;
-    
+
     gui_mouse_event_end ();
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -195,10 +230,10 @@ void
 gui_mouse_event_init ()
 {
     gui_mouse_event_pending = 1;
-    
+
     if (gui_mouse_event_timer)
         unhook (gui_mouse_event_timer);
-    
+
     gui_mouse_event_timer = hook_timer (NULL,
                                         CONFIG_INTEGER(config_look_mouse_timer_delay),
                                         0, 1,
@@ -212,13 +247,13 @@ gui_mouse_event_init ()
 const char *
 gui_mouse_event_code2key (const char *code)
 {
-    int x, y, code_utf8, length;
+    int i, x, y, code_utf8, length;
     double diff_x, diff_y, distance, angle, pi4;
     static char key[128];
-    char button[2], *ptr_code;
-    
+    char *ptr_code;
+
     key[0] = '\0';
-    
+
     /*
      * mouse code must have at least:
      *   one code (for event) + X + Y == 3 bytes or 3 UTF-8 chars
@@ -227,7 +262,7 @@ gui_mouse_event_code2key (const char *code)
     length = (code_utf8) ? utf8_strlen (code) : (int)strlen (code);
     if (length < 3)
         return NULL;
-    
+
     /* get coordinates and button */
     if (code_utf8)
     {
@@ -248,72 +283,59 @@ gui_mouse_event_code2key (const char *code)
         x = 0;
     if (y < 0)
         y = 0;
-    
-    /* ignore code '#' (button released) if it's received as first event */
-    if ((gui_mouse_event_index == 0) && (code[0] == '#'))
+
+    /* ignore code if it's motion/end code received as first event */
+    if ((gui_mouse_event_index == 0)
+        && (MOUSE_CODE_MOTION(code[0]) || MOUSE_CODE_END(code[0])))
+    {
         return NULL;
-    
+    }
+
     /* set data in "gui_mouse_event_xxx" */
     gui_mouse_event_x[gui_mouse_event_index] = x;
     gui_mouse_event_y[gui_mouse_event_index] = y;
     if (gui_mouse_event_index == 0)
         gui_mouse_event_button = code[0];
-    
+
     if (gui_mouse_event_index == 0)
         gui_mouse_event_index = 1;
-    
-    if (code[0] == '`')
+
+    /*
+     * browse wheel codes, if one code is found, return event name immediately
+     */
+    for (i = 0; gui_mouse_wheel_codes[i][0]; i++)
     {
-        gui_mouse_event_x[1] = gui_mouse_event_x[0];
-        gui_mouse_event_y[1] = gui_mouse_event_y[0];
-        strcat (key, "wheelup");
-        return key;
+        if (code[0] == gui_mouse_wheel_codes[i][0][0])
+        {
+            strcat (key, gui_mouse_wheel_codes[i][1]);
+            gui_mouse_event_x[1] = gui_mouse_event_x[0];
+            gui_mouse_event_y[1] = gui_mouse_event_y[0];
+            return key;
+        }
     }
-    
-    if (code[0] == 'a')
-    {
-        gui_mouse_event_x[1] = gui_mouse_event_x[0];
-        gui_mouse_event_y[1] = gui_mouse_event_y[0];
-        strcat (key, "wheeldown");
-        return key;
-    }
-    
-    if (code[0] != '#')
+
+    if (!MOUSE_CODE_END(code[0]))
         return NULL;
-    
-    /* add button/wheel */
-    switch (gui_mouse_event_button)
+
+    /* add name of button event */
+    for (i = 0; gui_mouse_button_codes[i][0]; i++)
     {
-        case ' ': /* left button pressed */
-            strcat (key, "button1");
+        if (gui_mouse_event_button == gui_mouse_button_codes[i][0][0])
+        {
+            strcat (key, gui_mouse_button_codes[i][1]);
             break;
-        case '"': /* right button pressed */
-            strcat (key, "button2");
-            break;
-        case '!': /* middle button pressed */
-            strcat (key, "button3");
-            break;
-        default: /* extra buttons: button4..button9 */
-            if ((gui_mouse_event_button >= 'b')
-                && (gui_mouse_event_button <= 'g'))
-            {
-                button[0] = gui_mouse_event_button - ('b' - '4');
-                button[1] = '\0';
-                strcat (key, "button");
-                strcat (key, button);
-            }
-            break;
+        }
     }
-    
+
     /*
      * Mouse gesture: if (x,y) on release is different from (x,y) on click,
      * compute distance and angle between 2 points.
      *
      * Distance: sqrt((x2-x1)²+(y2-y1)²)
      * Angle   : atan2(x1-x1, y2-y1)
-     * 
+     *
      * Angle:
-     * 
+     *
      *              3.14             pi
      *               /\
      *       -2.35   ||   2.35       3/4 * pi
@@ -338,7 +360,7 @@ gui_mouse_event_code2key (const char *code)
      *   buttonX-gesture-right      | 3..39 |  0.78..2.35
      *   buttonX-gesture-right-long | >= 40 |
      */
-    
+
     distance = 0;
     if (key[0]
         && ((gui_mouse_event_x[0] != gui_mouse_event_x[1])
@@ -378,7 +400,7 @@ gui_mouse_event_code2key (const char *code)
             }
         }
     }
-    
+
     return key;
 }
 
@@ -390,16 +412,16 @@ void
 gui_mouse_event_end ()
 {
     const char *mouse_key;
-    
+
     gui_mouse_event_pending = 0;
-    
+
     /* end mouse event timer */
     if (gui_mouse_event_timer)
     {
         unhook (gui_mouse_event_timer);
         gui_mouse_event_timer = NULL;
     }
-    
+
     /* get key from mouse code */
     mouse_key = gui_mouse_event_code2key (gui_key_combo_buffer);
     if (mouse_key && mouse_key[0])
@@ -416,6 +438,6 @@ gui_mouse_event_end ()
         }
         gui_mouse_event_reset ();
     }
-    
+
     gui_key_combo_buffer[0] = '\0';
 }

@@ -288,6 +288,10 @@ tali problemi, è necessario disabilitare questa opzione.
 
 Una soluzione alternativa è l'uso di uno dei seguenti script:
 
+// TRANSLATION MISSING
+urlserver.py::
+    shorten URLs with HTTP server in script
+
 urlbar.py::
     visualizza URL in una barra
 
@@ -363,6 +367,7 @@ Come posso cercare testo nel buffer (come /lastlog con irssi)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Il tasto predefinito è @k(C-)@k(r) (il comando è: `/input search-text`).
+E per passare agli eventi: @k(A-)@k(p)/@k(n).
 
 Consultare la guida per l'utente per maggiori informazioni su questa funzione
 (combinazioni tasti predefiniti).
@@ -461,7 +466,7 @@ Se il mouse ancora non funziona, verificare la variabile TERM nella propria
 shell (consultare l'output di `echo $TERM` nel terminale).
 In base al terminale usato, il mouse potrebbe non essere supportato.
 
-E' possibile testare il supporto al mouse nel terminale:
+È possibile testare il supporto al mouse nel terminale:
 
 ----------------------------------------
 $ printf '\033[?1002h'
@@ -571,15 +576,13 @@ utenti assenti, e si viene tempestati di messaggi voice. Perciò, è possibile
 modificare questo comportamento e consentire a WeeChat di utilizzare un
 colore speciale per i nick assenti nella lista nick.
 
-// TRANSLATION MISSING
-For Bitlbee ≥ 3, do that on channel '&bitlbee':
+Per versioni di Bitlbee ≥ 3, sul canale '&bitlbee' digitare:
 
 ----------------------------------------
 channel set show_users online,away
 ----------------------------------------
 
-// TRANSLATION MISSING
-For older version of Bitlbee, do that on channel '&bitlbee':
+Per versioni precedenti di Bitlbee, sul canale '&bitlbee' digitare:
 
 ----------------------------------------
 set away_devoice false
@@ -624,7 +627,7 @@ Per WeeChat ≤ 0.3.3, le opzioni sono 'irc.network.away_check' e
 Come posso essere avvisato quando qualcuno mi cerca in un canale?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-E' possibile usare script come 'beep.pl" o 'launcher.pl'.
+È possibile usare script come 'beep.pl" o 'launcher.pl'.
 
 Per 'launcher.pl', bisogna impostare il comando:
 
@@ -658,8 +661,7 @@ Se si verificano errori con i certificati, è possibile disabilitare "ssl_verify
 Come ci si può connettere al server freenode via SSL?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-// TRANSLATION MISSING
-Set option 'weechat.network.gnutls_ca_file' to file with certificates:
+Impostare l'opzione 'weechat.network.gnutls_ca_file' con il file dei certificati:
 
 ----------------------------------------
 /set weechat.network.gnutls_ca_file "/etc/ssl/certs/ca-certificates.crt"

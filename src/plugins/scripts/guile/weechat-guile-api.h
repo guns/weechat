@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2005 Benoit Papillault <benoit.papillault@free.fr>
- * Copyright (C) 2005-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -18,4 +17,14 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* gui-display.c: display functions for wxWidgets GUI */
+#ifndef __WEECHAT_GUILE_API_H
+#define __WEECHAT_GUILE_API_H 1
+
+extern int weechat_guile_api_buffer_input_data_cb (void *data,
+                                                   struct t_gui_buffer *buffer,
+                                                   const char *input_data);
+extern int weechat_guile_api_buffer_close_cb (void *data,
+                                              struct t_gui_buffer *buffer);
+extern void weechat_guile_api_module_init (void *data);
+
+#endif /* __WEECHAT_GUILE_API_H */

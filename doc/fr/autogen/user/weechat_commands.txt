@@ -53,8 +53,6 @@ Exemples:
     /bar hide mabarre
   faire défiler la liste des pseudos de 10 lignes vers le bas sur le tampon courant:
     /bar scroll nicklist * y+10
-  faire défiler la liste des pseudos d'une page vers le haut sur le tampon #weechat:
-    /bar scroll nicklist #weechat y-100%
   faire défiler la liste des pseudos à la fin sur le tampon courant:
     /bar scroll nicklist * ye
 ........................................
@@ -241,11 +239,7 @@ Exemples:
   filtrer les pseudos afficher en rejoignant les canaux ou avec /names:
     /filter add nicks * irc_366 *
   filtrer le pseudo "toto" sur le canal IRC #weechat:
-    /filter add toto irc.freenode.#weechat * toto\t
-  garder uniquement le pseudo "titi" sur le canal IRC #test:
-    /filter add titi irc.freenode.#test * !titi\t
-  filtrer les lignes contenant le mot "spam":
-    /filter add filtrespam * * spam
+    /filter add toto irc.freenode.#weechat nick_toto *
   filtrer les lignes contenant "weechat sucks" sur le canal IRC #weechat:
     /filter add sucks irc.freenode.#weechat * weechat sucks
 ........................................
@@ -311,6 +305,7 @@ list des actions:
   history_global_next: rappeler la commande suivante dans l'historique global
   jump_smart: sauter au prochain tampon avec de l'activité
   jump_last_buffer: sauter au dernier tampon
+  jump_last_buffer_displayed: sauter au dernier tampon affiché (avant le dernier saut vers un tampon)
   jump_previously_visited_buffer: sauter au tampon visité précédemment
   jump_next_visited_buffer: sauter au tampon visité après
   hotlist_clear: effacer la hotlist
@@ -443,18 +438,20 @@ Exemples:
 [command]*`plugin`* lister/charger/décharger des extensions::
 ........................................
 /plugin  list|listfull [<nom>]
-         load <fichier>
-         autoload
-         reload|unload [<nom>]
+         load <fichier> [<paramètres>]
+         autoload [<paramètres>]
+         reload [<nom> [<paramètres]]
+         unload [<nom>]
 
-    list: lister les extensions chargées
-listfull: lister les extensions chargées (verbeux)
-    load: charger une extension
-autoload: charger automatiquement les extensions dans un répertoire système ou utilisateur
-  reload: recharger une extension (si pas de nom donné, décharger toutes les extensions, puis recharger automatiquement les extensions)
-  unload: décharger une extension (si pas de nom donné, décharger toutes les extensions)
- fichier: extension (fichier) à charger
-     nom: nom d'extension
+      list: lister les extensions chargées
+  listfull: lister les extensions chargées (verbeux)
+      load: charger une extension
+  autoload: charger automatiquement les extensions dans un répertoire système ou utilisateur
+    reload: recharger une extension (si pas de nom donné, décharger toutes les extensions, puis recharger automatiquement les extensions)
+    unload: décharger une extension (si pas de nom donné, décharger toutes les extensions)
+   fichier: extension (fichier) à charger
+       nom: nom d'extension
+paramètres: paramètres donnés à l'extension lors de son chargement
 
 Sans paramètre, cette commande liste les extensions chargées.
 ........................................

@@ -86,6 +86,10 @@ if PLUGIN_TCL
 script_dir = scripts
 endif
 
+if PLUGIN_GUILE
+script_dir = scripts
+endif
+
 if PLUGIN_XFER
 xfer_dir = xfer
 endif
@@ -100,4 +104,9 @@ EXTRA_DIST = CMakeLists.txt
 
 install-data-hook:
 	$(INSTALL) -d $(includedir)/$(PACKAGE)
-	$(INSTALL_DATA) weechat-plugin.h $(includedir)/$(PACKAGE)
+	$(INSTALL_DATA) $(abs_top_srcdir)/src/plugins/weechat-plugin.h $(includedir)/$(PACKAGE)
+
+# uninstall plugin header
+
+uninstall-hook:
+	$(RM) $(includedir)/$(PACKAGE)/weechat-plugin.h

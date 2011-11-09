@@ -24,7 +24,6 @@ wesentliche Merkmale:
 
 * Multi-Protokoll fähig (IRC, Jabber)
 * Multi-Server Verbindungen (mittels SSL, IPv6, proxy)
-* verschiedene GUIs: Curses (wxWidgets, Gtk und Qt sind in der Entwicklung)
 * klein, schnell und schlank
 * den eigenen persönlichen Bedürfnissen anpassbar und durch Erweiterungen und Skripten in der Funktionalität erweiterbar
 * IRC RFCs konform http://www.ietf.org/rfc/rfc1459.txt[1459],
@@ -86,24 +85,24 @@ Abhängigkeiten
 folgende Tabelle beschreibt welche Pakete zwingend notwendig sind um WeeChat zu kompilieren und
 welche Pakete optional genutzt werden können.
 
-[width="80%",cols="4,^2,13",options="header"]
+[width="100%",cols="5,^3,^3,13",options="header"]
 |========================================
-| Paket ^(1)^             | benötigt | Funktion
-| cmake                   | *ja*     | zum kompilieren (autotools ist möglich. cmake wird aber empfohlen)
-| libncursesw5-dev ^(2)^  | *ja*     | ncurses Oberfläche
-| gettext                 | nein     | Internationalisierung (Übersetzung der Mitteilungen; Hauptsprache ist englisch)
-| libgcrypt11-dev         | nein     | SASL Authentifikation am IRC Server mittels DH-BLOWFISH Methode
-| libgnutls-dev (≥ 2.2.0) | nein     | SSL Verbindung zu einem IRC Server
-// TRANSLATION MISSING
-| ca-certificates         | nein     | certificates for SSL connections
-| libaspell-dev           | nein     | aspell Erweiterung
-| libperl-dev             | nein     | perl Erweiterung
-| python-dev              | nein     | python Erweiterung
-| ruby1.8-dev             | nein     | ruby Erweiterung
-| liblua5.1-0-dev         | nein     | lua Erweiterung
-| tcl-dev (≥ 8.5)         | nein     | tcl Erweiterung
-| asciidoc (≥ 8.5.0)      | nein     | erstellt Dokumentation (HTML Dateien)
-| source-highlight        | nein     | Syntax highlight für Quelltext in HTML Dokumentation
+| Paket ^(1)^            | Version   | benötigt | Funktion
+| cmake                  |           | *ja*     | zum kompilieren (autotools ist möglich. cmake wird aber empfohlen)
+| libncursesw5-dev ^(2)^ |           | *ja*     | ncurses Oberfläche
+| gettext                |           |          | Internationalisierung (Übersetzung der Mitteilungen; Hauptsprache ist englisch)
+| libgcrypt11-dev        |           |          | SASL Authentifikation am IRC Server mittels DH-BLOWFISH Methode
+| libgnutls-dev          | ≥ 2.2.0   |          | SSL Verbindung zu einem IRC Server
+| ca-certificates        |           |          | Zertifikate für SSL Verbindungen
+| libaspell-dev          |           |          | aspell Erweiterung
+| python-dev             | 2.5 → 2.7 |          | python Erweiterung
+| libperl-dev            |           |          | perl Erweiterung
+| ruby1.8-dev            |           |          | ruby Erweiterung
+| liblua5.1-0-dev        |           |          | lua Erweiterung
+| tcl-dev                | ≥ 8.5     |          | tcl Erweiterung
+| guile-1.8-dev          |           |          | guile (scheme) Erweiterung
+| asciidoc               | ≥ 8.5.0   |          | erstellt Dokumentation (HTML Dateien)
+| source-highlight       |           |          | Syntax highlight für Quelltext in HTML Dokumentation
 |========================================
 
 [NOTE]
@@ -270,19 +269,19 @@ Diese Fehlermeldung senden Sie bitte an den Entwickler und beschreiben was den F
 
 Danke für Ihre Mithilfe!
 
-// TRANSLATION MISSING
 [[debug_running_weechat]]
-Debug a running WeeChat
-^^^^^^^^^^^^^^^^^^^^^^^
+Eine laufende Session von WeeChat debuggen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To debug a running WeeChat (for example if WeeChat seems blocked), you can use
-gdb with process id (replace '12345' with PID of weechat-curses process):
+Um eine laufende Session von WeeChat zu debuggen (zum Beispiel wenn WeeChat nicht
+mehr reagieren sollte) sollte man gdb mit der Prozess-ID starten ('12345' muss durch
+die PID des laufenden weechat-curses Prozesses ersetzt werden):
 
 ----------------------------------------
 gdb /usr/bin/weechat-curses 12345
 ----------------------------------------
 
-Then like for a crash, use command `bt full`:
+Sollte WeeChat abgestürzt sein, muss der Befehl `bt full` genutzt werden:
 
 ----------------------------------------
 (gdb) bt full
@@ -529,6 +528,7 @@ Tastenbefehle für Buffer / Fenster
 | @k(A-)@k(z)               | Zoom für aktuelles Fenster (nochmals @k(A-)@k(z): stellt die vorherigen Einstellungen wieder her) | /window zoom
 | @k(A-)@k(<)               | springt zum letzten besuchten Buffer | /input jump_previously_visited_buffer
 | @k(A-)@k(>)               | springt zum nächsten besuchten Buffer | /input jump_next_visited_buffer
+| @k(A-)@k(/)               | wechselt zum jeweils zuletzt angezeigten Buffern | /input jump_last_buffer_displayed
 | @k(A-)@k(=)               | schaltet Filterfunktion an/aus | /filter toggle
 |========================================
 
@@ -651,8 +651,8 @@ einigen Terminals muss die "Alt"-Taste anstelle der "Shift"-Taste gedrückt werd
 Sollten Probleme bei der Mausunterstützung auftreten, dann sollte Bitte die 'WeeChat FAQ' gelesen werden.
 
 [[mouse_bind_events]]
-Maus-Events Befehle zuweisen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Einem Maus-Event, Befehle zuweisen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Es gibt eine Anzahl von Maus-Events die schon standardmäßig durch
 WeeChat definiert sind (siehe <<key_bindings_mouse_context,Tasten für "mouse"-Kontext>>).
@@ -660,34 +660,65 @@ WeeChat definiert sind (siehe <<key_bindings_mouse_context,Tasten für "mouse"-K
 Man kann mit dem Befehl `/key` im Kontext "mouse" aber auch eigene Befehle zuweisen
 und löschen (für die Syntax, siehe <<command_weechat_key,/key Befehl>>).
 
-Auflistung von Events die unterstützt werden:
+Der Name eines Events besteht aus einem Modifier (optional), einer Maustaste/Mausrad
+und der Mausgeste (optional). Die unterschiedlichen Elemente werden durch ein "-" getrennt.
 
-[width="80%",cols="3m,4",options="header"]
+Liste der Modifiers:
+
+[width="50%",cols="3m,4",options="header"]
 |========================================
-| Event                            | Beschreibung
-| button1                          | linker Mausknopf wird gedrückt
-| button2                          | rechter Mausknopf wird gedrückt
-| button3                          | mittlerer Mausknopf wird gedrückt (häufig der Druck auf das Mausrad)
-| button4 ... button9              | ein zusätzlicher Mausknopf wird gedrückt
-| wheelup                          | Mausrad wird nach oben gescrollt
-| wheeldown                        | Mausrad wird nach unten gescrollt
-| buttonX-gesture-up ^(1)^         | Mausgeste mit einer Länge von 3 bis 19 Zeichen
-| buttonX-gesture-up-long ^(1)^    | Mausgeste mit einer Länge von 20 und mehr Zeichen
-| buttonX-gesture-down ^(1)^       | Mausgeste mit einer Länge von 3 bis 19 Zeichen
-| buttonX-gesture-down-long ^(1)^  | Mausgeste mit einer Länge von 20 und mehr Zeichen
-| buttonX-gesture-left ^(1)^       | Mausgeste mit einer Länge von 3 bis 39 Zeichen
-| buttonX-gesture-left-long ^(1)^  | Mausgeste mit einer Länge von 40 und mehr Zeichen
-| buttonX-gesture-right ^(1)^      | Mausgeste mit einer Länge von 3 bis 39 Zeichen
-| buttonX-gesture-right-long ^(1)^ | Mausgeste mit einer Länge von 40 und mehr Zeichen
+| Modifier | Beschreibung
+| ctrl     | Taste @k(-C-)
+| alt      | Taste @k(-A-)
+| ctrl-alt | Taste @k(-C-) und @k(-A-)
 |========================================
 
-[NOTE]
-^(1)^ "X" muss durch die Nummer des Mausknopfes ersetzt werden (1 bis 9) die für die Mausgeste genutzt werden soll.
+Liste der Maustasten/Mausrad:
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Maustaste/-rad      | Beschreibung
+| button1             | linker Mausknopf wird gedrückt
+| button2             | rechter Mausknopf wird gedrückt
+| button3             | mittlerer Mausknopf wird gedrückt (häufig der Druck auf das Mausrad)
+| button4 ... button9 | ein zusätzlicher Mausknopf wird gedrückt
+| wheelup             | Mausrad wird nach oben gescrollt
+| wheeldown           | Mausrad wird nach unten gescrollt
+|========================================
+
+Liste der Mausgesten (nur für Maustasten, nicht für das Mausrad, anwendbar):
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Mausgeste              | Distanz
+| Bewegung hoch          | 3 ... 19
+| Bewegung hoch (lang)   | ≥ 20
+| Bewegung runter        | 3 ... 19
+| Bewegung runter (lang) | ≥ 20
+| Bewegung links         | 3 ... 39
+| Bewegung links (lang)  | ≥ 40
+| Bewegung rechts        | 3 ... 39
+| Bewegung rechts (lang) | ≥ 40
+|========================================
+
+Bespiele von Ereignissen:
+
+* `button1`
+* `ctrl-button1`
+* `button1-gesture-right`
+* `alt-button2-gesture-down-long`
+* `wheelup`
+* `ctrl-alt-wheeldown`
 
 [TIP]
-Wird eine Funktion im "mouse"-Kontext hinzufügt ist es möglich mehrere Events mittels
-`*` abzufangen. Zum Beispiel: `button1-gesture-*` fängt alle Mausgesten ab, die mit
-der linken Maustaste eingeleitet werden.
+Wird eine Funktion im "mouse"-Kontext hinzufügt ist es möglich mehrere Mausereignisse
+mittels `*` abzufangen. Zum Beispiel fängt `button1-gesture-*` alle Mausgesten ab, die
+mit der linken Maustaste eingeleitet werden.
+
+[TIP]
+Den Namen eines Mausereignisses kann man mittels des Befehls `/input grab_mouse` erfragen.
+Man führt den Befehl in der Eingabezeile aus und startet das Ereignis. Als Ergebnis erhält
+man in der Eingabezeile den Namen des ausgeführten Mausereignisses.
 
 [[command_line]]
 Befehlszeile
@@ -910,9 +941,10 @@ Attribute
 Er ist möglich einer Farbe ein Attribut hinzuzufügen. Dazu wird dem
 Farbnamen oder der Farbnummer ein- oder mehrere Attribute vorangestellt.
 
-* `*`: fett
-* `!`: invertierte Darstellung
-* `_`: unterstrichen
+* `*` : fett
+* `!` : invertierte Darstellung
+* `_` : unterstrichen
+* `|` : behält Attribut bei: fett, invertierte Darstellung, Unterstrichen wird beim Farbwechsel nicht zurückgesetzt
 
 Um zum Beispiel dem eigenen Nick die Farbe weiß und unterstrichen
 zuzuordnen:
@@ -972,8 +1004,8 @@ nachträglich zu laden oder zu entfernen.
 
 Es ist wichtig zwischen 'Erweiterung' und 'Skript' zu unterscheiden. Eine Erweiterung
 ist eine Binärdatei die kompiliert wurde und mit dem Befehl `/plugin` geladen wird.
-Dem gegenüber ist ein 'Skript' eine Textdatei die durch eine Erweiterung z.B. 'perl'
-mittels dem Befehl `/perl` geladen wird.
+Dem gegenüber ist ein 'Skript' eine Textdatei die durch eine Erweiterung z.B. 'python'
+mittels dem Befehl `/python` geladen wird.
 
 Mit dem Befehl `/plugin` kann eine Erweiterung geladen bzw. entfernt werden. Auch können
 mit dem Befehl alle installierten Erweiterungen aufgelistet werden. Wird eine Erweiterung
@@ -1002,11 +1034,12 @@ Standarderweiterungen:
 | logger      | erstellt Protokolldateien von Buffern
 | relay       | Daten via Netzwerk übermitteln (IRC Proxy)
 | rmodifier   | wandelt Schlüsselwörter mit regulären Ausdrücken
-| perl        | Perl-Skript API
 | python      | Python-Skript API
+| perl        | Perl-Skript API
 | ruby        | Ruby-Skript API
 | lua         | Lua-Skript API
 | tcl         | Tcl-Skript API
+| guile       | Guile(scheme)-Skript API
 | xfer        | Datentransfer und Direktchat
 |========================================
 
@@ -1204,11 +1237,11 @@ $ echo 'irc.freenode.#weechat *Hallo!' >~/.weechat/weechat_fifo_12345
 $ echo '*hello!' >~/.weechat/weechat_fifo_12345
 ----------------------------------------
 
-* sendet zwei Befehle um alle Perl-Skripten zu entfernen und dann neu zu laden (die beiden Befehle müssen
+* sendet zwei Befehle um alle Python-Skripten zu entfernen und dann neu zu laden (die beiden Befehle müssen
   mit "\n" getrennt werden):
 
 ----------------------------------------
-$ echo -e '*/perl unload\n*/perl autoload' >~/.weechat/weechat_fifo_12345
+$ echo -e '*/python unload\n*/python autoload' >~/.weechat/weechat_fifo_12345
 ----------------------------------------
 
 Das nachfolgende Skript sendet einen Befehl an alle laufenden WeeChat Instanzen:
@@ -1304,7 +1337,7 @@ erstes Beispiel: Verbindung zu oftc und Überprüfung der Zertifikate
 
 ----------------------------------------
 $ mkdir ~/.weechat/ssl
-$ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/secretary/spi-cacert.crt
+$ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/ca/spi-cacert.crt
 ----------------------------------------
 
 Hinweis: es ist möglich mehrere Zertifikate in der Datei CAs.pem zu halten.
@@ -1349,7 +1382,7 @@ Optionen für Server sind:
 
 * 'sasl_mechanism': Mechanismus welcher genutzt werden soll ("plain" oder "dh-blowfish")
 * 'sasl_timeout': Zeitüberschreitung (in Sekunden) für Authentifizierung
-* 'sasl_username': Username
+* 'sasl_username': Username (Nickname)
 * 'sasl_password': Passwort
 
 Soll "dh-blowfish" standardmäßig auf allen Servern genutzt werden:
@@ -1598,8 +1631,7 @@ Unvollständige Liste der IRC Nachrichten bzw. Alias die angepasst werden könne
 | 335       | whois         | whois (ist ein Bot auf)
 | 338       | whois         | whois (Host)
 | 341       |               | inviting
-// TRANSLATION MISSING
-| 343       | whois         | whois (is opered as)
+| 343       | whois         | whois (ist opered als)
 | 344       | reop          | channel reop
 | 345       | reop          | channel reop (Ende)
 | 346       | invitelist    | Einladung list
@@ -1911,7 +1943,8 @@ Lautet die Befehlszeile `/oper nick password` wird diese in der Befehlszeile als
 Skripten Erweiterungen
 ~~~~~~~~~~~~~~~~~~~~~~
 
-WeeChat unterstützt fünf Skript-Erweiterungen: Perl, Python, Ruby, Lua und Tcl.
+WeeChat unterstützt sechs Skript-Erweiterungen: Python, Perl, Ruby, Lua, Tcl und Guile
+(scheme).
 Diese Erweiterungen können für die jeweilige Sprache die Skripten laden, ausführen und
 entfernen.
 
@@ -1920,17 +1953,17 @@ bitte die 'WeeChat Scripting Guide'.
 
 Skripten für WeeChat finden Sie auf: http://www.weechat.org/scripts
 
-[[perl_commands]]
-Perl Befehle
-^^^^^^^^^^^^
-
-include::autogen/user/perl_commands.txt[]
-
 [[python_commands]]
 Python Befehle
 ^^^^^^^^^^^^^^
 
 include::autogen/user/python_commands.txt[]
+
+[[perl_commands]]
+Perl Befehle
+^^^^^^^^^^^^
+
+include::autogen/user/perl_commands.txt[]
 
 [[ruby_commands]]
 Ruby Befehle
@@ -1949,6 +1982,12 @@ Tcl Befehle
 ^^^^^^^^^^^
 
 include::autogen/user/tcl_commands.txt[]
+
+[[guile_commands]]
+Guile Befehle
+^^^^^^^^^^^^^
+
+include::autogen/user/guile_commands.txt[]
 
 [[xfer_plugin]]
 Xfer Erweiterung

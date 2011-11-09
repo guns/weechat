@@ -11,6 +11,9 @@ dictlist: listet installierte Wörterbücher auf
  disable: deaktiviert Aspell in aktuellem Buffer
  addword: fügt ein Wort in das persönliche Wörterbuch von Aspell hinzu
 
-Eingaben die mit '/' beginnen werden nicht überprüft, außer bei einigen Befehle.
+Eingaben die mit '/' beginnen werden nicht überprüft, davon ausgenommen sind einige Befehle (siehe /set aspell.check.commands).
+
+Um in allen Buffern Aspell anzuwenden sollte man die Option "default_dict" nutzen , als Beispiel:
+  /set aspell.check.default_dict "de_DE-neu"
 ........................................
 

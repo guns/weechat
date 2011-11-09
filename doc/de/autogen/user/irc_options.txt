@@ -33,6 +33,11 @@
 ** Typ: Farbe
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute werden vor einer Farbe gesetzt (ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `red`)
 
+* *irc.color.mirc_remap*
+** Beschreibung: `ersetzt mirc Farben in Nachrichten mittels einer Hashtabelle: Schlüssel sind "fg,bg" als Integerwerte zwischen -1 (nicht angegeben) und 15, als Werte sind die Farbnamen oder Farbnummer von WeeChat möglich (Format ist: "1,-1:Farbe1;2,7:Farbe2"), Beispiel: "1,-1:darkgray;1,2:white,blue" ersetzt Schwarz auf jedem Hintergrund durch "darkgray" und Schwarz auf Blau durch "white,blue"; Stardard-IRC-Farben Tabelle von WeeChat: 0:weiß, 1:schwarz, 2:blau, 3:grün, 4:hellrot, 5:rot, 6:violett, 7:braun, 8:gelb, 9: hellgrün, 10:türkis, 11:helltürkis, 12:hellblau, 13:hellviolett, 14:grau, 15:weiß`
+** Typ: Zeichenkette
+** Werte: beliebige Zeichenkette (Standardwert: `"1,-1:darkgray"`)
+
 * *irc.color.nick_prefix*
 ** Beschreibung: `Farbe für den Nick Präfix (Präfix ist die editierbare Zeichenkette die vor dem Nick steht)`
 ** Typ: Farbe

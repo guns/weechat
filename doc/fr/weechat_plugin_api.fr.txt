@@ -173,13 +173,13 @@ commande_double_cb (void *data, struct t_gui_buffer *buffer, int argc,
     (void) data;
     (void) buffer;
     (void) argv;
-    
+
     if (argc > 1)
     {
         weechat_command (NULL, argv_eol[1]);
         weechat_command (NULL, argv_eol[1]);
     }
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -188,7 +188,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin,
                      int argc, char *argv[])
 {
     weechat_plugin = plugin;
-    
+
     weechat_hook_command ("double",
                           "Affiche deux fois un message "
                           "ou exécute deux fois une commande",
@@ -197,7 +197,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin,
                           "commande : commande à exécuter deux fois",
                           NULL,
                           &commande_double_cb, NULL);
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -206,7 +206,7 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 {
     /* pour que le compilateur C soit content */
     (void) plugin;
-    
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -727,6 +727,7 @@ Paramètres :
 * 'string' : chaîne
 * 'mask' : masque, peut commencer ou se terminer par "`*`" (aucune autre "`*`"
   n'est autorisée dans le masque)
+* 'case_sensitive' : 1 pour une comparaison tenant compte de la casse, sinon 0
 
 Valeur de retour :
 
@@ -1051,6 +1052,11 @@ Paramètres :
 * 'separators' : délimiteurs utilisés pour le découpage
 * 'keep_eol' : si différent de 0, alors chaque paramètre contiendra toutes les
   chaînes jusqu'à la fin de la ligne (voir exemple ci-dessous)
+** 0: chaque chaîne contiendra un mot
+** 1: chaque chaîne contiendra toute la chaîne jusqu'à la fin de la ligne (voir
+   exemple ci-dessous)
+** 2: comme 1, mais ne supprime pas les séparateurs en fin de chaîne avant le
+   découpage (_nouveau dans la version 0.3.6_)
 * 'num_items_max' : nombre maximum de chaînes à créer (0 = pas de limite)
 * 'num_items' : pointeur vers un entier qui contiendra le nombre de chaînes
   créées
@@ -3549,7 +3555,7 @@ int
 my_config_reload_cb (void *data, struct t_config_file *config_file)
 {
     /* ... */
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -3707,7 +3713,7 @@ my_section_read_cb (void *data, struct t_config_file *config_file,
                     const char *value)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_OPTION_SET_OK_CHANGED;
     /* return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE; */
     /* return WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND; */
@@ -3719,7 +3725,7 @@ my_section_write_cb (void *data, struct t_config_file *config_file,
                      const char *section_name)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_WRITE_OK;
     /* return WEECHAT_CONFIG_WRITE_ERROR; */
 }
@@ -3729,7 +3735,7 @@ my_section_write_default_cb (void *data, struct t_config_file *config_file,
                              const char *section_name)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_WRITE_OK;
     /* return WEECHAT_CONFIG_WRITE_ERROR; */
 }
@@ -3740,7 +3746,7 @@ my_section_create_option_cb (void *data, struct t_config_file *config_file,
                              const char *option_name, const char *value)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
     /* return WEECHAT_CONFIG_OPTION_SET_ERROR; */
 }
@@ -3751,7 +3757,7 @@ my_section_delete_option_cb (void *data, struct t_config_file *config_file,
                              struct t_config_option *option)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED;
     /* return WEECHAT_CONFIG_OPTION_UNSET_ERROR; */
 }
@@ -5047,9 +5053,9 @@ my_section_write_cb (void *data, struct t_config_file *config_file,
                      const char *section_name)
 {
     weechat_config_write_line (config_file, "ma_section", NULL);
-    
+
     weechat_config_write_option (config_file, option);
-    
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -5100,10 +5106,10 @@ my_section_write_cb (void *data, struct t_config_file *config_file,
                      const char *section_name)
 {
     weechat_config_write_line (config_file, "ma_section", NULL);
-    
+
     weechat_config_write_line (config_file, "option", "%s;%d",
                                "valeur", 123);
-                               
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -5941,7 +5947,7 @@ Paramètres :
 
 * 'color_name' : nom de la couleur, parmi :
 ** une option WeeChat (de weechat.color.xxx), par exemple 'chat_delimiters'
-** une couleur avec un fond optionnel, par exemple 'yellow' ou 'yellow,red'
+** une couleur avec des attributs/fond optionnels (voir ci-dessous)
 ** un attribut :
 *** 'bold' : activer le gras
 *** '-bold' : désactiver le gras
@@ -5955,6 +5961,27 @@ Paramètres :
 *** 'bar_fg' : couleur de texte pour la barre
 *** 'bar_delim' : couleur des délimiteurs pour la barre
 *** 'bar_bg' : couleur de fond pour la barre
+** réinitialisation :
+*** 'reset' : réinitialiser la couleur et les attributs
+*** 'resetcolor' : réinitialiser la couleur (garder les attributs)
+    (_nouveau dans la version 0.3.6_)
+
+Le format de la couleur est : attributs (optionnel) + nom de couleur + ",fond"
+(optionnel). Les attributs possibles sont :
+
+* `*` : texte gras
+* `!` : mode vidéo inverse
+* `_` : texte souligné
+* `|` : garder les attributs : ne pas réinitialiser gras/inverse/souligné lors
+  du changement de couleur (_nouveau dans la version 0.3.6_)
+
+Exemples :
+
+* `yellow` : jaune
+* `_green` : vert souligné
+* `*214` : orange gras
+* `yellow,red` : jaune sur rouge
+* `|cyan` : cyan (et garder tout attribut définit précédemment)
 
 Valeur de retour :
 
@@ -6001,12 +6028,21 @@ Paramètres :
   tampon WeeChat
 * 'message' : message à afficher
 
+[NOTE]
+La première tabulation dans le message ("\t") est utilisée pour séparer le
+préfixe du message. +
+Si votre message contient des tabulations et si vous ne voulez pas de préfixe,
+utilisez un espace, une tabulation, puis le message : cela désactivera le
+préfixe (l'espace avant la tabulation ne sera pas affiché).
+
 Exemple en C :
 
 [source,C]
 ----------------------------------------
 weechat_printf (NULL, "Bonjour sur le tampon WeeChat");
 weechat_printf (buffer, "Bonjour sur ce tampon");
+weechat_printf (buffer, "%sCeci est une erreur !", weechat_prefix ("error"));
+weechat_printf (buffer, " \tMessage sans préfixe mais avec \t quelques \t tabulations");
 ----------------------------------------
 
 Script (Python) :
@@ -6019,6 +6055,8 @@ weechat.prnt(buffer, message)
 # exemple
 weechat.prnt("", "Bonjour sur le tampon WeeChat")
 weechat.prnt(buffer, "Bonjour sur ce tampon")
+weechat.prnt(buffer, "%sCeci est une erreur !" % weechat.prefix("error"))
+weechat.prnt(buffer, " \tMessage sans préfixe mais avec \t quelques \t tabulations")
 ----------------------------------------
 
 [NOTE]
@@ -6672,22 +6710,22 @@ my_process_cb (void *data, const char *command, int return_code,
         weechat_printf (NULL, "Erreur avec la commande '%s'", command);
         return WEECHAT_RC_OK;
     }
-    
+
     if (return_code >= 0)
     {
         weechat_printf (NULL, "return_code = %d", return_code);
     }
-    
+
     if (out)
     {
         weechat_printf (NULL, "stdout : %s", out);
     }
-    
+
     if (err)
     {
         weechat_printf (NULL, "stderr : %s", err);
     }
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -7619,6 +7657,10 @@ sont des chaînes) :
 Immédiatement après l'envoi de ce hsignal, vous devez envoyer la commande au
 serveur irc, et la redirection sera utilisée pour cette commande.
 
+Lorsque la réponse complète à votre commande a été reçue, un hsignal est envoyé.
+Ce hsignal a le nom 'irc_redirection_xxx_yyy' où 'xxx' est le 'signal' et 'yyy'
+le 'pattern' utilisé.
+
 Exemple en C :
 
 [source,C]
@@ -7933,10 +7975,10 @@ my_completion_cb (void *data, const char *completion_item,
 {
     /* récupère les paramètres de la commande */
     const char *args = weechat_hook_completion_get_string (completion, "args");
-    
+
     /* complétion selon les paramètres */
     /* ... */
-    
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -8121,10 +8163,10 @@ my_modifier_cb (void *data, const char *modifier,
 {
     char *result;
     int length;
-    
+
     if (!string)
         return NULL;
-    
+
     length = strlen (string) + 5;
     result = malloc (length);
     if (result)
@@ -8132,7 +8174,7 @@ my_modifier_cb (void *data, const char *modifier,
         /* ajouter "xxx" à chaque message affiché */
         snprintf (result, length, "%s xxx", string);
     }
-    
+
     return result;
 }
 
@@ -8402,10 +8444,10 @@ my_infolist_cb (void *data, const char *infolist_name, void *pointer,
                 const char *arguments)
 {
     struct t_infolist *mon_infolist;
-    
+
     /* construction de l'infolist */
     /* ... */
-    
+
     return mon_infolist;
 }
 
@@ -8477,10 +8519,10 @@ struct t_hdata *
 my_hdata_cb (void *data, const char *hdata_name)
 {
     struct t_hdata *mon_hdata;
-    
+
     /* construction du hdata */
     /* ... */
-    
+
     return mon_hdata;
 }
 
@@ -8553,8 +8595,8 @@ Contenu de la hashtable envoyée au "callback" (les clés et valeurs sont de typ
 | _chat                      | indicateur zone "chat"          | "0" ou "1"                                       | "0"
 | _chat_line_x               | colonne de la ligne ^(3)^       | "0" ... "n"                                      | "-1"
 | _chat_line_y               | numéro de ligne ^(3)^           | "0" ... "n"                                      | "-1"
-| _chat_line_date            | date de la ligne                | "1313237175"                                     | "0"
-| _chat_line_date_printed    | date de la ligne ^(4)^          | "1313237175"                                     | "0"
+| _chat_line_date            | date/heure de la ligne          | "1313237175"                                     | "0"
+| _chat_line_date_printed    | date/heure de la ligne ^(4)^    | "1313237175"                                     | "0"
 | _chat_line_time            | heure affichée                  | "14:06:15"                                       | ""
 | _chat_line_tags            | étiquettes de la ligne          | "irc_privmsg,notify_message,nick_FlashCode,log1" | ""
 | _chat_line_nick            | pseudo de la ligne              | "FlashCode"                                      | ""
@@ -8609,7 +8651,7 @@ my_focus_nicklist_cb (void *data, struct t_hashtable *info)
 {
     /* ajout de chaînes dans la hashtable */
     /* ... */
-    
+
     return info;
 }
 
@@ -9693,10 +9735,10 @@ Paramètres :
    caractères
 ** 'first_line_displayed' : 1 si la première du tampon est affichée à l'écran,
    sinon 0
-** 'scroll' : 1 s'il y a un défilement en cours dans la fenêtre (la dernière
+** 'scrolling' : 1 s'il y a un défilement en cours dans la fenêtre (la dernière
    ligne n'est pas affichée)
-** 'scroll_lines_after' : nombre de lignes non affichées après la dernière
-   ligne affichée (lors d'un défilement)
+** 'lines_after' : nombre de lignes non affichées après la dernière ligne
+   affichée (lors d'un défilement)
 
 Valeur de retour :
 

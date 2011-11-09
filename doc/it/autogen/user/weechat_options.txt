@@ -44,12 +44,12 @@
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `cyan`)
 
 * *weechat.color.chat_inactive_buffer*
-** descrizione: `text color for chat when line is inactive (buffer is merged with other buffers and is not selected)`
+** descrizione: `colore del testo per la chat quando la riga è inattiva (il buffer è unito con altri buffer e non è selezionato)`
 ** tipo: colore
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
 
 * *weechat.color.chat_inactive_window*
-** descrizione: `text color for chat when window is inactive (not current selected window)`
+** descrizione: `colore del testo per la chat quando la finestra è inattiva (nessuna finestra attiva selezionata)`
 ** tipo: colore
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
 
@@ -84,7 +84,7 @@
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `brown`)
 
 * *weechat.color.chat_prefix_buffer_inactive_buffer*
-** descrizione: `text color for inactive buffer name (before prefix, when many buffers are merged with same number and if buffer is not selected)`
+** descrizione: `colore del testo per il nome del buffer inattivo (prima del prefisso, quando più buffer sono uniti con lo stesso numero e il buffer non è selezionato)`
 ** tipo: colore
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
 
@@ -94,7 +94,7 @@
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
 
 * *weechat.color.chat_prefix_join*
-** descrizione: `colore del testo per il prefisso di entrata<`
+** descrizione: `colore del testo per il prefisso di entrata`
 ** tipo: colore
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightgreen`)
 
@@ -318,15 +318,20 @@
 ** tipo: intero
 ** valori: 0 .. 2147483647 (valore predefinito: `5`)
 
+* *weechat.history.max_buffer_lines_minutes*
+** descrizione: `maximum number of minutes in history per buffer (0 = unlimited, examples: 1440 = one day, 10080 = one week, 43200 = one month, 525600 = one year)`
+** tipo: intero
+** valori: 0 .. 2147483647 (valore predefinito: `0`)
+
+* *weechat.history.max_buffer_lines_number*
+** descrizione: `numero massimo di righe nella cronologia per buffer (0 = nessun limite)`
+** tipo: intero
+** valori: 0 .. 2147483647 (valore predefinito: `4096`)
+
 * *weechat.history.max_commands*
 ** descrizione: `numero massimo di comandi utente nella cronologia (0 = nessun limite)`
 ** tipo: intero
 ** valori: 0 .. 2147483647 (valore predefinito: `100`)
-
-* *weechat.history.max_lines*
-** descrizione: `numero massimo di righe nella cronologia per buffer (0 = nessun limite)`
-** tipo: intero
-** valori: 0 .. 2147483647 (valore predefinito: `4096`)
 
 * *weechat.history.max_visited_buffers*
 ** descrizione: `numero massimo di buffer visitati da memorizzare`
@@ -359,7 +364,7 @@
 ** valori: qualsiasi stringa (valore predefinito: `"--"`)
 
 * *weechat.look.buffer_notify_default*
-** descrizione: `livello predefinito di notifica per i buffer (utilizzato per comunicare a WeeChat se il buffer deve essere visualizzato nella hotlist oppure no, a seconda dell'importanza del messaggio): all: tutti i messaggi (predefinito), message=messaggi+eventi, highlight=solo eventi, none=non viene mai visualizzato nella hotlist`
+** descrizione: `livello predefinito di notifica per i buffer (usato per comunicare a WeeChat se il buffer deve essere visualizzato nella hotlist oppure no, a seconda dell'importanza del messaggio): all: tutti i messaggi (predefinito), message=messaggi+eventi, highlight=solo eventi, none=non viene mai visualizzato nella hotlist`
 ** tipo: intero
 ** valori: none, highlight, message, all (valore predefinito: `all`)
 
@@ -369,37 +374,37 @@
 ** valori: qualsiasi stringa (valore predefinito: `"%H:%M:%S"`)
 
 * *weechat.look.color_basic_force_bold*
-** descrizione: `force "bold" attribute for light colors and "darkgray" in basic colors (this option is disabled by default: bold is used only if terminal has less than 16 colors)`
+** descrizione: `forza l'attributo "bold" per i colori chiari e "darkgray" nei colori di base (questa opzione è disabilitata per default: il grassetto è usato solo se il terminale ha meno di 16 colori)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
 * *weechat.look.color_inactive_buffer*
-** descrizione: `use a different color for lines in inactive buffer (when line is from a merged buffer not selected)`
+** descrizione: `usa un colore diverso per le righe nel buffer inattivo (quando la riga viene da un buffer unito non selezionato)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
 * *weechat.look.color_inactive_message*
-** descrizione: `use a different color for inactive message (when window is not current window, or if line is from a merged buffer not selected)`
+** descrizione: `usa un colore diverso per un messaggio inattivo (quando la finestra non è quella corrente, o se la riga viene da un buffer unito non selezionato)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
 * *weechat.look.color_inactive_prefix*
-** descrizione: `use a different color for inactive prefix (when window is not current window, or if line is from a merged buffer not selected)`
+** descrizione: `usa un colore diverso per il prefisso inattivo (quando la finestra non è quella corrente, o se la riga viene da un buffer unito non selezionato)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
 * *weechat.look.color_inactive_prefix_buffer*
-** descrizione: `use a different color for inactive buffer name in prefix (when window is not current window, or if line is from a merged buffer not selected)`
+** descrizione: `usa un colore diverso per il nome del buffer inattivo nel prefisso (quando la finestra non è quella corrente, o se la riga viene da un buffer unito non selezionato)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
 * *weechat.look.color_inactive_time*
-** descrizione: `use a different color for inactive time (when window is not current window, or if line is from a merged buffer not selected)`
+** descrizione: `usa un colore diverso per il tempo di inattività (quando la finestra non è quella corrente, o se la riga viene da un buffer unito non selezionato)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
 * *weechat.look.color_inactive_window*
-** descrizione: `use a different color for lines in inactive window (when window is not current window)`
+** descrizione: `usa un colore diverso per le righe nella finestra inattiva (quando la finestra non è quella corrente)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
@@ -409,7 +414,7 @@
 ** valori: -1 .. 256 (valore predefinito: `5`)
 
 * *weechat.look.color_real_white*
-** descrizione: `se impostato, utilizza il colore bianco reale, disabilitato sui terminali con lo sfondo bianco (se non utilizzato, l'opzione dovrebbe essere attivata per visualizzare il bianco reale invece del colore di primo piano predefinito del terminale)`
+** descrizione: `se impostato, usa il colore bianco reale, disabilitato sui terminali con lo sfondo bianco (se non usato, l'opzione dovrebbe essere attivata per visualizzare il bianco reale invece del colore di primo piano predefinito del terminale)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
@@ -714,7 +719,7 @@
 ** valori: qualsiasi stringa (valore predefinito: `"*"`)
 
 * *weechat.plugin.debug*
-** descrizione: `abilita come predefinito il debug per tutti i plugin (opzione disabilita di predefinito, caldamente raccomandato)`
+** descrizione: `abilita come predefinito il debug per tutti i plugin (opzione disabilita di default, caldamente raccomandato)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
@@ -729,7 +734,7 @@
 ** valori: qualsiasi stringa (valore predefinito: `"%h/plugins"`)
 
 * *weechat.plugin.save_config_on_unload*
-** descrizione: `salva i file di configurazione alla disattivazione dei plugin`
+** descrizione: `salva i file di configurazione allo scaricamento dei plugin`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
@@ -744,12 +749,12 @@
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * *weechat.startup.display_logo*
-** descrizione: `visualizza il logo di WeeChat all'avvio`
+** descrizione: `mostra il logo di WeeChat all'avvio`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
 * *weechat.startup.display_version*
-** descrizione: `visualizza la versione di WeeChat all'avvio`
+** descrizione: `mostra la versione di WeeChat all'avvio`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 

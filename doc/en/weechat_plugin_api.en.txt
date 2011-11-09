@@ -170,13 +170,13 @@ command_double_cb (void *data, struct t_gui_buffer *buffer, int argc,
     (void) data;
     (void) buffer;
     (void) argv;
-    
+
     if (argc > 1)
     {
         weechat_command (NULL, argv_eol[1]);
         weechat_command (NULL, argv_eol[1]);
     }
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -185,7 +185,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin,
                      int argc, char *argv[])
 {
     weechat_plugin = plugin;
-    
+
     weechat_hook_command ("double",
                           "Display two times a message "
                           "or execute two times a command",
@@ -194,7 +194,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin,
                           "command: command to execute two times",
                           NULL,
                           &command_double_cb, NULL);
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -203,7 +203,7 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 {
     /* make C compiler happy */
     (void) plugin;
-    
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -719,6 +719,7 @@ Arguments:
 * 'string': string
 * 'mask': mask, can begin or end with "`*`" (no other "`*`" are allowed inside
   mask)
+* 'case_sensitive': 1 for case sensitive comparison, otherwise 0
 
 Return value:
 
@@ -1036,8 +1037,11 @@ Arguments:
 
 * 'string': string to split
 * 'separators': delimiters used for split
-* 'keep_eol': if different from 0, then each argument will contain all string
-  until end of line (see example below)
+* 'keep_eol':
+** 0: each string will contain one word
+** 1: each string will contain all string until end of line (see example below)
+** 2: same as 1, but do not remove separators at end of string before split
+   (_new in version 0.3.6_)
 * 'num_items_max': maximum number of items created (0 = no limit)
 * 'num_items': pointer to int which will contain number of items created
 
@@ -2033,7 +2037,7 @@ Arguments:
 
 Return value:
 
-* 1 if directory was successfully created, 0 if an error occured
+* 1 if directory was successfully created, 0 if an error occurred
 
 C example:
 
@@ -2075,7 +2079,7 @@ Arguments:
 
 Return value:
 
-* 1 if directory was successfully created, 0 if an error occured
+* 1 if directory was successfully created, 0 if an error occurred
 
 C example:
 
@@ -2117,7 +2121,7 @@ Arguments:
 
 Return value:
 
-* 1 if directory was successfully created, 0 if an error occured
+* 1 if directory was successfully created, 0 if an error occurred
 
 C example:
 
@@ -2992,7 +2996,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hashtable, NULL if an error occured
+* pointer to new hashtable, NULL if an error occurred
 
 C example:
 
@@ -3496,7 +3500,7 @@ Arguments:
 
 Return value:
 
-* pointer to new configuration file, NULL if an error occured
+* pointer to new configuration file, NULL if an error occurred
 
 [NOTE]
 File is NOT created on disk by this function. It will be created by call to
@@ -3513,7 +3517,7 @@ int
 my_config_reload_cb (void *data, struct t_config_file *config_file)
 {
     /* ... */
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -3654,7 +3658,7 @@ Arguments:
 
 Return value:
 
-* pointer to new section in configuration file, NULL if an error occured
+* pointer to new section in configuration file, NULL if an error occurred
 
 C example:
 
@@ -3666,7 +3670,7 @@ my_section_read_cb (void *data, struct t_config_file *config_file,
                     const char *value)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_OPTION_SET_OK_CHANGED;
     /* return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE; */
     /* return WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND; */
@@ -3678,7 +3682,7 @@ my_section_write_cb (void *data, struct t_config_file *config_file,
                      const char *section_name)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_WRITE_OK;
     /* return WEECHAT_CONFIG_WRITE_ERROR; */
 }
@@ -3688,7 +3692,7 @@ my_section_write_default_cb (void *data, struct t_config_file *config_file,
                              const char *section_name)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_WRITE_OK;
     /* return WEECHAT_CONFIG_WRITE_ERROR; */
 }
@@ -3699,7 +3703,7 @@ my_section_create_option_cb (void *data, struct t_config_file *config_file,
                              const char *option_name, const char *value)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
     /* return WEECHAT_CONFIG_OPTION_SET_ERROR; */
 }
@@ -3710,7 +3714,7 @@ my_section_delete_option_cb (void *data, struct t_config_file *config_file,
                              struct t_config_option *option)
 {
     /* ... */
-    
+
     return WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED;
     /* return WEECHAT_CONFIG_OPTION_UNSET_ERROR; */
 }
@@ -4245,7 +4249,7 @@ Return value:
 
 * 'WEECHAT_CONFIG_OPTION_SET_OK_CHANGED' if option value has been reset
 * 'WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE' if value was not changed
-* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if an error occured
+* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if an error occurred
 
 C example:
 
@@ -4306,7 +4310,7 @@ Return value:
 
 * 'WEECHAT_CONFIG_OPTION_SET_OK_CHANGED' if option value has been changed
 * 'WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE' if value was not changed
-* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if an error occured
+* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if an error occurred
 
 C example:
 
@@ -4370,7 +4374,7 @@ Return value:
 
 * 'WEECHAT_CONFIG_OPTION_SET_OK_CHANGED' if option value has been changed
 * 'WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE' if value was not changed
-* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if an error occured
+* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if an error occurred
 
 C example:
 
@@ -4428,7 +4432,7 @@ Return value:
 * 'WEECHAT_CONFIG_OPTION_UNSET_OK_NO_RESET' if option value has not been reset
 * 'WEECHAT_CONFIG_OPTION_UNSET_OK_RESET' if option value has been reset
 * 'WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED' if option has been removed
-* 'WEECHAT_CONFIG_OPTION_UNSET_ERROR' if an error occured
+* 'WEECHAT_CONFIG_OPTION_UNSET_ERROR' if an error occurred
 
 C example:
 
@@ -4994,9 +4998,9 @@ my_section_write_cb (void *data, struct t_config_file *config_file,
                      const char *section_name)
 {
     weechat_config_write_line (config_file, "my_section", NULL);
-    
+
     weechat_config_write_option (config_file, option);
-    
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -5046,10 +5050,10 @@ my_section_write_cb (void *data, struct t_config_file *config_file,
                      const char *section_name)
 {
     weechat_config_write_line (config_file, "my_section", NULL);
-    
+
     weechat_config_write_line (config_file, "option", "%s;%d",
                                "value", 123);
-                               
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -5088,7 +5092,7 @@ Return value:
 
 * 'WEECHAT_CONFIG_WRITE_OK' if configuration was written
 * 'WEECHAT_CONFIG_WRITE_MEMORY_ERROR' if there was not enough memory
-* 'WEECHAT_CONFIG_WRITE_ERROR' if another error occured
+* 'WEECHAT_CONFIG_WRITE_ERROR' if another error occurred
 
 C example:
 
@@ -5528,7 +5532,7 @@ Return value:
 * 'WEECHAT_CONFIG_OPTION_SET_OK_CHANGED' if option value has been changed
 * 'WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE' if value was not changed
 * 'WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND' if option was not found
-* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if other error occured
+* 'WEECHAT_CONFIG_OPTION_SET_ERROR' if other error occurred
 
 C example:
 
@@ -5637,7 +5641,7 @@ Return value:
 * 'WEECHAT_CONFIG_OPTION_UNSET_OK_NO_RESET' if option value has not been reset
 * 'WEECHAT_CONFIG_OPTION_UNSET_OK_RESET' if option value has been reset
 * 'WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED' if option has been removed
-* 'WEECHAT_CONFIG_OPTION_UNSET_ERROR' if an error occured
+* 'WEECHAT_CONFIG_OPTION_UNSET_ERROR' if an error occurred
 
 C example:
 
@@ -5878,7 +5882,7 @@ Arguments:
 
 * 'color_name': name of color, one of:
 ** WeeChat option name (from weechat.color.xxx), for example 'chat_delimiters'
-** color with optional background, for example 'yellow' or 'yellow,red'
+** color with optional attributes/background (see below)
 ** attribute:
 *** 'bold': set bold
 *** '-bold': remove bold
@@ -5892,6 +5896,26 @@ Arguments:
 *** 'bar_fg': foreground color for bar
 *** 'bar_delim': delimiters color for bar
 *** 'bar_bg': background color for bar
+** reset:
+*** 'reset': reset color and attributes
+*** 'resetcolor': reset color (keep attributes) (_new in version 0.3.6_)
+
+Format of color is: attributes (optional) + color name + ",background"
+(optional). Possible attributes are:
+
+* `*` : bold text
+* `!` : reverse video
+* `_` : underlined text
+* `|` : keep attributes: do not reset bold/reverse/underlined when changing
+  color (_new in version 0.3.6_)
+
+Examples:
+
+* `yellow` : yellow
+* `_green` : underlined green
+* `*214` : bold orange
+* `yellow,red` : yellow on red
+* `|cyan` : cyan (and keep any attribute which was set previously)
 
 Return value:
 
@@ -5936,12 +5960,20 @@ Arguments:
 * 'buffer': buffer pointer, if NULL, message is displayed on WeeChat buffer
 * 'message': message to display
 
+[NOTE]
+The first tabulation in message ("\t") is used to separate prefix from message. +
+If your message has some tabs and if you don't want prefix, then use a space,
+a tab, then message (see example below): this will disable prefix (the space
+before tab will not be displayed).
+
 C example:
 
 [source,C]
 ----------------------------------------
 weechat_printf (NULL, "Hello on WeeChat buffer");
 weechat_printf (buffer, "Hello on this buffer");
+weechat_printf (buffer, "%sThis is an error!", weechat_prefix ("error"));
+weechat_printf (buffer, " \tMessage without prefix but with \t some \t tabs");
 ----------------------------------------
 
 Script (Python):
@@ -5954,6 +5986,8 @@ weechat.prnt(buffer, message)
 # example
 weechat.prnt("", "Hello on WeeChat buffer")
 weechat.prnt(buffer, "Hello on this buffer")
+weechat.prnt(buffer, "%sThis is an error!" % weechat.prefix("error"))
+weechat.prnt(buffer, " \tMessage without prefix but with \t some \t tabs")
 ----------------------------------------
 
 [NOTE]
@@ -6228,7 +6262,7 @@ Special codes:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -6340,7 +6374,7 @@ be executed by WeeChat after callback).
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -6409,7 +6443,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -6478,7 +6512,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -6555,7 +6589,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 When command has ended, or if timeout is reached, WeeChat will automatically
 unhook (and kill process if it is still running).
@@ -6584,22 +6618,22 @@ my_process_cb (void *data, const char *command, int return_code,
         weechat_printf (NULL, "Error with command '%s'", command);
         return WEECHAT_RC_OK;
     }
-    
+
     if (return_code >= 0)
     {
         weechat_printf (NULL, "return_code = %d", return_code);
     }
-    
+
     if (out)
     {
         weechat_printf (NULL, "stdout: %s", out);
     }
-    
+
     if (err)
     {
         weechat_printf (NULL, "stderr: %s", err);
     }
-    
+
     return WEECHAT_RC_OK;
 }
 
@@ -6701,7 +6735,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -6837,7 +6871,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -7122,7 +7156,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -7390,7 +7424,7 @@ pattern.
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -7509,6 +7543,10 @@ Argument is a hashtable with following entries (keys and values are string):
 
 Immediately after sending this hsignal, you must send command to irc server,
 and redirection will be used for this command.
+
+When complete answer to your command has been be received, a hsignal will be
+send. This hsignal has name 'irc_redirection_xxx_yyy' where 'xxx' is the
+'signal' and 'yyy' the 'pattern' used.
 
 C example:
 
@@ -7664,7 +7702,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -7742,7 +7780,7 @@ recommended to choose a name with a unique prefix, like "plugin_xxx" (where
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -7816,10 +7854,10 @@ my_completion_cb (void *data, const char *completion_item,
 {
     /* get arguments of command */
     const char *args = weechat_hook_completion_get_string (completion, "args");
-    
+
     /* completion depending on args */
     /* ... */
-    
+
     return WEECHAT_RC_OK;
 }
 ----------------------------------------
@@ -7983,7 +8021,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -7996,10 +8034,10 @@ my_modifier_cb (void *data, const char *modifier,
 {
     char *result;
     int length;
-    
+
     if (!string)
         return NULL;
-    
+
     length = strlen (string) + 5;
     result = malloc (length);
     if (result)
@@ -8007,7 +8045,7 @@ my_modifier_cb (void *data, const char *modifier,
         /* add "xxx" to any message printed */
         snprintf (result, length, "%s xxx", string);
     }
-    
+
     return result;
 }
 
@@ -8105,7 +8143,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -8178,7 +8216,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -8256,7 +8294,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -8267,10 +8305,10 @@ my_infolist_cb (void *data, const char *infolist_name, void *pointer,
                 const char *arguments)
 {
     struct t_infolist *my_infolist;
-    
+
     /* build infolist */
     /* ... */
-    
+
     return my_infolist;
 }
 
@@ -8331,7 +8369,7 @@ Arguments:
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -8341,10 +8379,10 @@ struct t_hdata *
 my_hdata_cb (void *data, const char *hdata_name)
 {
     struct t_hdata *my_hdata;
-    
+
     /* build hdata */
     /* ... */
-    
+
     return my_hdata;
 }
 
@@ -8413,8 +8451,8 @@ Content of hashtable sent to callback (keys and values are of type "string"):
 | _chat                      | chat area indicator         | "0" or "1"                                       | "0"
 | _chat_line_x               | column in line ^(3)^        | "0" ... "n"                                      | "-1"
 | _chat_line_y               | line number ^(3)^           | "0" ... "n"                                      | "-1"
-| _chat_line_date            | line date                   | "1313237175"                                     | "0"
-| _chat_line_date_printed    | line date ^(4)^             | "1313237175"                                     | "0"
+| _chat_line_date            | line date/time              | "1313237175"                                     | "0"
+| _chat_line_date_printed    | line date/time ^(4)^        | "1313237175"                                     | "0"
 | _chat_line_time            | time displayed              | "14:06:15"                                       | ""
 | _chat_line_tags            | tags of line                | "irc_privmsg,notify_message,nick_FlashCode,log1" | ""
 | _chat_line_nick            | nick of line                | "FlashCode"                                      | ""
@@ -8457,7 +8495,7 @@ irc buffers).
 
 Return value:
 
-* pointer to new hook, NULL if error occured
+* pointer to new hook, NULL if error occurred
 
 C example:
 
@@ -8468,7 +8506,7 @@ my_focus_nicklist_cb (void *data, struct t_hashtable *info)
 {
     /* add strings in hashtable */
     /* ... */
-    
+
     return info;
 }
 
@@ -8607,7 +8645,7 @@ Arguments:
 
 Return value:
 
-* pointer to new buffer, NULL if error occured
+* pointer to new buffer, NULL if error occurred
 
 C example:
 
@@ -9526,9 +9564,9 @@ Arguments:
 ** 'win_chat_height': height of chat window, in chars
 ** 'first_line_displayed': 1 if first line of buffer is displayed on screen,
    otherwise 0
-** 'scroll': 1 if scroll is active on window (last line not displayed)
-** 'scroll_lines_after': number of lines not displayed after last one
-   displayed (when scrolling)
+** 'scrolling': 1 if scroll is active on window (last line not displayed)
+** 'lines_after': number of lines not displayed after last one displayed
+   (when scrolling)
 
 Return value:
 
@@ -9707,7 +9745,7 @@ order: first "test" then "abc".
 
 Return value:
 
-* pointer to new group, NULL if an error occured
+* pointer to new group, NULL if an error occurred
 
 C example:
 
@@ -9821,7 +9859,7 @@ Arguments:
 
 Return value:
 
-* pointer to new nick, NULL if an error occured
+* pointer to new nick, NULL if an error occurred
 
 C example:
 
@@ -10498,7 +10536,7 @@ Arguments:
 
 Return value:
 
-* pointer to new bar item, NULL if an error occured
+* pointer to new bar item, NULL if an error occurred
 
 C example:
 
@@ -10701,7 +10739,7 @@ Arguments:
 
 Return value:
 
-* pointer to new bar, NULL if an error occured
+* pointer to new bar, NULL if an error occurred
 
 C example:
 
@@ -10761,7 +10799,7 @@ Arguments:
 
 Return value:
 
-* 1 if new value was set, 0 if an error occured
+* 1 if new value was set, 0 if an error occurred
 
 C example:
 
@@ -10923,7 +10961,7 @@ Arguments:
 
 Return value:
 
-* 1 if connection is ok, 0 if an error occured
+* 1 if connection is ok, 0 if an error occurred
 
 C example:
 
@@ -10966,7 +11004,7 @@ Arguments:
 
 Return value:
 
-* 1 if connection is ok, 0 if an error occured
+* 1 if connection is ok, 0 if an error occurred
 
 C example:
 
@@ -11022,7 +11060,7 @@ include::autogen/plugin_api/infos.txt[]
 
 Return value:
 
-* string with info asked, NULL if an error occured
+* string with info asked, NULL if an error occurred
 
 C example:
 
@@ -11072,7 +11110,7 @@ include::autogen/plugin_api/infos_hashtable.txt[]
 
 Return value:
 
-* hashtable with info asked, NULL if an error occured
+* hashtable with info asked, NULL if an error occurred
 
 C example:
 
@@ -11456,7 +11494,7 @@ include::autogen/plugin_api/infolists.txt[]
 
 Return value:
 
-* pointer to infolist, NULL if an error occured
+* pointer to infolist, NULL if an error occurred
 
 C example:
 
@@ -12093,7 +12131,7 @@ include::autogen/plugin_api/hdata.txt[]
 
 Return value:
 
-* pointer to hdata, NULL if an error occured
+* pointer to hdata, NULL if an error occurred
 
 C example:
 
@@ -12134,7 +12172,7 @@ Arguments:
 
 Return value:
 
-* variable offset, 0 if an error occured
+* variable offset, 0 if an error occurred
 
 C example:
 
@@ -12167,7 +12205,7 @@ Arguments:
 
 Return value:
 
-* variable type, -1 if an error occured
+* variable type, -1 if an error occurred
 
 C example:
 
@@ -12224,7 +12262,7 @@ Arguments:
 
 Return value:
 
-* variable type, NULL if an error occured
+* variable type, NULL if an error occurred
 
 C example:
 
@@ -12265,7 +12303,7 @@ Arguments:
 
 Return value:
 
-* hdata for variable, NULL if no hdata or if an error occured
+* hdata for variable, NULL if no hdata or if an error occurred
 
 C example:
 
@@ -12307,7 +12345,7 @@ Arguments:
 
 Return value:
 
-* pointer to content of variable, NULL if an error occured
+* pointer to content of variable, NULL if an error occurred
 
 C example:
 
@@ -12343,7 +12381,7 @@ Arguments:
 
 Return value:
 
-* pointer to content of variable, NULL if an error occured
+* pointer to content of variable, NULL if an error occurred
 
 C example:
 
@@ -12379,7 +12417,7 @@ Arguments:
 
 Return value:
 
-* list pointer, NULL if an error occured
+* list pointer, NULL if an error occurred
 
 C example:
 
@@ -12424,7 +12462,7 @@ Arguments:
 
 Return value:
 
-* pointer to element reached, NULL if an error occured
+* pointer to element reached, NULL if an error occurred
 
 C example:
 

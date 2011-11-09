@@ -289,6 +289,9 @@ problèmes, vous devez désactiver cette option.
 
 Une autre solution est d'utiliser l'un des scripts suivants :
 
+urlserver.py::
+    réduit les URLs avec un serveur HTTP dans le script
+
 urlbar.py::
     affiche les URLs dans une barre
 
@@ -367,6 +370,7 @@ Comment puis-je chercher du texte dans le tampon (comme /lastlog dans irssi) ?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 La touche par défaut est @k(C-)@k(r) (la commande est : `/input search_text`).
+Et sauter aux highlights : @k(A-)@k(p)/@k(n).
 
 Voir le guide utilisateur pour plus d'information sur cette fonctionnalité
 (raccourcis clavier par défaut).

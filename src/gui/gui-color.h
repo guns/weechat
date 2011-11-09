@@ -23,7 +23,7 @@
 enum t_gui_color_enum
 {
     GUI_COLOR_SEPARATOR = 0,
-    
+
     GUI_COLOR_CHAT,
     GUI_COLOR_CHAT_TIME,
     GUI_COLOR_CHAT_TIME_DELIMITERS,
@@ -65,7 +65,7 @@ enum t_gui_color_enum
     GUI_COLOR_CHAT_INACTIVE_WINDOW,
     GUI_COLOR_CHAT_INACTIVE_BUFFER,
     GUI_COLOR_CHAT_PREFIX_BUFFER_INACTIVE_BUFFER,
-    
+
     /* number of colors */
     GUI_COLOR_NUM_COLORS,
 };
@@ -98,6 +98,7 @@ enum t_gui_color_enum
 #define GUI_COLOR_EXTENDED_REVERSE_CHAR       '!'
 #define GUI_COLOR_EXTENDED_ITALIC_CHAR        '/'
 #define GUI_COLOR_EXTENDED_UNDERLINE_CHAR     '_'
+#define GUI_COLOR_EXTENDED_KEEPATTR_CHAR      '|'
 
 /* color codes specific to bars */
 #define GUI_COLOR_BAR_CHAR                    'b'
@@ -115,6 +116,7 @@ enum t_gui_color_enum
 #define GUI_COLOR_EXTENDED_REVERSE_FLAG       0x0400000
 #define GUI_COLOR_EXTENDED_ITALIC_FLAG        0x0800000
 #define GUI_COLOR_EXTENDED_UNDERLINE_FLAG     0x1000000
+#define GUI_COLOR_EXTENDED_KEEPATTR_FLAG      0x2000000
 #define GUI_COLOR_EXTENDED_MASK               0x00FFFFF
 #define GUI_COLOR_EXTENDED_MAX                99999
 

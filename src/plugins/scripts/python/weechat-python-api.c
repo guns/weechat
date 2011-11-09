@@ -34,27 +34,43 @@
 #include "weechat-python.h"
 
 
-#define PYTHON_RETURN_OK return Py_BuildValue ("i", 1);
-#define PYTHON_RETURN_ERROR return Py_BuildValue ("i", 0);
-#define PYTHON_RETURN_EMPTY                                             \
-    Py_INCREF(Py_None);                                                 \
+#define API_FUNC(__init, __name, __ret)                                 \
+    char *python_function_name = __name;                                \
+    (void) self;                                                        \
+    if (__init                                                          \
+        && (!python_current_script || !python_current_script->name))    \
+    {                                                                   \
+        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME,         \
+                                    python_function_name);              \
+        __ret;                                                          \
+    }
+#define API_WRONG_ARGS(__ret)                                           \
+    {                                                                   \
+        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME,       \
+                                      python_function_name);            \
+        __ret;                                                          \
+    }
+#define API_RETURN_OK return Py_BuildValue ("i", 1);
+#define API_RETURN_ERROR return Py_BuildValue ("i", 0);
+#define API_RETURN_EMPTY                                                \
+    Py_INCREF (Py_None);                                                \
     return Py_None;
-#define PYTHON_RETURN_STRING(__string)                                  \
+#define API_RETURN_STRING(__string)                                     \
     if (__string)                                                       \
         return Py_BuildValue ("s", __string);                           \
     return Py_BuildValue ("s", "")
-#define PYTHON_RETURN_STRING_FREE(__string)                             \
+#define API_RETURN_STRING_FREE(__string)                                \
     if (__string)                                                       \
     {                                                                   \
-        object = Py_BuildValue ("s", __string);                         \
+        return_value = Py_BuildValue ("s", __string);                   \
         free (__string);                                                \
-        return object;                                                  \
+        return return_value;                                            \
     }                                                                   \
     return Py_BuildValue ("s", "")
-#define PYTHON_RETURN_INT(__int)                                        \
-    return Py_BuildValue("i", __int);
-#define PYTHON_RETURN_LONG(__long)                                      \
-    return Py_BuildValue("l", __long);
+#define API_RETURN_INT(__int)                                           \
+    return Py_BuildValue ("i", __int);
+#define API_RETURN_LONG(__long)                                         \
+    return Py_BuildValue ("l", __long);
 
 
 /*
@@ -66,13 +82,10 @@ weechat_python_api_register (PyObject *self, PyObject *args)
 {
     char *name, *author, *version, *license, *shutdown_func, *description;
     char *charset;
-    
-    /* make C compiler happy */
-    (void) self;
-    
+
+    API_FUNC(0, "register", API_RETURN_ERROR);
     python_current_script = NULL;
     python_registered_script = NULL;
-    
     name = NULL;
     author = NULL;
     version = NULL;
@@ -80,14 +93,10 @@ weechat_python_api_register (PyObject *self, PyObject *args)
     description = NULL;
     shutdown_func = NULL;
     charset = NULL;
-    
     if (!PyArg_ParseTuple (args, "sssssss", &name, &author, &version,
                            &license, &description, &shutdown_func, &charset))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(python_current_script_filename, "register");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     if (script_search (weechat_python_plugin, python_scripts, name))
     {
         /* error: another scripts already exists with this name! */
@@ -96,9 +105,9 @@ weechat_python_api_register (PyObject *self, PyObject *args)
                                          "\"%s\" (another script already "
                                          "exists with this name)"),
                         weechat_prefix ("error"), PYTHON_PLUGIN_NAME, name);
-        PYTHON_RETURN_ERROR;
+        API_RETURN_ERROR;
     }
-    
+
     /* register script */
     python_current_script = script_add (weechat_python_plugin,
                                         &python_scripts, &last_python_script,
@@ -119,10 +128,10 @@ weechat_python_api_register (PyObject *self, PyObject *args)
     }
     else
     {
-        PYTHON_RETURN_ERROR;
+        API_RETURN_ERROR;
     }
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -135,27 +144,15 @@ weechat_python_api_plugin_get_name (PyObject *self, PyObject *args)
 {
     char *plugin;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "plugin_get_name");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "plugin_get_name", API_RETURN_EMPTY);
     plugin = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &plugin))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "plugin_get_name");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_plugin_get_name (script_str2ptr (plugin));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -166,28 +163,16 @@ static PyObject *
 weechat_python_api_charset_set (PyObject *self, PyObject *args)
 {
     char *charset;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "charset_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "charset_set", API_RETURN_ERROR);
     charset = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &charset))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "charset_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_charset_set (python_current_script,
                             charset);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -198,29 +183,17 @@ static PyObject *
 weechat_python_api_iconv_to_internal (PyObject *self, PyObject *args)
 {
     char *charset, *string, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "iconv_to_internal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "iconv_to_internal", API_RETURN_EMPTY);
     charset = NULL;
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &charset, &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "iconv_to_internal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_iconv_to_internal (charset, string);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -232,29 +205,17 @@ static PyObject *
 weechat_python_api_iconv_from_internal (PyObject *self, PyObject *args)
 {
     char *charset, *string, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "iconv_from_internal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "iconv_from_internal", API_RETURN_EMPTY);
     charset = NULL;
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &charset, &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "iconv_from_internal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_iconv_from_internal (charset, string);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -266,27 +227,15 @@ weechat_python_api_gettext (PyObject *self, PyObject *args)
 {
     char *string;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "gettext");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "gettext", API_RETURN_EMPTY);
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "gettext");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_gettext (string);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -299,29 +248,17 @@ weechat_python_api_ngettext (PyObject *self, PyObject *args)
     char *single, *plural;
     const char *result;
     int count;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "ngettext");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "ngettext", API_RETURN_EMPTY);
     single = NULL;
     plural = NULL;
     count = 0;
-    
     if (!PyArg_ParseTuple (args, "ssi", &single, &plural, &count))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "ngettext");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_ngettext (single, plural, count);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -335,29 +272,17 @@ weechat_python_api_string_match (PyObject *self, PyObject *args)
 {
     char *string, *mask;
     int case_sensitive, value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_match");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "string_match", API_RETURN_INT(0));
     string = NULL;
     mask = NULL;
     case_sensitive = 0;
-    
     if (!PyArg_ParseTuple (args, "ssi", &string, &mask, &case_sensitive))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_match");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_string_match (string, mask, case_sensitive);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -373,28 +298,16 @@ weechat_python_api_string_has_highlight (PyObject *self, PyObject *args)
 {
     char *string, *highlight_words;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_has_highlight");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "string_has_highlight", API_RETURN_INT(0));
     string = NULL;
     highlight_words = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &string, &highlight_words))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_has_highlight");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_string_has_highlight (string, highlight_words);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -410,28 +323,16 @@ weechat_python_api_string_has_highlight_regex (PyObject *self, PyObject *args)
 {
     char *string, *regex;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_has_highlight_regex");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "string_has_highlight_regex", API_RETURN_INT(0));
     string = NULL;
     regex = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &string, &regex))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_has_highlight_regex");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_string_has_highlight_regex (string, regex);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -445,28 +346,16 @@ static PyObject *
 weechat_python_api_string_mask_to_regex (PyObject *self, PyObject *args)
 {
     char *mask, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_mask_to_regex");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "string_mask_to_regex", API_RETURN_EMPTY);
     mask = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &mask))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_mask_to_regex");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_string_mask_to_regex (mask);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -478,29 +367,17 @@ static PyObject *
 weechat_python_api_string_remove_color (PyObject *self, PyObject *args)
 {
     char *string, *replacement, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_remove_color");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "string_remove_color2", API_RETURN_EMPTY);
     string = NULL;
     replacement = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &string, &replacement))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_remove_color");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_string_remove_color (string, replacement);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -513,27 +390,15 @@ weechat_python_api_string_is_command_char (PyObject *self, PyObject *args)
 {
     char *string;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_is_command_char");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "string_is_command_char", API_RETURN_INT(0));
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_is_command_char");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_string_is_command_char (string);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -547,27 +412,15 @@ weechat_python_api_string_input_for_buffer (PyObject *self, PyObject *args)
 {
     char *string;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "string_input_for_buffer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "string_input_for_buffer", API_RETURN_EMPTY);
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "string_input_for_buffer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_string_input_for_buffer (string);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -579,29 +432,17 @@ weechat_python_api_mkdir_home (PyObject *self, PyObject *args)
 {
     char *directory;
     int mode;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "mkdir_home");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "mkdir_home", API_RETURN_ERROR);
     directory = NULL;
     mode = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &directory, &mode))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "mkdir_home");
-        PYTHON_RETURN_ERROR;
-    }
-    
-    if (weechat_mkdir_home (directory, mode))
-        PYTHON_RETURN_OK;
+        API_WRONG_ARGS(API_RETURN_ERROR);
 
-    PYTHON_RETURN_ERROR;
+    if (weechat_mkdir_home (directory, mode))
+        API_RETURN_OK;
+
+    API_RETURN_ERROR;
 }
 
 /*
@@ -613,29 +454,17 @@ weechat_python_api_mkdir (PyObject *self, PyObject *args)
 {
     char *directory;
     int mode;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "mkdir");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "mkdir", API_RETURN_ERROR);
     directory = NULL;
     mode = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &directory, &mode))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "mkdir");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     if (weechat_mkdir (directory, mode))
-        PYTHON_RETURN_OK;
-    
-    PYTHON_RETURN_ERROR;
+        API_RETURN_OK;
+
+    API_RETURN_ERROR;
 }
 
 /*
@@ -648,29 +477,17 @@ weechat_python_api_mkdir_parents (PyObject *self, PyObject *args)
 {
     char *directory;
     int mode;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "mkdir_parents");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "mkdir_parents", API_RETURN_ERROR);
     directory = NULL;
     mode = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &directory, &mode))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "mkdir_parents");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     if (weechat_mkdir_parents (directory, mode))
-        PYTHON_RETURN_OK;
-    
-    PYTHON_RETURN_ERROR;
+        API_RETURN_OK;
+
+    API_RETURN_ERROR;
 }
 
 /*
@@ -681,21 +498,16 @@ static PyObject *
 weechat_python_api_list_new (PyObject *self, PyObject *args)
 {
     char *result;
-    PyObject *object;
-    
+    PyObject *return_value;
+
     /* make C compiler happy */
-    (void) self;
     (void) args;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "list_new", API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_new ());
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -706,34 +518,22 @@ static PyObject *
 weechat_python_api_list_add (PyObject *self, PyObject *args)
 {
     char *weelist, *data, *where, *user_data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_add");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "list_add", API_RETURN_EMPTY);
     weelist = NULL;
     data = NULL;
     where = NULL;
     user_data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssss", &weelist, &data, &where, &user_data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_add");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_add (script_str2ptr (weelist),
                                                data,
                                                where,
                                                script_str2ptr (user_data)));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -744,30 +544,18 @@ static PyObject *
 weechat_python_api_list_search (PyObject *self, PyObject *args)
 {
     char *weelist, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "list_search", API_RETURN_EMPTY);
     weelist = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &weelist, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_search (script_str2ptr (weelist),
                                                   data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -779,28 +567,16 @@ weechat_python_api_list_search_pos (PyObject *self, PyObject *args)
 {
     char *weelist, *data;
     int pos;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_search_pos");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "list_search_pos", API_RETURN_INT(-1));
     weelist = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &weelist, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_search_pos");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     pos = weechat_list_search_pos (script_str2ptr (weelist), data);
-    
-    PYTHON_RETURN_INT(pos);
+
+    API_RETURN_INT(pos);
 }
 
 /*
@@ -811,30 +587,18 @@ static PyObject *
 weechat_python_api_list_casesearch (PyObject *self, PyObject *args)
 {
     char *weelist, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_casesearch");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "list_casesearch", API_RETURN_EMPTY);
     weelist = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &weelist, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_casesearch");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_casesearch (script_str2ptr (weelist),
                                                       data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -847,28 +611,16 @@ weechat_python_api_list_casesearch_pos (PyObject *self, PyObject *args)
 {
     char *weelist, *data;
     int pos;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_casesearch_pos");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "list_casesearch_pos", API_RETURN_INT(-1));
     weelist = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &weelist, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_casesearch_pos");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     pos = weechat_list_casesearch_pos (script_str2ptr (weelist), data);
-    
-    PYTHON_RETURN_INT(pos);
+
+    API_RETURN_INT(pos);
 }
 
 /*
@@ -880,29 +632,17 @@ weechat_python_api_list_get (PyObject *self, PyObject *args)
 {
     char *weelist, *result;
     int position;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "list_get", API_RETURN_EMPTY);
     weelist = NULL;
     position = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &weelist, &position))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_get (script_str2ptr (weelist),
                                                position));
-    PYTHON_RETURN_STRING_FREE(result);
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -913,29 +653,17 @@ static PyObject *
 weechat_python_api_list_set (PyObject *self, PyObject *args)
 {
     char *item, *new_value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "list_set", API_RETURN_ERROR);
     item = NULL;
     new_value = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &item, &new_value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_list_set (script_str2ptr (item),
                       new_value);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -946,28 +674,16 @@ static PyObject *
 weechat_python_api_list_next (PyObject *self, PyObject *args)
 {
     char *item, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_next");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "list_next", API_RETURN_EMPTY);
     item = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &item))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_next");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_next (script_str2ptr (item)));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -978,28 +694,16 @@ static PyObject *
 weechat_python_api_list_prev (PyObject *self, PyObject *args)
 {
     char *item, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_prev");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "list_prev", API_RETURN_EMPTY);
     item = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &item))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_prev");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_list_prev (script_str2ptr (item)));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -1011,27 +715,15 @@ weechat_python_api_list_string (PyObject *self, PyObject *args)
 {
     char *item;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "list_string", API_RETURN_EMPTY);
     item = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &item))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_list_string (script_str2ptr (item));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -1043,27 +735,15 @@ weechat_python_api_list_size (PyObject *self, PyObject *args)
 {
     char *weelist;
     int size;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_size");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "list_size", API_RETURN_INT(0));
     weelist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &weelist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_size");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     size = weechat_list_size (script_str2ptr (weelist));
-    
-    PYTHON_RETURN_INT(size);
+
+    API_RETURN_INT(size);
 }
 
 /*
@@ -1074,29 +754,17 @@ static PyObject *
 weechat_python_api_list_remove (PyObject *self, PyObject *args)
 {
     char *weelist, *item;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_remove");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "list_remove", API_RETURN_ERROR);
     weelist = NULL;
     item = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &weelist, &item))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_remove");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_list_remove (script_str2ptr (weelist),
                          script_str2ptr (item));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -1107,27 +775,15 @@ static PyObject *
 weechat_python_api_list_remove_all (PyObject *self, PyObject *args)
 {
     char *weelist;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_remove_all");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "list_remove_all", API_RETURN_ERROR);
     weelist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &weelist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_remove_all");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_list_remove_all (script_str2ptr (weelist));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -1138,27 +794,15 @@ static PyObject *
 weechat_python_api_list_free (PyObject *self, PyObject *args)
 {
     char *weelist;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "list_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "list_free", API_RETURN_ERROR);
     weelist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &weelist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "list_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_list_free (script_str2ptr (weelist));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -1170,22 +814,22 @@ weechat_python_api_config_reload_cb (void *data,
                                      struct t_config_file *config_file)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (config_file);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (config_file);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ss", python_argv);
-        
+                                          "ss", func_argv);
+
         if (!rc)
             ret = WEECHAT_CONFIG_READ_FILE_NOT_FOUND;
         else
@@ -1193,12 +837,12 @@ weechat_python_api_config_reload_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_CONFIG_READ_FILE_NOT_FOUND;
 }
 
@@ -1210,35 +854,23 @@ static PyObject *
 weechat_python_api_config_new (PyObject *self, PyObject *args)
 {
     char *name, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "config_new", API_RETURN_EMPTY);
     name = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &name, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_config_new (weechat_python_plugin,
                                                     python_current_script,
                                                     name,
                                                     &weechat_python_api_config_reload_cb,
                                                     function,
                                                     data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -1252,25 +884,25 @@ weechat_python_api_config_read_cb (void *data,
                                    const char *option_name, const char *value)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[5];
+    void *func_argv[5];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (config_file);
-        python_argv[2] = script_ptr2str (section);
-        python_argv[3] = (option_name) ? (char *)option_name : empty_arg;
-        python_argv[4] = (value) ? (char *)value : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (config_file);
+        func_argv[2] = script_ptr2str (section);
+        func_argv[3] = (option_name) ? (char *)option_name : empty_arg;
+        func_argv[4] = (value) ? (char *)value : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sssss", python_argv);
-        
+                                          "sssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_CONFIG_OPTION_SET_ERROR;
         else
@@ -1278,14 +910,14 @@ weechat_python_api_config_read_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        if (python_argv[2])
-            free (python_argv[2]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+        if (func_argv[2])
+            free (func_argv[2]);
+
         return ret;
     }
-    
+
     return WEECHAT_CONFIG_OPTION_SET_ERROR;
 }
 
@@ -1299,23 +931,23 @@ weechat_python_api_config_section_write_cb (void *data,
                                             const char *section_name)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (config_file);
-        python_argv[2] = (section_name) ? (char *)section_name : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (config_file);
+        func_argv[2] = (section_name) ? (char *)section_name : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = WEECHAT_CONFIG_WRITE_ERROR;
         else
@@ -1323,12 +955,12 @@ weechat_python_api_config_section_write_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_CONFIG_WRITE_ERROR;
 }
 
@@ -1343,23 +975,23 @@ weechat_python_api_config_section_write_default_cb (void *data,
                                                     const char *section_name)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (config_file);
-        python_argv[2] = (section_name) ? (char *)section_name : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (config_file);
+        func_argv[2] = (section_name) ? (char *)section_name : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = WEECHAT_CONFIG_WRITE_ERROR;
         else
@@ -1367,12 +999,12 @@ weechat_python_api_config_section_write_default_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_CONFIG_WRITE_ERROR;
 }
 
@@ -1388,25 +1020,25 @@ weechat_python_api_config_section_create_option_cb (void *data,
                                                     const char *value)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[5];
+    void *func_argv[5];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (config_file);
-        python_argv[2] = script_ptr2str (section);
-        python_argv[3] = (option_name) ? (char *)option_name : empty_arg;
-        python_argv[4] = (value) ? (char *)value : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (config_file);
+        func_argv[2] = script_ptr2str (section);
+        func_argv[3] = (option_name) ? (char *)option_name : empty_arg;
+        func_argv[4] = (value) ? (char *)value : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sssss", python_argv);
-        
+                                          "sssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_CONFIG_OPTION_SET_ERROR;
         else
@@ -1414,14 +1046,14 @@ weechat_python_api_config_section_create_option_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        if (python_argv[2])
-            free (python_argv[2]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+        if (func_argv[2])
+            free (func_argv[2]);
+
         return ret;
     }
-    
+
     return WEECHAT_CONFIG_OPTION_SET_ERROR;
 }
 
@@ -1436,24 +1068,24 @@ weechat_python_api_config_section_delete_option_cb (void *data,
                                                     struct t_config_option *option)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[4];
+    void *func_argv[4];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (config_file);
-        python_argv[2] = script_ptr2str (section);
-        python_argv[3] = script_ptr2str (option);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (config_file);
+        func_argv[2] = script_ptr2str (section);
+        func_argv[3] = script_ptr2str (option);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ssss", python_argv);
-        
+                                          "ssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_CONFIG_OPTION_UNSET_ERROR;
         else
@@ -1461,16 +1093,16 @@ weechat_python_api_config_section_delete_option_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        if (python_argv[2])
-            free (python_argv[2]);
-        if (python_argv[3])
-            free (python_argv[3]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+        if (func_argv[2])
+            free (func_argv[2]);
+        if (func_argv[3])
+            free (func_argv[3]);
+
         return ret;
     }
-    
+
     return WEECHAT_CONFIG_OPTION_UNSET_ERROR;
 }
 
@@ -1486,17 +1118,9 @@ weechat_python_api_config_new_section (PyObject *self, PyObject *args)
     char *function_create_option, *data_create_option, *function_delete_option;
     char *data_delete_option, *result;
     int user_can_add_options, user_can_delete_options;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_new_section");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "config_new_section", API_RETURN_EMPTY);
     config_file = NULL;
     name = NULL;
     user_can_add_options = 0;
@@ -1511,7 +1135,6 @@ weechat_python_api_config_new_section (PyObject *self, PyObject *args)
     data_create_option = NULL;
     function_delete_option = NULL;
     data_delete_option = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssiissssssssss", &config_file, &name,
                            &user_can_add_options, &user_can_delete_options,
                            &function_read, &data_read, &function_write,
@@ -1519,11 +1142,8 @@ weechat_python_api_config_new_section (PyObject *self, PyObject *args)
                            &data_write_default, &function_create_option,
                            &data_create_option, &function_delete_option,
                            &data_delete_option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_new_section");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_config_new_section (weechat_python_plugin,
                                                             python_current_script,
                                                             script_str2ptr (config_file),
@@ -1545,8 +1165,8 @@ weechat_python_api_config_new_section (PyObject *self, PyObject *args)
                                                             &weechat_python_api_config_section_delete_option_cb,
                                                             function_delete_option,
                                                             data_delete_option));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -1557,30 +1177,18 @@ static PyObject *
 weechat_python_api_config_search_section (PyObject *self, PyObject *args)
 {
     char *config_file, *section_name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_search_section");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "config_search_section", API_RETURN_EMPTY);
     config_file = NULL;
     section_name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &config_file, &section_name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_search_section");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_config_search_section (script_str2ptr (config_file),
                                                             section_name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -1594,23 +1202,23 @@ weechat_python_api_config_option_check_value_cb (void *data,
                                                  const char *value)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (option);
-        python_argv[2] = (value) ? (char *)value : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (option);
+        func_argv[2] = (value) ? (char *)value : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = 0;
         else
@@ -1618,12 +1226,12 @@ weechat_python_api_config_option_check_value_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return 0;
 }
 
@@ -1636,25 +1244,25 @@ weechat_python_api_config_option_change_cb (void *data,
                                             struct t_config_option *option)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char empty_arg[1] = { '\0' };
     int *rc;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (option);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (option);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ss", python_argv);
-        
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+                                          "ss", func_argv);
+
+        if (func_argv[1])
+            free (func_argv[1]);
+
         if (rc)
             free (rc);
     }
@@ -1669,25 +1277,25 @@ weechat_python_api_config_option_delete_cb (void *data,
                                             struct t_config_option *option)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char empty_arg[1] = { '\0' };
     int *rc;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (option);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (option);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ss", python_argv);
-        
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+                                          "ss", func_argv);
+
+        if (func_argv[1])
+            free (func_argv[1]);
+
         if (rc)
             free (rc);
     }
@@ -1705,17 +1313,9 @@ weechat_python_api_config_new_option (PyObject *self, PyObject *args)
     char *function_check_value, *data_check_value, *function_change;
     char *data_change, *function_delete, *data_delete;
     int min, max, null_value_allowed;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_new_option");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "config_new_option", API_RETURN_EMPTY);
     config_file = NULL;
     section = NULL;
     name = NULL;
@@ -1730,18 +1330,14 @@ weechat_python_api_config_new_option (PyObject *self, PyObject *args)
     data_change = NULL;
     function_delete = NULL;
     data_delete = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssssssiississssss", &config_file, &section, &name,
                            &type, &description, &string_values, &min, &max,
                            &default_value, &value, &null_value_allowed,
                            &function_check_value, &data_check_value,
                            &function_change, &data_change, &function_delete,
                            &data_delete))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_new_option");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_config_new_option (weechat_python_plugin,
                                                            python_current_script,
                                                            script_str2ptr (config_file),
@@ -1764,8 +1360,8 @@ weechat_python_api_config_new_option (PyObject *self, PyObject *args)
                                                            &weechat_python_api_config_option_delete_cb,
                                                            function_delete,
                                                            data_delete));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -1776,32 +1372,20 @@ static PyObject *
 weechat_python_api_config_search_option (PyObject *self, PyObject *args)
 {
     char *config_file, *section, *option_name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_search_option");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "config_search_option", API_RETURN_EMPTY);
     config_file = NULL;
     section = NULL;
     option_name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &config_file, &section, &option_name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_search_option");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_config_search_option (script_str2ptr (config_file),
                                                            script_str2ptr (section),
                                                            option_name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -1813,27 +1397,15 @@ weechat_python_api_config_string_to_boolean (PyObject *self, PyObject *args)
 {
     char *text;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_string_to_boolean");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_string_to_boolean", API_RETURN_INT(0));
     text = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &text))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_string_to_boolean");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_config_string_to_boolean (text);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -1845,29 +1417,17 @@ weechat_python_api_config_option_reset (PyObject *self, PyObject *args)
 {
     char *option;
     int run_callback, rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_reset");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_option_reset", API_RETURN_INT(0));
     option = NULL;
     run_callback = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &option, &run_callback))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_reset");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     rc = weechat_config_option_reset (script_str2ptr (option),
                                       run_callback);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -1879,31 +1439,19 @@ weechat_python_api_config_option_set (PyObject *self, PyObject *args)
 {
     char *option, *new_value;
     int run_callback, rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_set");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+
+    API_FUNC(1, "config_option_set", API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
     option = NULL;
     new_value = NULL;
     run_callback = 0;
-    
     if (!PyArg_ParseTuple (args, "ssi", &option, &new_value, &run_callback))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_set");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
+
     rc = weechat_config_option_set (script_str2ptr (option),
                                     new_value,
                                     run_callback);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -1916,29 +1464,17 @@ weechat_python_api_config_option_set_null (PyObject *self, PyObject *args)
 {
     char *option;
     int run_callback, rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_set_null");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+
+    API_FUNC(1, "config_option_set_null", API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
     option = NULL;
     run_callback = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &option, &run_callback))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_set_null");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
+
     rc = weechat_config_option_set_null (script_str2ptr (option),
                                          run_callback);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -1950,27 +1486,15 @@ weechat_python_api_config_option_unset (PyObject *self, PyObject *args)
 {
     char *option;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_unset");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR);
-    }
-    
+
+    API_FUNC(1, "config_option_unset", API_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_unset");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR));
+
     rc = weechat_config_option_unset (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -1981,29 +1505,17 @@ static PyObject *
 weechat_python_api_config_option_rename (PyObject *self, PyObject *args)
 {
     char *option, *new_name;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_rename");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_option_rename", API_RETURN_ERROR);
     option = NULL;
     new_name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &option, &new_name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_rename");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_config_option_rename (script_str2ptr (option),
                                   new_name);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2015,27 +1527,15 @@ weechat_python_api_config_option_is_null (PyObject *self, PyObject *args)
 {
     char *option;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_is_null");
-        PYTHON_RETURN_INT(1);
-    }
-    
+
+    API_FUNC(1, "config_option_is_null", API_RETURN_INT(1));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_is_null");
-        PYTHON_RETURN_INT(1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(1));
+
     value = weechat_config_option_is_null (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -2048,27 +1548,15 @@ weechat_python_api_config_option_default_is_null (PyObject *self, PyObject *args
 {
     char *option;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_default_is_null");
-        PYTHON_RETURN_INT(1);
-    }
-    
+
+    API_FUNC(1, "config_option_default_is_null", API_RETURN_INT(1));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_default_is_null");
-        PYTHON_RETURN_INT(1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(1));
+
     value = weechat_config_option_default_is_null (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -2080,27 +1568,15 @@ weechat_python_api_config_boolean (PyObject *self, PyObject *args)
 {
     char *option;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_boolean");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_boolean", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_boolean");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_config_boolean (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -2112,27 +1588,15 @@ weechat_python_api_config_boolean_default (PyObject *self, PyObject *args)
 {
     char *option;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_boolean_default");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_boolean_default", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_boolean_default");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_config_boolean_default (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -2144,27 +1608,15 @@ weechat_python_api_config_integer (PyObject *self, PyObject *args)
 {
     char *option;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_integer");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_integer", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_integer");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_config_integer (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -2176,27 +1628,15 @@ weechat_python_api_config_integer_default (PyObject *self, PyObject *args)
 {
     char *option;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_integer_default");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_integer_default", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_integer_default");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_config_integer_default (script_str2ptr (option));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -2208,27 +1648,15 @@ weechat_python_api_config_string (PyObject *self, PyObject *args)
 {
     char *option;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "config_string", API_RETURN_EMPTY);
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_config_string (script_str2ptr (option));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2240,27 +1668,15 @@ weechat_python_api_config_string_default (PyObject *self, PyObject *args)
 {
     char *option;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_string_default");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "config_string_default", API_RETURN_EMPTY);
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_string_default");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_config_string_default (script_str2ptr (option));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2272,27 +1688,15 @@ weechat_python_api_config_color (PyObject *self, PyObject *args)
 {
     char *option;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_color");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_color", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_color");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     result = weechat_config_color (script_str2ptr (option));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2304,27 +1708,15 @@ weechat_python_api_config_color_default (PyObject *self, PyObject *args)
 {
     char *option;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_color_default");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_color_default", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_color_default");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     result = weechat_config_color_default (script_str2ptr (option));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2335,29 +1727,17 @@ static PyObject *
 weechat_python_api_config_write_option (PyObject *self, PyObject *args)
 {
     char *config_file, *option;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_write_option");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_write_option", API_RETURN_ERROR);
     config_file = NULL;
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &config_file, &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_write_option");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_config_write_option (script_str2ptr (config_file),
                                  script_str2ptr (option));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2368,32 +1748,20 @@ static PyObject *
 weechat_python_api_config_write_line (PyObject *self, PyObject *args)
 {
     char *config_file, *option_name, *value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_write_line");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_write_line", API_RETURN_ERROR);
     config_file = NULL;
     option_name = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &config_file, &option_name, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_write_line");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_config_write_line (script_str2ptr (config_file),
                                option_name,
                                "%s",
                                value);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2405,27 +1773,15 @@ weechat_python_api_config_write (PyObject *self, PyObject *args)
 {
     char *config_file;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_write");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "config_write", API_RETURN_INT(-1));
     config_file = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &config_file))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_write");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     rc = weechat_config_write (script_str2ptr (config_file));
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -2437,27 +1793,15 @@ weechat_python_api_config_read (PyObject *self, PyObject *args)
 {
     char *config_file;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_read");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "config_read", API_RETURN_INT(-1));
     config_file = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &config_file))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_read");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     rc = weechat_config_read (script_str2ptr (config_file));
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -2469,27 +1813,15 @@ weechat_python_api_config_reload (PyObject *self, PyObject *args)
 {
     char *config_file;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_reload");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "config_reload", API_RETURN_INT(-1));
     config_file = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &config_file))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_reload");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     rc = weechat_config_reload (script_str2ptr (config_file));
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -2500,29 +1832,17 @@ static PyObject *
 weechat_python_api_config_option_free (PyObject *self, PyObject *args)
 {
     char *option;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_option_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_option_free", API_RETURN_ERROR);
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_option_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_config_option_free (weechat_python_plugin,
                                    python_current_script,
                                    script_str2ptr (option));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2534,29 +1854,17 @@ static PyObject *
 weechat_python_api_config_section_free_options (PyObject *self, PyObject *args)
 {
     char *section;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_section_free_options");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_section_free_options", API_RETURN_ERROR);
     section = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &section))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_section_free_options");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_config_section_free_options (weechat_python_plugin,
                                             python_current_script,
                                             script_str2ptr (section));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2567,29 +1875,17 @@ static PyObject *
 weechat_python_api_config_section_free (PyObject *self, PyObject *args)
 {
     char *section;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_section_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_section_free", API_RETURN_ERROR);
     section = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &section))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_section_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_config_section_free (weechat_python_plugin,
                                     python_current_script,
                                     script_str2ptr (section));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2600,29 +1896,17 @@ static PyObject *
 weechat_python_api_config_free (PyObject *self, PyObject *args)
 {
     char *config_file;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_free", API_RETURN_ERROR);
     config_file = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &config_file))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_config_free (weechat_python_plugin,
                             python_current_script,
                             script_str2ptr (config_file));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2633,28 +1917,16 @@ static PyObject *
 weechat_python_api_config_get (PyObject *self, PyObject *args)
 {
     char *option, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "config_get", API_RETURN_EMPTY);
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_config_get (option));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -2666,29 +1938,17 @@ weechat_python_api_config_get_plugin (PyObject *self, PyObject *args)
 {
     char *option;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_get_plugin");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "config_get_plugin", API_RETURN_EMPTY);
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_get_plugin");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_api_config_get_plugin (weechat_python_plugin,
                                            python_current_script,
                                            option);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2700,29 +1960,17 @@ weechat_python_api_config_is_set_plugin (PyObject *self, PyObject *args)
 {
     char *option;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_is_set_plugin");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "config_is_set_plugin", API_RETURN_INT(0));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_is_set_plugin");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
+
     rc = script_api_config_is_set_plugin (weechat_python_plugin,
                                           python_current_script,
                                           option);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -2734,31 +1982,19 @@ weechat_python_api_config_set_plugin (PyObject *self, PyObject *args)
 {
     char *option, *value;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_set_plugin");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+
+    API_FUNC(1, "config_set_plugin", API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
     option = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &option, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_set_plugin");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_CONFIG_OPTION_SET_ERROR));
+
     rc = script_api_config_set_plugin (weechat_python_plugin,
                                        python_current_script,
                                        option,
                                        value);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -2769,31 +2005,19 @@ static PyObject *
 weechat_python_api_config_set_desc_plugin (PyObject *self, PyObject *args)
 {
     char *option, *description;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_set_desc_plugin");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "config_set_desc_plugin", API_RETURN_ERROR);
     option = NULL;
     description = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &option, &description))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_set_desc_plugin");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_config_set_desc_plugin (weechat_python_plugin,
                                        python_current_script,
                                        option,
                                        description);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2805,29 +2029,17 @@ weechat_python_api_config_unset_plugin (PyObject *self, PyObject *args)
 {
     char *option;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "config_unset_plugin");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR);
-    }
-    
+
+    API_FUNC(1, "config_unset_plugin", API_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR));
     option = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &option))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "config_unset_plugin");
-        PYTHON_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_CONFIG_OPTION_UNSET_ERROR));
+
     rc = script_api_config_unset_plugin (weechat_python_plugin,
                                          python_current_script,
                                          option);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -2841,33 +2053,21 @@ weechat_python_api_key_bind (PyObject *self, PyObject *args)
     struct t_hashtable *hashtable;
     PyObject *dict;
     int num_keys;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "key_bind");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "key_bind", API_RETURN_INT(0));
     context = NULL;
-    
     if (!PyArg_ParseTuple (args, "sO", &context, &dict))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "key_bind");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     hashtable = weechat_python_dict_to_hashtable (dict,
                                                   WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
-    
+
     num_keys = weechat_key_bind (context, hashtable);
-    
+
     if (hashtable)
         weechat_hashtable_free (hashtable);
-    
-    PYTHON_RETURN_INT(num_keys);
+
+    API_RETURN_INT(num_keys);
 }
 
 /*
@@ -2879,28 +2079,16 @@ weechat_python_api_key_unbind (PyObject *self, PyObject *args)
 {
     char *context, *key;
     int num_keys;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "key_unbind");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "key_unbind", API_RETURN_INT(0));
     context = NULL;
     key = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &context, &key))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "key_unbind");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     num_keys = weechat_key_unbind (context, key);
-    
-    PYTHON_RETURN_INT(num_keys);
+
+    API_RETURN_INT(num_keys);
 }
 
 /*
@@ -2912,21 +2100,15 @@ weechat_python_api_prefix (PyObject *self, PyObject *args)
 {
     char *prefix;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
+
+    API_FUNC(0, "prefix", API_RETURN_EMPTY);
     prefix = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &prefix))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "prefix");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_prefix (prefix);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2938,21 +2120,15 @@ weechat_python_api_color (PyObject *self, PyObject *args)
 {
     char *color;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
+
+    API_FUNC(0, "color", API_RETURN_EMPTY);
     color = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &color))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "color");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_color (color);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -2963,25 +2139,19 @@ static PyObject *
 weechat_python_api_prnt (PyObject *self, PyObject *args)
 {
     char *buffer, *message;
-    
-    /* make C compiler happy */
-    (void) self;
-    
+
+    API_FUNC(0, "prnt", API_RETURN_ERROR);
     buffer = NULL;
     message = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &message))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "prnt");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_printf (weechat_python_plugin,
                        python_current_script,
                        script_str2ptr (buffer),
                        "%s", message);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -2994,35 +2164,23 @@ weechat_python_api_prnt_date_tags (PyObject *self, PyObject *args)
 {
     char *buffer, *tags, *message;
     int date;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "prnt_date_tags");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "prnt_date_tags", API_RETURN_ERROR);
     buffer = NULL;
     date = 0;
     tags = NULL;
     message = NULL;
-    
     if (!PyArg_ParseTuple (args, "siss", &buffer, &date, &tags, &message))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "prnt_date_tags");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_printf_date_tags (weechat_python_plugin,
                                  python_current_script,
                                  script_str2ptr (buffer),
                                  date,
                                  tags,
                                  "%s", message);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -3034,33 +2192,21 @@ weechat_python_api_prnt_y (PyObject *self, PyObject *args)
 {
     char *buffer, *message;
     int y;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "prnt_y");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "prnt_y", API_RETURN_ERROR);
     buffer = NULL;
     y = 0;
     message = NULL;
-    
     if (!PyArg_ParseTuple (args, "sis", &buffer, &y, &message))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "prnt_y");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_printf_y (weechat_python_plugin,
                           python_current_script,
                           script_str2ptr (buffer),
                           y,
                           "%s", message);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -3071,29 +2217,17 @@ static PyObject *
 weechat_python_api_log_print (PyObject *self, PyObject *args)
 {
     char *message;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "log_print");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "log_print", API_RETURN_ERROR);
     message = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &message))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "log_print");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_log_printf (weechat_python_plugin,
                            python_current_script,
                            "%s", message);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -3105,26 +2239,26 @@ weechat_python_api_hook_command_cb (void *data, struct t_gui_buffer *buffer,
                                     int argc, char **argv, char **argv_eol)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
 
     /* make C compiler happy */
     (void) argv;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (buffer);
-        python_argv[2] = (argc > 1) ? argv_eol[1] : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (buffer);
+        func_argv[2] = (argc > 1) ? argv_eol[1] : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3132,12 +2266,12 @@ weechat_python_api_hook_command_cb (void *data, struct t_gui_buffer *buffer,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3150,17 +2284,9 @@ weechat_python_api_hook_command (PyObject *self, PyObject *args)
 {
     char *command, *description, *arguments, *args_description, *completion;
     char *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_command");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_command", API_RETURN_EMPTY);
     command = NULL;
     description = NULL;
     arguments = NULL;
@@ -3168,14 +2294,10 @@ weechat_python_api_hook_command (PyObject *self, PyObject *args)
     completion = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sssssss", &command, &description, &arguments,
                            &args_description, &completion, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_command");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_command (weechat_python_plugin,
                                                       python_current_script,
                                                       command,
@@ -3186,8 +2308,8 @@ weechat_python_api_hook_command (PyObject *self, PyObject *args)
                                                       &weechat_python_api_hook_command_cb,
                                                       function,
                                                       data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3199,23 +2321,23 @@ weechat_python_api_hook_command_run_cb (void *data, struct t_gui_buffer *buffer,
                                         const char *command)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (buffer);
-        python_argv[2] = (command) ? (char *)command : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (buffer);
+        func_argv[2] = (command) ? (char *)command : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3223,12 +2345,12 @@ weechat_python_api_hook_command_run_cb (void *data, struct t_gui_buffer *buffer,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3240,35 +2362,23 @@ static PyObject *
 weechat_python_api_hook_command_run (PyObject *self, PyObject *args)
 {
     char *command, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_command_run");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_command_run", API_RETURN_EMPTY);
     command = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &command, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_command_run");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_command_run (weechat_python_plugin,
                                                           python_current_script,
                                                           command,
                                                           &weechat_python_api_hook_command_run_cb,
                                                           function,
                                                           data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3279,10 +2389,10 @@ int
 weechat_python_api_hook_timer_cb (void *data, int remaining_calls)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char str_remaining_calls[32], empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
@@ -3290,14 +2400,14 @@ weechat_python_api_hook_timer_cb (void *data, int remaining_calls)
         snprintf (str_remaining_calls, sizeof (str_remaining_calls),
                   "%d", remaining_calls);
 
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = str_remaining_calls;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = str_remaining_calls;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ss", python_argv);
-        
+                                          "ss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3305,10 +2415,10 @@ weechat_python_api_hook_timer_cb (void *data, int remaining_calls)
             ret = *rc;
             free (rc);
         }
-        
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3321,30 +2431,18 @@ weechat_python_api_hook_timer (PyObject *self, PyObject *args)
 {
     int interval, align_second, max_calls;
     char *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_timer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_timer", API_RETURN_EMPTY);
     interval = 10;
     align_second = 0;
     max_calls = 0;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "iiiss", &interval, &align_second, &max_calls,
                            &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_timer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_timer (weechat_python_plugin,
                                                     python_current_script,
                                                     interval,
@@ -3353,8 +2451,8 @@ weechat_python_api_hook_timer (PyObject *self, PyObject *args)
                                                     &weechat_python_api_hook_timer_cb,
                                                     function,
                                                     data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3365,24 +2463,24 @@ int
 weechat_python_api_hook_fd_cb (void *data, int fd)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char str_fd[32], empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
         snprintf (str_fd, sizeof (str_fd), "%d", fd);
-        
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = str_fd;
-        
+
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = str_fd;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ss", python_argv);
-        
+                                          "ss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3390,10 +2488,10 @@ weechat_python_api_hook_fd_cb (void *data, int fd)
             ret = *rc;
             free (rc);
         }
-        
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3406,31 +2504,19 @@ weechat_python_api_hook_fd (PyObject *self, PyObject *args)
 {
     int fd, read, write, exception;
     char *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_fd");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_fd", API_RETURN_EMPTY);
     fd = 0;
     read = 0;
     write = 0;
     exception = 0;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "iiiiss", &fd, &read, &write, &exception,
                            &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_fd");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_fd (weechat_python_plugin,
                                                  python_current_script,
                                                  fd,
@@ -3440,8 +2526,8 @@ weechat_python_api_hook_fd (PyObject *self, PyObject *args)
                                                  &weechat_python_api_hook_fd_cb,
                                                  function,
                                                  data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3454,27 +2540,27 @@ weechat_python_api_hook_process_cb (void *data,
                                     const char *out, const char *err)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[5];
+    void *func_argv[5];
     char str_rc[32], empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
         snprintf (str_rc, sizeof (str_rc), "%d", return_code);
-        
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (command) ? (char *)command : empty_arg;
-        python_argv[2] = str_rc;
-        python_argv[3] = (out) ? (char *)out : empty_arg;
-        python_argv[4] = (err) ? (char *)err : empty_arg;
-        
+
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (command) ? (char *)command : empty_arg;
+        func_argv[2] = str_rc;
+        func_argv[3] = (out) ? (char *)out : empty_arg;
+        func_argv[4] = (err) ? (char *)err : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sssss", python_argv);
-        
+                                          "sssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3482,10 +2568,10 @@ weechat_python_api_hook_process_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3498,28 +2584,16 @@ weechat_python_api_hook_process (PyObject *self, PyObject *args)
 {
     char *command, *function, *data, *result;
     int timeout;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_process");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_process", API_RETURN_EMPTY);
     command = NULL;
     timeout = 0;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "siss", &command, &timeout, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_process");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_process (weechat_python_plugin,
                                                       python_current_script,
                                                       command,
@@ -3527,8 +2601,8 @@ weechat_python_api_hook_process (PyObject *self, PyObject *args)
                                                       &weechat_python_api_hook_process_cb,
                                                       function,
                                                       data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3540,28 +2614,28 @@ weechat_python_api_hook_connect_cb (void *data, int status, int gnutls_rc,
                                     const char *error, const char *ip_address)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[5];
+    void *func_argv[5];
     char str_status[32], str_gnutls_rc[32], empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
         snprintf (str_status, sizeof (str_status), "%d", status);
         snprintf (str_gnutls_rc, sizeof (str_gnutls_rc), "%d", gnutls_rc);
-        
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = str_status;
-        python_argv[2] = str_gnutls_rc;
-        python_argv[3] = (ip_address) ? (char *)ip_address : empty_arg;
-        python_argv[4] = (error) ? (char *)error : empty_arg;
-        
+
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = str_status;
+        func_argv[2] = str_gnutls_rc;
+        func_argv[3] = (ip_address) ? (char *)ip_address : empty_arg;
+        func_argv[4] = (error) ? (char *)error : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sssss", python_argv);
-        
+                                          "sssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3569,10 +2643,10 @@ weechat_python_api_hook_connect_cb (void *data, int status, int gnutls_rc,
             ret = *rc;
             free (rc);
         }
-        
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3585,17 +2659,9 @@ weechat_python_api_hook_connect (PyObject *self, PyObject *args)
 {
     char *proxy, *address, *local_hostname, *function, *data, *result;
     int port, sock, ipv6;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_connect");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_connect", API_RETURN_EMPTY);
     proxy = NULL;
     address = NULL;
     port = 0;
@@ -3604,14 +2670,10 @@ weechat_python_api_hook_connect (PyObject *self, PyObject *args)
     local_hostname = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssiiisss", &proxy, &address, &port, &sock,
                            &ipv6, &local_hostname, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_connect");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_connect (weechat_python_plugin,
                                                       python_current_script,
                                                       proxy,
@@ -3627,8 +2689,8 @@ weechat_python_api_hook_connect (PyObject *self, PyObject *args)
                                                       &weechat_python_api_hook_connect_cb,
                                                       function,
                                                       data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3643,36 +2705,36 @@ weechat_python_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
                                   const char *prefix, const char *message)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[8];
+    void *func_argv[8];
     char empty_arg[1] = { '\0' };
     static char timebuffer[64];
     int *rc, ret;
-    
+
     /* make C compiler happy */
     (void) tags_count;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
         snprintf (timebuffer, sizeof (timebuffer) - 1, "%ld", (long int)date);
-        
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (buffer);
-        python_argv[2] = timebuffer;
-        python_argv[3] = weechat_string_build_with_split_string (tags, ",");
-        if (!python_argv[3])
-            python_argv[3] = strdup ("");
-        python_argv[4] = (displayed) ? strdup ("1") : strdup ("0");
-        python_argv[5] = (highlight) ? strdup ("1") : strdup ("0");
-        python_argv[6] = (prefix) ? (char *)prefix : empty_arg;
-        python_argv[7] = (message) ? (char *)message : empty_arg;
-        
+
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (buffer);
+        func_argv[2] = timebuffer;
+        func_argv[3] = weechat_string_build_with_split_string (tags, ",");
+        if (!func_argv[3])
+            func_argv[3] = strdup ("");
+        func_argv[4] = (displayed) ? strdup ("1") : strdup ("0");
+        func_argv[5] = (highlight) ? strdup ("1") : strdup ("0");
+        func_argv[6] = (prefix) ? (char *)prefix : empty_arg;
+        func_argv[7] = (message) ? (char *)message : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ssssssss", python_argv);
-        
+                                          "ssssssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3680,18 +2742,18 @@ weechat_python_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        if (python_argv[3])
-            free (python_argv[3]);
-        if (python_argv[4])
-            free (python_argv[4]);
-        if (python_argv[5])
-            free (python_argv[5]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+        if (func_argv[3])
+            free (func_argv[3]);
+        if (func_argv[4])
+            free (func_argv[4]);
+        if (func_argv[5])
+            free (func_argv[5]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3704,31 +2766,19 @@ weechat_python_api_hook_print (PyObject *self, PyObject *args)
 {
     char *buffer, *tags, *message, *function, *data, *result;
     int strip_colors;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_print");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_print", API_RETURN_EMPTY);
     buffer = NULL;
     tags = NULL;
     message = NULL;
     strip_colors = 0;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sssiss", &buffer, &tags, &message,
                            &strip_colors, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_print");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_print (weechat_python_plugin,
                                                     python_current_script,
                                                     script_str2ptr (buffer),
@@ -3738,8 +2788,8 @@ weechat_python_api_hook_print (PyObject *self, PyObject *args)
                                                     &weechat_python_api_hook_print_cb,
                                                     function,
                                                     data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3751,41 +2801,41 @@ weechat_python_api_hook_signal_cb (void *data, const char *signal, const char *t
                                    void *signal_data)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     static char value_str[64];
     int *rc, ret, free_needed;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (signal) ? (char *)signal : empty_arg;
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (signal) ? (char *)signal : empty_arg;
         free_needed = 0;
         if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_STRING) == 0)
         {
-            python_argv[2] = (signal_data) ? (char *)signal_data : empty_arg;
+            func_argv[2] = (signal_data) ? (char *)signal_data : empty_arg;
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
         {
             snprintf (value_str, sizeof (value_str) - 1,
                       "%d", *((int *)signal_data));
-            python_argv[2] = value_str;
+            func_argv[2] = value_str;
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
         {
-            python_argv[2] = script_ptr2str (signal_data);
+            func_argv[2] = script_ptr2str (signal_data);
             free_needed = 1;
         }
         else
-            python_argv[2] = empty_arg;
-        
+            func_argv[2] = empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3793,12 +2843,12 @@ weechat_python_api_hook_signal_cb (void *data, const char *signal, const char *t
             ret = *rc;
             free (rc);
         }
-        if (free_needed && python_argv[2])
-            free (python_argv[2]);
-        
+        if (free_needed && func_argv[2])
+            free (func_argv[2]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3810,35 +2860,23 @@ static PyObject *
 weechat_python_api_hook_signal (PyObject *self, PyObject *args)
 {
     char *signal, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_signal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_signal", API_RETURN_EMPTY);
     signal = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &signal, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_signal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_signal (weechat_python_plugin,
                                                      python_current_script,
                                                      signal,
                                                      &weechat_python_api_hook_signal_cb,
                                                      function,
                                                      data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3850,30 +2888,18 @@ weechat_python_api_hook_signal_send (PyObject *self, PyObject *args)
 {
     char *signal, *type_data, *signal_data, *error;
     int number;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_signal_send");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "hook_signal_send", API_RETURN_ERROR);
     signal = NULL;
     type_data = NULL;
     signal_data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &signal, &type_data, &signal_data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_signal_send");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_STRING) == 0)
     {
         weechat_hook_signal_send (signal, type_data, signal_data);
-        PYTHON_RETURN_OK;
+        API_RETURN_OK;
     }
     else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
     {
@@ -3883,16 +2909,16 @@ weechat_python_api_hook_signal_send (PyObject *self, PyObject *args)
         {
             weechat_hook_signal_send (signal, type_data, &number);
         }
-        PYTHON_RETURN_OK;
+        API_RETURN_OK;
     }
     else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
     {
         weechat_hook_signal_send (signal, type_data,
                                   script_str2ptr (signal_data));
-        PYTHON_RETURN_OK;
+        API_RETURN_OK;
     }
-    
-    PYTHON_RETURN_ERROR;
+
+    API_RETURN_ERROR;
 }
 
 /*
@@ -3904,23 +2930,23 @@ weechat_python_api_hook_hsignal_cb (void *data, const char *signal,
                                     struct t_hashtable *hashtable)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (signal) ? (char *)signal : empty_arg;
-        python_argv[2] = weechat_python_hashtable_to_dict (hashtable);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (signal) ? (char *)signal : empty_arg;
+        func_argv[2] = weechat_python_hashtable_to_dict (hashtable);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ssO", python_argv);
-        
+                                          "ssO", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -3928,14 +2954,14 @@ weechat_python_api_hook_hsignal_cb (void *data, const char *signal,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[2])
+        if (func_argv[2])
         {
-            Py_XDECREF((PyObject *)python_argv[2]);
+            Py_XDECREF((PyObject *)func_argv[2]);
         }
-        
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -3947,35 +2973,23 @@ static PyObject *
 weechat_python_api_hook_hsignal (PyObject *self, PyObject *args)
 {
     char *signal, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_hsignal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_hsignal", API_RETURN_EMPTY);
     signal = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &signal, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_hsignal");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_hsignal (weechat_python_plugin,
                                                       python_current_script,
                                                       signal,
                                                       &weechat_python_api_hook_hsignal_cb,
                                                       function,
                                                       data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -3988,33 +3002,21 @@ weechat_python_api_hook_hsignal_send (PyObject *self, PyObject *args)
     char *signal;
     struct t_hashtable *hashtable;
     PyObject *dict;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_hsignal_send");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "hook_hsignal_send", API_RETURN_ERROR);
     signal = NULL;
-    
     if (!PyArg_ParseTuple (args, "sO", &signal, &dict))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_hsignal_send");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     hashtable = weechat_python_dict_to_hashtable (dict,
                                                   WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
-    
+
     weechat_hook_hsignal_send (signal, hashtable);
-    
+
     if (hashtable)
         weechat_hashtable_free (hashtable);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -4025,23 +3027,23 @@ int
 weechat_python_api_hook_config_cb (void *data, const char *option, const char *value)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (option) ? (char *)option : empty_arg;
-        python_argv[2] = (value) ? (char *)value : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (option) ? (char *)option : empty_arg;
+        func_argv[2] = (value) ? (char *)value : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
-        
+                                          "sss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -4049,10 +3051,10 @@ weechat_python_api_hook_config_cb (void *data, const char *option, const char *v
             ret = *rc;
             free (rc);
         }
-        
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -4064,35 +3066,23 @@ static PyObject *
 weechat_python_api_hook_config (PyObject *self, PyObject *args)
 {
     char *option, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_config");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_config", API_RETURN_EMPTY);
     option = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &option, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_config");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_config (weechat_python_plugin,
                                                      python_current_script,
                                                      option,
                                                      &weechat_python_api_hook_config_cb,
                                                      function,
                                                      data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4105,24 +3095,24 @@ weechat_python_api_hook_completion_cb (void *data, const char *completion_item,
                                        struct t_gui_completion *completion)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[4];
+    void *func_argv[4];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (completion_item) ? (char *)completion_item : empty_arg;
-        python_argv[2] = script_ptr2str (buffer);
-        python_argv[3] = script_ptr2str (completion);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (completion_item) ? (char *)completion_item : empty_arg;
+        func_argv[2] = script_ptr2str (buffer);
+        func_argv[3] = script_ptr2str (completion);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ssss", python_argv);
-        
+                                          "ssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -4130,14 +3120,14 @@ weechat_python_api_hook_completion_cb (void *data, const char *completion_item,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[2])
-            free (python_argv[2]);
-        if (python_argv[3])
-            free (python_argv[3]);
-        
+        if (func_argv[2])
+            free (func_argv[2]);
+        if (func_argv[3])
+            free (func_argv[3]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -4149,29 +3139,17 @@ static PyObject *
 weechat_python_api_hook_completion (PyObject *self, PyObject *args)
 {
     char *completion, *description, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_completion");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_completion", API_RETURN_EMPTY);
     completion = NULL;
     description = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssss", &completion, &description, &function,
                            &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_completion");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_completion (weechat_python_plugin,
                                                          python_current_script,
                                                          completion,
@@ -4179,8 +3157,8 @@ weechat_python_api_hook_completion (PyObject *self, PyObject *args)
                                                          &weechat_python_api_hook_completion_cb,
                                                          function,
                                                          data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4192,34 +3170,22 @@ weechat_python_api_hook_completion_list_add (PyObject *self, PyObject *args)
 {
     char *completion, *word, *where;
     int nick_completion;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_completion_list_add");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "hook_completion_list_add", API_RETURN_ERROR);
     completion = NULL;
     word = NULL;
     nick_completion = 0;
     where = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssis", &completion, &word, &nick_completion,
                            &where))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_completion_list_add");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_hook_completion_list_add (script_str2ptr (completion),
                                       word,
                                       nick_completion,
                                       where);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -4231,24 +3197,24 @@ weechat_python_api_hook_modifier_cb (void *data, const char *modifier,
                                      const char *modifier_data, const char *string)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[4];
+    void *func_argv[4];
     char empty_arg[1] = { '\0' };
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (modifier) ? (char *)modifier : empty_arg;
-        python_argv[2] = (modifier_data) ? (char *)modifier_data : empty_arg;
-        python_argv[3] = (string) ? (char *)string : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (modifier) ? (char *)modifier : empty_arg;
+        func_argv[2] = (modifier_data) ? (char *)modifier_data : empty_arg;
+        func_argv[3] = (string) ? (char *)string : empty_arg;
+
         return (char *)weechat_python_exec (script_callback->script,
                                             WEECHAT_SCRIPT_EXEC_STRING,
                                             script_callback->function,
-                                            "ssss", python_argv);
+                                            "ssss", func_argv);
     }
-    
+
     return NULL;
 }
 
@@ -4260,35 +3226,23 @@ static PyObject *
 weechat_python_api_hook_modifier (PyObject *self, PyObject *args)
 {
     char *modifier, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_modifier");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_modifier", API_RETURN_EMPTY);
     modifier = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &modifier, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_modifier");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_modifier (weechat_python_plugin,
                                                        python_current_script,
                                                        modifier,
                                                        &weechat_python_api_hook_modifier_cb,
                                                        function,
                                                        data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4299,30 +3253,18 @@ static PyObject *
 weechat_python_api_hook_modifier_exec (PyObject *self, PyObject *args)
 {
     char *modifier, *modifier_data, *string, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_modifier_exec");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_modifier_exec", API_RETURN_EMPTY);
     modifier = NULL;
     modifier_data = NULL;
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &modifier, &modifier_data, &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_modifier_exec");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_hook_modifier_exec (modifier, modifier_data, string);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4334,23 +3276,23 @@ weechat_python_api_hook_info_cb (void *data, const char *info_name,
                                  const char *arguments)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (info_name) ? (char *)info_name : empty_arg;
-        python_argv[2] = (arguments) ? (char *)arguments : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (info_name) ? (char *)info_name : empty_arg;
+        func_argv[2] = (arguments) ? (char *)arguments : empty_arg;
+
         return (const char *)weechat_python_exec (script_callback->script,
                                                   WEECHAT_SCRIPT_EXEC_STRING,
                                                   script_callback->function,
-                                                  "sss", python_argv);
+                                                  "sss", func_argv);
     }
-    
+
     return NULL;
 }
 
@@ -4362,30 +3304,18 @@ static PyObject *
 weechat_python_api_hook_info (PyObject *self, PyObject *args)
 {
     char *info_name, *description, *args_description, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_info");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_info", API_RETURN_EMPTY);
     info_name = NULL;
     description = NULL;
     args_description = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sssss", &info_name, &description,
                            &args_description, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_info");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_info (weechat_python_plugin,
                                                    python_current_script,
                                                    info_name,
@@ -4394,8 +3324,8 @@ weechat_python_api_hook_info (PyObject *self, PyObject *args)
                                                    &weechat_python_api_hook_info_cb,
                                                    function,
                                                    data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4407,31 +3337,31 @@ weechat_python_api_hook_info_hashtable_cb (void *data, const char *info_name,
                                            struct t_hashtable *hashtable)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     struct t_hashtable *ret_hashtable;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (info_name) ? (char *)info_name : empty_arg;
-        python_argv[2] = weechat_python_hashtable_to_dict (hashtable);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (info_name) ? (char *)info_name : empty_arg;
+        func_argv[2] = weechat_python_hashtable_to_dict (hashtable);
+
         ret_hashtable = weechat_python_exec (script_callback->script,
                                              WEECHAT_SCRIPT_EXEC_HASHTABLE,
                                              script_callback->function,
-                                             "ssO", python_argv);
-        
-        if (python_argv[2])
+                                             "ssO", func_argv);
+
+        if (func_argv[2])
         {
-            Py_XDECREF((PyObject *)python_argv[2]);
+            Py_XDECREF((PyObject *)func_argv[2]);
         }
-        
+
         return ret_hashtable;
     }
-    
+
     return NULL;
 }
 
@@ -4444,32 +3374,20 @@ weechat_python_api_hook_info_hashtable (PyObject *self, PyObject *args)
 {
     char *info_name, *description, *args_description, *output_description;
     char *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_info_hashtable");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_info_hashtable", API_RETURN_EMPTY);
     info_name = NULL;
     description = NULL;
     args_description = NULL;
     output_description = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssssss", &info_name, &description,
                            &args_description, &output_description,
                            &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_info_hashtable");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_info_hashtable (weechat_python_plugin,
                                                              python_current_script,
                                                              info_name,
@@ -4479,8 +3397,8 @@ weechat_python_api_hook_info_hashtable (PyObject *self, PyObject *args)
                                                              &weechat_python_api_hook_info_hashtable_cb,
                                                              function,
                                                              data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4492,30 +3410,30 @@ weechat_python_api_hook_infolist_cb (void *data, const char *infolist_name,
                                      void *pointer, const char *arguments)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[4];
+    void *func_argv[4];
     char empty_arg[1] = { '\0' };
     struct t_infolist *result;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = (infolist_name) ? (char *)infolist_name : empty_arg;
-        python_argv[2] = script_ptr2str (pointer);
-        python_argv[3] = (arguments) ? (char *)arguments : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = (infolist_name) ? (char *)infolist_name : empty_arg;
+        func_argv[2] = script_ptr2str (pointer);
+        func_argv[3] = (arguments) ? (char *)arguments : empty_arg;
+
         result = (struct t_infolist *)weechat_python_exec (script_callback->script,
                                                            WEECHAT_SCRIPT_EXEC_STRING,
                                                            script_callback->function,
-                                                           "ssss", python_argv);
-        
-        if (python_argv[2])
-            free (python_argv[2]);
-        
+                                                           "ssss", func_argv);
+
+        if (func_argv[2])
+            free (func_argv[2]);
+
         return result;
     }
-    
+
     return NULL;
 }
 
@@ -4528,32 +3446,20 @@ weechat_python_api_hook_infolist (PyObject *self, PyObject *args)
 {
     char *infolist_name, *description, *pointer_description, *args_description;
     char *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_infolist");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_infolist", API_RETURN_EMPTY);
     infolist_name = NULL;
     description = NULL;
     pointer_description = NULL;
     args_description = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssssss", &infolist_name, &description,
                            &pointer_description, &args_description, &function,
                            &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_infolist");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_infolist (weechat_python_plugin,
                                                        python_current_script,
                                                        infolist_name,
@@ -4563,8 +3469,8 @@ weechat_python_api_hook_infolist (PyObject *self, PyObject *args)
                                                        &weechat_python_api_hook_infolist_cb,
                                                        function,
                                                        data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4576,22 +3482,29 @@ weechat_python_api_hook_focus_cb (void *data,
                                   struct t_hashtable *info)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char empty_arg[1] = { '\0' };
-    
+    struct t_hashtable *ret_hashtable;
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = info;
-        
-        return (struct t_hashtable *)weechat_python_exec (script_callback->script,
-                                                          WEECHAT_SCRIPT_EXEC_HASHTABLE,
-                                                          script_callback->function,
-                                                          "sh", python_argv);
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = weechat_python_hashtable_to_dict (info);
+
+        ret_hashtable = weechat_python_exec (script_callback->script,
+                                             WEECHAT_SCRIPT_EXEC_HASHTABLE,
+                                             script_callback->function,
+                                             "sO", func_argv);
+        if (func_argv[1])
+        {
+            Py_XDECREF((PyObject *)func_argv[1]);
+        }
+
+        return ret_hashtable;
     }
-    
+
     return NULL;
 }
 
@@ -4603,35 +3516,23 @@ static PyObject *
 weechat_python_api_hook_focus (PyObject *self, PyObject *args)
 {
     char *area, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hook_focus");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hook_focus", API_RETURN_EMPTY);
     area = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &area, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hook_focus");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_hook_focus (weechat_python_plugin,
                                                     python_current_script,
                                                     area,
                                                     &weechat_python_api_hook_focus_cb,
                                                     function,
                                                     data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4642,29 +3543,17 @@ static PyObject *
 weechat_python_api_unhook (PyObject *self, PyObject *args)
 {
     char *hook;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "unhook");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "unhook", API_RETURN_ERROR);
     hook = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &hook))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "unhook");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_unhook (weechat_python_plugin,
                        python_current_script,
                        script_str2ptr (hook));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -4675,18 +3564,13 @@ static PyObject *
 weechat_python_api_unhook_all (PyObject *self, PyObject *args)
 {
     /* make C compiler happy */
-    (void) self;
     (void) args;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "unhook_all");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "unhook_all", API_RETURN_ERROR);
+
     script_api_unhook_all (python_current_script);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -4698,22 +3582,22 @@ weechat_python_api_buffer_input_data_cb (void *data, struct t_gui_buffer *buffer
                                          const char *input_data)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (buffer);
-        python_argv[2] = (input_data) ? (char *)input_data : empty_arg;
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (buffer);
+        func_argv[2] = (input_data) ? (char *)input_data : empty_arg;
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "sss", python_argv);
+                                          "sss", func_argv);
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -4721,12 +3605,12 @@ weechat_python_api_buffer_input_data_cb (void *data, struct t_gui_buffer *buffer
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -4738,21 +3622,21 @@ int
 weechat_python_api_buffer_close_cb (void *data, struct t_gui_buffer *buffer)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[2];
+    void *func_argv[2];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (buffer);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (buffer);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ss", python_argv);
+                                          "ss", func_argv);
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -4760,12 +3644,12 @@ weechat_python_api_buffer_close_cb (void *data, struct t_gui_buffer *buffer)
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -4778,30 +3662,18 @@ weechat_python_api_buffer_new (PyObject *self, PyObject *args)
 {
     char *name, *function_input, *data_input, *function_close, *data_close;
     char *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "buffer_new", API_RETURN_EMPTY);
     name = NULL;
     function_input = NULL;
     data_input = NULL;
     function_close = NULL;
     data_close = NULL;
-    
     if (!PyArg_ParseTuple (args, "sssss", &name, &function_input, &data_input,
                            &function_close, &data_close))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_buffer_new (weechat_python_plugin,
                                                     python_current_script,
                                                     name,
@@ -4811,8 +3683,8 @@ weechat_python_api_buffer_new (PyObject *self, PyObject *args)
                                                     &weechat_python_api_buffer_close_cb,
                                                     function_close,
                                                     data_close));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4824,29 +3696,17 @@ weechat_python_api_buffer_search (PyObject *self, PyObject *args)
 {
     char *plugin, *name;
     char *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "buffer_search", API_RETURN_EMPTY);
     plugin = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &plugin, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_buffer_search (plugin, name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4857,21 +3717,16 @@ static PyObject *
 weechat_python_api_buffer_search_main (PyObject *self, PyObject *args)
 {
     char *result;
-    PyObject *object;
-    
+    PyObject *return_value;
+
     /* make C compiler happy */
-    (void) self;
     (void) args;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_search_main");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "buffer_search_main", API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_buffer_search_main ());
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4882,21 +3737,16 @@ static PyObject *
 weechat_python_api_current_buffer (PyObject *self, PyObject *args)
 {
     char *result;
-    PyObject *object;
-    
+    PyObject *return_value;
+
     /* make C compiler happy */
-    (void) self;
     (void) args;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "current_buffer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "current_buffer", API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_current_buffer ());
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -4907,27 +3757,15 @@ static PyObject *
 weechat_python_api_buffer_clear (PyObject *self, PyObject *args)
 {
     char *buffer;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_clear");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "buffer_clear", API_RETURN_ERROR);
     buffer = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &buffer))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_clear");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_buffer_clear (script_str2ptr (buffer));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -4938,29 +3776,17 @@ static PyObject *
 weechat_python_api_buffer_close (PyObject *self, PyObject *args)
 {
     char *buffer;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_close");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "buffer_close", API_RETURN_ERROR);
     buffer = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &buffer))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_close");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_buffer_close (weechat_python_plugin,
                              python_current_script,
                              script_str2ptr (buffer));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -4971,29 +3797,17 @@ static PyObject *
 weechat_python_api_buffer_merge (PyObject *self, PyObject *args)
 {
     char *buffer, *target_buffer;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_merge");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "buffer_merge", API_RETURN_ERROR);
     buffer = NULL;
     target_buffer = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &target_buffer))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_merge");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_buffer_merge (script_str2ptr (buffer),
                           script_str2ptr (target_buffer));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5006,28 +3820,16 @@ weechat_python_api_buffer_unmerge (PyObject *self, PyObject *args)
 {
     char *buffer;
     int number;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_unmerge");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "buffer_unmerge", API_RETURN_ERROR);
     buffer = NULL;
     number = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &buffer, &number))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_unmerge");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_buffer_unmerge (script_str2ptr (buffer), number);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5039,28 +3841,16 @@ weechat_python_api_buffer_get_integer (PyObject *self, PyObject *args)
 {
     char *buffer, *property;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "buffer_get_integer", API_RETURN_INT(-1));
     buffer = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     value = weechat_buffer_get_integer (script_str2ptr (buffer), property);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -5072,28 +3862,16 @@ weechat_python_api_buffer_get_string (PyObject *self, PyObject *args)
 {
     char *buffer, *property;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_get_string");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "buffer_get_string", API_RETURN_ERROR);
     buffer = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_buffer_get_string (script_str2ptr (buffer), property);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -5104,30 +3882,18 @@ static PyObject *
 weechat_python_api_buffer_get_pointer (PyObject *self, PyObject *args)
 {
     char *buffer, *property, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "buffer_get_pointer", API_RETURN_EMPTY);
     buffer = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_buffer_get_pointer (script_str2ptr (buffer),
                                                          property));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5138,31 +3904,19 @@ static PyObject *
 weechat_python_api_buffer_set (PyObject *self, PyObject *args)
 {
     char *buffer, *property, *value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "buffer_set", API_RETURN_ERROR);
     buffer = NULL;
     property = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &property, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_buffer_set (script_str2ptr (buffer),
                         property,
                         value);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5174,29 +3928,17 @@ static PyObject *
 weechat_python_api_buffer_string_replace_local_var (PyObject *self, PyObject *args)
 {
     char *buffer, *string, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_string_replace_local_var");
-        PYTHON_RETURN_ERROR;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "buffer_string_replace_local_var", API_RETURN_ERROR);
     buffer = NULL;
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_string_replace_local_var");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     result = weechat_buffer_string_replace_local_var (script_str2ptr (buffer), string);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5209,28 +3951,16 @@ weechat_python_api_buffer_match_list (PyObject *self, PyObject *args)
 {
     char *buffer, *string;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "buffer_match_list");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "buffer_match_list", API_RETURN_INT(0));
     buffer = NULL;
     string = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &string))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "buffer_match_list");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_buffer_match_list (script_str2ptr (buffer), string);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -5241,21 +3971,16 @@ static PyObject *
 weechat_python_api_current_window (PyObject *self, PyObject *args)
 {
     char *result;
-    PyObject *object;
-    
+    PyObject *return_value;
+
     /* make C compiler happy */
-    (void) self;
     (void) args;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "current_window");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "current_window", API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_current_window ());
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5267,28 +3992,16 @@ static PyObject *
 weechat_python_api_window_search_with_buffer (PyObject *self, PyObject *args)
 {
     char *buffer, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "window_search_with_buffer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "window_search_with_buffer", API_RETURN_EMPTY);
     buffer = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &buffer))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "window_search_with_buffer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_window_search_with_buffer (script_str2ptr (buffer)));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5300,28 +4013,16 @@ weechat_python_api_window_get_integer (PyObject *self, PyObject *args)
 {
     char *window, *property;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "window_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "window_get_integer", API_RETURN_INT(-1));
     window = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &window, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "window_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     value = weechat_window_get_integer (script_str2ptr (window), property);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -5333,28 +4034,16 @@ weechat_python_api_window_get_string (PyObject *self, PyObject *args)
 {
     char *window, *property;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "window_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "window_get_string", API_RETURN_EMPTY);
     window = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &window, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "window_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_window_get_string (script_str2ptr (window), property);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -5365,30 +4054,18 @@ static PyObject *
 weechat_python_api_window_get_pointer (PyObject *self, PyObject *args)
 {
     char *window, *property, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "window_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "window_get_pointer", API_RETURN_EMPTY);
     window = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &window, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "window_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_window_get_pointer (script_str2ptr (window),
                                                          property));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5399,27 +4076,15 @@ static PyObject *
 weechat_python_api_window_set_title (PyObject *self, PyObject *args)
 {
     char *title;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "window_set_title");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "window_set_title", API_RETURN_ERROR);
     title = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &title))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "window_set_title");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_window_set_title (title);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5431,37 +4096,25 @@ weechat_python_api_nicklist_add_group (PyObject *self, PyObject *args)
 {
     char *buffer, *parent_group, *name, *color, *result;
     int visible;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_add_group");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "nicklist_add_group", API_RETURN_EMPTY);
     buffer = NULL;
     parent_group = NULL;
     name = NULL;
     color = NULL;
     visible = 0;
-    
     if (!PyArg_ParseTuple (args, "ssssi", &buffer, &parent_group, &name,
                            &color, &visible))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_add_group");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_nicklist_add_group (script_str2ptr (buffer),
                                                          script_str2ptr (parent_group),
                                                          name,
                                                          color,
                                                          visible));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5472,32 +4125,20 @@ static PyObject *
 weechat_python_api_nicklist_search_group (PyObject *self, PyObject *args)
 {
     char *buffer, *from_group, *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_search_group");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "nicklist_search_group", API_RETURN_EMPTY);
     buffer = NULL;
     from_group = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &from_group, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_search_group");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_nicklist_search_group (script_str2ptr (buffer),
                                                             script_str2ptr (from_group),
                                                             name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5509,17 +4150,9 @@ weechat_python_api_nicklist_add_nick (PyObject *self, PyObject *args)
 {
     char *buffer, *group, *name, *color, *prefix, *prefix_color, *result;
     int visible;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_add_nick");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "nicklist_add_nick", API_RETURN_EMPTY);
     buffer = NULL;
     group = NULL;
     name = NULL;
@@ -5527,14 +4160,10 @@ weechat_python_api_nicklist_add_nick (PyObject *self, PyObject *args)
     prefix = NULL;
     prefix_color = NULL;
     visible = 0;
-    
     if (!PyArg_ParseTuple (args, "ssssssi", &buffer, &group, &name, &color,
                            &prefix, &prefix_color, &visible))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_add_nick");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_nicklist_add_nick (script_str2ptr (buffer),
                                                         script_str2ptr (group),
                                                         name,
@@ -5542,8 +4171,8 @@ weechat_python_api_nicklist_add_nick (PyObject *self, PyObject *args)
                                                         prefix,
                                                         prefix_color,
                                                         visible));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5554,32 +4183,20 @@ static PyObject *
 weechat_python_api_nicklist_search_nick (PyObject *self, PyObject *args)
 {
     char *buffer, *from_group, *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_search_nick");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "nicklist_search_nick", API_RETURN_EMPTY);
     buffer = NULL;
     from_group = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &from_group, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_search_nick");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_nicklist_search_nick (script_str2ptr (buffer),
                                                            script_str2ptr (from_group),
                                                            name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5590,29 +4207,17 @@ static PyObject *
 weechat_python_api_nicklist_remove_group (PyObject *self, PyObject *args)
 {
     char *buffer, *group;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_remove_group");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_remove_group", API_RETURN_ERROR);
     buffer = NULL;
     group = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &group))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_remove_group");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_nicklist_remove_group (script_str2ptr (buffer),
                                    script_str2ptr (group));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5623,29 +4228,17 @@ static PyObject *
 weechat_python_api_nicklist_remove_nick (PyObject *self, PyObject *args)
 {
     char *buffer, *nick;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_remove_nick");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_remove_nick", API_RETURN_ERROR);
     buffer = NULL;
     nick = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &nick))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_remove_nick");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_nicklist_remove_nick (script_str2ptr (buffer),
                                   script_str2ptr (nick));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5656,27 +4249,15 @@ static PyObject *
 weechat_python_api_nicklist_remove_all (PyObject *self, PyObject *args)
 {
     char *buffer;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_remove_all");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_remove_all", API_RETURN_ERROR);
     buffer = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &buffer))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_remove_all");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_nicklist_remove_all (script_str2ptr (buffer));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5688,31 +4269,19 @@ weechat_python_api_nicklist_group_get_integer (PyObject *self, PyObject *args)
 {
     char *buffer, *group, *property;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "nicklist_group_get_integer", API_RETURN_INT(-1));
     buffer = NULL;
     group = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &group, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     value = weechat_nicklist_group_get_integer (script_str2ptr (buffer),
                                                 script_str2ptr (group),
                                                 property);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -5724,31 +4293,19 @@ weechat_python_api_nicklist_group_get_string (PyObject *self, PyObject *args)
 {
     char *buffer, *group, *property;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_get_string");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_group_get_string", API_RETURN_ERROR);
     buffer = NULL;
     group = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &group, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_nicklist_group_get_string (script_str2ptr (buffer),
                                                 script_str2ptr (group),
                                                 property);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -5759,32 +4316,20 @@ static PyObject *
 weechat_python_api_nicklist_group_get_pointer (PyObject *self, PyObject *args)
 {
     char *buffer, *group, *property, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "nicklist_group_get_pointer", API_RETURN_EMPTY);
     buffer = NULL;
     group = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &group, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_nicklist_group_get_pointer (script_str2ptr (buffer),
                                                                  script_str2ptr (group),
                                                                  property));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5795,33 +4340,21 @@ static PyObject *
 weechat_python_api_nicklist_group_set (PyObject *self, PyObject *args)
 {
     char *buffer, *group, *property, *value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_group_set", API_RETURN_ERROR);
     buffer = NULL;
     group = NULL;
     property = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssss", &buffer, &group, &property, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_group_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_nicklist_group_set (script_str2ptr (buffer),
                                 script_str2ptr (group),
                                 property,
                                 value);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5833,31 +4366,19 @@ weechat_python_api_nicklist_nick_get_integer (PyObject *self, PyObject *args)
 {
     char *buffer, *nick, *property;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+
+    API_FUNC(1, "nicklist_nick_get_integer", API_RETURN_INT(-1));
     buffer = NULL;
     nick = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &nick, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_get_integer");
-        PYTHON_RETURN_INT(-1);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(-1));
+
     value = weechat_nicklist_nick_get_integer (script_str2ptr (buffer),
                                                script_str2ptr (nick),
                                                property);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -5869,31 +4390,19 @@ weechat_python_api_nicklist_nick_get_string (PyObject *self, PyObject *args)
 {
     char *buffer, *nick, *property;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_get_string");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_nick_get_string", API_RETURN_ERROR);
     buffer = NULL;
     nick = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &nick, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_nicklist_nick_get_string (script_str2ptr (buffer),
                                                script_str2ptr (nick),
                                                property);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -5904,32 +4413,20 @@ static PyObject *
 weechat_python_api_nicklist_nick_get_pointer (PyObject *self, PyObject *args)
 {
     char *buffer, *nick, *property, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "nicklist_nick_get_pointer", API_RETURN_EMPTY);
     buffer = NULL;
     nick = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &buffer, &nick, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_get_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_nicklist_nick_get_pointer (script_str2ptr (buffer),
                                                                 script_str2ptr (nick),
                                                                 property));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -5940,33 +4437,21 @@ static PyObject *
 weechat_python_api_nicklist_nick_set (PyObject *self, PyObject *args)
 {
     char *buffer, *nick, *property, *value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "nicklist_nick_set", API_RETURN_ERROR);
     buffer = NULL;
     nick = NULL;
     property = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "ssss", &buffer, &nick, &property, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "nicklist_nick_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_nicklist_nick_set (script_str2ptr (buffer),
                                script_str2ptr (nick),
                                property,
                                value);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -5977,28 +4462,16 @@ static PyObject *
 weechat_python_api_bar_item_search (PyObject *self, PyObject *args)
 {
     char *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "bar_item_search", API_RETURN_EMPTY);
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_bar_item_search (name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6010,30 +4483,30 @@ weechat_python_api_bar_item_build_cb (void *data, struct t_gui_bar_item *item,
                                       struct t_gui_window *window)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[3];
+    void *func_argv[3];
     char empty_arg[1] = { '\0' }, *ret;
-    
+
     script_callback = (struct t_script_callback *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (item);
-        python_argv[2] = script_ptr2str (window);
-        
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (item);
+        func_argv[2] = script_ptr2str (window);
+
         ret = (char *)weechat_python_exec (script_callback->script,
                                            WEECHAT_SCRIPT_EXEC_STRING,
                                            script_callback->function,
-                                           "sss", python_argv);
-        
-        if (python_argv[1])
-            free (python_argv[1]);
-        if (python_argv[2])
-            free (python_argv[2]);
-        
+                                           "sss", func_argv);
+
+        if (func_argv[1])
+            free (func_argv[1]);
+        if (func_argv[2])
+            free (func_argv[2]);
+
         return ret;
     }
-    
+
     return NULL;
 }
 
@@ -6045,35 +4518,23 @@ static PyObject *
 weechat_python_api_bar_item_new (PyObject *self, PyObject *args)
 {
     char *name, *function, *data, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "bar_item_new", API_RETURN_EMPTY);
     name = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &name, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (script_api_bar_item_new (weechat_python_plugin,
                                                       python_current_script,
                                                       name,
                                                       &weechat_python_api_bar_item_build_cb,
                                                       function,
                                                       data));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6084,27 +4545,15 @@ static PyObject *
 weechat_python_api_bar_item_update (PyObject *self, PyObject *args)
 {
     char *name;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_update");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "bar_item_update", API_RETURN_ERROR);
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_update");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_bar_item_update (name);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6115,29 +4564,17 @@ static PyObject *
 weechat_python_api_bar_item_remove (PyObject *self, PyObject *args)
 {
     char *item;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_remove");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "bar_item_remove", API_RETURN_ERROR);
     item = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &item))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_item_remove");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_bar_item_remove (weechat_python_plugin,
                                 python_current_script,
                                 script_str2ptr (item));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6148,28 +4585,16 @@ static PyObject *
 weechat_python_api_bar_search (PyObject *self, PyObject *args)
 {
     char *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "bar_search", API_RETURN_EMPTY);
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_search");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_bar_search (name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6182,17 +4607,9 @@ weechat_python_api_bar_new (PyObject *self, PyObject *args)
     char *name, *hidden, *priority, *type, *conditions, *position;
     char *filling_top_bottom, *filling_left_right, *size, *size_max;
     char *color_fg, *color_delim, *color_bg, *separator, *items, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "bar_new", API_RETURN_EMPTY);
     name = NULL;
     hidden = NULL;
     priority = NULL;
@@ -6208,16 +4625,12 @@ weechat_python_api_bar_new (PyObject *self, PyObject *args)
     color_bg = NULL;
     separator = NULL;
     items = NULL;
-    
     if (!PyArg_ParseTuple (args, "sssssssssssssss", &name, &hidden, &priority,
                            &type, &conditions, &position, &filling_top_bottom,
                            &filling_left_right, &size, &size_max, &color_fg,
                            &color_delim, &color_bg, &separator, &items))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_bar_new (name,
                                               hidden,
                                               priority,
@@ -6233,8 +4646,8 @@ weechat_python_api_bar_new (PyObject *self, PyObject *args)
                                               color_bg,
                                               separator,
                                               items));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6245,31 +4658,19 @@ static PyObject *
 weechat_python_api_bar_set (PyObject *self, PyObject *args)
 {
     char *bar, *property, *value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "bar_set", API_RETURN_ERROR);
     bar = NULL;
     property = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &bar, &property, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_set");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_bar_set (script_str2ptr (bar),
                      property,
                      value);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6280,27 +4681,15 @@ static PyObject *
 weechat_python_api_bar_update (PyObject *self, PyObject *args)
 {
     char *name;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_item");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "bar_item", API_RETURN_ERROR);
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_item");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_bar_update (name);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6311,27 +4700,15 @@ static PyObject *
 weechat_python_api_bar_remove (PyObject *self, PyObject *args)
 {
     char *bar;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "bar_remove");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "bar_remove", API_RETURN_ERROR);
     bar = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &bar))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "bar_remove");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_bar_remove (script_str2ptr (bar));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6342,31 +4719,19 @@ static PyObject *
 weechat_python_api_command (PyObject *self, PyObject *args)
 {
     char *buffer, *command;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "command");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "command", API_RETURN_ERROR);
     buffer = NULL;
     command = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &buffer, &command))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "command");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     script_api_command (weechat_python_plugin,
                         python_current_script,
                         script_str2ptr (buffer),
                         command);
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6378,28 +4743,16 @@ weechat_python_api_info_get (PyObject *self, PyObject *args)
 {
     char *info_name, *arguments;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "info_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "info_get", API_RETURN_EMPTY);
     info_name = NULL;
     arguments = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &info_name, &arguments))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "info_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_info_get (info_name, arguments);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -6412,26 +4765,14 @@ weechat_python_api_info_get_hashtable (PyObject *self, PyObject *args)
     char *info_name;
     struct t_hashtable *hashtable, *result_hashtable;
     PyObject *dict, *result_dict;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "info_get_hashtable");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "info_get_hashtable", API_RETURN_EMPTY);
     info_name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sO", &info_name, &dict))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "info_get_hashtable");
-        PYTHON_RETURN_EMPTY;
-    }
+        API_WRONG_ARGS(API_RETURN_EMPTY);
     hashtable = weechat_python_dict_to_hashtable (dict,
                                                   WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
-    
+
     result_hashtable = weechat_info_get_hashtable (info_name, hashtable);
     result_dict = weechat_python_hashtable_to_dict (result_hashtable);
 
@@ -6439,7 +4780,7 @@ weechat_python_api_info_get_hashtable (PyObject *self, PyObject *args)
         weechat_hashtable_free (hashtable);
     if (result_hashtable)
         weechat_hashtable_free (result_hashtable);
-    
+
     return result_dict;
 }
 
@@ -6451,21 +4792,15 @@ static PyObject *
 weechat_python_api_infolist_new (PyObject *self, PyObject *args)
 {
     char *result;
-    PyObject *object;
-    
+    PyObject *return_value;
+
     /* make C compiler happy */
-    (void) self;
     (void) args;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "infolist_new", API_RETURN_EMPTY);
     result = script_ptr2str (weechat_infolist_new ());
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6476,28 +4811,16 @@ static PyObject *
 weechat_python_api_infolist_new_item (PyObject *self, PyObject *args)
 {
     char *infolist, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_item");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_new_item", API_RETURN_EMPTY);
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_item");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_new_item (script_str2ptr (infolist)));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6510,32 +4833,20 @@ weechat_python_api_infolist_new_var_integer (PyObject *self, PyObject *args)
 {
     char *infolist, *name, *result;
     int value;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_integer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_new_var_integer", API_RETURN_EMPTY);
     infolist = NULL;
     name = NULL;
     value = 0;
-    
     if (!PyArg_ParseTuple (args, "ssi", &infolist, &name, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_integer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_new_var_integer (script_str2ptr (infolist),
                                                                name,
                                                                value));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6547,32 +4858,20 @@ static PyObject *
 weechat_python_api_infolist_new_var_string (PyObject *self, PyObject *args)
 {
     char *infolist, *name, *value, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_new_var_string", API_RETURN_EMPTY);
     infolist = NULL;
     name = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &infolist, &name, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_new_var_string (script_str2ptr (infolist),
                                                               name,
                                                               value));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6584,32 +4883,20 @@ static PyObject *
 weechat_python_api_infolist_new_var_pointer (PyObject *self, PyObject *args)
 {
     char *infolist, *name, *value, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_new_var_pointer", API_RETURN_EMPTY);
     infolist = NULL;
     name = NULL;
     value = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &infolist, &name, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_new_var_pointer (script_str2ptr (infolist),
                                                                name,
                                                                script_str2ptr (value)));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6622,32 +4909,20 @@ weechat_python_api_infolist_new_var_time (PyObject *self, PyObject *args)
 {
     char *infolist, *name, *result;
     int value;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_time");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_new_var_time", API_RETURN_EMPTY);
     infolist = NULL;
     name = NULL;
     value = 0;
-    
     if (!PyArg_ParseTuple (args, "ssi", &infolist, &name, &value))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_new_var_time");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_new_var_time (script_str2ptr (infolist),
                                                             name,
                                                             value));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6658,32 +4933,20 @@ static PyObject *
 weechat_python_api_infolist_get (PyObject *self, PyObject *args)
 {
     char *name, *pointer, *arguments, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_get", API_RETURN_EMPTY);
     name = NULL;
     pointer = NULL;
     arguments = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &name, &pointer, &arguments))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_get (name,
                                                    script_str2ptr (pointer),
                                                    arguments));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6695,27 +4958,15 @@ weechat_python_api_infolist_next (PyObject *self, PyObject *args)
 {
     char *infolist;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_next");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "infolist_next", API_RETURN_INT(0));
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_next");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_infolist_next (script_str2ptr (infolist));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -6727,27 +4978,15 @@ weechat_python_api_infolist_prev (PyObject *self, PyObject *args)
 {
     char *infolist;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_prev");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "infolist_prev", API_RETURN_INT(0));
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_prev");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_infolist_prev (script_str2ptr (infolist));
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -6759,27 +4998,15 @@ static PyObject *
 weechat_python_api_infolist_reset_item_cursor (PyObject *self, PyObject *args)
 {
     char *infolist;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_reset_item_cursor");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "infolist_reset_item_cursor", API_RETURN_ERROR);
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_reset_item_cursor");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_infolist_reset_item_cursor (script_str2ptr (infolist));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6791,27 +5018,15 @@ weechat_python_api_infolist_fields (PyObject *self, PyObject *args)
 {
     char *infolist;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_fields");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "infolist_fields", API_RETURN_EMPTY);
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_fields");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_infolist_fields (script_str2ptr (infolist));
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -6823,29 +5038,17 @@ weechat_python_api_infolist_integer (PyObject *self, PyObject *args)
 {
     char *infolist, *variable;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_integer");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "infolist_integer", API_RETURN_INT(0));
     infolist = NULL;
     variable = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &infolist, &variable))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_integer");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_infolist_integer (script_str2ptr (infolist),
                                       variable);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -6857,29 +5060,17 @@ weechat_python_api_infolist_string (PyObject *self, PyObject *args)
 {
     char *infolist, *variable;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "infolist_string", API_RETURN_EMPTY);
     infolist = NULL;
     variable = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &infolist, &variable))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_infolist_string (script_str2ptr (infolist),
                                       variable);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -6890,30 +5081,18 @@ static PyObject *
 weechat_python_api_infolist_pointer (PyObject *self, PyObject *args)
 {
     char *infolist, *variable, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_pointer", API_RETURN_EMPTY);
     infolist = NULL;
     variable = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &infolist, &variable))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_infolist_pointer (script_str2ptr (infolist),
                                                        variable));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6925,32 +5104,20 @@ weechat_python_api_infolist_time (PyObject *self, PyObject *args)
 {
     char *infolist, *variable, timebuffer[64], *result;
     time_t time;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_time");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "infolist_time", API_RETURN_EMPTY);
     infolist = NULL;
     variable = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &infolist, &variable))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_time");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     time = weechat_infolist_time (script_str2ptr (infolist),
                                   variable);
     strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
     result = strdup (timebuffer);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -6961,27 +5128,15 @@ static PyObject *
 weechat_python_api_infolist_free (PyObject *self, PyObject *args)
 {
     char *infolist;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "infolist_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "infolist_free", API_RETURN_ERROR);
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "infolist_free");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_infolist_free (script_str2ptr (infolist));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*
@@ -6992,28 +5147,16 @@ static PyObject *
 weechat_python_api_hdata_get (PyObject *self, PyObject *args)
 {
     char *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hdata_get", API_RETURN_EMPTY);
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_hdata_get (name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -7025,28 +5168,16 @@ weechat_python_api_hdata_get_var_offset (PyObject *self, PyObject *args)
 {
     char *hdata, *name;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_var_offset");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "hdata_get_var_offset", API_RETURN_INT(0));
     hdata = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &hdata, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_var_offset");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_hdata_get_var_offset (script_str2ptr (hdata), name);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -7059,28 +5190,16 @@ weechat_python_api_hdata_get_var_type_string (PyObject *self, PyObject *args)
 {
     char *hdata, *name;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_var_type_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "hdata_get_var_type_string", API_RETURN_EMPTY);
     hdata = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &hdata, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_var_type_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_hdata_get_var_type_string (script_str2ptr (hdata), name);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -7092,28 +5211,16 @@ weechat_python_api_hdata_get_var_hdata (PyObject *self, PyObject *args)
 {
     char *hdata, *name;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_var_hdata");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "hdata_get_var_hdata", API_RETURN_EMPTY);
     hdata = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &hdata, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_var_hdata");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_hdata_get_var_hdata (script_str2ptr (hdata), name);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -7124,30 +5231,18 @@ static PyObject *
 weechat_python_api_hdata_get_list (PyObject *self, PyObject *args)
 {
     char *hdata, *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_list");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hdata_get_list", API_RETURN_EMPTY);
     hdata = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &hdata, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_list");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_hdata_get_list (script_str2ptr (hdata),
                                                      name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -7159,32 +5254,20 @@ weechat_python_api_hdata_move (PyObject *self, PyObject *args)
 {
     char *result, *hdata, *pointer;
     int count;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_move");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hdata_move", API_RETURN_EMPTY);
     hdata = NULL;
     pointer = NULL;
     count = 0;
-    
     if (!PyArg_ParseTuple (args, "ssi", &hdata, &pointer, &count))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_move");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_hdata_move (script_str2ptr (hdata),
                                                  script_str2ptr (pointer),
                                                  count));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -7197,31 +5280,19 @@ weechat_python_api_hdata_integer (PyObject *self, PyObject *args)
 {
     char *hdata, *pointer, *name;
     int value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_integer");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "hdata_integer", API_RETURN_INT(0));
     hdata = NULL;
     pointer = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_integer");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     value = weechat_hdata_integer (script_str2ptr (hdata),
                                    script_str2ptr (pointer),
                                    name);
-    
-    PYTHON_RETURN_INT(value);
+
+    API_RETURN_INT(value);
 }
 
 /*
@@ -7234,31 +5305,19 @@ weechat_python_api_hdata_long (PyObject *self, PyObject *args)
 {
     char *hdata, *pointer, *name;
     long value;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_long");
-        PYTHON_RETURN_LONG(0);
-    }
-    
+
+    API_FUNC(1, "hdata_long", API_RETURN_LONG(0));
     hdata = NULL;
     pointer = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_long");
-        PYTHON_RETURN_LONG(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_LONG(0));
+
     value = weechat_hdata_long (script_str2ptr (hdata),
                                 script_str2ptr (pointer),
                                 name);
-    
-    PYTHON_RETURN_LONG(value);
+
+    API_RETURN_LONG(value);
 }
 
 /*
@@ -7271,31 +5330,19 @@ weechat_python_api_hdata_string (PyObject *self, PyObject *args)
 {
     char *hdata, *pointer, *name;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "hdata_string", API_RETURN_EMPTY);
     hdata = NULL;
     pointer = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_hdata_string (script_str2ptr (hdata),
                                    script_str2ptr (pointer),
                                    name);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -7307,32 +5354,20 @@ static PyObject *
 weechat_python_api_hdata_pointer (PyObject *self, PyObject *args)
 {
     char *hdata, *pointer, *name, *result;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hdata_pointer", API_RETURN_EMPTY);
     hdata = NULL;
     pointer = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_pointer");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_hdata_pointer (script_str2ptr (hdata),
                                                     script_str2ptr (pointer),
                                                     name));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -7345,34 +5380,22 @@ weechat_python_api_hdata_time (PyObject *self, PyObject *args)
 {
     char *hdata, *pointer, *name, timebuffer[64], *result;
     time_t time;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_time");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "hdata_time", API_RETURN_EMPTY);
     hdata = NULL;
     pointer = NULL;
     name = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_time");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     time = weechat_hdata_time (script_str2ptr (hdata),
                                script_str2ptr (pointer),
                                name);
     strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
     result = strdup (timebuffer);
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -7384,28 +5407,16 @@ weechat_python_api_hdata_get_string (PyObject *self, PyObject *args)
 {
     char *hdata, *property;
     const char *result;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+
+    API_FUNC(1, "hdata_get_string", API_RETURN_EMPTY);
     hdata = NULL;
     property = NULL;
-    
     if (!PyArg_ParseTuple (args, "ss", &hdata, &property))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "hdata_get_string");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = weechat_hdata_get_string (script_str2ptr (hdata), property);
-    
-    PYTHON_RETURN_STRING(result);
+
+    API_RETURN_STRING(result);
 }
 
 /*
@@ -7417,29 +5428,17 @@ weechat_python_api_upgrade_new (PyObject *self, PyObject *args)
 {
     char *filename, *result;
     int write;
-    PyObject *object;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+    PyObject *return_value;
+
+    API_FUNC(1, "upgrade_new", API_RETURN_EMPTY);
     filename = NULL;
     write = 0;
-    
     if (!PyArg_ParseTuple (args, "si", &filename, &write))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_new");
-        PYTHON_RETURN_EMPTY;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
     result = script_ptr2str (weechat_upgrade_new (filename, write));
-    
-    PYTHON_RETURN_STRING_FREE(result);
+
+    API_RETURN_STRING_FREE(result);
 }
 
 /*
@@ -7451,31 +5450,19 @@ weechat_python_api_upgrade_write_object (PyObject *self, PyObject *args)
 {
     char *upgrade_file, *infolist;
     int object_id, rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_write_object");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "upgrade_write_object", API_RETURN_INT(0));
     upgrade_file = NULL;
     object_id = 0;
     infolist = NULL;
-    
     if (!PyArg_ParseTuple (args, "sis", &upgrade_file, &object_id, &infolist))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_write_object");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     rc = weechat_upgrade_write_object (script_str2ptr (upgrade_file),
                                        object_id,
                                        script_str2ptr (infolist));
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -7489,26 +5476,26 @@ weechat_python_api_upgrade_read_cb (void *data,
                                     struct t_infolist *infolist)
 {
     struct t_script_callback *script_callback;
-    void *python_argv[4];
+    void *func_argv[4];
     char empty_arg[1] = { '\0' }, str_object_id[32];
     int *rc, ret;
-    
+
     script_callback = (struct t_script_callback *)data;
-    
+
     if (script_callback && script_callback->function && script_callback->function[0])
     {
         snprintf (str_object_id, sizeof (str_object_id), "%d", object_id);
-        
-        python_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        python_argv[1] = script_ptr2str (upgrade_file);
-        python_argv[2] = str_object_id;
-        python_argv[3] = script_ptr2str (infolist);
-        
+
+        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+        func_argv[1] = script_ptr2str (upgrade_file);
+        func_argv[2] = str_object_id;
+        func_argv[3] = script_ptr2str (infolist);
+
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ssss", python_argv);
-        
+                                          "ssss", func_argv);
+
         if (!rc)
             ret = WEECHAT_RC_ERROR;
         else
@@ -7516,14 +5503,14 @@ weechat_python_api_upgrade_read_cb (void *data,
             ret = *rc;
             free (rc);
         }
-        if (python_argv[1])
-            free (python_argv[1]);
-        if (python_argv[3])
-            free (python_argv[3]);
-        
+        if (func_argv[1])
+            free (func_argv[1]);
+        if (func_argv[3])
+            free (func_argv[3]);
+
         return ret;
     }
-    
+
     return WEECHAT_RC_ERROR;
 }
 
@@ -7536,34 +5523,22 @@ weechat_python_api_upgrade_read (PyObject *self, PyObject *args)
 {
     char *upgrade_file, *function, *data;
     int rc;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_read");
-        PYTHON_RETURN_INT(0);
-    }
-    
+
+    API_FUNC(1, "upgrade_read", API_RETURN_INT(0));
     upgrade_file = NULL;
     function = NULL;
     data = NULL;
-    
     if (!PyArg_ParseTuple (args, "sss", &upgrade_file, &function, &data))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_read");
-        PYTHON_RETURN_INT(0);
-    }
-    
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
     rc = script_api_upgrade_read (weechat_python_plugin,
                                   python_current_script,
                                   script_str2ptr (upgrade_file),
                                   &weechat_python_api_upgrade_read_cb,
                                   function,
                                   data);
-    
-    PYTHON_RETURN_INT(rc);
+
+    API_RETURN_INT(rc);
 }
 
 /*
@@ -7574,27 +5549,15 @@ static PyObject *
 weechat_python_api_upgrade_close (PyObject *self, PyObject *args)
 {
     char *upgrade_file;
-    
-    /* make C compiler happy */
-    (void) self;
-    
-    if (!python_current_script || !python_current_script->name)
-    {
-        WEECHAT_SCRIPT_MSG_NOT_INIT(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_close");
-        PYTHON_RETURN_ERROR;
-    }
-    
+
+    API_FUNC(1, "upgrade_close", API_RETURN_ERROR);
     upgrade_file = NULL;
-    
     if (!PyArg_ParseTuple (args, "s", &upgrade_file))
-    {
-        WEECHAT_SCRIPT_MSG_WRONG_ARGS(PYTHON_CURRENT_SCRIPT_NAME, "upgrade_close");
-        PYTHON_RETURN_ERROR;
-    }
-    
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
     weechat_upgrade_close (script_str2ptr (upgrade_file));
-    
-    PYTHON_RETURN_OK;
+
+    API_RETURN_OK;
 }
 
 /*

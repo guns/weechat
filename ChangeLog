@@ -1,12 +1,52 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.6-dev, 2011-09-30
+v0.3.7-dev, 2011-11-08
 
 
-Version 0.3.6 (under dev!)
+Version 0.3.7 (under dev!)
 --------------------------
 
+* core: add option "jump_last_buffer_displayed" for command /input
+  (key: alt+"/") (task #11553)
+* core: display error in command /buffer if arguments are wrong (bug #34180)
+* core: add developer's guide (task #5416)
+* core: add option weechat.history.max_buffer_lines_minutes: maximum number of
+  minutes in history per buffer (task #10900), rename option
+  weechat.history.max_lines to weechat.history.max_buffer_lines_number
+* core: fix help on plugin option when config_set_desc_plugin is called to set
+  help on newly created option
+* core: add WEECHAT_HOME option in cmake and configure to setup default
+  WeeChat home (default is "~/.weechat") (task #11266)
+* core: add optional arguments for command /plugin load/reload/autoload
+* core: fix compilation error with "pid_t" on Mac OS X (bug #34639)
+* core: enable background process under Cygwin to connect to servers, fix
+  reconnection problem (bug #34626)
+* irc: display channel voice notices received in channel buffer (bug #34762),
+  display channel/op notices sent in channel buffer
+* irc: add option irc.color.mirc_remap to remap mirc colors in messages to
+  WeeChat colors
+* irc: allow URL "irc://" in command /connect
+* irc: auto-connect to servers created with "irc://" on command line but not
+  other servers if "-a" ("--no-connect") is given
+* guile: new script plugin for scheme (task #7289)
+* ruby: fix crash when reloading ruby plugin (bug #34474)
+
+Version 0.3.6 (2011-10-22)
+--------------------------
+
+* core: fix freeze when calling function util_file_get_content with a directory
+  instead of a filename
+* core: add color attribute "|" (keep attributes) and value "resetcolor" for
+  function weechat_color in plugin API (used by irc plugin to keep
+  bold/reverse/underlined in message when changing color) (bug #34550)
+* core: fix compilation error (INSTALLPREFIX undeclared) on OS X and when
+  compiling with included gettext (bug #26690)
+* core: display timeout for hook_process command only if debug for core is
+  enabled (task #11401)
+* core: bufferize lines displayed before core buffer is created, to display them
+  in buffer when it is created
+* core: fix display of background color in chat area after line feed
 * core: fix paste detection (problem with end of lines)
 * core: add new option weechat.look.color_basic_force_bold, off by default: bold
   is used only if terminal has less than 16 colors (patch #7621)
@@ -51,7 +91,7 @@ Version 0.3.6 (under dev!)
 * core: add support of mouse: new command /mouse, new key context "mouse",
   new options weechat.look.mouse and weechat.look.mouse_timer_delay (task #5435)
 * core: add command /cursor (free movement of cursor on screen), with key
-  context "search"
+  context "cursor"
 * core: automatic scroll direction in /bar scroll (x/y is now optional)
 * core: add optional delay for key grab (commands /input grab_key and
   /input grab_key_command, default is 500 milliseconds)
@@ -86,6 +126,9 @@ Version 0.3.6 (under dev!)
   description for option when function is called)
 * scripts: fix crash with scripts not auto-loaded having a buffer opened after
   /upgrade (input/close callbacks for buffer not set properly)
+* irc: fix display of items "away" and "lag" in root bars, refresh all irc bar
+  items on signal "buffer_switch" (bug #34466)
+* irc: fix crash on malformed irc notice received (without message after target)
 * irc: add missing messages for whois: 223, 264, 343
 * irc: use high priority queue for sending modes and wallchops messages
 * irc: allow reason for command /disconnect

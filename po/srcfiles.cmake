@@ -92,10 +92,6 @@ SET(WEECHAT_SOURCES
 ./src/gui/gui-nicklist.h
 ./src/gui/gui-window.c
 ./src/gui/gui-window.h
-./src/gui/qt/gui-qt.c
-./src/gui/qt/gui-qt.h
-./src/gui/wxwidgets/gui-display.c
-./src/gui/wxwidgets/gui-input.c
 ./src/plugins/alias/alias.c
 ./src/plugins/alias/alias.h
 ./src/plugins/alias/alias-config.c
@@ -214,6 +210,10 @@ SET(WEECHAT_SOURCES
 ./src/plugins/rmodifier/rmodifier.h
 ./src/plugins/rmodifier/rmodifier-info.c
 ./src/plugins/rmodifier/rmodifier-info.h
+./src/plugins/scripts/guile/weechat-guile-api.c
+./src/plugins/scripts/guile/weechat-guile-api.h
+./src/plugins/scripts/guile/weechat-guile.c
+./src/plugins/scripts/guile/weechat-guile.h
 ./src/plugins/scripts/lua/weechat-lua-api.c
 ./src/plugins/scripts/lua/weechat-lua-api.h
 ./src/plugins/scripts/lua/weechat-lua.c

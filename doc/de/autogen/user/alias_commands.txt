@@ -1,16 +1,15 @@
 [[command_alias_alias]]
 [command]*`alias`* Einem Befehl wird ein Alias zugewiesen::
 ........................................
-/alias  [-completion <completion>] <alias> [<command> [<arguments>]]
+/alias  [-completion <completion>] <alias> [<command> [;<command>...]]
 
 completion: optionale Vervollständigung für einen Alias-Befehl (Standardverhalten: Vervollständigung wird auf den Zielbefehl angewendet)
      alias: Name des Alias (kann mit Joker "*" beginnen oder enden um Aliase aufzulisten)
    command: Name des zuzuordnenden Befehls (WeeChat- oder IRC-Befehl ohne führenden '/', mehrere Befehle müssen durch Semikolon getrennt werden)
- arguments: Argumente für Befehl
 
 Ohne Angabe von Argumenten werden alle definierten Aliase angezeigt.
 
-Anmerkung: im Befehl können Variablen gesetzt werden, die dann durch den entsprechenden Wert ersetzt werden:
+Anmerkung: Im Befehl können Variablen genutzt werden, die dann durch den entsprechenden Wert ersetzt werden:
         $n: Argument 'n' (zwischen 1 und 9)
        $-m: Argumente von 1 bis 'm'
        $n-: Argumente von 'n' bis zum letzten Argument

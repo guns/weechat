@@ -1,6 +1,5 @@
 #
-# Copyright (C) 2005 Benoit Papillault <benoit.papillault@free.fr>
-# Copyright (C) 2005-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2011 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -18,14 +17,15 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\"
+ADD_LIBRARY(guile MODULE weechat-guile.c weechat-guile.h
+weechat-guile-api.c weechat-guile-api.h)
 
-bin_PROGRAMS = weechat-wxwidgets
+SET_TARGET_PROPERTIES(guile PROPERTIES PREFIX "")
 
-weechat_wxwidgets_LDADD = ../lib_weechat_gui_common.a \
-                       ../../common/lib_weechat_main.a \
-                       ../../irc/lib_weechat_irc.a \
-                       ../../plugins/lib_weechat_plugins.a $(PLUGINS_LIBS)
+IF(GUILE_FOUND)
+  INCLUDE_DIRECTORIES(${GUILE_INCLUDE_PATH})
+  SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${GUILE_LFLAGS}")
+  TARGET_LINK_LIBRARIES(guile ${GUILE_LIBRARY} weechat_scripts)
+ENDIF(GUILE_FOUND)
 
-weechat_wxwidgets_SOURCES = gui-display.c \
-                            gui-input.c
+INSTALL(TARGETS guile LIBRARY DESTINATION ${LIBDIR}/plugins)

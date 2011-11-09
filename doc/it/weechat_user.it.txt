@@ -25,7 +25,6 @@ Le principali caratteristiche:
 
 * multi-protocollo (IRC, Jabber)
 * connessione a server multipli (con SSL, IPv6, proxy)
-* interfacce multiple: Curses (wxWidgets, Gtk e Qt in fase di sviluppo)
 * piccolo, veloce e leggero
 * personalizzabile ed estensibile con plugin e script
 * conforme alle RFC di IRC http://www.ietf.org/rfc/rfc1459.txt[1459],
@@ -90,23 +89,24 @@ Dipendenze
 La seguente tabella mostra l'elenco di pacchetti richiesti o opzionali per
 compilare WeeChat.
 
-[width="80%",cols="4,^2,13",options="header"]
+[width="100%",cols="5,^3,^3,13",options="header"]
 |========================================
-| Pacchetto ^(1)^         | Richiesto | Caratteristica
-| cmake                   | *sì*      | compilazione (ancora possibile con autotools, ma si raccomanda cmake)
-| libncursesw5-dev ^(2)^  | *sì*      | interfaccia ncurses
-| gettext                 | no        | internazionalizzazione (traduzione dei messaggi; la lingua base è l'inglese)
-| libgcrypt11-dev         | no        | autenticazione SASL per i server IRC che utilizzano il meccanismo DH-BLOWFISH
-| libgnutls-dev (≥ 2.2.0) | no        | connessione SSL al server IRC
-| ca-certificates         | no        | certificati per le connessioni SSL
-| libaspell-dev           | no        | plugin aspell
-| libperl-dev             | no        | plugin perl
-| python-dev              | no        | plugin python
-| ruby1.8-dev             | no        | plugin ruby
-| liblua5.1-0-dev         | no        | plugin lua
-| tcl-dev (≥ 8.5)         | no        | plugin tcl
-| asciidoc (≥ 8.5.0)      | no        | compilazione della documentazione (file HTML)
-| source-highlight        | no        | evidenziazione della sintassi per i sorgenti nella documentazione HTML
+| Pacchetto ^(1)^        | Versione  | Richiesto | Caratteristica
+| cmake                  |           | *sì*      | compilazione (ancora possibile con autotools, ma si raccomanda cmake)
+| libncursesw5-dev ^(2)^ |           | *sì*      | interfaccia ncurses
+| gettext                |           |           | internazionalizzazione (traduzione dei messaggi; la lingua base è l'inglese)
+| libgcrypt11-dev        |           |           | autenticazione SASL per i server IRC che utilizzano il meccanismo DH-BLOWFISH
+| libgnutls-dev          | ≥ 2.2.0   |           | connessione SSL al server IRC
+| ca-certificates        |           |           | certificati per le connessioni SSL
+| libaspell-dev          |           |           | plugin aspell
+| python-dev             | 2.5 → 2.7 |           | plugin python
+| libperl-dev            |           |           | plugin perl
+| ruby1.8-dev            |           |           | plugin ruby
+| liblua5.1-0-dev        |           |           | plugin lua
+| tcl-dev                | ≥ 8.5     |           | plugin tcl
+| guile-1.8-dev          |           |           | plugin guile (scheme)
+| asciidoc               | ≥ 8.5.0   |           | compilazione della documentazione (file HTML)
+| source-highlight       |           |           | evidenziazione della sintassi per i sorgenti nella documentazione HTML
 |========================================
 
 [NOTE]
@@ -537,6 +537,8 @@ Tasti per buffer / finestre
 | @k(A-)@k(z)               | Ingrandimento sulla finestra attiva (@k(A-)@k(z) di nuovo: ripristina lo stato iniziale della finestra, prima dell'ingrandimento) | /window zoom
 | @k(A-)@k(<)               | Passa al buffer precedente nella lista dei buffer visitati | /input jump_previously_visited_buffer
 | @k(A-)@k(>)               | Passa al buffer successivo nella lista dei buffer visitati | /input jump_next_visited_buffer
+// TRANSLATION MISSING
+| @k(A-)@k(/)               | Switch to last buffer displayed (before last jump to a buffer) | /input jump_last_buffer_displayed
 | @k(A-)@k(=)               | Attiva/disattiva filtri | /filter toggle
 |========================================
 
@@ -669,34 +671,66 @@ Molti eventi del mouse predefiniti sono già definiti da WeeChat (consultare
 È possibile cambiare o aggiungere combinazioni con il comando `/key` usando il
 contesto "mouse" (per la sintassi, consultare <<command_weechat_key,comando /key>>).
 
-List of events supported:
+Il nome dell'evento consiste di un modificatore (opzionale), il nome di un
+pulsante/rotellina e un'azione (opzionale). Elementi diversi sono separati da "-".
 
-[width="80%",cols="3m,4",options="header"]
+Elenco di modificatori
+
+[width="50%",cols="3m,4",options="header"]
 |========================================
-| Evento                           | Descrizione
-| button1                          | click sul tasto sinistro
-| button2                          | click sul tasto destro
-| button3                          | click sul tasto centrale (spesso click sulla rotellina)
-| button4 ... button9              | click sui pulsanti extra
-| wheelup                          | rotellina (su)
-| wheeldown                        | rotellina (giù)
-| buttonX-gesture-up ^(1)^         | azione con distanza tra 3 and 19
-| buttonX-gesture-up-long ^(1)^    | azione con distanza maggiore o uguale a 20
-| buttonX-gesture-down ^(1)^       | azione con distanza tra 3 e 19
-| buttonX-gesture-down-long ^(1)^  | azione con distanza maggiore o uguale a 20
-| buttonX-gesture-left ^(1)^       | azione con distanza tra 3 e 39
-| buttonX-gesture-left-long ^(1)^  | azione con distanza maggiore o uguale a 40
-| buttonX-gesture-right ^(1)^      | azione con distanza tra 3 e 39
-| buttonX-gesture-right-long ^(1)^ | azione con distanza maggiore o uguale a 40
+| Modificatore | Descrizione
+| ctrl         | tasto @k(-C-)
+| alt          | tasto @k(-A-)
+| ctrl-alt     | tasto @k(-C-) e @k(-A-)
 |========================================
 
-[NOTE]
-^(1)^ "X" è il numero del pulsante usato nell'azione (da 1 a 9).
+Elenco di pulsanti/rotellina:
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Pulsante/rotellina  | Descrizione
+| button1             | click sul tasto sinistro
+| button2             | click sul tasto destro
+| button3             | click sul tasto centrale (spesso click sulla rotellina)
+| button4 ... button9 | click sui pulsanti extra
+| wheelup             | rotellina (su)
+| wheeldown           | rotellina (giù)
+|========================================
+
+Elenco di azioni (solo per i pulsanti, non la rotellina):
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Azione             | Distanza
+| gesture-up         | 3 ... 19
+| gesture-up-long    | ≥ 20
+| gesture-down       | 3 ... 19
+| gesture-down-long  | ≥ 20
+| gesture-left       | 3 ... 39
+| gesture-left-long  | ≥ 40
+| gesture-right      | 3 ... 39
+| gesture-right-long | ≥ 40
+|========================================
+
+Esempio di eventi:
+
+* `button1`
+* `ctrl-button1`
+* `button1-gesture-right`
+* `alt-button2-gesture-down-long`
+* `wheelup`
+* `ctrl-alt-wheeldown`
+* ...
 
 [TIP]
 Quando si associa un tasto nel contesto "mouse", è possibile far corrispondere
-più eventi usando '*' all'inizio o alla fine del nome, ad esempio
+più eventi usando `*` all'inizio o alla fine del nome, ad esempio
 `button1-gesture-*` corrisponderà ad ogni azione compiuta col tasto sinistro.
+
+[TIP]
+È possibile trovare il nome di un evento con il comando `/input grab_mouse`
+poi eseguire l'evento col mouse. Il comando inserisce il nome dell'evento
+nella riga di comando.
 
 [[command_line]]
 Riga di comando
@@ -916,9 +950,11 @@ Attributi
 Esistono alcuni attributi per i colori. Uno o più attributi vanno aggiunti prima
 del nome o del numero del colore:
 
-* `*`: testo in grassetto
-* `!`: video inverso
-* `_`: testo sottolineato
+* `*` : testo in grassetto
+* `!` : video inverso
+* `_` : testo sottolineato
+* `|` : mantiene attributi: non ripristina grassetto/inverso/sottolineato
+  al cambio di colore
 
 Ad esempio se si vuole il proprio nick bianco e sottolineato:
 
@@ -973,19 +1009,19 @@ da WeeChat.
 In GNU/Linux, il file ha estensione ".so", ".dll" in Windows.
 
 I plugin trovati vengono caricati automaticamente all'avvio di WeeChat, ed
-è possibile attivare o disattivare i plugin durante l'esecuzione del programma.
+è possibile caricare o scaricare i plugin durante l'esecuzione del programma.
 
 È importante evidenziare la differenza tra un 'plugin' ed uno 'script': un
 'plugin' è un file binario compilato e caricato con il comando `/plugin`,
-mentre uno 'script' è un file di testo caricato con un plugin come 'perl'
-con il comando `/perl`.
+mentre uno 'script' è un file di testo caricato con un plugin come 'python'
+con il comando `/python`.
 
-È possibile utilizzare il comando `/plugin` per attivare/disattivare un plugin,
-oppure elencare tutti i plugin attivi.
-Quando un plugin viene disattivato, tutti i buffer creati da questo plugin
+È possibile utilizzare il comando `/plugin` per caricare/scaricare un plugin,
+oppure elencare tutti i plugin caricati.
+Quando un plugin viene scaricato, tutti i buffer creati da questo plugin
 sono chiusi automaticamente.
 
-Esempi per attivare, disattivare oppure elencare i plugin:
+Esempi per caricare, scaricare oppure elencare i plugin:
 
 ----------------------------------------
 /plugin load irc
@@ -1007,11 +1043,12 @@ I plugin predefiniti sono:
 | logger    | Registra i buffer su file
 | relay     | Relay dei dati via rete (proxy IRC)
 | rmodifier | Cambia le stringhe del modificatore con espressioni regolari
-| perl      | API per lo scripting in Perl
 | python    | API per lo scripting in Python
+| perl      | API per lo scripting in Perl
 | ruby      | API per lo scripting in Ruby
 | lua       | API per lo scripting in Lua
 | tcl       | API per lo scripting in TCL
+| guile     | API per lo scripting in Guile (scheme)
 | xfer      | Trasferimento file e chat diretta
 |=======================================
 
@@ -1077,7 +1114,7 @@ i set caratteri.
 Esiste un set caratteri predefinito per la codifica/decodifica, e set caratteri
 specifici per i buffer (o gruppi di buffer).
 
-Questo plugin è opzionale, ma raccomandato: se non attivato, WeeChat
+Questo plugin è opzionale, ma raccomandato: se non caricato, WeeChat
 può leggere/scrivere soltanto dati UTF-8.
 
 Il plugin Charset dovrebbe essere caricato automaticamente da WeeChat.
@@ -1210,11 +1247,11 @@ $ echo 'irc.freenode.#weechat *hello!' >~/.weechat/weechat_fifo_12345
 $ echo '*hello!' >~/.weechat/weechat_fifo_12345
 ----------------------------------------
 
-* inviare due comandi per disattivare/caricare gli script Perl (è necessario
+* inviare due comandi per scaricare/caricare gli script Python (è necessario
   separarli con "\n"):
 
 ----------------------------------------
-$ echo -e '*/perl unload\n*/perl autoload' >~/.weechat/weechat_fifo_12345
+$ echo -e '*/python unload\n*/python autoload' >~/.weechat/weechat_fifo_12345
 ----------------------------------------
 
 È possibile realizzare uno script per inviare un comando a tutte le istanze di
@@ -1313,7 +1350,7 @@ Primo esempio: connessione a otfc e verifica del certificato
 
 ----------------------------------------
 $ mkdir ~/.weechat/ssl
-$ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/secretary/spi-cacert.crt
+$ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/ca/spi-cacert.crt
 ----------------------------------------
 
 Nota: è possibile concatenare più certificati nel file CAs.pem.
@@ -1356,7 +1393,7 @@ Le opzioni nel server sono:
 
 * 'sasl_mechanism': meccanismo da usare ("plain" o "dh-blowfish")
 * 'sasl_timeout': timeout (in secondi) per l'autenticazione
-* 'sasl_username': nome utente
+* 'sasl_username': nome utente (nick)
 * 'sasl_password': password
 
 Se si desidera usare "dh-blowfish" in tutti i server:
@@ -1612,8 +1649,7 @@ personalizzare:
 | 335       | whois         | whois (è un bot su)
 | 338       | whois         | whois (host)
 | 341       |               | invito
-// TRANSLATION MISSING
-| 343       | whois         | whois (is opered as)
+| 343       | whois         | whois (è opered come)
 | 344       | reop          | reop sul canale
 | 345       | reop          | reop sul canale (fine)
 | 346       | invitelist    | lista di inviti
@@ -1923,8 +1959,9 @@ Se la riga di comando contiene: `/oper nick password` allora sullo schermo diven
 Plugin per gli script
 ~~~~~~~~~~~~~~~~~~~~~
 
-WeeChat fornisce 5 plugin per lo scripting: Perl, Python, Ruby, Lua, Tcl.
-Questi plugin possono attivare, eseguire e disattivare gli script per questi
+WeeChat fornisce 6 plugin per lo scripting: Python, Perl, Ruby, Lua, Tcl, Guile
+(scheme).
+Questi plugin possono caricare, eseguire e scaricare gli script per questi
 linguaggi.
 
 Per maggiori informazioni su come scrivere gli script, o le API WeeChat
@@ -1932,17 +1969,17 @@ per gli script, consultare la 'Guida allo Scripting di WeeChat'.
 
 È possibile trovare alcuni script qui: http://www.weechat.org/scripts
 
-[[perl_commands]]
-Comandi Perl
-^^^^^^^^^^^^
-
-include::autogen/user/perl_commands.txt[]
-
 [[python_commands]]
 Comandi Python
 ^^^^^^^^^^^^^^
 
 include::autogen/user/python_commands.txt[]
+
+[[perl_commands]]
+Comandi Perl
+^^^^^^^^^^^^
+
+include::autogen/user/perl_commands.txt[]
 
 [[ruby_commands]]
 Comandi Ruby
@@ -1961,6 +1998,12 @@ Comandi Tcl
 ^^^^^^^^^^^
 
 include::autogen/user/tcl_commands.txt[]
+
+[[guile_commands]]
+Comandi Guile
+^^^^^^^^^^^^^
+
+include::autogen/user/guile_commands.txt[]
 
 [[xfer_plugin]]
 Plugin Xfer

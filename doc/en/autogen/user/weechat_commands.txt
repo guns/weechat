@@ -53,8 +53,6 @@ Examples:
     /bar hide mybar
   scroll nicklist 10 lines down on current buffer:
     /bar scroll nicklist * y+10
-  scroll nicklist one page up on #weechat buffer:
-    /bar scroll nicklist #weechat y-100%
   scroll to end of nicklist on current buffer:
     /bar scroll nicklist * ye
 ........................................
@@ -241,11 +239,7 @@ Examples:
   filter nicks displayed when joining channels or with /names:
     /filter add nicks * irc_366 *
   filter nick "toto" on IRC channel #weechat:
-    /filter add toto irc.freenode.#weechat * toto\t
-  keep only nick "titi" on IRC channel #test:
-    /filter add titi irc.freenode.#test * !titi\t
-  filter lines containing word "spam":
-    /filter add filterspam * * spam
+    /filter add toto irc.freenode.#weechat nick_toto *
   filter lines containing "weechat sucks" on IRC channel #weechat:
     /filter add sucks irc.freenode.#weechat * weechat sucks
 ........................................
@@ -311,6 +305,7 @@ list of actions:
   history_global_next: recall next command in global history
   jump_smart: jump to next buffer with activity
   jump_last_buffer: jump to last buffer
+  jump_last_buffer_displayed: jump to last buffer displayed (before last jump to a buffer)
   jump_previously_visited_buffer: jump to previously visited buffer
   jump_next_visited_buffer: jump to next visited buffer
   hotlist_clear: clear hotlist
@@ -443,18 +438,20 @@ Examples:
 [command]*`plugin`* list/load/unload plugins::
 ........................................
 /plugin  list|listfull [<name>]
-         load <filename>
-         autoload
-         reload|unload [<name>]
+         load <filename> [<arguments>]
+         autoload [<arguments>]
+         reload [<name> [<arguments>]]
+         unload [<name>]
 
-    list: list loaded plugins
-listfull: list loaded plugins (verbose)
-    load: load a plugin
-autoload: autoload plugins in system or user directory
-  reload: reload a plugin (if no name given, unload all plugins, then autoload plugins)
-  unload: unload a plugin (if no name given, unload all plugins)
-filename: plugin (file) to load
-    name: a plugin name
+     list: list loaded plugins
+ listfull: list loaded plugins (verbose)
+     load: load a plugin
+ autoload: autoload plugins in system or user directory
+   reload: reload a plugin (if no name given, unload all plugins, then autoload plugins)
+   unload: unload a plugin (if no name given, unload all plugins)
+ filename: plugin (file) to load
+     name: a plugin name
+arguments: arguments given to plugin on load
 
 Without argument, this command lists loaded plugins.
 ........................................

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2011-09-30 16:34+0200\n"
+"POT-Creation-Date: 2011-11-08 17:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,8 +41,8 @@ msgid ""
 "  plugin:option     option for plugin\n"
 "                    for example, irc plugin can connect\n"
 "                    to server with url like:\n"
-"                    irc[6][s]://[nickname[:password]@]irc.example.org[/port]"
-"[//#channel1][,#channel2[...]]\n"
+"                    irc[6][s]://[nickname[:password]@]irc.example.org[:port]"
+"[/#channel1][,#channel2[...]]\n"
 "                    (look at plugins documentation for more information\n"
 "                    about possible options)\n"
 msgstr ""
@@ -54,6 +54,9 @@ msgstr ""
 
 #, c-format
 msgid "Error: missing argument for \"%s\" option\n"
+msgstr ""
+
+msgid "Error: WEECHAT_HOME is undefined, check build options\n"
 msgstr ""
 
 msgid "Error: unable to get HOME directory\n"
@@ -441,6 +444,12 @@ msgstr ""
 msgid "Layout reset for windows"
 msgstr ""
 
+msgid "Mouse enabled"
+msgstr ""
+
+msgid "Mouse disabled"
+msgstr ""
+
 msgid "Plugins loaded:"
 msgstr ""
 
@@ -805,8 +814,6 @@ msgid ""
 "    /bar hide mybar\n"
 "  scroll nicklist 10 lines down on current buffer:\n"
 "    /bar scroll nicklist * y+10\n"
-"  scroll nicklist one page up on #weechat buffer:\n"
-"    /bar scroll nicklist #weechat y-100%\n"
 "  scroll to end of nicklist on current buffer:\n"
 "    /bar scroll nicklist * ye"
 msgstr ""
@@ -1015,11 +1022,7 @@ msgid ""
 "  filter nicks displayed when joining channels or with /names:\n"
 "    /filter add nicks * irc_366 *\n"
 "  filter nick \"toto\" on IRC channel #weechat:\n"
-"    /filter add toto irc.freenode.#weechat * toto\\t\n"
-"  keep only nick \"titi\" on IRC channel #test:\n"
-"    /filter add titi irc.freenode.#test * !titi\\t\n"
-"  filter lines containing word \"spam\":\n"
-"    /filter add filterspam * * spam\n"
+"    /filter add toto irc.freenode.#weechat nick_toto *\n"
 "  filter lines containing \"weechat sucks\" on IRC channel #weechat:\n"
 "    /filter add sucks irc.freenode.#weechat * weechat sucks"
 msgstr ""
@@ -1089,6 +1092,8 @@ msgid ""
 "  history_global_next: recall next command in global history\n"
 "  jump_smart: jump to next buffer with activity\n"
 "  jump_last_buffer: jump to last buffer\n"
+"  jump_last_buffer_displayed: jump to last buffer displayed (before last "
+"jump to a buffer)\n"
 "  jump_previously_visited_buffer: jump to previously visited buffer\n"
 "  jump_next_visited_buffer: jump to next visited buffer\n"
 "  hotlist_clear: clear hotlist\n"
@@ -1244,20 +1249,21 @@ msgid "list/load/unload plugins"
 msgstr ""
 
 msgid ""
-"list|listfull [<name>] || load <filename> || autoload || reload|unload "
-"[<name>]"
+"list|listfull [<name>] || load <filename> [<arguments>] || autoload "
+"[<arguments>] || reload [<name> [<arguments>]] || unload [<name>]"
 msgstr ""
 
 msgid ""
-"    list: list loaded plugins\n"
-"listfull: list loaded plugins (verbose)\n"
-"    load: load a plugin\n"
-"autoload: autoload plugins in system or user directory\n"
-"  reload: reload a plugin (if no name given, unload all plugins, then "
+"     list: list loaded plugins\n"
+" listfull: list loaded plugins (verbose)\n"
+"     load: load a plugin\n"
+" autoload: autoload plugins in system or user directory\n"
+"   reload: reload a plugin (if no name given, unload all plugins, then "
 "autoload plugins)\n"
-"  unload: unload a plugin (if no name given, unload all plugins)\n"
-"filename: plugin (file) to load\n"
-"    name: a plugin name\n"
+"   unload: unload a plugin (if no name given, unload all plugins)\n"
+" filename: plugin (file) to load\n"
+"     name: a plugin name\n"
+"arguments: arguments given to plugin on load\n"
 "\n"
 "Without argument, this command lists loaded plugins."
 msgstr ""
@@ -2185,6 +2191,11 @@ msgstr ""
 msgid "maximum number of lines in history per buffer (0 = unlimited)"
 msgstr ""
 
+msgid ""
+"maximum number of minutes in history per buffer (0 = unlimited, examples: "
+"1440 = one day, 10080 = one week, 43200 = one month, 525600 = one year)"
+msgstr ""
+
 msgid "maximum number of user commands in history (0 = unlimited)"
 msgstr ""
 
@@ -2268,15 +2279,15 @@ msgid "%sWarning: %s, line %d: unknown section identifier (\"%s\")"
 msgstr ""
 
 #, c-format
-msgid "%sWarning: %s, line %d: option \"%s\" unknown for section \"%s\""
+msgid "%sWarning: %s, line %d: unknown option for section \"%s\": %s"
 msgstr ""
 
 #, c-format
-msgid "%sWarning: %s, line %d: unknown option \"%s\" (outside a section)"
+msgid "%sWarning: %s, line %d: option outside section: %s"
 msgstr ""
 
 #, c-format
-msgid "%sWarning: %s, line %d: invalid value for option \"%s\""
+msgid "%sWarning: %s, line %d: invalid value for option: %s"
 msgstr ""
 
 #, c-format
@@ -2535,7 +2546,10 @@ msgstr ""
 msgid "bar type (root, window, window_active, window_inactive)"
 msgstr ""
 
-msgid "condition(s) for displaying bar (for bars of type \"window\")"
+msgid ""
+"condition(s) for displaying bar (for bars of type \"window\"): \"active\" = "
+"window must be active, \"inactive\" = window must be inactive, \"nicklist\" "
+"= buffer must have a nicklist"
 msgstr ""
 
 msgid "bar position (bottom, top, left, right)"
@@ -2696,7 +2710,7 @@ msgstr ""
 msgid "create an alias for a command"
 msgstr ""
 
-msgid "[-completion <completion>] <alias> [<command> [<arguments>]]"
+msgid "[-completion <completion>] <alias> [<command> [;<command>...]]"
 msgstr ""
 
 #, c-format
@@ -2704,8 +2718,8 @@ msgid ""
 "completion: completion for alias (optional, by default completion is done "
 "with target command)\n"
 "     alias: name of alias (can start or end with \"*\" for alias listing)\n"
-"   command: command name (many commands can be separated by semicolons)\n"
-" arguments: arguments for command\n"
+"   command: command name with arguments (many commands can be separated by "
+"semicolons)\n"
 "\n"
 "Without argument, this command lists all defined alias.\n"
 "\n"
@@ -2800,7 +2814,11 @@ msgid ""
 " disable: disable aspell on current buffer\n"
 " addword: add a word in your personal aspell dictionary\n"
 "\n"
-"Input line beginning with a '/' is not checked, except for some commands."
+"Input line beginning with a '/' is not checked, except for some commands "
+"(see /set aspell.check.commands).\n"
+"\n"
+"To enable aspell on all buffers, use option \"default_dict\", for example:\n"
+"  /set aspell.check.default_dict \"en\""
 msgstr ""
 
 msgid "list of supported langs for aspell"
@@ -3358,16 +3376,18 @@ msgid "connect to IRC server(s)"
 msgstr ""
 
 msgid ""
-"[<server> [<server>...] | <hostname>[/<port>]] [-<option>[=<value>]] [-"
-"no<option>] [-nojoin] [-switch] || -all|-open [-nojoin] [-switch]"
+"<server> [<server>...] [-<option>[=<value>]] [-no<option>] [-nojoin] [-"
+"switch] || -all|-open [-nojoin] [-switch]"
 msgstr ""
 
 msgid ""
-"    server: internal server name to connect (server must have been created "
-"by /server add)\n"
-"  hostname: hostname (or IP) of a server (this will create a TEMPORARY "
-"server)\n"
-"      port: port for server (6667 by default)\n"
+"    server: server name, which can be:\n"
+"            - internal server name (created by /server add, recommended "
+"usage)\n"
+"            - hostname/port or IP/port (this will create a TEMPORARY "
+"server), port is 6667 by default\n"
+"            - URL with format: irc[6][s]://[nickname[:password]@]irc.example."
+"org[:port][/#channel1][,#channel2[...]]\n"
 "    option: set option for server (for boolean option, value can be "
 "omitted)\n"
 "  nooption: set boolean option to 'off' (for example: -nossl)\n"
@@ -3382,6 +3402,7 @@ msgid ""
 "  /connect irc6.oftc.net/6667 -ipv6\n"
 "  /connect irc6.oftc.net/6697 -ipv6 -ssl\n"
 "  /connect my.server.org/6697 -ssl -password=test\n"
+"  /connect irc://nick@irc.oftc.net/#channel\n"
 "  /connect -switch"
 msgstr ""
 
@@ -3619,7 +3640,8 @@ msgstr ""
 msgid "change channel or user mode"
 msgstr ""
 
-msgid "[<channel>] [+|-]o|p|s|i|t|n|b|v [<arguments>] || <nick> [+|-]i|w|s|o"
+msgid ""
+"[<channel>] [+|-]o|p|s|i|t|n|m|l|b|e|v|k [<arguments>] || <nick> [+|-]i|s|w|o"
 msgstr ""
 
 msgid ""
@@ -4468,6 +4490,18 @@ msgid "color for text in join messages"
 msgstr ""
 
 msgid "color for text in part/quit messages"
+msgstr ""
+
+#. TRANSLATORS: please do not translate the list of WeeChat color names at the end of string
+msgid ""
+"remap mirc colors in messages using a hashtable: keys are \"fg,bg\" as "
+"integers between -1 (not specified) and 15, values are WeeChat color names "
+"or numbers (format is: \"1,-1:color1;2,7:color2\"), example: \"1,-1:"
+"darkgray;1,2:white,blue\" to remap black on any bg to \"darkgray\" and black "
+"on blue to \"white,blue\"; default WeeChat colors for IRC codes: 0:white, 1:"
+"black, 2:blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: "
+"lightgreen, 10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, "
+"15:white"
 msgstr ""
 
 msgid ""
@@ -6119,31 +6153,19 @@ msgid "%s: registered script \"%s\", version %s (%s)"
 msgstr ""
 
 #, c-format
-msgid "%s%s: unable to run function \"%s\""
+msgid "%s: stdout/stderr: %s%s"
 msgstr ""
 
 #, c-format
-msgid "%s%s: script \"%s\" not found"
+msgid "%s%s: function \"%s\" must return a valid value"
+msgstr ""
+
+#, c-format
+msgid "%s%s: error in function \"%s\""
 msgstr ""
 
 #, c-format
 msgid "%s: loading script \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to create new sub-interpreter"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to redirect stdout and stderr"
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to load file \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s%s: unable to execute file \"%s\""
 msgstr ""
 
 #, c-format
@@ -6164,6 +6186,30 @@ msgstr ""
 
 #, c-format
 msgid "%s%s: unknown option for command \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to run function \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: script \"%s\" not found"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to create new sub-interpreter"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to redirect stdout and stderr"
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to load file \"%s\""
+msgstr ""
+
+#, c-format
+msgid "%s%s: unable to execute file \"%s\""
 msgstr ""
 
 #, c-format
@@ -6196,18 +6242,6 @@ msgstr ""
 
 #, c-format
 msgid "%s%s: unable to initialize %s"
-msgstr ""
-
-#, c-format
-msgid "%s%s: function \"%s\" must return a valid value"
-msgstr ""
-
-#, c-format
-msgid "%s%s: error in function \"%s\""
-msgstr ""
-
-#, c-format
-msgid "%s: stdout/stderr: %s%s"
 msgstr ""
 
 #, c-format
@@ -6262,6 +6296,11 @@ msgid "%s%s: unable to eval WeeChat ruby internal code"
 msgstr ""
 
 msgid "list/load/unload scripts"
+msgstr ""
+
+msgid ""
+"list|listfull [<name>] || load <filename> || autoload || reload|unload "
+"[<name>]"
 msgstr ""
 
 msgid ""
@@ -6355,7 +6394,7 @@ msgid "%s%s: unable to create new interpreter"
 msgstr ""
 
 #, c-format
-msgid "%s%s: error occured while parsing file \"%s\": %s"
+msgid "%s%s: error occurred while parsing file \"%s\": %s"
 msgstr ""
 
 msgid "  [A] Accept"
