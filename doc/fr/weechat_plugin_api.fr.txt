@@ -603,6 +603,50 @@ int diff = weechat_strcasecmp ("aaa", "CCC"); /* == -2 */
 [NOTE]
 Cette fonction n'est pas disponible dans l'API script.
 
+weechat_strcasecmp_range
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.7._
+
+Comparaison de chaînes indépendante de la locale et de la casse, avec un
+intervalle pour comparer la casse.
+
+Prototype :
+
+[source,C]
+----------------------------------------
+int weechat_strcasecmp_range (const char *string1, const char *string2, int range);
+----------------------------------------
+
+Paramètres :
+
+* 'string1' : première chaîne à comparer
+* 'string2' : seconde chaîne à comparer
+* 'range' : nombre de caractères pour la comparaison de casse, par exemple :
+** 26 : "A-Z" deviennent en minuscules "a-z"
+** 29 : "A-Z [ \ ]" deviennent minuscules "a-z { | }"
+** 30 : "A-Z [ \ ] ^" deviennent minuscules "a-z { | } ~"
+
+[NOTE]
+Les valeurs 29 et 30 sont utilisés par quelques protocoles comme IRC.
+
+Valeur de retour :
+
+* différence entre les deux chaînes :
+** négative si string1 < string2
+** zéro si string1 == string2
+** positive si string1 > string2
+
+Exemple en C :
+
+[source,C]
+----------------------------------------
+int diff = weechat_strcasecmp_range ("nick{away}", "NICK[away]", 29); /* == 0 */
+----------------------------------------
+
+[NOTE]
+Cette fonction n'est pas disponible dans l'API script.
+
 weechat_strncasecmp
 ^^^^^^^^^^^^^^^^^^^
 
@@ -634,6 +678,51 @@ Exemple en C :
 [source,C]
 ----------------------------------------
 int diff = weechat_strncasecmp ("aabb", "aacc", 2); /* == 0 */
+----------------------------------------
+
+[NOTE]
+Cette fonction n'est pas disponible dans l'API script.
+
+weechat_strncasecmp_range
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.7._
+
+Comparaison de chaînes indépendante de la locale et de la casse, pour 'max'
+caractères, avec un intervalle pour comparer la casse.
+
+Prototype :
+
+[source,C]
+----------------------------------------
+int weechat_strncasecmp_range (const char *string1, const char *string2, int max, int range);
+----------------------------------------
+
+Paramètres :
+
+* 'string1' : première chaîne à comparer
+* 'string2' : seconde chaîne à comparer
+* 'max' : nombre maximum de caractères à comparer
+* 'range' : nombre de caractères pour la comparaison de casse, par exemple :
+** 26 : "A-Z" deviennent en minuscules "a-z"
+** 29 : "A-Z [ \ ]" deviennent minuscules "a-z { | }"
+** 30 : "A-Z [ \ ] ^" deviennent minuscules "a-z { | } ~"
+
+[NOTE]
+Les valeurs 29 et 30 sont utilisés par quelques protocoles comme IRC.
+
+Valeur de retour :
+
+* différence entre les deux chaînes :
+** négative si string1 < string2
+** zéro si string1 == string2
+** positive si string1 > string2
+
+Exemple en C :
+
+[source,C]
+----------------------------------------
+int diff = weechat_strncasecmp_range ("nick{away}", "NICK[away]", 6, 29); /* == 0 */
 ----------------------------------------
 
 [NOTE]
@@ -8581,35 +8670,36 @@ Contenu de la hashtable envoyée au "callback" (les clés et valeurs sont de typ
 
 [width="100%",cols="5m,5,8,3",options="header"]
 |========================================
-| Clé ^(1)^                  | Description                     | Exemples de valeur                               | Valeur si non applicable
-| _x                         | colonne sur l'écran           2+| "0" ... "n"
-| _y                         | ligne sur l'écran             2+| "0" ... "n"
-| _key                       | touche ou évènement souris    2+| "button1", "button2-gesture-left", ...
-| _window                    | pointeur vers la fenêtre        | "0x12345678"                                     | ""
-| _window_number             | numéro de la fenêtre            | "1" ... "n"                                      | "*"
-| _buffer                    | pointeur vers le tampon         | "0x12345678"                                     | ""
-| _buffer_number             | numéro du tampon                | "1" ... "n"                                      | "-1"
-| _buffer_plugin             | nom d'extension du tampon       | "core", "irc", ...                               | ""
-| _buffer_name               | nom du tampon                   | "weechat", "freenode.#weechat", ...              | ""
-| _buffer_localvar_XXX ^(2)^ | variables locales du tampon     | toute chaîne                                     | non défini
-| _chat                      | indicateur zone "chat"          | "0" ou "1"                                       | "0"
-| _chat_line_x               | colonne de la ligne ^(3)^       | "0" ... "n"                                      | "-1"
-| _chat_line_y               | numéro de ligne ^(3)^           | "0" ... "n"                                      | "-1"
-| _chat_line_date            | date/heure de la ligne          | "1313237175"                                     | "0"
-| _chat_line_date_printed    | date/heure de la ligne ^(4)^    | "1313237175"                                     | "0"
-| _chat_line_time            | heure affichée                  | "14:06:15"                                       | ""
-| _chat_line_tags            | étiquettes de la ligne          | "irc_privmsg,notify_message,nick_FlashCode,log1" | ""
-| _chat_line_nick            | pseudo de la ligne              | "FlashCode"                                      | ""
-| _chat_line_prefix          | préfixe de la ligne             | "@FlashCode"                                     | ""
-| _chat_line_message         | message de la ligne             | "Hello world!"                                   | ""
-| _chat_word                 | mot à la position (x,y)         | "Hello"                                          | ""
-| _chat_bol                  | début de ligne ⇒ (x-1,y)        | "He"                                             | ""
-| _chat_eol                  | (x,y) ⇒ fin de ligne            | "llo world!"                                     | ""
-| _bar_name                  | nom de la barre                 | "title", "nicklist", ...                         | ""
-| _bar_filling               | remplissage de la barre         | "horizontal", "vertical", ...                    | ""
-| _bar_item_name             | nom de l'objet de barre         | "buffer_nicklist", "hotlist", ...                | ""
-| _bar_item_line             | ligne dans l'objet de barre     | "0" ... "n"                                      | "-1"
-| _bar_item_col              | colonne dans l'objet de barre   | "0" ... "n"                                      | "-1"
+| Clé ^(1)^                  | Description                   | Exemples de valeur                               | Valeur si non applicable
+| _x                         | colonne sur l'écran         2+| "0" ... "n"
+| _y                         | ligne sur l'écran           2+| "0" ... "n"
+| _key                       | touche ou évènement souris  2+| "button1", "button2-gesture-left", ...
+| _window                    | pointeur vers la fenêtre      | "0x12345678"                                     | ""
+| _window_number             | numéro de la fenêtre          | "1" ... "n"                                      | "*"
+| _buffer                    | pointeur vers le tampon       | "0x12345678"                                     | ""
+| _buffer_number             | numéro du tampon              | "1" ... "n"                                      | "-1"
+| _buffer_plugin             | nom d'extension du tampon     | "core", "irc", ...                               | ""
+| _buffer_name               | nom du tampon                 | "weechat", "freenode.#weechat", ...              | ""
+| _buffer_full_name          | nom complet du tampon         | "core.weechat", "irc.freenode.#weechat", ...     | ""
+| _buffer_localvar_XXX ^(2)^ | variables locales du tampon   | toute chaîne                                     | non défini
+| _chat                      | indicateur zone "chat"        | "0" ou "1"                                       | "0"
+| _chat_line_x               | colonne de la ligne ^(3)^     | "0" ... "n"                                      | "-1"
+| _chat_line_y               | numéro de ligne ^(3)^         | "0" ... "n"                                      | "-1"
+| _chat_line_date            | date/heure de la ligne        | "1313237175"                                     | "0"
+| _chat_line_date_printed    | date/heure de la ligne ^(4)^  | "1313237175"                                     | "0"
+| _chat_line_time            | heure affichée                | "14:06:15"                                       | ""
+| _chat_line_tags            | étiquettes de la ligne        | "irc_privmsg,notify_message,nick_FlashCode,log1" | ""
+| _chat_line_nick            | pseudo de la ligne            | "FlashCode"                                      | ""
+| _chat_line_prefix          | préfixe de la ligne           | "@FlashCode"                                     | ""
+| _chat_line_message         | message de la ligne           | "Hello world!"                                   | ""
+| _chat_word                 | mot à la position (x,y)       | "Hello"                                          | ""
+| _chat_bol                  | début de ligne ⇒ (x-1,y)      | "He"                                             | ""
+| _chat_eol                  | (x,y) ⇒ fin de ligne          | "llo world!"                                     | ""
+| _bar_name                  | nom de la barre               | "title", "nicklist", ...                         | ""
+| _bar_filling               | remplissage de la barre       | "horizontal", "vertical", ...                    | ""
+| _bar_item_name             | nom de l'objet de barre       | "buffer_nicklist", "hotlist", ...                | ""
+| _bar_item_line             | ligne dans l'objet de barre   | "0" ... "n"                                      | "-1"
+| _bar_item_col              | colonne dans l'objet de barre | "0" ... "n"                                      | "-1"
 |========================================
 
 [NOTE]
@@ -9205,6 +9295,7 @@ Paramètres :
 ** 'plugin' : nom de l'extension qui a créé ce tampon ("core" pour le tampon
    principal WeeChat)
 ** 'name' : nom du tampon
+** 'full_name' : nom complet du tampon ("extension.nom") (_nouveau dans la version 0.3.7_)
 ** 'short_name' : nom court du tampon
 ** 'title' : titre du tampon
 ** 'input' : texte saisi
@@ -10212,6 +10303,58 @@ weechat.nicklist_remove_all(buffer)
 # exemple
 weechat.nicklist_remove_all(my_buffer)
 ----------------------------------------
+
+weechat_nicklist_get_next_item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.7._
+
+Retourne le prochain groupe ou pseudo de la liste des pseudos (utilisé
+principalement pour afficher la liste des pseudos).
+
+Prototype :
+
+[source,C]
+----------------------------------------
+void gui_nicklist_get_next_item (struct t_gui_buffer *buffer,
+                                 struct t_gui_nick_group **group,
+                                 struct t_gui_nick **nick);
+----------------------------------------
+
+Paramètres :
+
+* 'buffer' : pointeur vers le tampon
+* 'group' : pointeur vers un pointeur sur le groupe
+* 'nick' : pointeur vers un pointeur sur le pseudo
+
+Exemple en C :
+
+[source,C]
+----------------------------------------
+struct t_gui_nick_group *ptr_group;
+struct t_gui_nick *ptr_nick;
+
+ptr_group = NULL;
+ptr_nick = NULL;
+gui_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
+while (ptr_group || ptr_nick)
+{
+    if (ptr_nick)
+    {
+        /* pseudo */
+        /* ... */
+    }
+    else
+    {
+        /* groupe */
+        /* ... */
+    }
+    gui_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
+}
+----------------------------------------
+
+[NOTE]
+Cette fonction n'est pas disponible dans l'API script.
 
 weechat_nicklist_group_get_integer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12206,6 +12349,7 @@ Paramètres :
 * 'name' : nom de la variable
 * 'offset' : position (offset) de la variable dans la structure
 * 'type' : type de la variable, un parmi ceux-ci :
+** WEECHAT_HDATA_CHAR
 ** WEECHAT_HDATA_INTEGER
 ** WEECHAT_HDATA_LONG
 ** WEECHAT_HDATA_STRING
@@ -12421,6 +12565,9 @@ Exemple en C :
 int type = weechat_hdata_get_var_type (hdata, "name");
 switch (type)
 {
+    case WEECHAT_HDATA_CHAR:
+        /* ... */
+        break;
     case WEECHAT_HDATA_INTEGER:
         /* ... */
         break;
@@ -12704,6 +12851,49 @@ buffer = weechat.hdata_move(hdata, buffer, 2)
 # se déplacer au tampon précédent
 if buffer:
     buffer = weechat.hdata_move(hdata, buffer, -1)
+----------------------------------------
+
+weechat_hdata_char
+^^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.7._
+
+Retourne la valeur de la variable dans la structure en utilisant le hdata, sous
+forme de caractère.
+
+Prototype :
+
+[source,C]
+----------------------------------------
+char weechat_hdata_char (struct t_hdata *hdata, void *pointer, const char *name);
+----------------------------------------
+
+Paramètres :
+
+* 'hdata' : pointeur vers le hdata
+* 'pointer' : pointeur vers un objet WeeChat ou d'une extension
+* 'name' : nom de la variable (doit être de type "char")
+
+Valeur de retour :
+
+* valeur de la variable, sous forme de caractère
+
+Exemple en C :
+
+[source,C]
+----------------------------------------
+weechat_printf (NULL, "letter = %c", weechat_hdata_char (hdata, pointer, "letter"));
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototype
+value = weechat.hdata_char(hdata, pointer, name)
+
+# exemple
+weechat.prnt("", "letter = %c" % weechat.hdata_char(hdata, pointer, "letter"))
 ----------------------------------------
 
 weechat_hdata_integer

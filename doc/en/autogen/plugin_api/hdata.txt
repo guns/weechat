@@ -137,6 +137,7 @@
   'prefix_modes' (string) +
   'prefix_chars' (string) +
   'nick_max_length' (integer) +
+  'casemapping' (integer) +
   'reconnect_delay' (integer) +
   'reconnect_start' (time) +
   'command_time' (time) +
@@ -227,6 +228,7 @@
   'layout_number' (integer) +
   'layout_number_merge_order' (integer) +
   'name' (string) +
+  'full_name' (string) +
   'short_name' (string) +
   'type' (integer) +
   'notify' (integer) +
@@ -443,9 +445,9 @@
   'str_time' (string) +
   'tags_count' (integer) +
   'tags_array' (pointer) +
-  'displayed' (integer) +
-  'highlight' (integer) +
-  'refresh_needed' (integer) +
+  'displayed' (char) +
+  'highlight' (char) +
+  'refresh_needed' (char) +
   'prefix' (string) +
   'prefix_length' (integer) +
   'message' (string) |

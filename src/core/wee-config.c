@@ -141,6 +141,7 @@ struct t_config_option *config_look_read_marker_string;
 struct t_config_option *config_look_save_config_on_exit;
 struct t_config_option *config_look_save_layout_on_exit;
 struct t_config_option *config_look_scroll_amount;
+struct t_config_option *config_look_scroll_bottom_after_switch;
 struct t_config_option *config_look_scroll_page_percent;
 struct t_config_option *config_look_search_text_not_found_alert;
 struct t_config_option *config_look_separator_horizontal;
@@ -202,6 +203,7 @@ struct t_config_option *config_color_nicklist_offline;
 
 /* config, completion section */
 
+struct t_config_option *config_completion_base_word_until_cursor;
 struct t_config_option *config_completion_default_template;
 struct t_config_option *config_completion_nick_add_space;
 struct t_config_option *config_completion_nick_completer;
@@ -241,6 +243,8 @@ int config_day_change_old_day = -1;
 regex_t *config_highlight_regex = NULL;
 char **config_highlight_tags = NULL;
 int config_num_highlight_tags = 0;
+char **config_plugin_extensions = NULL;
+int config_num_plugin_extensions = 0;
 
 
 /*
@@ -352,7 +356,13 @@ config_change_eat_newline_glitch (void *data, struct t_config_option *option)
     if (gui_ok)
     {
         if (CONFIG_BOOLEAN(config_look_eat_newline_glitch))
+        {
+            gui_chat_printf (NULL,
+                             _("WARNING: this option can cause serious display "
+                               "bugs, if you have such problems, you must "
+                               "turn off this option."));
             gui_term_set_eat_newline_glitch (0);
+        }
         else
             gui_term_set_eat_newline_glitch (1);
     }
@@ -533,6 +543,31 @@ config_change_network_gnutls_ca_file (void *data,
         network_set_gnutls_ca_file ();
 }
 
+/*
+ * config_change_plugin_extension: called when plugin extension is changed
+ */
+
+void
+config_change_plugin_extension (void *data, struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (config_plugin_extensions)
+    {
+        string_free_split (config_plugin_extensions);
+        config_plugin_extensions = NULL;
+    }
+    config_num_plugin_extensions = 0;
+
+    if (CONFIG_STRING(config_plugin_extension)
+        && CONFIG_STRING(config_plugin_extension)[0])
+    {
+        config_plugin_extensions = string_split (CONFIG_STRING(config_plugin_extension),
+                                                 ",", 0, 0, &config_num_plugin_extensions);
+    }
+}
 
 /*
  * config_day_change_timer_cb: timer callback for displaying
@@ -627,6 +662,9 @@ config_weechat_init_after_read ()
         if (!gui_keys[i])
             gui_key_default_bindings (i);
     }
+
+    /* apply filters on all buffers */
+    gui_filter_all_buffers ();
 }
 
 /*
@@ -670,8 +708,7 @@ config_weechat_reload_cb (void *data, struct t_config_file *config_file)
 
     rc = config_file_reload (config_file);
 
-    if (rc == WEECHAT_CONFIG_READ_OK)
-        config_weechat_init_after_read ();
+    config_weechat_init_after_read ();
 
     return rc;
 }
@@ -1337,9 +1374,7 @@ config_weechat_notify_delete_option_cb (void *data,
 int
 config_weechat_notify_set (struct t_gui_buffer *buffer, const char *notify)
 {
-    const char *plugin_name;
-    char *option_name;
-    int i, value, length;
+    int i, value;
 
     if (!buffer || !notify)
         return 0;
@@ -1356,24 +1391,14 @@ config_weechat_notify_set (struct t_gui_buffer *buffer, const char *notify)
     if ((value < 0) && (strcmp (notify, "reset") != 0))
         return 0;
 
-    plugin_name = gui_buffer_get_plugin_name (buffer);
-    length = strlen (plugin_name) + 1 + strlen (buffer->name) + 1;
-    option_name = malloc (length);
-    if (option_name)
-    {
-        snprintf (option_name, length, "%s.%s", plugin_name, buffer->name);
-
-        /* create/update option */
-        config_weechat_notify_create_option_cb (NULL,
-                                                weechat_config_file,
-                                                weechat_config_section_notify,
-                                                option_name,
-                                                (value < 0) ?
-                                                NULL : gui_buffer_notify_string[value]);
-        return 1;
-    }
-
-    return 0;
+    /* create/update option */
+    config_weechat_notify_create_option_cb (NULL,
+                                            weechat_config_file,
+                                            weechat_config_section_notify,
+                                            buffer->full_name,
+                                            (value < 0) ?
+                                            NULL : gui_buffer_notify_string[value]);
+    return 1;
 }
 
 /*
@@ -2015,6 +2040,13 @@ config_weechat_init_options ()
         N_("how many lines to scroll by with scroll_up and "
            "scroll_down"),
         NULL, 1, INT_MAX, "3", NULL, 0, NULL, NULL, &config_change_buffer_content, NULL, NULL, NULL);
+    config_look_scroll_bottom_after_switch = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "scroll_bottom_after_switch", "boolean",
+        N_("scroll to bottom of window after switch to another buffer (do not "
+           "remember scroll position in windows); the scroll is done only for "
+            "buffers with formatted content (not free content)"),
+        NULL, 0, 0, "off", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_scroll_page_percent = config_file_new_option (
         weechat_config_file, ptr_section,
         "scroll_page_percent", "integer",
@@ -2427,6 +2459,12 @@ config_weechat_init_options ()
         return 0;
     }
 
+    config_completion_base_word_until_cursor = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "base_word_until_cursor", "boolean",
+        N_("if enabled, the base word to complete ends at char before cursor; "
+           "otherwise the base word ends at first space after cursor"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_completion_default_template = config_file_new_option (
         weechat_config_file, ptr_section,
         "default_template", "string",
@@ -2593,15 +2631,9 @@ config_weechat_init_options ()
     config_plugin_extension = config_file_new_option (
         weechat_config_file, ptr_section,
         "extension", "string",
-        N_("standard plugins extension in filename (for example "
-           "\".so\" under Linux or \".dll\" under Microsoft Windows)"),
-        NULL, 0, 0,
-#if defined(WIN32) || defined(__CYGWIN__)
-        ".dll",
-#else
-        ".so",
-#endif
-        NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        N_("comma separated list of file name extensions for plugins"),
+        NULL, 0, 0, ".so,.dll", NULL, 0, NULL, NULL,
+        &config_change_plugin_extension, NULL, NULL, NULL);
     config_plugin_path = config_file_new_option (
         weechat_config_file, ptr_section,
         "path", "string",
@@ -2729,6 +2761,8 @@ config_weechat_init ()
         config_change_highlight_regex (NULL, NULL);
     if (!config_highlight_tags)
         config_change_highlight_tags (NULL, NULL);
+    if (!config_plugin_extensions)
+        config_change_plugin_extension (NULL, NULL);
 
     return rc;
 }
@@ -2747,8 +2781,8 @@ config_weechat_read ()
     int rc;
 
     rc = config_file_read (weechat_config_file);
-    if (rc == WEECHAT_CONFIG_READ_OK)
-        config_weechat_init_after_read ();
+
+    config_weechat_init_after_read ();
 
     if (rc != WEECHAT_CONFIG_READ_OK)
     {

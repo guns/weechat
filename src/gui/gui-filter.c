@@ -75,7 +75,7 @@ gui_filter_line_has_tag_no_filter (struct t_gui_line *line)
  */
 
 int
-gui_filter_check_line (struct t_gui_line *line, const char *buffer_full_name)
+gui_filter_check_line (struct t_gui_line *line)
 {
     struct t_gui_filter *ptr_filter;
     int rc;
@@ -93,9 +93,9 @@ gui_filter_check_line (struct t_gui_line *line, const char *buffer_full_name)
         if (ptr_filter->enabled)
         {
             /* check buffer */
-            if (gui_buffer_full_name_match_list (buffer_full_name,
-                                                 ptr_filter->num_buffers,
-                                                 ptr_filter->buffers))
+            if (gui_buffer_match_list_split (line->data->buffer,
+                                             ptr_filter->num_buffers,
+                                             ptr_filter->buffers))
             {
                 if ((strcmp (ptr_filter->tags, "*") == 0)
                     || (gui_line_match_tags (line,
@@ -134,20 +134,15 @@ gui_filter_buffer (struct t_gui_buffer *buffer)
 {
     struct t_gui_line *ptr_line;
     int line_displayed, lines_hidden;
-    char buffer_full_name[512];
 
     lines_hidden = 0;
 
     buffer->lines->prefix_max_length = CONFIG_INTEGER(config_look_prefix_align_min);
 
-    snprintf (buffer_full_name, sizeof (buffer_full_name), "%s.%s",
-              gui_buffer_get_plugin_name (buffer),
-              buffer->name);
-
     for (ptr_line = buffer->lines->first_line; ptr_line;
          ptr_line = ptr_line->next_line)
     {
-        line_displayed = gui_filter_check_line (ptr_line, buffer_full_name);
+        line_displayed = gui_filter_check_line (ptr_line);
 
         if (line_displayed
             && (ptr_line->data->prefix_length > buffer->lines->prefix_max_length))
@@ -218,34 +213,6 @@ gui_filter_global_disable ()
         gui_filter_all_buffers ();
         hook_signal_send ("filters_disabled",
                           WEECHAT_HOOK_SIGNAL_STRING, NULL);
-    }
-}
-
-/*
- * gui_filter_enable: enable a filter
- */
-
-void
-gui_filter_enable (struct t_gui_filter *filter)
-{
-    if (filter && !filter->enabled)
-    {
-        filter->enabled = 1;
-        gui_filter_all_buffers ();
-    }
-}
-
-/*
- * gui_filter_disable: disable a filter
- */
-
-void
-gui_filter_disable (struct t_gui_filter *filter)
-{
-    if (filter && filter->enabled)
-    {
-        filter->enabled = 0;
-        gui_filter_all_buffers ();
     }
 }
 
@@ -382,8 +349,6 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
         last_gui_filter = new_filter;
         new_filter->next_filter = NULL;
 
-        gui_filter_all_buffers ();
-
         hook_signal_send ("filter_added",
                           WEECHAT_HOOK_SIGNAL_POINTER, new_filter);
     }
@@ -455,8 +420,6 @@ gui_filter_free (struct t_gui_filter *filter)
         last_gui_filter = filter->prev_filter;
 
     free (filter);
-
-    gui_filter_all_buffers ();
 
     hook_signal_send ("filter_removed", WEECHAT_HOOK_SIGNAL_STRING, NULL);
 }

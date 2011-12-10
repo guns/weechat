@@ -596,6 +596,50 @@ int diff = weechat_strcasecmp ("aaa", "CCC"); /* == -2 */
 [NOTE]
 This function is not available in scripting API.
 
+weechat_strcasecmp_range
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.7._
+
+Locale and case independent string comparison, using a range for case
+comparison.
+
+Prototype:
+
+[source,C]
+----------------------------------------
+int weechat_strcasecmp_range (const char *string1, const char *string2, int range);
+----------------------------------------
+
+Arguments:
+
+* 'string1': first string for comparison
+* 'string2': second string for comparison
+* 'range': number of chars in case comparison, for example:
+** 26: "A-Z" are lowered to "a-z"
+** 29: "A-Z [ \ ]" are lowered to "a-z { | }"
+** 30: "A-Z [ \ ] ^" are lowered to "a-z { | } ~"
+
+[NOTE]
+Values 29 and 30 are used by some protocols like IRC.
+
+Return value:
+
+* difference between two strings:
+** negative if string1 < string2
+** zero if string1 == string2
+** positive if string1 > string2
+
+C example:
+
+[source,C]
+----------------------------------------
+int diff = weechat_strcasecmp_range ("nick{away}", "NICK[away]", 29); /* == 0 */
+----------------------------------------
+
+[NOTE]
+This function is not available in scripting API.
+
 weechat_strncasecmp
 ^^^^^^^^^^^^^^^^^^^
 
@@ -626,6 +670,51 @@ C example:
 [source,C]
 ----------------------------------------
 int diff = weechat_strncasecmp ("aabb", "aacc", 2); /* == 0 */
+----------------------------------------
+
+[NOTE]
+This function is not available in scripting API.
+
+weechat_strncasecmp_range
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.7._
+
+Locale and case independent string comparison, for 'max' chars, using a range
+for case comparison.
+
+Prototype:
+
+[source,C]
+----------------------------------------
+int weechat_strncasecmp_range (const char *string1, const char *string2, int max, int range);
+----------------------------------------
+
+Arguments:
+
+* 'string1': first string for comparison
+* 'string2': second string for comparison
+* 'max': max chars to compare
+* 'range': number of chars in case comparison, for example:
+** 26: "A-Z" are lowered to "a-z"
+** 29: "A-Z [ \ ]" are lowered to "a-z { | }"
+** 30: "A-Z [ \ ] ^" are lowered to "a-z { | } ~"
+
+[NOTE]
+Values 29 and 30 are used by some protocols like IRC.
+
+Return value:
+
+* difference between two strings:
+** negative if string1 < string2
+** zero if string1 == string2
+** positive if string1 > string2
+
+C example:
+
+[source,C]
+----------------------------------------
+int diff = weechat_strncasecmp_range ("nick{away}", "NICK[away]", 6, 29); /* == 0 */
 ----------------------------------------
 
 [NOTE]
@@ -8447,6 +8536,7 @@ Content of hashtable sent to callback (keys and values are of type "string"):
 | _buffer_number             | number of buffer            | "1" ... "n"                                      | "-1"
 | _buffer_plugin             | plugin name of buffer       | "core", "irc", ...                               | ""
 | _buffer_name               | name of buffer              | "weechat", "freenode.#weechat", ...              | ""
+| _buffer_full_name          | full name of buffer         | "core.weechat", "irc.freenode.#weechat", ...     | ""
 | _buffer_localvar_XXX ^(2)^ | local variables of buffer   | any value                                        | not set
 | _chat                      | chat area indicator         | "0" or "1"                                       | "0"
 | _chat_line_x               | column in line ^(3)^        | "0" ... "n"                                      | "-1"
@@ -9055,6 +9145,7 @@ Arguments:
 ** 'plugin': name of plugin which created this buffer ("core" for WeeChat main
    buffer)
 ** 'name': name of buffer
+** 'full_name': full name of buffer ("plugin.name") (_new in version 0.3.7_)
 ** 'short_name': short name of buffer
 ** 'title': title of buffer
 ** 'input': input text
@@ -10037,6 +10128,57 @@ weechat.nicklist_remove_all(buffer)
 # example
 weechat.nicklist_remove_all(my_buffer)
 ----------------------------------------
+
+weechat_nicklist_get_next_item
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.7._
+
+Get next group or nick from nicklist (mainly used to display nicklist).
+
+Prototype:
+
+[source,C]
+----------------------------------------
+void gui_nicklist_get_next_item (struct t_gui_buffer *buffer,
+                                 struct t_gui_nick_group **group,
+                                 struct t_gui_nick **nick);
+----------------------------------------
+
+Arguments:
+
+* 'buffer': buffer pointer
+* 'group': pointer on pointer to group
+* 'nick': pointer on pointer to nick
+
+C example:
+
+[source,C]
+----------------------------------------
+struct t_gui_nick_group *ptr_group;
+struct t_gui_nick *ptr_nick;
+
+ptr_group = NULL;
+ptr_nick = NULL;
+gui_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
+while (ptr_group || ptr_nick)
+{
+    if (ptr_nick)
+    {
+        /* nick */
+        /* ... */
+    }
+    else
+    {
+        /* group */
+        /* ... */
+    }
+    gui_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
+}
+----------------------------------------
+
+[NOTE]
+This function is not available in scripting API.
 
 weechat_nicklist_group_get_integer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12001,6 +12143,7 @@ Arguments:
 * 'name': variable name
 * 'offset': offset of variable in structure
 * 'type': variable type, one of:
+** WEECHAT_HDATA_CHAR
 ** WEECHAT_HDATA_INTEGER
 ** WEECHAT_HDATA_LONG
 ** WEECHAT_HDATA_STRING
@@ -12214,6 +12357,9 @@ C example:
 int type = weechat_hdata_get_var_type (hdata, "name");
 switch (type)
 {
+    case WEECHAT_HDATA_CHAR:
+        /* ... */
+        break;
     case WEECHAT_HDATA_INTEGER:
         /* ... */
         break;
@@ -12496,6 +12642,48 @@ buffer = weechat.hdata_move(hdata, buffer, 2)
 # move to previous buffer
 if buffer:
     buffer = weechat.hdata_move(hdata, buffer, -1)
+----------------------------------------
+
+weechat_hdata_char
+^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.7._
+
+Return value of char variable in structure using hdata.
+
+Prototype:
+
+[source,C]
+----------------------------------------
+char weechat_hdata_char (struct t_hdata *hdata, void *pointer, const char *name);
+----------------------------------------
+
+Arguments:
+
+* 'hdata': hdata pointer
+* 'pointer': pointer to WeeChat/plugin object
+* 'name': variable name (must be type "char")
+
+Return value:
+
+* char value of variable
+
+C example:
+
+[source,C]
+----------------------------------------
+weechat_printf (NULL, "letter = %c", weechat_hdata_char (hdata, pointer, "letter"));
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototype
+value = weechat.hdata_char(hdata, pointer, name)
+
+# example
+weechat.prnt("", "letter = %c" % weechat.hdata_char(hdata, pointer, "letter"))
 ----------------------------------------
 
 weechat_hdata_integer

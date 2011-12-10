@@ -4922,6 +4922,7 @@ XS (XS_weechat_api_infolist_pointer)
 XS (XS_weechat_api_infolist_time)
 {
     time_t time;
+    struct tm *date_tmp;
     char timebuffer[64], *result, *infolist, *variable;
     dXSARGS;
 
@@ -4931,8 +4932,12 @@ XS (XS_weechat_api_infolist_time)
 
     infolist = SvPV_nolen (ST (0));
     variable = SvPV_nolen (ST (1));
+
+    timebuffer[0] = '\0';
     time = weechat_infolist_time (script_str2ptr (infolist), variable);
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -5090,6 +5095,31 @@ XS (XS_weechat_api_hdata_move)
 }
 
 /*
+ * weechat::hdata_char: get char value of a variable in structure using hdata
+ */
+
+XS (XS_weechat_api_hdata_char)
+{
+    char *hdata, *pointer, *name;
+    int value;
+    dXSARGS;
+
+    API_FUNC(1, "hdata_char", API_RETURN_INT(0));
+    if (items < 3)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    hdata = SvPV_nolen (ST (0));
+    pointer = SvPV_nolen (ST (1));
+    name = SvPV_nolen (ST (2));
+
+    value = (int)weechat_hdata_char (script_str2ptr (hdata),
+                                     script_str2ptr (pointer),
+                                     name);
+
+    API_RETURN_INT(value);
+}
+
+/*
  * weechat::hdata_integer: get integer value of a variable in structure using
  *                         hdata
  */
@@ -5199,6 +5229,7 @@ XS (XS_weechat_api_hdata_pointer)
 XS (XS_weechat_api_hdata_time)
 {
     time_t time;
+    struct tm *date_tmp;
     char timebuffer[64], *result, *hdata, *pointer, *name;
     dXSARGS;
 
@@ -5210,10 +5241,13 @@ XS (XS_weechat_api_hdata_time)
     pointer = SvPV_nolen (ST (1));
     name = SvPV_nolen (ST (2));
 
+    timebuffer[0] = '\0';
     time = weechat_hdata_time (script_str2ptr (hdata),
                                script_str2ptr (pointer),
                                name);
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -5562,6 +5596,7 @@ weechat_perl_api_init (pTHX)
     newXS ("weechat::hdata_get_var_hdata", XS_weechat_api_hdata_get_var_hdata, "weechat");
     newXS ("weechat::hdata_get_list", XS_weechat_api_hdata_get_list, "weechat");
     newXS ("weechat::hdata_move", XS_weechat_api_hdata_move, "weechat");
+    newXS ("weechat::hdata_char", XS_weechat_api_hdata_char, "weechat");
     newXS ("weechat::hdata_integer", XS_weechat_api_hdata_integer, "weechat");
     newXS ("weechat::hdata_long", XS_weechat_api_hdata_long, "weechat");
     newXS ("weechat::hdata_string", XS_weechat_api_hdata_string, "weechat");

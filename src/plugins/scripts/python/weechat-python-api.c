@@ -5104,6 +5104,7 @@ weechat_python_api_infolist_time (PyObject *self, PyObject *args)
 {
     char *infolist, *variable, timebuffer[64], *result;
     time_t time;
+    struct tm *date_tmp;
     PyObject *return_value;
 
     API_FUNC(1, "infolist_time", API_RETURN_EMPTY);
@@ -5112,9 +5113,12 @@ weechat_python_api_infolist_time (PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple (args, "ss", &infolist, &variable))
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
+    timebuffer[0] = '\0';
     time = weechat_infolist_time (script_str2ptr (infolist),
                                   variable);
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -5271,6 +5275,31 @@ weechat_python_api_hdata_move (PyObject *self, PyObject *args)
 }
 
 /*
+ * weechat_python_api_hdata_char: get char value of a variable in structure
+ *                                using hdata
+ */
+
+static PyObject *
+weechat_python_api_hdata_char (PyObject *self, PyObject *args)
+{
+    char *hdata, *pointer, *name;
+    int value;
+
+    API_FUNC(1, "hdata_char", API_RETURN_INT(0));
+    hdata = NULL;
+    pointer = NULL;
+    name = NULL;
+    if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = (int)weechat_hdata_char (script_str2ptr (hdata),
+                                     script_str2ptr (pointer),
+                                     name);
+
+    API_RETURN_INT(value);
+}
+
+/*
  * weechat_python_api_hdata_integer: get integer value of a variable in
  *                                   structure using hdata
  */
@@ -5380,6 +5409,7 @@ weechat_python_api_hdata_time (PyObject *self, PyObject *args)
 {
     char *hdata, *pointer, *name, timebuffer[64], *result;
     time_t time;
+    struct tm *date_tmp;
     PyObject *return_value;
 
     API_FUNC(1, "hdata_time", API_RETURN_EMPTY);
@@ -5389,10 +5419,13 @@ weechat_python_api_hdata_time (PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple (args, "sss", &hdata, &pointer, &name))
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
+    timebuffer[0] = '\0';
     time = weechat_hdata_time (script_str2ptr (hdata),
                                script_str2ptr (pointer),
                                name);
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -5733,6 +5766,7 @@ PyMethodDef weechat_python_funcs[] =
     { "hdata_get_var_hdata", &weechat_python_api_hdata_get_var_hdata, METH_VARARGS, "" },
     { "hdata_get_list", &weechat_python_api_hdata_get_list, METH_VARARGS, "" },
     { "hdata_move", &weechat_python_api_hdata_move, METH_VARARGS, "" },
+    { "hdata_char", &weechat_python_api_hdata_char, METH_VARARGS, "" },
     { "hdata_integer", &weechat_python_api_hdata_integer, METH_VARARGS, "" },
     { "hdata_long", &weechat_python_api_hdata_long, METH_VARARGS, "" },
     { "hdata_string", &weechat_python_api_hdata_string, METH_VARARGS, "" },

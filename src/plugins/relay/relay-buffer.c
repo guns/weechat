@@ -64,11 +64,11 @@ relay_buffer_refresh (const char *hotlist)
                           weechat_color("lightgreen"),
                           /* disconnect */
                           (client_selected
-                           && !RELAY_CLIENT_HAS_ENDED(client_selected->status)) ?
+                           && !RELAY_CLIENT_HAS_ENDED(client_selected)) ?
                           _("  [D] Disconnect") : "",
                           /* remove */
                           (client_selected
-                           && RELAY_CLIENT_HAS_ENDED(client_selected->status)) ?
+                           && RELAY_CLIENT_HAS_ENDED(client_selected)) ?
                           _("  [R] Remove") : "",
                           /* purge old */
                           _("  [P] Purge finished"),
@@ -95,15 +95,22 @@ relay_buffer_refresh (const char *hotlist)
                 }
             }
 
+            date_start[0] = '\0';
             date_tmp = localtime (&(ptr_client->start_time));
-            strftime (date_start, sizeof (date_start),
-                      "%a, %d %b %Y %H:%M:%S", date_tmp);
+            if (date_tmp)
+            {
+                strftime (date_start, sizeof (date_start),
+                          "%a, %d %b %Y %H:%M:%S", date_tmp);
+            }
             date_end[0] = '\0';
             if (ptr_client->end_time > 0)
             {
                 date_tmp = localtime (&(ptr_client->end_time));
-                strftime (date_end, sizeof (date_end),
-                          "%a, %d %b %Y %H:%M:%S", date_tmp);
+                if (date_tmp)
+                {
+                    strftime (date_end, sizeof (date_end),
+                              "%a, %d %b %Y %H:%M:%S", date_tmp);
+                }
             }
 
             /* first line with status and start time */
@@ -171,7 +178,7 @@ relay_buffer_input_cb (void *data, struct t_gui_buffer *buffer,
         /* disconnect client */
         if (weechat_strcasecmp (input_data, "d") == 0)
         {
-            if (client && !RELAY_CLIENT_HAS_ENDED(client->status))
+            if (client && !RELAY_CLIENT_HAS_ENDED(client))
             {
                 relay_client_disconnect (client);
                 relay_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
@@ -184,7 +191,7 @@ relay_buffer_input_cb (void *data, struct t_gui_buffer *buffer,
             while (ptr_client)
             {
                 next_client = ptr_client->next_client;
-                if (RELAY_CLIENT_HAS_ENDED(ptr_client->status))
+                if (RELAY_CLIENT_HAS_ENDED(ptr_client))
                     relay_client_free (ptr_client);
                 ptr_client = next_client;
             }
@@ -198,7 +205,7 @@ relay_buffer_input_cb (void *data, struct t_gui_buffer *buffer,
         /* remove client */
         else if (weechat_strcasecmp (input_data, "r") == 0)
         {
-            if (client && RELAY_CLIENT_HAS_ENDED(client->status))
+            if (client && RELAY_CLIENT_HAS_ENDED(client))
             {
                 relay_client_free (client);
                 relay_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);

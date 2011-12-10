@@ -1,12 +1,23 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.7-dev, 2011-11-08
+v0.3.7-dev, 2011-12-09
 
 
 Version 0.3.7 (under dev!)
 --------------------------
 
+* core: add option "hooks" for command /debug
+* core: add option "weechat.look.scroll_bottom_after_switch" (if enabled,
+  restore old behaviour before fix of bug #25555 in version 0.3.5)
+* core: apply filters after full reload of configuration files (with /reload)
+  (bug #31182)
+* core: allow list for option weechat.plugin.extension (makes weechat.conf
+  portable accross Un*x and Windows) (task #11479)
+* core: fix compilation under OpenBSD 5.0 (lib utf8 not needed any more)
+  (bug #34727)
+* core: add new option weechat.completion.base_word_until_cursor: allow
+  completion in middle of words (enabled by default) (task #9771)
 * core: add option "jump_last_buffer_displayed" for command /input
   (key: alt+"/") (task #11553)
 * core: display error in command /buffer if arguments are wrong (bug #34180)
@@ -22,6 +33,17 @@ Version 0.3.7 (under dev!)
 * core: fix compilation error with "pid_t" on Mac OS X (bug #34639)
 * core: enable background process under Cygwin to connect to servers, fix
   reconnection problem (bug #34626)
+* api: add new functions strcasecmp_range, strncasecmp_range, hdata_char and
+  nicklist_get_next_item
+* irc: reset read marker of current buffer on manual /join
+* irc: fix crash when signon time in message 317 (whois, idle) is invalid
+  (too large) (bug #34905)
+* irc: do not delete servers added in irc.conf on /reload (bug #34872)
+* irc: remove autorejoin on channels when disconnected from server (bug #32207)
+* irc: display messages kick/kill/mode/topic even if nick is ignored
+  (bug #34853)
+* irc: add case insensitive string comparison based on casemapping of server
+  (rfc1459, strict-rfc1459, ascii) (bug #34239)
 * irc: display channel voice notices received in channel buffer (bug #34762),
   display channel/op notices sent in channel buffer
 * irc: add option irc.color.mirc_remap to remap mirc colors in messages to
@@ -30,7 +52,9 @@ Version 0.3.7 (under dev!)
 * irc: auto-connect to servers created with "irc://" on command line but not
   other servers if "-a" ("--no-connect") is given
 * guile: new script plugin for scheme (task #7289)
+* relay: add WeeChat protocol for remote GUI
 * ruby: fix crash when reloading ruby plugin (bug #34474)
+* xfer: display origin of xfer in core and xfer buffers (task #10956)
 
 Version 0.3.6 (2011-10-22)
 --------------------------

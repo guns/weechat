@@ -165,6 +165,7 @@ extern struct t_config_option *config_look_read_marker_string;
 extern struct t_config_option *config_look_save_config_on_exit;
 extern struct t_config_option *config_look_save_layout_on_exit;
 extern struct t_config_option *config_look_scroll_amount;
+extern struct t_config_option *config_look_scroll_bottom_after_switch;
 extern struct t_config_option *config_look_scroll_page_percent;
 extern struct t_config_option *config_look_search_text_not_found_alert;
 extern struct t_config_option *config_look_separator_horizontal;
@@ -222,6 +223,7 @@ extern struct t_config_option *config_color_nicklist_group;
 extern struct t_config_option *config_color_nicklist_away;
 extern struct t_config_option *config_color_nicklist_offline;
 
+extern struct t_config_option *config_completion_base_word_until_cursor;
 extern struct t_config_option *config_completion_default_template;
 extern struct t_config_option *config_completion_nick_add_space;
 extern struct t_config_option *config_completion_nick_completer;
@@ -251,6 +253,8 @@ extern struct t_config_option *config_plugin_save_config_on_unload;
 extern regex_t *config_highlight_regex;
 extern char **config_highlight_tags;
 extern int config_num_highlight_tags;
+extern char **config_plugin_extensions;
+extern int config_num_plugin_extensions;
 
 
 extern struct t_config_option *config_weechat_debug_get (const char *plugin_name);

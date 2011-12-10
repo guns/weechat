@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat 0.3.7-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2011-11-08 17:56+0100\n"
+"POT-Creation-Date: 2011-12-07 17:39+0100\n"
 "PO-Revision-Date: 2011-11-03 16:57+0100\n"
 "Last-Translator: Jiri Golembiovsky <golemj@gmail.com>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
@@ -1148,6 +1148,7 @@ msgid ""
 "   cursor: toggle debug for cursor mode\n"
 "    hdata: display infos about hdata (with free: remove all hdata in "
 "memory)\n"
+"    hooks: display infos about hooks\n"
 "infolists: display infos about infolists\n"
 "   memory: display infos about memory usage\n"
 "    mouse: toggle debug for mouse\n"
@@ -2169,6 +2170,11 @@ msgstr ""
 "Upozornění: mel by ste nyní provést /save pro zapsání volby "
 "\"save_config_on_exit\" do konfiguračního souboru"
 
+msgid ""
+"WARNING: this option can cause serious display bugs, if you have such "
+"problems, you must turn off this option."
+msgstr ""
+
 #, c-format
 msgid "\t\tDay changed to %s"
 msgstr "\t\tZměnil se den na %s"
@@ -2576,6 +2582,12 @@ msgid "how many lines to scroll by with scroll_up and scroll_down"
 msgstr "o kolik řádů posunou pomocí scroll_up a scroll_down"
 
 msgid ""
+"scroll to bottom of window after switch to another buffer (do not remember "
+"scroll position in windows); the scroll is done only for buffers with "
+"formatted content (not free content)"
+msgstr ""
+
+msgid ""
 "percent of screen to scroll when scrolling one page up or down (for example "
 "100 means one page, 50 half-page)"
 msgstr ""
@@ -2793,6 +2805,11 @@ msgid "text color for offline nicknames"
 msgstr "barva textu pro nepřipojené přezdíveky"
 
 msgid ""
+"if enabled, the base word to complete ends at char before cursor; otherwise "
+"the base word ends at first space after cursor"
+msgstr ""
+
+msgid ""
 "default completion template (please see documentation for template codes and "
 "values)"
 msgstr ""
@@ -2892,12 +2909,9 @@ msgstr ""
 "povolit ladící zprávy defaultně ve všech pluginech (volba je defaultně "
 "vypnuta, což je velice doporučeno)"
 
-msgid ""
-"standard plugins extension in filename (for example \".so\" under Linux or "
-"\".dll\" under Microsoft Windows)"
-msgstr ""
-"standardní přípona souboru pluginů (například \".so\" pod Linuxem nebo \".dll"
-"\" pod Microsoft Windows)"
+#, fuzzy
+msgid "comma separated list of file name extensions for plugins"
+msgstr "čárkami oddělený seznam slovníků, které použít pro tento buffer"
 
 msgid ""
 "path for searching plugins (\"%h\" will be replaced by WeeChat home, \"~/."
@@ -3305,8 +3319,8 @@ msgstr "%s-VÍCE(%d)-"
 msgid "Act: "
 msgstr "Akt: "
 
-#, c-format
-msgid "Notify changed for \"%s%s.%s%s\": \"%s%s%s\" to \"%s%s%s\""
+#, fuzzy, c-format
+msgid "Notify changed for \"%s%s%s\": \"%s%s%s\" to \"%s%s%s\""
 msgstr "Notifikace pro \"%s%s.%s%s\" změněna: \"%s%s%s\" na \"%s%s%s\""
 
 #, c-format
@@ -7190,18 +7204,6 @@ msgstr "%s%s: selhala autentizace s klientem %s%s%s (%s.%s)"
 msgid "%s: disconnected from client %s%s%s (%s.%s)"
 msgstr "%s: odpojen od klienta %s%s%s (%s.%s)"
 
-#, c-format
-msgid "%s%s: not enough memory for parsing message"
-msgstr "%s%s: nedostatek paměti pro rozdělení zprávy"
-
-#, c-format
-msgid "%s%s: error sending data to client: %s"
-msgstr "%s%s: chyba při zasílání dat na klienta: %s"
-
-#, c-format
-msgid "%s%s: error sending data to client %s"
-msgstr "%s%s: chyba při zasílání dat na klienta %s"
-
 msgid "Clients for relay:"
 msgstr "Klienti pro přenos:"
 
@@ -7337,12 +7339,22 @@ msgid "text color for \"disconnected\" status"
 msgstr "barva textu pro status \"odpojen\""
 
 msgid ""
+"regular expression with IPs allowed to use relay, example: \"^(123.45.67.89|"
+"192.160.*)$\""
+msgstr ""
+
+msgid ""
 "address for bind (if empty, connection is possible on all interfaces, use "
 "\"127.0.0.1\" to allow connections from local machine only)"
 msgstr ""
 "adresa, kterou napojit (pokud není uvedeno, je možné připojení na všech "
 "rozhranních, použijte \"127.0.0.1\" pro povolení připojení pouze z lokálního "
 "počítače)"
+
+msgid ""
+"compression level for packets sent to client with WeeChat protocol (0 = "
+"disable compression, 1 = low compression ... 9 = best compression)"
+msgstr ""
 
 msgid "maximum number of clients connecting to a port"
 msgstr "maximální počet klientů připojených k portu"
@@ -7371,6 +7383,10 @@ msgstr "%s: soket pro %s.%s (port %d) uzavřen"
 msgid "%s%s: cannot accept client on port %d (%s.%s)"
 msgstr "%s%s: nemohu akceptovat klienta na portu %d (%s.%s)"
 
+#, fuzzy, c-format
+msgid "%s%s: IP address \"%s\" not allowed for relay"
+msgstr "%s%s: adresa \"%s\" nenalezena"
+
 #, c-format
 msgid "%s%s: error with \"bind\" on port %d (%s.%s)"
 msgstr "%s%s: chyba s \"bind\" na portu %d (%s.%s)"
@@ -7382,6 +7398,30 @@ msgstr "%s: poslouchám na portu %d (přesměrování %s.%s, maximálně %d klie
 #, c-format
 msgid "%s%s: not enough memory for listening on new port"
 msgstr "%s%s: nedostatek paměti pro poslouchání na portu"
+
+#, c-format
+msgid "%s%s: not enough memory for parsing message"
+msgstr "%s%s: nedostatek paměti pro rozdělení zprávy"
+
+#, c-format
+msgid "%s%s: error sending data to client: %s"
+msgstr "%s%s: chyba při zasílání dat na klienta: %s"
+
+#, fuzzy, c-format
+msgid "%s%s: error sending data to client %d (%s)"
+msgstr "%s%s: chyba při zasílání dat na klienta %s"
+
+#, fuzzy, c-format
+msgid "%s%s: failed to execute command \"%s\" for client %d"
+msgstr "%s%s: selhalo parsování příkazu \"%s\" (prosím oznamte to vývojárům):"
+
+#, fuzzy, c-format
+msgid ""
+"%s%s: too few arguments received from client %d for command \"%s"
+"\" (received: %d arguments, expected: at least %d)"
+msgstr ""
+"%s%s: přijato příliš málo argumentů od IRC serveru pro příkaz \"%s"
+"\" (obdrženo: %d argumentů, očekáváno: alespoň %d)"
 
 #, c-format
 msgid "%s%s: error compiling regular expression \"%s\""
@@ -7827,23 +7867,26 @@ msgstr "%s: rozhovor zavřen s %s (%d.%d.%d.%d)"
 msgid "%s%s: not enough memory for new xfer"
 msgstr "%s%s: nedostatek paměti pro nový xfer"
 
-#, c-format
-msgid "%s: incoming file from %s (%d.%d.%d.%d): %s, %llu bytes (protocol: %s)"
+#, fuzzy, c-format
+msgid ""
+"%s: incoming file from %s (%s.%s), ip: %d.%d.%d.%d, name: %s, %llu bytes "
+"(protocol: %s)"
 msgstr "%s: příchozí soubor od %s (%d.%d.%d.%d): %s, %llu bytů (protokol: %s)"
 
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%s: sending file to %s: %s (local filename: %s), %llu bytes (protocol: %s)"
+"%s: sending file to %s (%s.%s): %s (local filename: %s), %llu bytes "
+"(protocol: %s)"
 msgstr ""
 "%s: posílám soubor k %s: %s (lokální jméno souboru: %s), %llu bytů "
 "(protokol: %s)"
 
-#, c-format
-msgid "%s: incoming chat request from %s (%d.%d.%d.%d)"
+#, fuzzy, c-format
+msgid "%s: incoming chat request from %s (%s.%s), ip: %d.%d.%d.%d"
 msgstr "%s: příchozí požadavek rozhovoru od %s (%d.%d.%d.%d)"
 
-#, c-format
-msgid "%s: sending chat request to %s"
+#, fuzzy, c-format
+msgid "%s: sending chat request to %s (%s.%s)"
 msgstr "%s: posílám požadavek rozhovoru na %s"
 
 #, c-format
@@ -8150,6 +8193,13 @@ msgstr ""
 
 msgid "Lists"
 msgstr ""
+
+#~ msgid ""
+#~ "standard plugins extension in filename (for example \".so\" under Linux "
+#~ "or \".dll\" under Microsoft Windows)"
+#~ msgstr ""
+#~ "standardní přípona souboru pluginů (například \".so\" pod Linuxem nebo \"."
+#~ "dll\" pod Microsoft Windows)"
 
 #~ msgid "%sWarning: %s, line %d: unknown option \"%s\" (outside a section)"
 #~ msgstr "%sUpozornění: %s, řádek %d: neznámé nastavení \"%s\" (mimo sekci)"

@@ -21,8 +21,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat 0.3.7-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2011-11-08 17:56+0100\n"
-"PO-Revision-Date: 2011-11-08 17:15+0100\n"
+"POT-Creation-Date: 2011-12-07 17:39+0100\n"
+"PO-Revision-Date: 2011-12-07 17:32+0100\n"
 "Last-Translator: Sebastien Helleu <flashcode@flashtux.org>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: French\n"
@@ -1165,6 +1165,7 @@ msgid ""
 "   cursor: toggle debug for cursor mode\n"
 "    hdata: display infos about hdata (with free: remove all hdata in "
 "memory)\n"
+"    hooks: display infos about hooks\n"
 "infolists: display infos about infolists\n"
 "   memory: display infos about memory usage\n"
 "    mouse: toggle debug for mouse\n"
@@ -1184,6 +1185,7 @@ msgstr ""
 "   cursor: activer/désactiver le debug pour le mode curseur\n"
 "    hdata: afficher des infos sur les hdata (avec free: supprimer tous les "
 "hdata en mémoire)\n"
+"    hooks: afficher des infos sur les hooks\n"
 "infolists: afficher des infos sur les infolists\n"
 "   memory: afficher des infos sur l'utilisation de la mémoire\n"
 "    mouse: activer/désactiver le debug pour la souris\n"
@@ -2274,6 +2276,13 @@ msgstr ""
 "Attention: vous devriez taper /save maintenant pour écrire l'option "
 "\"save_config_on_exit\" dans le fichier de configuration"
 
+msgid ""
+"WARNING: this option can cause serious display bugs, if you have such "
+"problems, you must turn off this option."
+msgstr ""
+"ATTENTION: cette option peut causer de sérieux problèmes d'affichage, si "
+"vous rencontrez de tels problèmes, vous devez désactiver cette option."
+
 #, c-format
 msgid "\t\tDay changed to %s"
 msgstr "\t\tJour changé: %s"
@@ -2724,6 +2733,16 @@ msgid "how many lines to scroll by with scroll_up and scroll_down"
 msgstr "nombre de lignes pour le défilement avec scroll_up et scroll_down"
 
 msgid ""
+"scroll to bottom of window after switch to another buffer (do not remember "
+"scroll position in windows); the scroll is done only for buffers with "
+"formatted content (not free content)"
+msgstr ""
+"faire défiler en bas de la fenêtre après un basculemment vers un autre "
+"tampon (ne pas sauvegarder la position du défilement dans les fenêtres); le "
+"défilement n'est fait que pour les tampons avec contenu formaté (pas le "
+"contenu libre)"
+
+msgid ""
 "percent of screen to scroll when scrolling one page up or down (for example "
 "100 means one page, 50 half-page)"
 msgstr ""
@@ -2970,6 +2989,13 @@ msgid "text color for offline nicknames"
 msgstr "couleur du texte pour les pseudos déconnectés"
 
 msgid ""
+"if enabled, the base word to complete ends at char before cursor; otherwise "
+"the base word ends at first space after cursor"
+msgstr ""
+"si activé, le mot de base pour la complétion s'arrête au caractère avant le "
+"curseur; sinon le mot de base s'arrête au premier espace après le curseur"
+
+msgid ""
 "default completion template (please see documentation for template codes and "
 "values)"
 msgstr ""
@@ -3076,12 +3102,10 @@ msgstr ""
 "active les messages de debug par défaut pour toutes les extensions (option "
 "désactivée par défaut, ce qui est hautement recommandé)"
 
-msgid ""
-"standard plugins extension in filename (for example \".so\" under Linux or "
-"\".dll\" under Microsoft Windows)"
+msgid "comma separated list of file name extensions for plugins"
 msgstr ""
-"extension par défaut des extensions (par example \".so\" sous Linux ou \".dll"
-"\" sous Microsoft Windows)"
+"liste d'extensions de noms de fichiers pour les extensions (séparées par des "
+"virgules)"
 
 msgid ""
 "path for searching plugins (\"%h\" will be replaced by WeeChat home, \"~/."
@@ -3498,8 +3522,8 @@ msgid "Act: "
 msgstr "Act: "
 
 #, c-format
-msgid "Notify changed for \"%s%s.%s%s\": \"%s%s%s\" to \"%s%s%s\""
-msgstr "Notification changée pour \"%s%s.%s%s\": \"%s%s%s\" à \"%s%s%s\""
+msgid "Notify changed for \"%s%s%s\": \"%s%s%s\" to \"%s%s%s\""
+msgstr "Notification changée pour \"%s%s%s\": \"%s%s%s\" à \"%s%s%s\""
 
 #, c-format
 msgid "%sError: a buffer with same name (%s) already exists"
@@ -7440,18 +7464,6 @@ msgstr "%s%s: l'authentification a échoué avec le client %s%s%s (%s.%s)"
 msgid "%s: disconnected from client %s%s%s (%s.%s)"
 msgstr "%s: déconnecté du client %s%s%s (%s.%s)"
 
-#, c-format
-msgid "%s%s: not enough memory for parsing message"
-msgstr "%s%s: mémoire insuffisante pour analyser le message"
-
-#, c-format
-msgid "%s%s: error sending data to client: %s"
-msgstr "%s%s: erreur d'envoi de données au client: %s"
-
-#, c-format
-msgid "%s%s: error sending data to client %s"
-msgstr "%s%s: erreur d'envoi de données au client %s"
-
 msgid "Clients for relay:"
 msgstr "Clients pour le relai:"
 
@@ -7589,12 +7601,27 @@ msgid "text color for \"disconnected\" status"
 msgstr "couleur du texte pour le statut \"déconnecté\""
 
 msgid ""
+"regular expression with IPs allowed to use relay, example: \"^(123.45.67.89|"
+"192.160.*)$\""
+msgstr ""
+"expression régulière avec les IPs autorisées pour le relai, par exemple: \"^"
+"(123.45.67.89|192.160.*)$\""
+
+msgid ""
 "address for bind (if empty, connection is possible on all interfaces, use "
 "\"127.0.0.1\" to allow connections from local machine only)"
 msgstr ""
 "addresse pour le bind (si vide, la connexion est possible sur toutes les "
 "interfaces, utiliser \"127.0.0.1\" pour autoriser les connections depuis la "
 "machine locale seulement)"
+
+msgid ""
+"compression level for packets sent to client with WeeChat protocol (0 = "
+"disable compression, 1 = low compression ... 9 = best compression)"
+msgstr ""
+"niveau de compression pour les paquets envoyés au client avec le protocole "
+"WeeChat (0 = désactiver la compression, 1 = peu de compression ... 9 = "
+"meilleure compression)"
 
 msgid "maximum number of clients connecting to a port"
 msgstr "nombre maximum de clients qui se connectent sur un port"
@@ -7624,6 +7651,10 @@ msgid "%s%s: cannot accept client on port %d (%s.%s)"
 msgstr "%s%s: impossible d'accepter le client sur le port %d (%s.%s)"
 
 #, c-format
+msgid "%s%s: IP address \"%s\" not allowed for relay"
+msgstr "%s%s: adresse IP \"%s\" non autorisée pour le relai"
+
+#, c-format
 msgid "%s%s: error with \"bind\" on port %d (%s.%s)"
 msgstr "%s%s: erreur avec le \"bind\" sur le port %d (%s.%s)"
 
@@ -7634,6 +7665,30 @@ msgstr "%s: écoute sur le port %d (relai: %s.%s, max %d clients)"
 #, c-format
 msgid "%s%s: not enough memory for listening on new port"
 msgstr "%s%s: pas assez de mémoire pour écouter sur le nouveau port"
+
+#, c-format
+msgid "%s%s: not enough memory for parsing message"
+msgstr "%s%s: mémoire insuffisante pour analyser le message"
+
+#, c-format
+msgid "%s%s: error sending data to client: %s"
+msgstr "%s%s: erreur d'envoi de données au client: %s"
+
+#, c-format
+msgid "%s%s: error sending data to client %d (%s)"
+msgstr "%s%s: erreur d'envoi de données au client %d (%s)"
+
+#, c-format
+msgid "%s%s: failed to execute command \"%s\" for client %d"
+msgstr "%s%s: echec d'exécution de la commamde \"%s\" pour le client %d"
+
+#, c-format
+msgid ""
+"%s%s: too few arguments received from client %d for command \"%s"
+"\" (received: %d arguments, expected: at least %d)"
+msgstr ""
+"%s%s: trop peu de paramètres reçus du client %d pour la commande \"%s"
+"\" (reçu: %d paramètres, attendu: au moins %d)"
 
 #, c-format
 msgid "%s%s: error compiling regular expression \"%s\""
@@ -8087,23 +8142,28 @@ msgid "%s%s: not enough memory for new xfer"
 msgstr "%s%s: pas assez de mémoire pour un nouveau xfer"
 
 #, c-format
-msgid "%s: incoming file from %s (%d.%d.%d.%d): %s, %llu bytes (protocol: %s)"
+msgid ""
+"%s: incoming file from %s (%s.%s), ip: %d.%d.%d.%d, name: %s, %llu bytes "
+"(protocol: %s)"
 msgstr ""
-"%s: réception fichier de %s (%d.%d.%d.%d): %s, %llu octets (protocole: %s)"
+"%s: réception fichier de %s (%s.%s), ip: %d.%d.%d.%d, nom: %s, %llu octets "
+"(protocole: %s)"
 
 #, c-format
 msgid ""
-"%s: sending file to %s: %s (local filename: %s), %llu bytes (protocol: %s)"
+"%s: sending file to %s (%s.%s): %s (local filename: %s), %llu bytes "
+"(protocol: %s)"
 msgstr ""
-"%s: envoi fichier à %s: %s (nom local: %s), %llu octets (protocole: %s)"
+"%s: envoi fichier à %s (%s.%s): %s (nom local: %s), %llu octets (protocole: "
+"%s)"
 
 #, c-format
-msgid "%s: incoming chat request from %s (%d.%d.%d.%d)"
-msgstr "%s: demande de discussion reçue de %s (%d.%d.%d.%d)"
+msgid "%s: incoming chat request from %s (%s.%s), ip: %d.%d.%d.%d"
+msgstr "%s: demande de discussion reçue de %s (%s.%s), ip: %d.%d.%d.%d"
 
 #, c-format
-msgid "%s: sending chat request to %s"
-msgstr "%s: envoi d'une demande de discussion à %s"
+msgid "%s: sending chat request to %s (%s.%s)"
+msgstr "%s: envoi d'une demande de discussion à %s (%s.%s)"
 
 #, c-format
 msgid "%s: file %s (local filename: %s) will be resumed at position %llu"
@@ -8419,6 +8479,20 @@ msgstr "Variables"
 
 msgid "Lists"
 msgstr "Listes"
+
+#~ msgid ""
+#~ "compression level (0 = no compression - faster, 9 = best compression - "
+#~ "slower)"
+#~ msgstr ""
+#~ "niveau de compression des paquets envoyés au client avec le protocole "
+#~ "WeeChat (0 = pas de compression ... 9 = meilleure compression)"
+
+#~ msgid ""
+#~ "standard plugins extension in filename (for example \".so\" under Linux "
+#~ "or \".dll\" under Microsoft Windows)"
+#~ msgstr ""
+#~ "extension par défaut des extensions (par example \".so\" sous Linux ou \"."
+#~ "dll\" sous Microsoft Windows)"
 
 #~ msgid "%sWarning: %s, line %d: unknown option \"%s\" (outside a section)"
 #~ msgstr ""

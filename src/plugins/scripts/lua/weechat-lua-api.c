@@ -5179,6 +5179,7 @@ weechat_lua_api_infolist_time (lua_State *L)
 {
     const char *infolist, *variable;
     time_t time;
+    struct tm *date_tmp;
     char timebuffer[64], *result;
 
     API_FUNC(1, "infolist_time", API_RETURN_EMPTY);
@@ -5188,9 +5189,12 @@ weechat_lua_api_infolist_time (lua_State *L)
     infolist = lua_tostring (lua_current_interpreter, -2);
     variable = lua_tostring (lua_current_interpreter, -1);
 
+    timebuffer[0] = '\0';
     time = weechat_infolist_time (script_str2ptr (infolist),
                                   variable);
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -5352,6 +5356,32 @@ weechat_lua_api_hdata_move (lua_State *L)
 }
 
 /*
+ * weechat_lua_api_hdata_char: get char value of a variable in structure using
+ *                             hdata
+ */
+
+static int
+weechat_lua_api_hdata_char (lua_State *L)
+{
+    const char *hdata, *pointer, *name;
+    int value;
+
+    API_FUNC(1, "hdata_char", API_RETURN_INT(0));
+    if (lua_gettop (lua_current_interpreter) < 3)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    hdata = lua_tostring (lua_current_interpreter, -3);
+    pointer = lua_tostring (lua_current_interpreter, -2);
+    name = lua_tostring (lua_current_interpreter, -1);
+
+    value = (int)weechat_hdata_char (script_str2ptr (hdata),
+                                     script_str2ptr (pointer),
+                                     name);
+
+    API_RETURN_INT(value);
+}
+
+/*
  * weechat_lua_api_hdata_integer: get integer value of a variable in structure
  *                                using hdata
  */
@@ -5464,6 +5494,7 @@ weechat_lua_api_hdata_time (lua_State *L)
 {
     const char *hdata, *pointer, *name;
     time_t time;
+    struct tm *date_tmp;
     char timebuffer[64], *result;
 
     API_FUNC(1, "hdata_time", API_RETURN_EMPTY);
@@ -5474,10 +5505,13 @@ weechat_lua_api_hdata_time (lua_State *L)
     pointer = lua_tostring (lua_current_interpreter, -2);
     name = lua_tostring (lua_current_interpreter, -1);
 
+    timebuffer[0] = '\0';
     time = weechat_hdata_time (script_str2ptr (hdata),
                                script_str2ptr (pointer),
                                name);
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -6205,6 +6239,7 @@ const struct luaL_reg weechat_lua_api_funcs[] = {
     { "hdata_get_var_hdata", &weechat_lua_api_hdata_get_var_hdata },
     { "hdata_get_list", &weechat_lua_api_hdata_get_list },
     { "hdata_move", &weechat_lua_api_hdata_move },
+    { "hdata_char", &weechat_lua_api_hdata_char },
     { "hdata_integer", &weechat_lua_api_hdata_integer },
     { "hdata_long", &weechat_lua_api_hdata_long },
     { "hdata_string", &weechat_lua_api_hdata_string },

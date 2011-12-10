@@ -4706,15 +4706,19 @@ weechat_guile_api_infolist_time (SCM infolist, SCM variable)
 {
     char timebuffer[64], *result;
     time_t time;
+    struct tm *date_tmp;
     SCM return_value;
 
     API_FUNC(1, "infolist_time", API_RETURN_EMPTY);
     if (!scm_is_string (infolist) || !scm_is_string (variable))
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
+    timebuffer[0] = '\0';
     time = weechat_infolist_time (script_str2ptr (scm_i_string_chars (infolist)),
                                   scm_i_string_chars (variable));
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -4856,6 +4860,28 @@ weechat_guile_api_hdata_move (SCM hdata, SCM pointer, SCM count)
 }
 
 /*
+ * weechat_guile_api_hdata_char: get char value of a variable in structure
+ *                               using hdata
+ */
+
+SCM
+weechat_guile_api_hdata_char (SCM hdata, SCM pointer, SCM name)
+{
+    int value;
+
+    API_FUNC(1, "hdata_char", API_RETURN_INT(0));
+    if (!scm_is_string (hdata) || !scm_is_string (pointer)
+        || !scm_is_string (name))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = (int)weechat_hdata_char (script_str2ptr (scm_i_string_chars (hdata)),
+                                     script_str2ptr (scm_i_string_chars (pointer)),
+                                     scm_i_string_chars (name));
+
+    API_RETURN_INT(value);
+}
+
+/*
  * weechat_guile_api_hdata_integer: get integer value of a variable in structure
  *                                  using hdata
  */
@@ -4954,16 +4980,20 @@ weechat_guile_api_hdata_time (SCM hdata, SCM pointer, SCM name)
 {
     char timebuffer[64], *result;
     time_t time;
+    struct tm *date_tmp;
     SCM return_value;
 
     API_FUNC(1, "hdata_time", API_RETURN_EMPTY);
     if (!scm_is_string (hdata) || !scm_is_string (pointer) || !scm_is_string (name))
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
+    timebuffer[0] = '\0';
     time = weechat_hdata_time (script_str2ptr (scm_i_string_chars (hdata)),
                                script_str2ptr (scm_i_string_chars (pointer)),
                                scm_i_string_chars (name));
-    strftime (timebuffer, sizeof (timebuffer), "%F %T", localtime (&time));
+    date_tmp = localtime (&time);
+    if (date_tmp)
+        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
@@ -5312,6 +5342,7 @@ weechat_guile_api_module_init (void *data)
     scm_c_define_gsubr ("weechat:hdata_get_var_hdata", 2, 0, 0, &weechat_guile_api_hdata_get_var_hdata);
     scm_c_define_gsubr ("weechat:hdata_get_list", 2, 0, 0, &weechat_guile_api_hdata_get_list);
     scm_c_define_gsubr ("weechat:hdata_move", 3, 0, 0, &weechat_guile_api_hdata_move);
+    scm_c_define_gsubr ("weechat:hdata_char", 3, 0, 0, &weechat_guile_api_hdata_char);
     scm_c_define_gsubr ("weechat:hdata_integer", 3, 0, 0, &weechat_guile_api_hdata_integer);
     scm_c_define_gsubr ("weechat:hdata_long", 3, 0, 0, &weechat_guile_api_hdata_long);
     scm_c_define_gsubr ("weechat:hdata_string", 3, 0, 0, &weechat_guile_api_hdata_string);

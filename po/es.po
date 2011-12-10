@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat 0.3.7-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2011-11-08 17:56+0100\n"
+"POT-Creation-Date: 2011-12-07 17:39+0100\n"
 "PO-Revision-Date: 2011-11-03 16:57+0100\n"
 "Last-Translator: Elián Hanisch <lambdae2@gmail.com>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
@@ -1152,6 +1152,7 @@ msgstr ""
 "list || set <plugin> <nivel> || dump [<plugin>] || buffer|color|infolists|"
 "memory|tags|term|windows || mouse|cursor [verbose] || hdata [free]"
 
+#, fuzzy
 msgid ""
 "     list: list plugins with debug levels\n"
 "      set: set debug level for plugin\n"
@@ -1164,6 +1165,7 @@ msgid ""
 "   cursor: toggle debug for cursor mode\n"
 "    hdata: display infos about hdata (with free: remove all hdata in "
 "memory)\n"
+"    hooks: display infos about hooks\n"
 "infolists: display infos about infolists\n"
 "   memory: display infos about memory usage\n"
 "    mouse: toggle debug for mouse\n"
@@ -2275,6 +2277,11 @@ msgstr ""
 "Atención: ahora se debería ejecutar /save para guardar la opción "
 "\"save_config_on_exit\" en el archivo de configuración"
 
+msgid ""
+"WARNING: this option can cause serious display bugs, if you have such "
+"problems, you must turn off this option."
+msgstr ""
+
 #, c-format
 msgid "\t\tDay changed to %s"
 msgstr "\t\tNuevo día, %s"
@@ -2721,6 +2728,12 @@ msgid "how many lines to scroll by with scroll_up and scroll_down"
 msgstr "cuántas líneas a desplazar con scroll_up y scroll_down"
 
 msgid ""
+"scroll to bottom of window after switch to another buffer (do not remember "
+"scroll position in windows); the scroll is done only for buffers with "
+"formatted content (not free content)"
+msgstr ""
+
+msgid ""
 "percent of screen to scroll when scrolling one page up or down (for example "
 "100 means one page, 50 half-page)"
 msgstr ""
@@ -2953,6 +2966,11 @@ msgid "text color for offline nicknames"
 msgstr "color para apodos desconectados"
 
 msgid ""
+"if enabled, the base word to complete ends at char before cursor; otherwise "
+"the base word ends at first space after cursor"
+msgstr ""
+
+msgid ""
 "default completion template (please see documentation for template codes and "
 "values)"
 msgstr ""
@@ -3051,12 +3069,9 @@ msgstr ""
 "habilita mensajes de depuración por defecto en todos los plugins (opción "
 "desactivada por defecto, ya que es lo recomendado)"
 
-msgid ""
-"standard plugins extension in filename (for example \".so\" under Linux or "
-"\".dll\" under Microsoft Windows)"
-msgstr ""
-"extensión estándar de los archivos de plugin (por ejemplo \".so\" en linux o "
-"\".dll\" en Microsoft Windows)"
+#, fuzzy
+msgid "comma separated list of file name extensions for plugins"
+msgstr "lista separada por comas de diccionarios para usar en este buffer"
 
 msgid ""
 "path for searching plugins (\"%h\" will be replaced by WeeChat home, \"~/."
@@ -3469,8 +3484,8 @@ msgstr "%s-MÁS(%d)-"
 msgid "Act: "
 msgstr "Act: "
 
-#, c-format
-msgid "Notify changed for \"%s%s.%s%s\": \"%s%s%s\" to \"%s%s%s\""
+#, fuzzy, c-format
+msgid "Notify changed for \"%s%s%s\": \"%s%s%s\" to \"%s%s%s\""
 msgstr "Notificación cambiada para \"%s%s.%s%s\": \"%s%s%s\" a \"%s%s%s\""
 
 #, c-format
@@ -7385,18 +7400,6 @@ msgstr "%s%s: la autenticación falló con el cliente %s%s%s (%s.%s)"
 msgid "%s: disconnected from client %s%s%s (%s.%s)"
 msgstr "%s: desconectado del cliente %s%s%s (%s.%s)"
 
-#, c-format
-msgid "%s%s: not enough memory for parsing message"
-msgstr "%s%s: memoria insuficiente para analizar el mensaje"
-
-#, c-format
-msgid "%s%s: error sending data to client: %s"
-msgstr "%s%s: error al enviar datos al cliente: %s"
-
-#, c-format
-msgid "%s%s: error sending data to client %s"
-msgstr "%s%s: error al enviar datos al cliente %s"
-
 msgid "Clients for relay:"
 msgstr "Clientes para retransmitir:"
 
@@ -7535,12 +7538,22 @@ msgid "text color for \"disconnected\" status"
 msgstr "color para el estado \"desconectado\""
 
 msgid ""
+"regular expression with IPs allowed to use relay, example: \"^(123.45.67.89|"
+"192.160.*)$\""
+msgstr ""
+
+msgid ""
 "address for bind (if empty, connection is possible on all interfaces, use "
 "\"127.0.0.1\" to allow connections from local machine only)"
 msgstr ""
 "dirección a escuchar (si está vacío, conexión es posible en todas las "
 "interfaces, usa \"127.0.0.1\" para permitir conexiones de la máquina local "
 "solamente)"
+
+msgid ""
+"compression level for packets sent to client with WeeChat protocol (0 = "
+"disable compression, 1 = low compression ... 9 = best compression)"
+msgstr ""
 
 msgid "maximum number of clients connecting to a port"
 msgstr "número máximo de clientes conectados a un puerto"
@@ -7569,6 +7582,10 @@ msgstr "%s: socket cerrado para %s.%s (puerto %d)"
 msgid "%s%s: cannot accept client on port %d (%s.%s)"
 msgstr "%s%s: no se puede aceptar el cliente en el puerto %d (%s.%s)"
 
+#, fuzzy, c-format
+msgid "%s%s: IP address \"%s\" not allowed for relay"
+msgstr "%s%s: dirección \"%s\" no encontrada"
+
 #, c-format
 msgid "%s%s: error with \"bind\" on port %d (%s.%s)"
 msgstr "%s%s: error con \"bind\" en el puerto %d (%s.%s)"
@@ -7580,6 +7597,32 @@ msgstr "%s: escuchando en el puerto %d (repetidor: %s.%s, max %d clientes)"
 #, c-format
 msgid "%s%s: not enough memory for listening on new port"
 msgstr "%s%s: no hay memoria suficiente para escuchar en un nuevo puerto"
+
+#, c-format
+msgid "%s%s: not enough memory for parsing message"
+msgstr "%s%s: memoria insuficiente para analizar el mensaje"
+
+#, c-format
+msgid "%s%s: error sending data to client: %s"
+msgstr "%s%s: error al enviar datos al cliente: %s"
+
+#, fuzzy, c-format
+msgid "%s%s: error sending data to client %d (%s)"
+msgstr "%s%s: error al enviar datos al cliente %s"
+
+#, fuzzy, c-format
+msgid "%s%s: failed to execute command \"%s\" for client %d"
+msgstr ""
+"%s%s: falló el análisis del comando \"%s\" (por favor repórtalo a los "
+"desarrolladores):"
+
+#, fuzzy, c-format
+msgid ""
+"%s%s: too few arguments received from client %d for command \"%s"
+"\" (received: %d arguments, expected: at least %d)"
+msgstr ""
+"%s%s: muy pocos argumentos recibidos del servidor IRC para el comando \"%s"
+"\"\" (recibidos: %d argumentos, esperado: al menos %d)"
 
 #, c-format
 msgid "%s%s: error compiling regular expression \"%s\""
@@ -8030,24 +8073,27 @@ msgstr "%s: charla con %s cerrada (%d.%d.%d.%d)"
 msgid "%s%s: not enough memory for new xfer"
 msgstr "%s%s: no hay memoria suficiente para una nueva transferencia"
 
-#, c-format
-msgid "%s: incoming file from %s (%d.%d.%d.%d): %s, %llu bytes (protocol: %s)"
+#, fuzzy, c-format
+msgid ""
+"%s: incoming file from %s (%s.%s), ip: %d.%d.%d.%d, name: %s, %llu bytes "
+"(protocol: %s)"
 msgstr ""
 "%s: archivo entrante desde %s (%d.%d.%d.%d): %s, %llu bytes (protocolo: %s)"
 
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%s: sending file to %s: %s (local filename: %s), %llu bytes (protocol: %s)"
+"%s: sending file to %s (%s.%s): %s (local filename: %s), %llu bytes "
+"(protocol: %s)"
 msgstr ""
 "%s: enviando archivo a %s: %s (nombre del archivo local: %s), %llu bytes "
 "(protocolo: %s)"
 
-#, c-format
-msgid "%s: incoming chat request from %s (%d.%d.%d.%d)"
+#, fuzzy, c-format
+msgid "%s: incoming chat request from %s (%s.%s), ip: %d.%d.%d.%d"
 msgstr "%s: petición de charla desde %s (%d.%d.%d.%d)"
 
-#, c-format
-msgid "%s: sending chat request to %s"
+#, fuzzy, c-format
+msgid "%s: sending chat request to %s (%s.%s)"
 msgstr "%s: petición de charla enviada a %s"
 
 #, c-format
@@ -8363,6 +8409,13 @@ msgstr "Variables"
 
 msgid "Lists"
 msgstr "Listas"
+
+#~ msgid ""
+#~ "standard plugins extension in filename (for example \".so\" under Linux "
+#~ "or \".dll\" under Microsoft Windows)"
+#~ msgstr ""
+#~ "extensión estándar de los archivos de plugin (por ejemplo \".so\" en "
+#~ "linux o \".dll\" en Microsoft Windows)"
 
 #~ msgid "%sWarning: %s, line %d: unknown option \"%s\" (outside a section)"
 #~ msgstr ""
