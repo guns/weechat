@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -105,6 +105,9 @@ extern struct t_config_option *irc_config_look_item_channel_modes_hide_key;
 extern struct t_config_option *irc_config_look_item_nick_modes;
 extern struct t_config_option *irc_config_look_item_nick_prefix;
 extern struct t_config_option *irc_config_look_hide_nickserv_pwd;
+extern struct t_config_option *irc_config_look_highlight_server;
+extern struct t_config_option *irc_config_look_highlight_channel;
+extern struct t_config_option *irc_config_look_highlight_pv;
 extern struct t_config_option *irc_config_look_highlight_tags;
 extern struct t_config_option *irc_config_look_item_display_server;
 extern struct t_config_option *irc_config_look_msgbuffer_fallback;

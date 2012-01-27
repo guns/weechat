@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2007-2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -57,6 +57,10 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
   ENDIF(HAVE_BACKTRACE)
 ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 
+IF(${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
+  LIST(APPEND EXTRA_LIBS "pthread")
+ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
+
 IF(ICONV_LIBRARY)
   LIST(APPEND EXTRA_LIBS ${ICONV_LIBRARY})
 ENDIF(ICONV_LIBRARY)
@@ -66,6 +70,8 @@ IF(LIBINTL_LIBRARY)
 ENDIF(LIBINTL_LIBRARY)
 
 LIST(APPEND EXTRA_LIBS "m")
+
+LIST(APPEND EXTRA_LIBS ${CURL_LIBRARIES})
 
 ADD_EXECUTABLE(${EXECUTABLE} ${WEECHAT_CURSES_SRC})
 

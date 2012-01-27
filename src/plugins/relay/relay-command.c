@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -138,13 +138,14 @@ relay_command_server_list ()
             }
 
             weechat_printf (NULL,
-                            _("  port %s%d%s, relay: %s%s.%s%s, started on: %s"),
+                            _("  port %s%d%s, relay: %s%s%s%s%s, started on: %s"),
                             RELAY_COLOR_CHAT_BUFFER,
                             ptr_server->port,
                             RELAY_COLOR_CHAT,
                             RELAY_COLOR_CHAT_BUFFER,
                             relay_protocol_string[ptr_server->protocol],
-                            ptr_server->protocol_args,
+                            (ptr_server->protocol_args) ? "." : "",
+                            (ptr_server->protocol_args) ? ptr_server->protocol_args : "",
                             RELAY_COLOR_CHAT,
                             date_start);
             i++;
@@ -307,17 +308,20 @@ relay_command_init ()
                              "    listrelay: list relays (name and port)\n"
                              "          add: add relay for a protocol + name\n"
                              "          del: remove relay for a protocol + name\n"
-                             "protocol.name: protocol and name to relay\n"
-                             "               currently, only protocol \"irc\" "
-                             "is supported\n"
-                             "               for example: irc.freenode\n"
+                             "protocol.name: protocol and name to relay:\n"
+                             "                 - protocol \"irc\": name is the "
+                             "server to share\n"
+                             "                 - protocol \"weechat\" (name is "
+                             "not used)\n"
                              "         port: port used for relay\n"
                              "          raw: open buffer with raw Relay data\n\n"
                              "Without argument, this command opens buffer "
                              "with list of relay clients.\n\n"
-                             "Example:\n"
+                             "Examples:\n"
                              "  irc proxy, for server \"freenode\":\n"
-                             "    /relay add irc.freenode 8000"),
+                             "    /relay add irc.freenode 8000\n"
+                             "  weechat protocol:\n"
+                             "    /relay add weechat 8001"),
                           "list %(relay_relays)"
                           " || listfull %(relay_relays)"
                           " || listrelay"

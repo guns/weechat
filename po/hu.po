@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat 0.3.7-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2011-12-07 17:39+0100\n"
-"PO-Revision-Date: 2011-10-22 12:21+0200\n"
+"POT-Creation-Date: 2012-01-24 21:20+0100\n"
+"PO-Revision-Date: 2011-12-25 22:56+0100\n"
 "Last-Translator: Andras Voroskoi <voroskoi@frugalware.org>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: Hungarian\n"
@@ -758,6 +758,10 @@ msgstr "nincs a szobában"
 msgid "Option changed"
 msgstr "nincs a szobában"
 
+#, c-format
+msgid "%sReset of all options is not allowed"
+msgstr ""
+
 #, fuzzy, c-format
 msgid "%sFailed to unset option \"%s\""
 msgstr "%s nem sikerült a modul opciókat elmenteni\n"
@@ -1140,6 +1144,8 @@ msgid ""
 "'\\!' to start with '!')\n"
 "         - two regular expressions are created: one for prefix and one for "
 "message\n"
+"         - regex are case insensitive, they can start by \"(?-i)\" to become "
+"case sensitive\n"
 "\n"
 "The default key alt+'=' toggles filtering on/off.\n"
 "\n"
@@ -1250,7 +1256,6 @@ msgid ""
 "argument: delay for end of grab, default is 500 milliseconds)\n"
 "  grab_mouse: grab mouse event code\n"
 "  grab_mouse_area: grab mouse event code with area\n"
-"  scroll_unread: scroll to unread marker\n"
 "  set_unread: set unread marker for all buffers\n"
 "  set_unread_current_buffer: set unread marker for current buffer\n"
 "  switch_active_buffer: switch to next merged buffer\n"
@@ -1365,8 +1370,7 @@ msgid ""
 "  delay: delay (in seconds) after which initial mouse state is restored "
 "(useful to temporarily disable mouse)\n"
 "\n"
-"To enable/disable mouse at startup, use:\n"
-"  /set weechat.look.mouse on/off\n"
+"The mouse state is saved in option \"weechat.look.mouse\".\n"
 "\n"
 "Examples:\n"
 "  enable mouse:\n"
@@ -1672,9 +1676,9 @@ msgid ""
 "balance || merge [-window <number>] [all] || page_up|page_down [-window "
 "<number>] || refresh || scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y] "
 "|| scroll_horiz [-window <number>] [+/-]<value>[%] || scroll_up|scroll_down|"
-"scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight [-"
-"window <number>] || swap [-window <number>] [up|down|left|right] || zoom[-"
-"window <number>]"
+"scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|"
+"scroll_unread [-window <number>] || swap [-window <number>] [up|down|left|"
+"right] || zoom[-window <number>]"
 msgstr ""
 "[list | -1 | +1 | b# | up | down | left | right | splith [pct] | splitv "
 "[pct] | resize pct | merge [all]]"
@@ -1711,6 +1715,7 @@ msgid ""
 "scroll_bottom: scroll to bottom of buffer\n"
 "scroll_previous_highlight: scroll to previous highlight\n"
 "scroll_next_highlight: scroll to next highlight\n"
+"scroll_unread: scroll to unread marker\n"
 "         swap: swap buffers of two windows (with optional direction for "
 "target window)\n"
 "         zoom: zoom on window\n"
@@ -2018,9 +2023,12 @@ msgid ""
 "because it can cause serious display bugs)"
 msgstr ""
 
+#, fuzzy
 msgid ""
-"comma separated list of words to highlight (case insensitive comparison, "
-"words may begin or end with \"*\" for partial match)"
+"comma separated list of words to highlight; case insensitive comparison (use "
+"\"(?-i)\" at beginning of words to make them case sensitive), words may "
+"begin or end with \"*\" for partial match; example: \"test,(?-i)*toto*,flash*"
+"\""
 msgstr ""
 "kiemelendő szavak vesszővel elválasztott listája (kis/nagybetűtől független "
 "összehasonlítás, a szavak végére/elejére \"*\"-ot illesztve részleges keresés"
@@ -2028,8 +2036,9 @@ msgstr ""
 msgid ""
 "regular expression used to check if a message has highlight or not, at least "
 "one match in string must be surrounded by word chars (alphanumeric, \"-\", "
-"\"_\" or \"|\"), regular expression is case sensitive, example: \"FlashCode|"
-"flashy\""
+"\"_\" or \"|\"), regular expression is case insensitive (use \"(?-i)\" at "
+"beginning to make it case sensitive), examples: \"flashcode|flashy\", \"(?-i)"
+"FlashCode|flashy\""
 msgstr ""
 
 #, fuzzy
@@ -2128,7 +2137,7 @@ msgid ""
 "jump to buffer number - 1)"
 msgstr ""
 
-msgid "enable mouse support at startup (to enable it now, see /help mouse)"
+msgid "enable mouse support"
 msgstr ""
 
 msgid ""
@@ -3103,6 +3112,8 @@ msgstr "[alias_név [parancs [paraméterek]]]"
 msgid ""
 "completion: completion for alias (optional, by default completion is done "
 "with target command)\n"
+"            note: you can use %%command to use completion of an existing "
+"command\n"
 "     alias: name of alias (can start or end with \"*\" for alias listing)\n"
 "   command: command name with arguments (many commands can be separated by "
 "semicolons)\n"
@@ -3959,6 +3970,9 @@ msgid ""
 "   server: internal server name where ignore is working\n"
 "  channel: channel name where ignore is working\n"
 "\n"
+"Note: the regular expression can start with \"(?-i)\" to become case "
+"sensitive.\n"
+"\n"
 "Examples:\n"
 "  ignore nick \"toto\" everywhere:\n"
 "    /ignore add toto\n"
@@ -4087,7 +4101,8 @@ msgstr "[szoba[,szoba] [szerver]]"
 msgid ""
 "channel: channel to list\n"
 " server: server name\n"
-"  regex: regular expression used to filter results\n"
+"  regex: regular expression used to filter results (case insensitive, can "
+"start by \"(?-i)\" to become case sensitive)\n"
 "\n"
 "Examples:\n"
 "  list all channels on server (can be very slow on large networks):\n"
@@ -5159,6 +5174,36 @@ msgid "hide password displayed by nickserv"
 msgstr "a nickserv által mutatott jelszó elrejtése"
 
 msgid ""
+"comma separated list of words to highlight in server buffers (case "
+"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"sensitive; special variables $nick, $channel and $server are replaced by "
+"their value), these words are added to buffer local variable "
+"\"highlight_words\" only when buffer is created (it does not affect current "
+"buffers), an empty string disables default highlight on nick, examples: "
+"\"$nick\", \"(?-i)$nick\""
+msgstr ""
+
+msgid ""
+"comma separated list of words to highlight in channel buffers (case "
+"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"sensitive; special variables $nick, $channel and $server are replaced by "
+"their value), these words are added to buffer local variable "
+"\"highlight_words\" only when buffer is created (it does not affect current "
+"buffers), an empty string disables default highlight on nick, examples: "
+"\"$nick\", \"(?-i)$nick\""
+msgstr ""
+
+msgid ""
+"comma separated list of words to highlight in private buffers (case "
+"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"sensitive; special variables $nick, $channel and $server are replaced by "
+"their value), these words are added to buffer local variable "
+"\"highlight_words\" only when buffer is created (it does not affect current "
+"buffers), an empty string disables default highlight on nick, examples: "
+"\"$nick\", \"(?-i)$nick\""
+msgstr ""
+
+msgid ""
 "comma separated list of tags for messages that may produce highlight "
 "(usually any message from another user, not server messages,..)"
 msgstr ""
@@ -5407,12 +5452,12 @@ msgstr[0] "%d szoba"
 msgstr[1] "%d szoba"
 
 #, fuzzy
-msgid "1 if string is a valid IRC channel name"
+msgid "1 if string is a valid IRC channel name for server"
 msgstr "felhasználók listája a szobában"
 
 #, fuzzy
-msgid "channel name"
-msgstr "%d szoba"
+msgid "server,channel (server is optional)"
+msgstr "szoba: szoba neve"
 
 #, fuzzy
 msgid "1 if string is a valid IRC nick name"
@@ -5466,9 +5511,8 @@ msgstr ""
 msgid "parse an IRC message"
 msgstr "üzenet: küldendő üzenet"
 
-#, fuzzy
-msgid "\"message\": IRC message"
-msgstr "üzenet: küldendő üzenet"
+msgid "\"message\": IRC message, \"server\": server name (optional)"
+msgstr ""
 
 #. TRANSLATORS: please do not translate key names (enclosed by quotes)
 msgid ""
@@ -5477,9 +5521,6 @@ msgid ""
 msgstr ""
 
 msgid "split an IRC message (to fit in 512 bytes)"
-msgstr ""
-
-msgid "\"message\": IRC message, \"server\": server name (optional)"
 msgstr ""
 
 #. TRANSLATORS: please do not translate key names (enclosed by quotes)
@@ -6529,6 +6570,10 @@ msgid "plugin name (can start or end with \"*\" as wildcard) (optional)"
 msgstr ""
 
 #, fuzzy
+msgid "options for URL"
+msgstr "Aliaszok listája:\n"
+
+#, fuzzy
 msgid "list of windows"
 msgstr "Mellőzések listája:\n"
 
@@ -6733,7 +6778,7 @@ msgid "disconnected"
 msgstr "csatlakozva"
 
 #, c-format
-msgid "%s: new client from %s%s%s on port %d (id: %d, relaying: %s.%s)"
+msgid "%s: new client from %s%s%s on port %d (id: %d, relaying: %s%s%s)"
 msgstr ""
 
 #, fuzzy, c-format
@@ -6741,11 +6786,11 @@ msgid "%s%s: not enough memory for new client"
 msgstr "%s nincs elegendő memória új DCC számára\n"
 
 #, fuzzy, c-format
-msgid "%s%s: authentication failed with client %s%s%s (%s.%s)"
+msgid "%s%s: authentication failed with client %s%s%s (%s%s%s)"
 msgstr "Nem sikerült a(z) \"%s\" naplófájlt írni\n"
 
 #, fuzzy, c-format
-msgid "%s: disconnected from client %s%s%s (%s.%s)"
+msgid "%s: disconnected from client %s%s%s (%s%s%s)"
 msgstr "Lekapcsolódott a szerverről!\n"
 
 msgid "Clients for relay:"
@@ -6769,7 +6814,7 @@ msgid "Listening on ports:"
 msgstr "Aliaszok listája:\n"
 
 #, fuzzy, c-format
-msgid "  port %s%d%s, relay: %s%s.%s%s, started on: %s"
+msgid "  port %s%d%s, relay: %s%s%s%s%s, started on: %s"
 msgstr "%s%s%s távol: %s\n"
 
 #, fuzzy
@@ -6802,17 +6847,19 @@ msgid ""
 "    listrelay: list relays (name and port)\n"
 "          add: add relay for a protocol + name\n"
 "          del: remove relay for a protocol + name\n"
-"protocol.name: protocol and name to relay\n"
-"               currently, only protocol \"irc\" is supported\n"
-"               for example: irc.freenode\n"
+"protocol.name: protocol and name to relay:\n"
+"                 - protocol \"irc\": name is the server to share\n"
+"                 - protocol \"weechat\" (name is not used)\n"
 "         port: port used for relay\n"
 "          raw: open buffer with raw Relay data\n"
 "\n"
 "Without argument, this command opens buffer with list of relay clients.\n"
 "\n"
-"Example:\n"
+"Examples:\n"
 "  irc proxy, for server \"freenode\":\n"
-"    /relay add irc.freenode 8000"
+"    /relay add irc.freenode 8000\n"
+"  weechat protocol:\n"
+"    /relay add weechat 8001"
 msgstr ""
 
 msgid "all possible protocol.name for relay plugin"
@@ -6831,6 +6878,14 @@ msgstr "%s az ignore már létezik\n"
 
 #, fuzzy, c-format
 msgid "%s%s: error: unknown protocol \"%s\""
+msgstr "%s ismeretlen billentyűparancs \"%s\"\n"
+
+#, fuzzy, c-format
+msgid "%s%s: error: name is not allowed for protocol \"%s\""
+msgstr "%s ismeretlen billentyűparancs \"%s\"\n"
+
+#, fuzzy, c-format
+msgid "%s%s: error: name is not required for protocol \"%s\""
 msgstr "%s ismeretlen billentyűparancs \"%s\"\n"
 
 #, fuzzy, c-format
@@ -6873,7 +6928,8 @@ msgid "text color for \"disconnected\" status"
 msgstr "\"connecting\" dcc státusz színe"
 
 msgid ""
-"regular expression with IPs allowed to use relay, example: \"^(123.45.67.89|"
+"regular expression with IPs allowed to use relay (case insensitive, use \"(?-"
+"i)\" at beginning to make it case sensitive), example: \"^(123.45.67.89|"
 "192.160.*)$\""
 msgstr ""
 
@@ -6907,11 +6963,11 @@ msgid "Relay raw messages"
 msgstr "hibakereső üzenetek megjelenítése"
 
 #, fuzzy, c-format
-msgid "%s: socket closed for %s.%s (port %d)"
+msgid "%s: socket closed for %s%s%s (port %d)"
 msgstr "FIFO cső bezárva\n"
 
 #, fuzzy, c-format
-msgid "%s%s: cannot accept client on port %d (%s.%s)"
+msgid "%s%s: cannot accept client on port %d (%s%s%s)"
 msgstr "%s nem sikerült a csatornát létrehozni\n"
 
 #, fuzzy, c-format
@@ -6919,11 +6975,11 @@ msgid "%s%s: IP address \"%s\" not allowed for relay"
 msgstr "%s cím \"%s\" nem található\n"
 
 #, fuzzy, c-format
-msgid "%s%s: error with \"bind\" on port %d (%s.%s)"
+msgid "%s%s: error with \"bind\" on port %d (%s%s%s)"
 msgstr "%s nem sikerült a csatornát létrehozni\n"
 
 #, c-format
-msgid "%s: listening on port %d (relay: %s.%s, max %d clients)"
+msgid "%s: listening on port %d (relay: %s%s%s, max %d clients)"
 msgstr ""
 
 #, fuzzy, c-format
@@ -7017,7 +7073,8 @@ msgid ""
 "  modifiers: comma separated list of modifiers\n"
 "     groups: action on groups found: comma separated list of groups (from 1 "
 "to 9) with optional \"*\" after number to hide group\n"
-"      regex: regular expression\n"
+"      regex: regular expression (case insensitive, can start by \"(?-i)\" to "
+"become case sensitive)\n"
 "        del: delete a rmodifier\n"
 "       -all: delete all rmodifiers\n"
 "    default: restore default rmodifiers\n"
@@ -7726,5 +7783,11 @@ msgid "Lists"
 msgstr ""
 
 #, fuzzy
-#~ msgid "%sWarning: %s, line %d: unknown option \"%s\" (outside a section)"
-#~ msgstr "%s %s, %d. sor: ismeretlen csoportazonosító (\"%s\")\n"
+msgid "Option"
+msgstr "[parancs]"
+
+msgid "Type"
+msgstr ""
+
+msgid "Constants"
+msgstr ""

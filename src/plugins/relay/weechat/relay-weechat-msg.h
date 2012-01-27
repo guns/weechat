@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -23,16 +23,17 @@
 #define RELAY_WEECHAT_MSG_INITIAL_ALLOC 4096
 
 /* object ids in binary messages */
-#define RELAY_WEECHAT_MSG_OBJ_CHAR     "chr"
-#define RELAY_WEECHAT_MSG_OBJ_INT      "int"
-#define RELAY_WEECHAT_MSG_OBJ_LONG     "lon"
-#define RELAY_WEECHAT_MSG_OBJ_STRING   "str"
-#define RELAY_WEECHAT_MSG_OBJ_BUFFER   "buf"
-#define RELAY_WEECHAT_MSG_OBJ_POINTER  "ptr"
-#define RELAY_WEECHAT_MSG_OBJ_TIME     "tim"
-#define RELAY_WEECHAT_MSG_OBJ_HDATA    "hda"
-#define RELAY_WEECHAT_MSG_OBJ_INFO     "inf"
-#define RELAY_WEECHAT_MSG_OBJ_INFOLIST "lis"
+#define RELAY_WEECHAT_MSG_OBJ_CHAR      "chr"
+#define RELAY_WEECHAT_MSG_OBJ_INT       "int"
+#define RELAY_WEECHAT_MSG_OBJ_LONG      "lon"
+#define RELAY_WEECHAT_MSG_OBJ_STRING    "str"
+#define RELAY_WEECHAT_MSG_OBJ_BUFFER    "buf"
+#define RELAY_WEECHAT_MSG_OBJ_POINTER   "ptr"
+#define RELAY_WEECHAT_MSG_OBJ_TIME      "tim"
+#define RELAY_WEECHAT_MSG_OBJ_HASHTABLE "htb"
+#define RELAY_WEECHAT_MSG_OBJ_HDATA     "hda"
+#define RELAY_WEECHAT_MSG_OBJ_INFO      "inf"
+#define RELAY_WEECHAT_MSG_OBJ_INFOLIST  "inl"
 
 struct t_relay_weechat_msg
 {
@@ -64,9 +65,6 @@ extern void relay_weechat_msg_add_pointer (struct t_relay_weechat_msg *msg,
                                            void *pointer);
 extern void relay_weechat_msg_add_time (struct t_relay_weechat_msg *msg,
                                         time_t time);
-extern void relay_weechat_msg_add_hdata1 (struct t_relay_weechat_msg *msg,
-                                          const char *name, const char *list,
-                                          const char *keys);
 extern void relay_weechat_msg_add_hdata (struct t_relay_weechat_msg *msg,
                                          const char *path, const char *keys);
 extern void relay_weechat_msg_add_infolist (struct t_relay_weechat_msg *msg,
@@ -76,7 +74,8 @@ extern void relay_weechat_msg_add_infolist (struct t_relay_weechat_msg *msg,
 extern void relay_weechat_msg_add_nicklist (struct t_relay_weechat_msg *msg,
                                             struct t_gui_buffer *buffer);
 extern void relay_weechat_msg_send (struct t_relay_client *client,
-                                    struct t_relay_weechat_msg *msg);
+                                    struct t_relay_weechat_msg *msg,
+                                    int display_in_raw_buffer);
 extern void relay_weechat_msg_free (struct t_relay_weechat_msg *msg);
 
 #endif /* __WEECHAT_RELAY_WEECHAT_MSG_H */

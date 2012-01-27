@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -46,7 +46,7 @@ struct timeval;
  */
 
 /* API version (used to check that plugin has same API and can be loaded) */
-#define WEECHAT_PLUGIN_API_VERSION "20111206-01"
+#define WEECHAT_PLUGIN_API_VERSION "20120122-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -111,6 +111,7 @@ struct timeval;
 #define WEECHAT_HDATA_STRING                        4
 #define WEECHAT_HDATA_POINTER                       5
 #define WEECHAT_HDATA_TIME                          6
+#define WEECHAT_HDATA_HASHTABLE                     7
 
 /* buffer hotlist */
 #define WEECHAT_HOTLIST_LOW                         "0"
@@ -224,10 +225,13 @@ struct t_weechat_plugin
     char *(*string_remove_quotes) (const char *string, const char *quotes);
     char *(*string_strip) (const char *string, int left, int right,
                            const char *chars);
+    char *(*string_mask_to_regex) (const char *mask);
+    const char *(*string_regex_flags) (const char *regex, int default_flags,
+                                       int *flags);
+    int (*string_regcomp) (void *preg, const char *regex, int default_flags);
     int (*string_has_highlight) (const char *string,
                                  const char *highlight_words);
     int (*string_has_highlight_regex) (const char *string, const char *regex);
-    char *(*string_mask_to_regex) (const char *mask);
     char **(*string_split) (const char *string, const char *separators,
                             int keep_eol, int num_items_max, int *num_items);
     void (*string_free_split) (char **split_string);
@@ -323,6 +327,12 @@ struct t_weechat_plugin
                                                  const void *key,
                                                  const void *value),
                            void *callback_map_data);
+    void (*hashtable_map_string) (struct t_hashtable *hashtable,
+                                  void (*callback_map) (void *data,
+                                                        struct t_hashtable *hashtable,
+                                                        const char *key,
+                                                        const char *value),
+                                  void *callback_map_data);
     int (*hashtable_get_integer) (struct t_hashtable *hashtable,
                                   const char *property);
     const char *(*hashtable_get_string) (struct t_hashtable *hashtable,
@@ -509,6 +519,16 @@ struct t_weechat_plugin
                                                     const char *out,
                                                     const char *err),
                                     void *callback_data);
+    struct t_hook *(*hook_process_hashtable) (struct t_weechat_plugin *plugin,
+                                              const char *command,
+                                              struct t_hashtable *options,
+                                              int timeout,
+                                              int (*callback)(void *data,
+                                                              const char *command,
+                                                              int return_code,
+                                                              const char *out,
+                                                              const char *err),
+                                              void *callback_data);
     struct t_hook *(*hook_connect) (struct t_weechat_plugin *plugin,
                                     const char *proxy,
                                     const char *address,
@@ -827,6 +847,8 @@ struct t_weechat_plugin
     void *(*hdata_get_var_at_offset) (struct t_hdata *hdata, void *pointer,
                                       int offset);
     void *(*hdata_get_list) (struct t_hdata *hdata, const char *name);
+    int (*hdata_check_pointer) (struct t_hdata *hdata, void *list,
+                                void *pointer);
     void *(*hdata_move) (struct t_hdata *hdata, void *pointer, int count);
     char (*hdata_char) (struct t_hdata *hdata, void *pointer,
                         const char *name);
@@ -840,6 +862,8 @@ struct t_weechat_plugin
                             const char *name);
     time_t (*hdata_time) (struct t_hdata *hdata, void *pointer,
                           const char *name);
+    struct t_hashtable *(*hdata_hashtable) (struct t_hdata *hdata,
+                                            void *pointer, const char *name);
     const char *(*hdata_get_string) (struct t_hdata *hdata,
                                      const char *property);
 
@@ -918,12 +942,17 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->string_remove_quotes(__string, __quotes)
 #define weechat_string_strip(__string, __left, __right, __chars)        \
     weechat_plugin->string_strip(__string, __left, __right, __chars)
+#define weechat_string_mask_to_regex(__mask)                            \
+    weechat_plugin->string_mask_to_regex(__mask)
+#define weechat_string_regex_flags(__regex, __default_flags, __flags)   \
+    weechat_plugin->string_regex_flags(__regex, __default_flags,        \
+                                       __flags)
+#define weechat_string_regcomp(__preg, __regex, __default_flags)        \
+    weechat_plugin->string_regcomp(__preg, __regex, __default_flags)
 #define weechat_string_has_highlight(__string, __highlight_words)       \
     weechat_plugin->string_has_highlight(__string, __highlight_words)
 #define weechat_string_has_highlight_regex(__string, __regex)           \
     weechat_plugin->string_has_highlight_regex(__string, __regex)
-#define weechat_string_mask_to_regex(__mask)                            \
-    weechat_plugin->string_mask_to_regex(__mask)
 #define weechat_string_split(__string, __separator, __eol, __max,       \
                              __num_items)                               \
     weechat_plugin->string_split(__string, __separator, __eol,          \
@@ -1061,6 +1090,10 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->hashtable_has_key(__hashtable, __key)
 #define weechat_hashtable_map(__hashtable, __cb_map, __cb_map_data)     \
     weechat_plugin->hashtable_map(__hashtable, __cb_map, __cb_map_data)
+#define weechat_hashtable_map_string(__hashtable, __cb_map,             \
+                                     __cb_map_data)                     \
+    weechat_plugin->hashtable_map_string(__hashtable, __cb_map,         \
+                                         __cb_map_data)
 #define weechat_hashtable_get_integer(__hashtable, __property)          \
     weechat_plugin->hashtable_get_integer(__hashtable, __property)
 #define weechat_hashtable_get_string(__hashtable, __property)           \
@@ -1268,6 +1301,11 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                              __callback_data)                           \
     weechat_plugin->hook_process(weechat_plugin, __command, __timeout,  \
                                  __callback, __callback_data)
+#define weechat_hook_process_hashtable(__command, __options, __timeout, \
+                                       __callback, __callback_data)     \
+    weechat_plugin->hook_process_hashtable(weechat_plugin, __command,   \
+                                           __options, __timeout,        \
+                                            __callback, __callback_data)
 #define weechat_hook_connect(__proxy, __address, __port, __sock,        \
                             __ipv6, __gnutls_sess, __gnutls_cb,         \
                              __gnutls_dhkey_size, __gnutls_priorities,  \
@@ -1575,6 +1613,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                             __offset)
 #define weechat_hdata_get_list(__hdata, __name)                         \
     weechat_plugin->hdata_get_list(__hdata, __name)
+#define weechat_hdata_check_pointer(__hdata, __list, __pointer)         \
+    weechat_plugin->hdata_check_pointer(__hdata, __list, __pointer)
 #define weechat_hdata_move(__hdata, __pointer, __count)                 \
     weechat_plugin->hdata_move(__hdata, __pointer, __count)
 #define weechat_hdata_char(__hdata, __pointer, __name)                  \
@@ -1589,6 +1629,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->hdata_pointer(__hdata, __pointer, __name)
 #define weechat_hdata_time(__hdata, __pointer, __name)                  \
     weechat_plugin->hdata_time(__hdata, __pointer, __name)
+#define weechat_hdata_hashtable(__hdata, __pointer, __name)             \
+    weechat_plugin->hdata_hashtable(__hdata, __pointer, __name)
 #define weechat_hdata_get_string(__hdata, __property)                   \
     weechat_plugin->hdata_get_string(__hdata, __property)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1270,9 +1270,9 @@ gui_buffer_set_highlight_regex (struct t_gui_buffer *buffer,
                 malloc (sizeof (*buffer->highlight_regex_compiled));
             if (buffer->highlight_regex_compiled)
             {
-                if (regcomp (buffer->highlight_regex_compiled,
-                             buffer->highlight_regex,
-                             REG_EXTENDED) != 0)
+                if (string_regcomp (buffer->highlight_regex_compiled,
+                                    buffer->highlight_regex,
+                                    REG_EXTENDED | REG_ICASE) != 0)
                 {
                     free (buffer->highlight_regex_compiled);
                     buffer->highlight_regex_compiled = NULL;
@@ -3140,11 +3140,11 @@ gui_buffer_hdata_buffer_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_buffer, highlight_tags, STRING, NULL);
         HDATA_VAR(struct t_gui_buffer, highlight_tags_count, INTEGER, NULL);
         HDATA_VAR(struct t_gui_buffer, highlight_tags_array, POINTER, NULL);
-        HDATA_VAR(struct t_gui_buffer, hotlist_max_level_nicks, POINTER, NULL);
+        HDATA_VAR(struct t_gui_buffer, hotlist_max_level_nicks, HASHTABLE, NULL);
         HDATA_VAR(struct t_gui_buffer, keys, POINTER, "key");
         HDATA_VAR(struct t_gui_buffer, last_key, POINTER, "key");
         HDATA_VAR(struct t_gui_buffer, keys_count, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_buffer, local_variables, POINTER, NULL);
+        HDATA_VAR(struct t_gui_buffer, local_variables, HASHTABLE, NULL);
         HDATA_VAR(struct t_gui_buffer, prev_buffer, POINTER, hdata_name);
         HDATA_VAR(struct t_gui_buffer, next_buffer, POINTER, hdata_name);
         HDATA_LIST(gui_buffers);
@@ -3359,7 +3359,8 @@ gui_buffer_dump_hexa (struct t_gui_buffer *buffer)
             free (message_without_colors);
         tags = string_build_with_split_string ((const char **)ptr_line->data->tags_array,
                                                ",");
-        log_printf ("  tags: %s", (tags) ? tags : "(none)");
+        log_printf ("  tags: %s, highlight: %d",
+                    (tags) ? tags : "(none)", ptr_line->data->highlight);
         if (tags)
             free (tags);
         snprintf (buf, sizeof (buf), "%s", ctime (&ptr_line->data->date));

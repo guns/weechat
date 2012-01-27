@@ -449,12 +449,12 @@
 ** valori: on, off (valore predefinito: `off`)
 
 * [[option_weechat.look.highlight]] *weechat.look.highlight*
-** descrizione: `elenco separato da virgole di finestre da evidenziare (maiuscole/minuscole, le parole potrebbero cominciare o terminare con "*" per un riscontro parziale)`
+** descrizione: `comma separated list of words to highlight; case insensitive comparison (use "(?-i)" at beginning of words to make them case sensitive), words may begin or end with "*" for partial match; example: "test,(?-i)*toto*,flash*"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_weechat.look.highlight_regex]] *weechat.look.highlight_regex*
-** descrizione: `l'espressione regolare usata per verificare se un messaggio contiene un evento oppure no, almeno una corrispondenza nella stringa deve essere circondata da caratteri :(alfanumerici, "-", "_" or "|"), l'espressione regolare è esatta, esempio "FlashCode|flashy"`
+** descrizione: `regular expression used to check if a message has highlight or not, at least one match in string must be surrounded by word chars (alphanumeric, "-", "_" or "|"), regular expression is case insensitive (use "(?-i)" at beginning to make it case sensitive), examples: "flashcode|flashy", "(?-i)FlashCode|flashy"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -559,7 +559,7 @@
 ** valori: on, off (valore predefinito: `on`)
 
 * [[option_weechat.look.mouse]] *weechat.look.mouse*
-** descrizione: `abilita il supporto del mouse all'avvio (per attivarlo ora, consultare /help mouse)`
+** descrizione: `abilita il supporto del mouse`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
@@ -679,7 +679,7 @@
 ** valori: 1 .. 2147483647 (valore predefinito: `3`)
 
 * [[option_weechat.look.scroll_bottom_after_switch]] *weechat.look.scroll_bottom_after_switch*
-** descrizione: `scroll to bottom of window after switch to another buffer (do not remember scroll position in windows); the scroll is done only for buffers with formatted content (not free content)`
+** descrizione: `scorri verso il fondo della finestra dopo essere passati ad un altro buffer non ricordare la posizione di scorrimento nelle finestre); lo scorrimento viene eseguito solo per i buffer con contenuto formattato (contenuto non libero)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 

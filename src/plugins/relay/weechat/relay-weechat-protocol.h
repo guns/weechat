@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,9 @@
 #ifndef __WEECHAT_RELAY_WEECHAT_PROTOCOL_H
 #define __WEECHAT_RELAY_WEECHAT_PROTOCOL_H 1
 
+#define RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER   1
+#define RELAY_WEECHAT_PROTOCOL_SYNC_NICKLIST 2
+
 #define RELAY_WEECHAT_PROTOCOL_CALLBACK(__command)                      \
     int                                                                 \
     relay_weechat_protocol_cb_##__command (                             \
@@ -35,15 +38,19 @@
     (void) command;                                                     \
     (void) argv;                                                        \
     (void) argv_eol;                                                    \
-    if ((weechat_relay_plugin->debug >= 1) && (argc < __min_args))      \
+    if (argc < __min_args)                                              \
     {                                                                   \
-        weechat_printf (NULL,                                           \
-                        _("%s%s: too few arguments received from "      \
-                          "client %d for command \"%s\" "               \
-                          "(received: %d arguments, expected: at "      \
-                          "least %d)"),                                 \
-                        weechat_prefix ("error"), RELAY_PLUGIN_NAME,    \
-                        client->id, command, argc, __min_args);         \
+        if (weechat_relay_plugin->debug >= 1)                           \
+        {                                                               \
+            weechat_printf (NULL,                                       \
+                            _("%s%s: too few arguments received from "  \
+                              "client %d for command \"%s\" "           \
+                              "(received: %d arguments, expected: at "  \
+                              "least %d)"),                             \
+                            weechat_prefix ("error"),                   \
+                            RELAY_PLUGIN_NAME,                          \
+                            client->id, command, argc, __min_args);     \
+        }                                                               \
         return WEECHAT_RC_ERROR;                                        \
     }
 
@@ -57,6 +64,16 @@ struct t_relay_weechat_protocol_cb
     t_relay_weechat_cmd_func *cmd_function; /* callback                     */
 };
 
+extern int relay_weechat_protocol_signal_buffer_cb (void *data,
+                                                    const char *signal,
+                                                    const char *type_data,
+                                                    void *signal_data);
+extern int relay_weechat_protocol_signal_nicklist_cb (void *data,
+                                                      const char *signal,
+                                                      const char *type_data,
+                                                      void *signal_data);
+extern int relay_weechat_protocol_timer_nicklist_cb (void *data,
+                                                     int remaining_calls);
 extern void relay_weechat_protocol_recv (struct t_relay_client *client,
                                          char *data);
 

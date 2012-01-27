@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -146,7 +146,8 @@ irc_ignore_new (const char *mask, const char *server, const char *channel)
         return NULL;
     }
 
-    if (regcomp (regex, complete_mask, REG_NOSUB | REG_ICASE) != 0)
+    if (weechat_string_regcomp (regex, complete_mask,
+                                REG_EXTENDED | REG_ICASE | REG_NOSUB) != 0)
     {
         free (regex);
         free (complete_mask);
@@ -210,7 +211,7 @@ irc_ignore_check (struct t_irc_server *server, const char *channel,
         server_match = 0;
         channel_match = 0;
 
-        if (!server || (strcmp (ptr_ignore->server, "*") == 0))
+        if (strcmp (ptr_ignore->server, "*") == 0)
             server_match = 1;
         else
             server_match = (weechat_strcasecmp (ptr_ignore->server,
@@ -220,7 +221,7 @@ irc_ignore_check (struct t_irc_server *server, const char *channel,
             channel_match = 1;
         else
         {
-            if (irc_channel_is_channel (channel))
+            if (irc_channel_is_channel (server, channel))
             {
                 channel_match = (weechat_strcasecmp (ptr_ignore->channel,
                                                      channel) == 0);

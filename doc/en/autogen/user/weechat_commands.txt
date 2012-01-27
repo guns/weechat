@@ -219,6 +219,7 @@ disable: disable filters
          - use '\t' to separate prefix from message, special chars like '|' must be escaped: '\|'
          - if regex starts with '!', then matching result is reversed (use '\!' to start with '!')
          - two regular expressions are created: one for prefix and one for message
+         - regex are case insensitive, they can start by "(?-i)" to become case sensitive
 
 The default key alt+'=' toggles filtering on/off.
 
@@ -314,7 +315,6 @@ list of actions:
   grab_key_command: grab a key with its associated command (optional argument: delay for end of grab, default is 500 milliseconds)
   grab_mouse: grab mouse event code
   grab_mouse_area: grab mouse event code with area
-  scroll_unread: scroll to unread marker
   set_unread: set unread marker for all buffers
   set_unread_current_buffer: set unread marker for current buffer
   switch_active_buffer: switch to next merged buffer
@@ -403,8 +403,7 @@ disable: disable mouse
  toggle: toggle mouse
   delay: delay (in seconds) after which initial mouse state is restored (useful to temporarily disable mouse)
 
-To enable/disable mouse at startup, use:
-  /set weechat.look.mouse on/off
+The mouse state is saved in option "weechat.look.mouse".
 
 Examples:
   enable mouse:
@@ -649,7 +648,7 @@ Examples:
          refresh
          scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]
          scroll_horiz [-window <number>] [+/-]<value>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight [-window <number>]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
          swap [-window <number>] [up|down|left|right]
          zoom[-window <number>]
 
@@ -678,6 +677,7 @@ Examples:
 scroll_bottom: scroll to bottom of buffer
 scroll_previous_highlight: scroll to previous highlight
 scroll_next_highlight: scroll to next highlight
+scroll_unread: scroll to unread marker
          swap: swap buffers of two windows (with optional direction for target window)
          zoom: zoom on window
 

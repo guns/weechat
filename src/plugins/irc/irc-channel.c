@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -229,7 +229,10 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
         }
 
         /* set highlights settings on channel buffer */
-        weechat_buffer_set(new_buffer, "highlight_words_add", "$nick");
+        weechat_buffer_set(new_buffer, "highlight_words_add",
+                           (channel_type == IRC_CHANNEL_TYPE_CHANNEL) ?
+                           weechat_config_string (irc_config_look_highlight_channel) :
+                           weechat_config_string (irc_config_look_highlight_pv));
         if (weechat_config_string (irc_config_look_highlight_tags)
             && weechat_config_string (irc_config_look_highlight_tags)[0])
         {
@@ -266,7 +269,6 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
     new_channel->has_quit_server = 0;
     new_channel->cycle = 0;
     new_channel->part = 0;
-    new_channel->display_creation_date = 0;
     new_channel->nick_completion_reset = 0;
     new_channel->pv_remote_nick_color = NULL;
     new_channel->hook_autorejoin = NULL;
@@ -347,6 +349,19 @@ irc_channel_set_topic (struct t_irc_channel *channel, const char *topic)
 }
 
 /*
+ * irc_channel_set_modes: set modes for a channel
+ */
+
+void
+irc_channel_set_modes (struct t_irc_channel *channel, const char *modes)
+{
+    if (channel->modes)
+        free (channel->modes);
+
+    channel->modes = (modes) ? strdup (modes) : NULL;
+}
+
+/*
  * irc_channel_search: returns pointer on a channel with name
  */
 
@@ -368,11 +383,11 @@ irc_channel_search (struct t_irc_server *server, const char *channel_name)
 }
 
 /*
- * irc_channel_is_channel: returns 1 if string is channel
+ * irc_channel_is_channel: returns 1 if string is a channel for given server
  */
 
 int
-irc_channel_is_channel (const char *string)
+irc_channel_is_channel (struct t_irc_server *server, const char *string)
 {
     char first_char[2];
 
@@ -381,7 +396,10 @@ irc_channel_is_channel (const char *string)
 
     first_char[0] = string[0];
     first_char[1] = '\0';
-    return (strpbrk (first_char, IRC_CHANNEL_PREFIX)) ? 1 : 0;
+    return (strpbrk (first_char,
+                     (server && server->chantypes) ?
+                     server->chantypes : IRC_CHANNEL_DEFAULT_CHANTYPES)) ?
+        1 : 0;
 }
 
 /*
@@ -867,7 +885,6 @@ irc_channel_hdata_channel_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_channel, has_quit_server, INTEGER, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, cycle, INTEGER, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, part, INTEGER, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, display_creation_date, INTEGER, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, nick_completion_reset, INTEGER, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, pv_remote_nick_color, STRING, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, hook_autorejoin, POINTER, NULL);
@@ -966,8 +983,6 @@ irc_channel_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "part", channel->part))
         return 0;
-    if (!weechat_infolist_new_var_integer (ptr_item, "display_creation_date", channel->display_creation_date))
-        return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "nick_completion_reset", channel->nick_completion_reset))
         return 0;
     for (i = 0; i < 2; i++)
@@ -1035,7 +1050,6 @@ irc_channel_print_log (struct t_irc_channel *channel)
     weechat_log_printf ("       has_quit_server. . . . . : %d",    channel->has_quit_server);
     weechat_log_printf ("       cycle. . . . . . . . . . : %d",    channel->cycle);
     weechat_log_printf ("       part . . . . . . . . . . : %d",    channel->part);
-    weechat_log_printf ("       display_creation_date. . : %d",    channel->display_creation_date);
     weechat_log_printf ("       nick_completion_reset. . : %d",    channel->nick_completion_reset);
     weechat_log_printf ("       pv_remote_nick_color . . : '%s'",  channel->pv_remote_nick_color);
     weechat_log_printf ("       hook_autorejoin. . . . . : 0x%lx", channel->hook_autorejoin);

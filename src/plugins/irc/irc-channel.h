@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,7 +20,7 @@
 #ifndef __WEECHAT_IRC_CHANNEL_H
 #define __WEECHAT_IRC_CHANNEL_H 1
 
-#define IRC_CHANNEL_PREFIX "#&+!"
+#define IRC_CHANNEL_DEFAULT_CHANTYPES "#&+!"
 
 /* channel types */
 #define IRC_CHANNEL_TYPE_UNKNOWN  -1
@@ -53,7 +53,6 @@ struct t_irc_channel
                                        /* display message when he's back    */
     int cycle;                         /* currently cycling (/part + /join) */
     int part;                          /* /part done on channel?            */
-    int display_creation_date;         /* 1 for displaying creation date    */
     int nick_completion_reset;         /* 1 for resetting nick completion   */
                                        /* there was some join/part on chan  */
     char *pv_remote_nick_color;        /* color for remote nick in pv       */
@@ -82,12 +81,15 @@ extern struct t_irc_channel *irc_channel_new (struct t_irc_server *server,
                                               int auto_switch);
 extern void irc_channel_set_topic (struct t_irc_channel *channel,
                                    const char *topic);
+extern void irc_channel_set_modes (struct t_irc_channel *channel,
+                                   const char *modes);
 extern void irc_channel_free (struct t_irc_server *server,
                               struct t_irc_channel *channel);
 extern void irc_channel_free_all (struct t_irc_server *server);
 extern struct t_irc_channel *irc_channel_search (struct t_irc_server *server,
                                                  const char *channel_name);
-extern int irc_channel_is_channel (const char *string);
+extern int irc_channel_is_channel (struct t_irc_server *server,
+                                   const char *string);
 extern void irc_channel_remove_away (struct t_irc_server *server,
                                      struct t_irc_channel *channel);
 extern void irc_channel_check_away (struct t_irc_server *server,

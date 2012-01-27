@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -185,6 +185,7 @@ extern void gui_window_scroll (struct t_gui_window *window, char *scroll);
 extern void gui_window_scroll_horiz (struct t_gui_window *window, char *scroll);
 extern void gui_window_scroll_previous_highlight (struct t_gui_window *window);
 extern void gui_window_scroll_next_highlight (struct t_gui_window *window);
+extern void gui_window_scroll_unread (struct t_gui_window *window);
 extern void gui_window_search_start (struct t_gui_window *window);
 extern void gui_window_search_restart (struct t_gui_window *window);
 extern void gui_window_search_stop (struct t_gui_window *window);

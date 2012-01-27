@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -119,9 +119,11 @@ gui_key_default_bindings (int context)
         BIND(/* m-b         */ "meta-b",             "/input move_previous_word");
         BIND(/* ^left       */ "meta-Od",            "/input move_previous_word");
         BIND(/* ^left       */ "meta-OD",            "/input move_previous_word");
+        BIND(/* ^left       */ "meta2-1;5D",         "/input move_previous_word");
         BIND(/* m-f         */ "meta-f",             "/input move_next_word");
         BIND(/* ^right      */ "meta-Oc",            "/input move_next_word");
         BIND(/* ^right      */ "meta-OC",            "/input move_next_word");
+        BIND(/* ^right      */ "meta2-1;5C",         "/input move_next_word");
         BIND(/* up          */ "meta2-A",            "/input history_previous");
         BIND(/* down        */ "meta2-B",            "/input history_next");
         BIND(/* ^up         */ "meta-Oa",            "/input history_global_previous");
@@ -136,7 +138,7 @@ gui_key_default_bindings (int context)
         BIND(/* m-j,m-s     */ "meta-jmeta-s",       "/server jump");
         BIND(/* m-h         */ "meta-h",             "/input hotlist_clear");
         BIND(/* m-k         */ "meta-k",             "/input grab_key_command");
-        BIND(/* m-u         */ "meta-u",             "/input scroll_unread");
+        BIND(/* m-u         */ "meta-u",             "/window scroll_unread");
         BIND(/* ^S^U        */ "ctrl-Sctrl-U",       "/input set_unread");
         BIND(/* ^Cb         */ "ctrl-Cb",            "/input insert \\x02");
         BIND(/* ^Cc         */ "ctrl-Cc",            "/input insert \\x03");

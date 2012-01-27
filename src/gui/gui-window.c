@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1381,6 +1381,39 @@ gui_window_scroll_next_highlight (struct t_gui_window *window)
                 }
                 ptr_line = ptr_line->next_line;
             }
+        }
+    }
+}
+
+/*
+ * gui_window_scroll_unread: scroll to first unread line of buffer
+ */
+
+void
+gui_window_scroll_unread (struct t_gui_window *window)
+{
+    if (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED)
+    {
+        if (CONFIG_STRING(config_look_read_marker) &&
+            CONFIG_STRING(config_look_read_marker)[0] &&
+            (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) &&
+            (window->buffer->lines->first_line_not_read ||
+             (window->buffer->lines->last_read_line &&
+              window->buffer->lines->last_read_line != window->buffer->lines->last_line)))
+        {
+            if (window->buffer->lines->first_line_not_read)
+                window->scroll->start_line = window->buffer->lines->first_line;
+            else
+                window->scroll->start_line = window->buffer->lines->last_read_line->next_line;
+            if (window->scroll->start_line)
+            {
+                if (!gui_line_is_displayed (window->scroll->start_line))
+                    window->scroll->start_line = gui_line_get_next_displayed (window->scroll->start_line);
+            }
+            window->scroll->start_line_pos = 0;
+            window->scroll->first_line_displayed =
+                (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
+            gui_buffer_ask_chat_refresh (window->buffer, 2);
         }
     }
 }

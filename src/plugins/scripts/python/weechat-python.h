@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -25,6 +25,14 @@
 #define PYTHON_PLUGIN_NAME "python"
 
 #define PYTHON_CURRENT_SCRIPT_NAME ((python_current_script) ? python_current_script->name : "-")
+
+/* define some bytes functions for old python (<= 2.5) */
+#if PY_VERSION_HEX < 0x02060000
+#define PyBytes_AsString PyString_AsString
+#define PyBytes_Check PyString_Check
+#define PyBytes_FromString PyString_FromString
+#define PyUnicode_FromString PyString_FromString
+#endif
 
 extern struct t_weechat_plugin *weechat_python_plugin;
 

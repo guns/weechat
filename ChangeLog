@@ -1,12 +1,22 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.7-dev, 2011-12-09
+v0.3.7-dev, 2012-01-24
 
 
 Version 0.3.7 (under dev!)
 --------------------------
 
+* core: move option "scroll_unread" from command /input to /window
+* core: add support of flags in regular expressions and highlight options
+* core: add library "pthread" in cmake file for link on OpenBSD
+* core: use extended regex in filters (patch #7616)
+* core: save current mouse state in option weechat.look.mouse (set option when
+  mouse state is changed with command /mouse)
+* core: add type "hashtable" for hdata
+* core: add signal "buffer_line_added"
+* core: add default keys "meta2-1;5D" and "meta2-1;5C" (ctrl+left/right) for
+  gnome-terminal
 * core: add option "hooks" for command /debug
 * core: add option "weechat.look.scroll_bottom_after_switch" (if enabled,
   restore old behaviour before fix of bug #25555 in version 0.3.5)
@@ -33,8 +43,26 @@ Version 0.3.7 (under dev!)
 * core: fix compilation error with "pid_t" on Mac OS X (bug #34639)
 * core: enable background process under Cygwin to connect to servers, fix
   reconnection problem (bug #34626)
-* api: add new functions strcasecmp_range, strncasecmp_range, hdata_char and
+* api: add modifier "input_text_for_buffer"
+* api: add support of URL in hook_process/hook_process_hashtable (task #10247)
+* api: add new functions strcasecmp_range, strncasecmp_range,
+  string_regex_flags, string_regcomp, hashtable_map_string,
+  hook_process_hashtable, hdata_check_pointer, hdata_char, hdata_hashtable and
   nicklist_get_next_item
+* alias: add default alias umode => /mode $nick
+* aspell: fix URL detection (do not check spelling of URLs) (bug #34040)
+* irc: add options irc.look.highlight_{server|channel|pv} to customize or
+  disable default nick highlight (task #11128)
+* irc: use low priority for MODE sent automatically by WeeChat (when joining
+  channel)
+* irc: use extended regex in commands /ignore and /list
+* irc: use redirection to get channel modes after update of modes on channel,
+  display output of /mode #channel, allow /mode without argument (display modes
+  of current channel or user modes on server buffer)
+* irc: do not use option irc.look.nick_color_stop_chars for forced nick colors
+  (bug #33480)
+* irc: add optional server in info "irc_is_channel" (before channel name)
+  (bug #35124), add optional server in info_hashtable "irc_message_parse"
 * irc: reset read marker of current buffer on manual /join
 * irc: fix crash when signon time in message 317 (whois, idle) is invalid
   (too large) (bug #34905)
@@ -52,6 +80,9 @@ Version 0.3.7 (under dev!)
 * irc: auto-connect to servers created with "irc://" on command line but not
   other servers if "-a" ("--no-connect") is given
 * guile: new script plugin for scheme (task #7289)
+* python: add support of Python 3.x (task #11704)
+* relay: do not create relay if there is a problem with socket creation
+  (bug #35345)
 * relay: add WeeChat protocol for remote GUI
 * ruby: fix crash when reloading ruby plugin (bug #34474)
 * xfer: display origin of xfer in core and xfer buffers (task #10956)

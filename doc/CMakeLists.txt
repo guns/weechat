@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -25,11 +25,12 @@ IF(ENABLE_DOC)
   IF(ASCIIDOC_FOUND AND SOURCEHIGHLIGHT_FOUND)
     ADD_SUBDIRECTORY( en )
     ADD_SUBDIRECTORY( fr )
-    ADD_SUBDIRECTORY( pl )
+    ADD_SUBDIRECTORY( it )
     ADD_SUBDIRECTORY( de )
+    ADD_SUBDIRECTORY( pl )
+    ADD_SUBDIRECTORY( es )
     ADD_SUBDIRECTORY( ru )
     ADD_SUBDIRECTORY( ja )
-    ADD_SUBDIRECTORY( it )
   ENDIF(ASCIIDOC_FOUND AND SOURCEHIGHLIGHT_FOUND)
 
 ENDIF(ENABLE_DOC)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -505,9 +505,11 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->string_expand_home = &string_expand_home;
         new_plugin->string_remove_quotes = &string_remove_quotes;
         new_plugin->string_strip = &string_strip;
+        new_plugin->string_mask_to_regex = &string_mask_to_regex;
+        new_plugin->string_regex_flags = &string_regex_flags;
+        new_plugin->string_regcomp = &string_regcomp;
         new_plugin->string_has_highlight = &string_has_highlight;
         new_plugin->string_has_highlight_regex = &string_has_highlight_regex;
-        new_plugin->string_mask_to_regex = &string_mask_to_regex;
         new_plugin->string_split = &string_split;
         new_plugin->string_free_split = &string_free_split;
         new_plugin->string_build_with_split_string = &string_build_with_split_string;
@@ -571,6 +573,7 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->hashtable_get = &hashtable_get;
         new_plugin->hashtable_has_key = &hashtable_has_key;
         new_plugin->hashtable_map = &hashtable_map;
+        new_plugin->hashtable_map_string = &hashtable_map_string;
         new_plugin->hashtable_get_integer = &hashtable_get_integer;
         new_plugin->hashtable_get_string = &hashtable_get_string;
         new_plugin->hashtable_set_pointer = &hashtable_set_pointer;
@@ -633,6 +636,7 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->hook_timer = &hook_timer;
         new_plugin->hook_fd = &hook_fd;
         new_plugin->hook_process = &hook_process;
+        new_plugin->hook_process_hashtable = &hook_process_hashtable;
         new_plugin->hook_connect = &hook_connect;
         new_plugin->hook_print = &hook_print;
         new_plugin->hook_signal = &hook_signal;
@@ -739,6 +743,7 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->hdata_get_var = &hdata_get_var;
         new_plugin->hdata_get_var_at_offset = &hdata_get_var_at_offset;
         new_plugin->hdata_get_list = &hdata_get_list;
+        new_plugin->hdata_check_pointer = &hdata_check_pointer;
         new_plugin->hdata_move = &hdata_move;
         new_plugin->hdata_char = &hdata_char;
         new_plugin->hdata_integer = &hdata_integer;
@@ -746,6 +751,7 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->hdata_string = &hdata_string;
         new_plugin->hdata_pointer = &hdata_pointer;
         new_plugin->hdata_time = &hdata_time;
+        new_plugin->hdata_hashtable = &hdata_hashtable;
         new_plugin->hdata_get_string = &hdata_get_string;
 
         new_plugin->upgrade_new = &upgrade_file_new;

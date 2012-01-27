@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -74,7 +74,6 @@ extern void gui_input_hotlist_clear (struct t_gui_buffer *buffer);
 extern void gui_input_grab_key (struct t_gui_buffer *buffer, int command,
                                 const char *delay);
 extern void gui_input_grab_mouse (struct t_gui_buffer *buffer, int area);
-extern void gui_input_scroll_unread (struct t_gui_buffer *buffer);
 extern void gui_input_set_unread ();
 extern void gui_input_set_unread_current (struct t_gui_buffer *buffer);
 extern void gui_input_switch_active_buffer (struct t_gui_buffer *buffer);

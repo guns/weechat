@@ -1006,47 +1006,6 @@ free (str);
 [NOTE]
 Questa funzione non è disponibile nelle API per lo scripting.
 
-weechat_string_has_highlight
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Controlla se una stringa ha uno o più eventi, usando la lista di parole per
-gli eventi.
-
-Prototipo:
-
-[source,C]
-----------------------------------------
-int weechat_string_has_highlight (const char *string,
-                                  const char highlight_words);
-----------------------------------------
-
-Argomenti:
-
-* 'string': stringa
-* 'highlight_words': lista di parole per gli eventi, separate da virgole
-
-Valore restituito:
-
-* 1 se la stringa ha uno o più eventi, altrimenti 0
-
-Esempio in C:
-
-[source,C]
-----------------------------------------
-int hl = weechat_string_has_highlight ("my test string", "test,word2"); /* == 1 */
-----------------------------------------
-
-Script (Python):
-
-[source,python]
-----------------------------------------
-# prototipo
-highlight = weechat.string_has_highlight(string, highlight_words)
-
-# esempio
-highlight = weechat.string_has_highlight("my test string", "test,word2") # 1
-----------------------------------------
-
 weechat_string_mask_to_regex
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1089,6 +1048,146 @@ regex = weechat.string_mask_to_regex(mask)
 
 # esempio
 regex = weechat.string_mask_to_regex("test*mask") # "test.*mask"
+----------------------------------------
+
+// TRANSLATION MISSING
+weechat_string_regex_flags
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.7._
+
+Get pointer on string after flags and return mask with flags to compile regular
+expression.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+const char *weechat_string_regex_flags (const char *regex, int default_flags, int *flags)
+----------------------------------------
+
+Argomenti:
+
+* 'regex': regular expression
+* 'default_flags': combination of following values (see `man regcomp`):
+** REG_EXTENDED
+** REG_ICASE
+** REG_NEWLINE
+** REG_NOSUB
+* 'flags': pointer value is set with flags used in regular expression (default
+  flags + flags set in regular expression)
+
+Flags must be at beginning of regular expression. Format is:
+"(?eins-eins)string".
+
+Allowed flags are:
+
+* 'e': POSIX extended regular expression ('REG_EXTENDED')
+* 'i': case insensitive ('REG_ICASE')
+* 'n': match-any-character operators don't match a newline ('REG_NEWLINE')
+* 's': support for substring addressing of matches is not required ('REG_NOSUB')
+
+Valore restituito:
+
+* pointer in 'regex', after flags
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+const char *regex = "(?i)test";
+int flags;
+const char *ptr_regex = weechat_string_regex_flags (regex, REG_EXTENDED, &flags);
+/* ptr_regex == "test", flags == REG_EXTENDED | REG_ICASE */
+----------------------------------------
+
+[NOTE]
+Questa funzione non è disponibile nelle API per lo scripting.
+
+// TRANSLATION MISSING
+weechat_string_regcomp
+^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.7._
+
+Compile a regular expression using optional flags at beginning of string (for
+format of flags, see <<_weechat_string_regex_flags,weechat_string_regex_flags>>).
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+int weechat_string_regcomp (void *preg, const char *regex, int default_flags)
+----------------------------------------
+
+Argomenti:
+
+* 'preg': pointer to 'regex_t' structure
+* 'regex': regular expression
+* 'default_flags': combination of following values (see `man regcomp`):
+** REG_EXTENDED
+** REG_ICASE
+** REG_NEWLINE
+** REG_NOSUB
+
+Valore restituito:
+
+* same return code as function `regcomp` (0 if ok, other value for error,
+  see `man regcomp`)
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+regex_t my_regex;
+if (weechat_string_regcomp (&my_regex, "(?i)test", REG_EXTENDED) != 0)
+{
+    /* error */
+}
+----------------------------------------
+
+[NOTE]
+Questa funzione non è disponibile nelle API per lo scripting.
+
+weechat_string_has_highlight
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Controlla se una stringa ha uno o più eventi, usando la lista di parole per
+gli eventi.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+int weechat_string_has_highlight (const char *string,
+                                  const char highlight_words);
+----------------------------------------
+
+Argomenti:
+
+* 'string': stringa
+* 'highlight_words': lista di parole per gli eventi, separate da virgole
+
+Valore restituito:
+
+* 1 se la stringa ha uno o più eventi, altrimenti 0
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+int hl = weechat_string_has_highlight ("my test string", "test,word2"); /* == 1 */
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+highlight = weechat.string_has_highlight(string, highlight_words)
+
+# esempio
+highlight = weechat.string_has_highlight("my test string", "test,word2") # 1
 ----------------------------------------
 
 weechat_string_split
@@ -3252,7 +3351,7 @@ Prototipo:
 
 [source,C]
 ----------------------------------------
-void hashtable_map (struct t_hashlist *hashlist,
+void hashtable_map (struct t_hashtable *hashtable,
                     void (*callback_map)(void *data,
                                          struct t_hashtable *hashtable,
                                          const void *key,
@@ -3281,6 +3380,57 @@ map_cb (void *data, struct t_hashtable *hashtable,
 }
 /* ... */
 weechat_hashtable_map (hashtable, &map_cb, NULL);
+----------------------------------------
+
+[NOTE]
+Questa funzione non è disponibile nelle API per lo scripting.
+
+weechat_hashtable_map_string
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.7._
+
+// TRANSLATION MISSING
+Chiama una funzione su tutte le voci della tabella hash, sending keys and values
+as strings.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+void hashtable_map_string (struct t_hashtable *hashtable,
+                           void (*callback_map)(void *data,
+                                                struct t_hashtable *hashtable,
+                                                const char *key,
+                                                const char *value),
+                           void *callback_map_data);
+----------------------------------------
+
+Argomenti:
+
+* 'hashtable': puntatore alla tabella hash
+* 'callback_map': funzione chiamata per ogni voce nella tabella hash
+* 'callback_map_data': puntatore fornito alla mappa di callback quando chiamata
+
+// TRANSLATION MISSING
+[NOTE]
+The strings 'key' and 'value' sent to callback are temporary strings, they
+are deleted after call to callback.
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+void
+map_cb (void *data, struct t_hashtable *hashtable,
+        const char *key, const char *value)
+{
+    /* display key and value */
+    weechat_printf (NULL, "key: '%s', value: '%s'",
+                    key, value);
+}
+/* ... */
+weechat_hashtable_map_string (hashtable, &map_cb, NULL);
 ----------------------------------------
 
 [NOTE]
@@ -3452,10 +3602,10 @@ weechat_hashtable_add_to_infolist (hashtable, infolist_item, "testhash");
      "key1" => "value 1"
      "key2" => "value 2"
    allora le seguenti variabili verranno aggiunti all'elemento  della lista info:
-     "testhash_name_00001"  = "key1"
-     "testhash_value_00001" = "value 1"
-     "testhash_name_00002"  = "key2"
-     "testhash_value_00002" = "value 2"
+     "testhash_name_00000"  = "key1"
+     "testhash_value_00000" = "value 1"
+     "testhash_name_00001"  = "key2"
+     "testhash_value_00001" = "value 2"
 */
 ----------------------------------------
 
@@ -6680,7 +6830,9 @@ struct t_hook *weechat_hook_process (const char *command,
 
 Argomenti:
 
-* 'command': comando da avviare nel processo figlio
+// TRANSLATION MISSING
+* 'command': comando da avviare nel processo figlio or URL
+  (_novità nella versione 0.3.7_), see below
 * 'timeout': timeout per il comando (in millisecondi): dopo questo timeout,
   il processo figlio viene terminato (0 vuol dire nessun timeout)
 * 'callback': funzione chiamata quando i dati dal processo figlio sono disponibili,
@@ -6688,7 +6840,13 @@ Argomenti:
 ** 'void *data': puntatore
 ** 'const char *command': comando eseguito dal processo figlio
 ** 'int return_code': codice restituito:
-*** '>= 0': codice restituito dal comando figlio
+// TRANSLATION MISSING
+*** '>= 0': child return code for a command, and for URL possible values are:
+**** '0': transfer ok
+**** '1': invalid URL
+**** '2': transfer error
+**** '3': not enough memory
+**** '4': error with a file
 *** '< 0': 'WEECHAT_HOOK_PROCESS_RUNNING' (dati disponibili, ma figlio
     ancora in esecuzione) o 'WEECHAT_HOOK_PROCESS_ERROR' (errore nella
     esecuzione del comando)
@@ -6705,6 +6863,11 @@ Valore restituito:
 
 Quando il comando ha terminato, o se viene raggiunto il timeout, WeeChat
 effettua automaticamente l'unhook (e termina il processo se ancora in esecuzione).
+
+// TRANSLATION MISSING
+The command can be an URL with format: "url:http://www.example.com", to download
+content of URL (_new in version 0.3.7_). Options are possible for URL with
+function <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>>.
 
 [NOTE]
 La dimensione del buffer per l'invio dei dati alla callback è di 64KB (ci sono
@@ -6775,6 +6938,131 @@ def my_process_cb(data, command, return_code, out, err):
     return weechat.WEECHAT_RC_OK
 
 hook = weechat.hook_process("ls", 5000, "my_process_cb", "")
+----------------------------------------
+
+weechat_hook_process_hashtable
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.7._
+
+// TRANSLATION MISSING
+Hook a process (launched with fork) using options in a hashtable, and catch
+output.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+struct t_hook *weechat_hook_process_hashtable (const char *command,
+                                               struct t_hashtable *options,
+                                               int timeout,
+                                               int (*callback)(void *data,
+                                                               const char *command,
+                                                               int return_code,
+                                                               const char *out,
+                                                               const char *err),
+                                               void *callback_data);
+----------------------------------------
+
+// TRANSLATION MISSING
+Arguments are the same as function <<_weechat_hook_process,weechat_hook_process>>,
+with an extra argument:
+
+* 'options': options for command executed (see table below); the hashtable is
+  duplicated in function, so it's safe to free it after this call
+
+// TRANSLATION MISSING
+For command "url:...", following options are available (see
+`man curl_easy_setopt` for a description of each option):
+
+include::autogen/plugin_api/url_options.txt[]
+
+// TRANSLATION MISSING
+[NOTE]
+^(1)^ When constants are available they must be used as value for option. For
+options with type "mask", format is: "value1+value2+value3".
+
+For URL, two extra options (strings) are allowed for input/output file:
+
+* 'file_in': file to read and send with URLs (post file)
+* 'file_out': write downloaded URL/file in this file (instead of standard
+  output)
+
+Valore restituito:
+
+* puntatore al nuovo hook, NULL in caso di errore
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+int
+my_process_cb (void *data, const char *command, int return_code,
+               const char *out, const char *err)
+{
+    if (return_code == WEECHAT_HOOK_PROCESS_ERROR)
+    {
+        weechat_printf (NULL, "Error with command '%s'", command);
+        return WEECHAT_RC_OK;
+    }
+
+    if (return_code >= 0)
+    {
+        weechat_printf (NULL, "return_code = %d", return_code);
+    }
+
+    if (out)
+    {
+        weechat_printf (NULL, "stdout: %s", out);
+    }
+
+    if (err)
+    {
+        weechat_printf (NULL, "stderr: %s", err);
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+struct t_hashtable *options = weechat_hashtable_new (8,
+                                                     WEECHAT_HASHTABLE_STRING,
+                                                     WEECHAT_HASHTABLE_STRING,
+                                                     NULL,
+                                                     NULL);
+if (hashtable)
+{
+    weechat_hashtable_set (options, "file_out", "/tmp/weechat.org.html");
+    struct t_hook *my_process_hook = weechat_hook_process_hashtable ("url:http://www.weechat.org/",
+                                                                     options,
+                                                                     20000,
+                                                                     &my_process_cb, NULL);
+    weechat_hashtable_free (options);
+}
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+hook = weechat.hook_process_hashtable(command, options, timeout, callback, callback_data)
+
+# esempio
+def my_process_cb(data, command, return_code, out, err):
+    if return_code == weechat.WEECHAT_HOOK_PROCESS_ERROR:
+        weechat.prnt("", "Error with command '%s'" % command)
+        return weechat.WEECHAT_RC_OK
+    if return_code >= 0:
+        weechat.prnt("", "return_code = %d" % return_code)
+    if out != "":
+        weechat.prnt("", "stdout: %s" % out)
+    if err != "":
+        weechat.prnt("", "stderr: %s" % err)
+    return weechat.WEECHAT_RC_OK
+
+hook = weechat.hook_process_hashtable("url:http://www.weechat.org/",
+                                      { "file_out": "/tmp/weechat.org.html" },
+                                      20000, "my_process_cb", "")
 ----------------------------------------
 
 weechat_hook_connect
@@ -7151,6 +7439,10 @@ Argomenti:
 
 | weechat | buffer_type_changed | puntatore: buffer |
   tipo di buffer modificato
+
+// TRANSLATION MISSING
+| weechat | buffer_line_added | puntatore: line |
+  line added in a buffer
 
 | weechat | debug_dump | stringa: nome plugin |
   richiesta di dump
@@ -7680,6 +7972,19 @@ Quando è stata ricevuta la risposta completa dal proprio comando, verrà
 inviato un hsignal. Questo hsignal ha il nome 'irc_redirection_xxx_yyy' dove
 'xxx' è il segnale e 'yyy' lo 'schema' usato.
 
+// TRANSLATION MISSING
+Hashtable sent in hsignal has following content (key and values are strings):
+
+// TRANSLATION MISSING
+* 'output': output of command (messages are separated by "\n")
+* 'output_size': number of bytes in 'output' (as string)
+* 'error': error string (if an error occurred):
+** 'timeout': redirection stopped after timeout
+* 'server': internal server name
+* 'pattern': redirect pattern
+* 'signal': signal name
+* 'command': redirected command
+
 Esempio in C:
 
 [source,C]
@@ -7695,7 +8000,7 @@ test_whois_cb (void *data, const char *signal, struct t_hashtable *hashtable)
 weechat_hook_hsignal ("irc_redirection_test_whois", &test_whois_cb, NULL);
 struct t_hashtable *hashtable = weechat_hashtable_new (8,
                                                        WEECHAT_HASHTABLE_STRING,
-                                                       WEECHAT_HASHTABLE_INTEGER,
+                                                       WEECHAT_HASHTABLE_STRING,
                                                        NULL,
                                                        NULL);
 if (hashtable)
@@ -7768,7 +8073,7 @@ Esempio in C:
 ----------------------------------------
 struct t_hashtable *hashtable = weechat_hashtable_new (8,
                                                        WEECHAT_HASHTABLE_STRING,
-                                                       WEECHAT_HASHTABLE_INTEGER,
+                                                       WEECHAT_HASHTABLE_STRING,
                                                        NULL,
                                                        NULL);
 if (hashtable)
@@ -8104,7 +8409,8 @@ Argomenti:
   contenuto del messaggio ricevuto dal server IRC (prima della codifica del set caratteri) |
   nuovo contenuto del messaggio
 
-| irc | irc_in2_xxx ^(1)^ |
+| irc | irc_in2_xxx ^(1)^ +
+  (_novità nella versione 0.3.5_) |
   nome server |
   contenuto del messaggio ricevuto dal server IRC (dopo la codifica del set caratteri) |
   nuovo contenuto del messaggio
@@ -8119,27 +8425,37 @@ Argomenti:
   stringa vuota |
   "1" per visualizzare la barra, "0" per nasconderla
 
-| weechat | history_add |
+// TRANSLATION MISSING
+| weechat | history_add +
+  (_novità nella versione 0.3.2_) |
   stringa con puntatore al buffer ("0x123..") |
-  input buffer (from user) to add in command history (buffer and global) |
+  content of command line to add in command history (buffer and global) |
   string added to command history
 
+// TRANSLATION MISSING
 | weechat | input_text_content |
   stringa con puntatore al buffer ("0x123..") |
-  input buffer (dall'utente) |
-  nuovo contenuto del buffer di input
+  content of command line |
+  new content of command line
 
+// TRANSLATION MISSING
 | weechat | input_text_display |
   stringa con puntatore al buffer ("0x123..") |
-  buffer di input (dall'utente), senza tag di cursore |
-  nuovo contenuto del buffer di input, solo per visualizzazione (il buffer
-  di input non è modificato)
+  content of command line, without cursor tag |
+  new string, for display only (command line is not changed)
 
+// TRANSLATION MISSING
 | weechat | input_text_display_with_cursor |
   stringa con puntatore al buffer ("0x123..") |
-  buffer di input (dall'utente), con tag di cursore |
-  nuovo contenuto del buffer di input, solo per la visualizzazione (buffer di
-  input non è modificato)
+  content of command line, with cursor tag |
+  new string, for display only (command line is not changed)
+
+// TRANSLATION MISSING
+| weechat | input_text_for_buffer +
+  (_novità nella versione 0.3.7_) |
+  stringa con puntatore al buffer ("0x123..") |
+  content of command line sent to buffer (text or command) |
+  new content of command line sent to buffer
 
 | weechat | weechat_print |
   plugin;buffer_name;tags |
@@ -12441,8 +12757,16 @@ Esempio in C:
 int offset = weechat_hdata_get_var_offset (hdata, "name");
 ----------------------------------------
 
-[NOTE]
-Questa funzione non è disponibile nelle API per lo scripting.
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+offset = weechat.hdata_get_var_offset(hdata, name)
+
+# esempio
+offset = weechat.hdata_get(hdata, "name")
+----------------------------------------
 
 weechat_hdata_get_var_type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12701,6 +13025,69 @@ list = weechat.hdata_get_list(hdata, name)
 # esempio
 hdata = weechat.hdata_get("buffer")
 buffers = weechat.hdata_get_list(hdata, "gui_buffers")
+----------------------------------------
+
+weechat_hdata_check_pointer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.7._
+
+// TRANSLATION MISSING
+Check if a pointer is valid for a hdata and a list pointer.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+int weechat_hdata_check_pointer (struct t_hdata *hdata, void *list, void *pointer);
+----------------------------------------
+
+Argomenti:
+
+* 'hdata': puntatore hdata
+// TRANSLATION MISSING
+* 'list': list pointer
+// TRANSLATION MISSING
+* 'pointer': pointer to check
+
+Valore restituito:
+
+// TRANSLATION MISSING
+* 1 if pointer is in list, 0 if not found
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+/* check if a buffer pointer is valid */
+struct t_hdata *hdata = weechat_hdata_get ("buffer");
+if (weechat_hdata_check_pointer (hdata,
+                                 weechat_hdata_get_list (hdata, "gui_buffers"),
+                                 ptr_buffer))
+{
+    /* valid pointer */
+}
+else
+{
+    /* invalid pointer */
+}
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+rc = weechat.hdata_check_pointer(hdata, list, pointer)
+
+# esempio
+hdata = weechat.hdata_get("buffer")
+if weechat.hdata_check_pointer(hdata, weechat.hdata_get_list(hdata, "gui_buffers"), ptr_buffer):
+    # valid pointer
+    # ...
+else:
+    # invalid pointer
+    # ...
 ----------------------------------------
 
 weechat_hdata_move
@@ -13054,6 +13441,59 @@ if ptr:
         if ptr:
             hdata = weechat.hdata_get("line_data")
             weechat.prnt("", "time of last line displayed = %s" % weechat.hdata_time(hdata, ptr, "date"))
+----------------------------------------
+
+weechat_hdata_hashtable
+^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.7._
+
+// TRANSLATION MISSING
+Return value of hashtable variable in structure using hdata.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+struct t_hashtable *weechat_hdata_hashtable (struct t_hdata *hdata, void *pointer, const char *name);
+----------------------------------------
+
+Argomenti:
+
+* 'hdata': puntatore hdata
+* 'pointer': puntatore all'oggetto di WeeChat/plugin
+* 'name': nome della variabile (deve essere di tipo "hashtable")
+
+Valore restituito:
+
+// TRANSLATION MISSING
+* hashtable value of variable (pointer to hashtable)
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+struct t_hdata *hdata = weechat_hdata_get ("buffer");
+struct t_gui_buffer *buffer = weechat_buffer_search_main ();
+struct t_hashtable *hashtable = weechat_hdata_hashtable (hdata, buffer, "local_variables");
+weechat_printf (NULL, "%d local variables in core buffer",
+                weechat_hashtable_get_integer (hashtable, "items_count"));
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+hashtable = weechat.hdata_hashtable(hdata, pointer, name)
+
+# esempio
+hdata = weechat.hdata_get("buffer")
+buffer = weechat.buffer_search_main()
+hash = weechat.hdata_hashtable(hdata, buffer, "local_variables")
+weechat.prnt("", "local variables in core buffer:")
+for key in hash:
+    weechat.prnt("", "  %s == %s" % (key, hash[key]))
 ----------------------------------------
 
 weechat_hdata_get_string

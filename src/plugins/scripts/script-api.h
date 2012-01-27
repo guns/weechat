@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -152,6 +152,18 @@ extern struct t_hook *script_api_hook_fd (struct t_weechat_plugin *weechat_plugi
                                           int (*callback)(void *data, int fd),
                                           const char *function,
                                           const char *data);
+extern struct t_hook *script_api_hook_process_hashtable (struct t_weechat_plugin *weechat_plugin,
+                                                         struct t_plugin_script *script,
+                                                         const char *command,
+                                                         struct t_hashtable *options,
+                                                         int timeout,
+                                                         int (*callback)(void *data,
+                                                                         const char *command,
+                                                                         int return_code,
+                                                                         const char *out,
+                                                                         const char *err),
+                                                         const char *function,
+                                                         const char *data);
 extern struct t_hook *script_api_hook_process (struct t_weechat_plugin *weechat_plugin,
                                                struct t_plugin_script *script,
                                                const char *command,

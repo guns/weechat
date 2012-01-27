@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat 0.3.7-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2011-12-07 17:39+0100\n"
-"PO-Revision-Date: 2011-11-15 19:37+0100\n"
+"POT-Creation-Date: 2012-01-24 21:20+0100\n"
+"PO-Revision-Date: 2012-01-16 22:07+0100\n"
 "Last-Translator: Marco Paolone <marcopaolone@gmail.com>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: Italian\n"
@@ -717,6 +717,10 @@ msgid "Option changed"
 msgstr "Opzione modificata"
 
 #, c-format
+msgid "%sReset of all options is not allowed"
+msgstr "%sIl ripristino di tutte le opzioni non è consentito"
+
+#, c-format
 msgid "%sFailed to unset option \"%s\""
 msgstr "%sImpossibile disabilitare l'opzione \"%s\""
 
@@ -1143,7 +1147,6 @@ msgstr ""
 "list || set <plugin> <livello> || dump [<plugin>] || buffer|color|infolists|"
 "memory|tags|term|windows || mouse|cursor [verbose] || hdata [free]"
 
-#, fuzzy
 msgid ""
 "     list: list plugins with debug levels\n"
 "      set: set debug level for plugin\n"
@@ -1176,6 +1179,7 @@ msgstr ""
 "   cursor: abilita/disabilita debug per la modalità cursore\n"
 "    hdata: mostra informazioni su hdata (con free: rimuove tutti gli hdata "
 "in memoria)\n"
+"    hooks: mostra informazioni sugli hook\n"
 "infolists: mostra informazioni sulle liste info\n"
 "   memory: mostra informazioni sull'uso della memoria\n"
 "    mouse: abilita/disabilita debug per il mouse\n"
@@ -1195,6 +1199,7 @@ msgstr ""
 "list || enable|disable|toggle [<nome>] || add <nome> <buffer>[,<buffer>...] "
 "<tag> <regex>] || del <nome>|-all"
 
+#, fuzzy
 msgid ""
 "   list: list all filters\n"
 " enable: enable filters (filters are enabled by default)\n"
@@ -1219,6 +1224,8 @@ msgid ""
 "'\\!' to start with '!')\n"
 "         - two regular expressions are created: one for prefix and one for "
 "message\n"
+"         - regex are case insensitive, they can start by \"(?-i)\" to become "
+"case sensitive\n"
 "\n"
 "The default key alt+'=' toggles filtering on/off.\n"
 "\n"
@@ -1340,6 +1347,7 @@ msgstr "funzioni per la riga di comando"
 msgid "<action> [<arguments>]"
 msgstr "<azioni> [<argomenti>]"
 
+#, fuzzy
 msgid ""
 "list of actions:\n"
 "  return: simulate key \"enter\"\n"
@@ -1384,7 +1392,6 @@ msgid ""
 "argument: delay for end of grab, default is 500 milliseconds)\n"
 "  grab_mouse: grab mouse event code\n"
 "  grab_mouse_area: grab mouse event code with area\n"
-"  scroll_unread: scroll to unread marker\n"
 "  set_unread: set unread marker for all buffers\n"
 "  set_unread_current_buffer: set unread marker for current buffer\n"
 "  switch_active_buffer: switch to next merged buffer\n"
@@ -1612,8 +1619,7 @@ msgid ""
 "  delay: delay (in seconds) after which initial mouse state is restored "
 "(useful to temporarily disable mouse)\n"
 "\n"
-"To enable/disable mouse at startup, use:\n"
-"  /set weechat.look.mouse on/off\n"
+"The mouse state is saved in option \"weechat.look.mouse\".\n"
 "\n"
 "Examples:\n"
 "  enable mouse:\n"
@@ -1627,8 +1633,7 @@ msgstr ""
 "ritardo: ritardo (in secondi) dopo il quale viene ripristinato lo stato "
 "iniziale del mouse (utile per disattivarlo temporaneamente)\n"
 "\n"
-"Per abilitare/disabilitare il mouse all'avvio, usare:\n"
-"  /set weechat.look.mouse on/off\n"
+"Lo stato del mouse viene salvato nell'opzione \"weechat.look.mouse\".\n"
 "\n"
 "Esempi:\n"
 "  abilita mouse:\n"
@@ -2045,15 +2050,16 @@ msgstr ""
 msgid "manage windows"
 msgstr "gestione finestre"
 
+#, fuzzy
 msgid ""
 "list || -1|+1|b#|up|down|left|right [-window <number>] || <number> || splith|"
 "splitv [-window <number>] [<pct>] || resize [-window <number>] [+/-]<pct> || "
 "balance || merge [-window <number>] [all] || page_up|page_down [-window "
 "<number>] || refresh || scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y] "
 "|| scroll_horiz [-window <number>] [+/-]<value>[%] || scroll_up|scroll_down|"
-"scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight [-"
-"window <number>] || swap [-window <number>] [up|down|left|right] || zoom[-"
-"window <number>]"
+"scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|"
+"scroll_unread [-window <number>] || swap [-window <number>] [up|down|left|"
+"right] || zoom[-window <number>]"
 msgstr ""
 "list || -1|+1|b#|up|down|left|right [-window <numero>] || <numero> || splith|"
 "splitv [-window <numero>] [<pct>] || resize [-window <numero>] [+/-]<pct> || "
@@ -2064,6 +2070,7 @@ msgstr ""
 "window <numero>] || swap [-window <numero>] [up|down|left|right] || zoom[-"
 "window <numero>]"
 
+#, fuzzy
 msgid ""
 "         list: list opened windows (without argument, this list is "
 "displayed)\n"
@@ -2095,6 +2102,7 @@ msgid ""
 "scroll_bottom: scroll to bottom of buffer\n"
 "scroll_previous_highlight: scroll to previous highlight\n"
 "scroll_next_highlight: scroll to next highlight\n"
+"scroll_unread: scroll to unread marker\n"
 "         swap: swap buffers of two windows (with optional direction for "
 "target window)\n"
 "         zoom: zoom on window\n"
@@ -2466,19 +2474,24 @@ msgstr ""
 "applicazione (l'opzione è disabilitata per default, dato che può causare "
 "seri errori di visualizzazione)"
 
+#, fuzzy
 msgid ""
-"comma separated list of words to highlight (case insensitive comparison, "
-"words may begin or end with \"*\" for partial match)"
+"comma separated list of words to highlight; case insensitive comparison (use "
+"\"(?-i)\" at beginning of words to make them case sensitive), words may "
+"begin or end with \"*\" for partial match; example: \"test,(?-i)*toto*,flash*"
+"\""
 msgstr ""
 "elenco separato da virgole di finestre da evidenziare (maiuscole/minuscole, "
 "le parole potrebbero cominciare o terminare con \"*\" per un riscontro "
 "parziale)"
 
+#, fuzzy
 msgid ""
 "regular expression used to check if a message has highlight or not, at least "
 "one match in string must be surrounded by word chars (alphanumeric, \"-\", "
-"\"_\" or \"|\"), regular expression is case sensitive, example: \"FlashCode|"
-"flashy\""
+"\"_\" or \"|\"), regular expression is case insensitive (use \"(?-i)\" at "
+"beginning to make it case sensitive), examples: \"flashcode|flashy\", \"(?-i)"
+"FlashCode|flashy\""
 msgstr ""
 "l'espressione regolare usata per verificare se un messaggio contiene un "
 "evento oppure no, almeno una corrispondenza nella stringa deve essere "
@@ -2614,10 +2627,8 @@ msgstr ""
 "passa al buffer visitato in precedenza alla chiusura di un buffer (se "
 "disabilitato, allora passa al buffer numero -1)"
 
-msgid "enable mouse support at startup (to enable it now, see /help mouse)"
-msgstr ""
-"abilita il supporto del mouse all'avvio (per attivarlo ora, consultare /help "
-"mouse)"
+msgid "enable mouse support"
+msgstr "abilita il supporto del mouse"
 
 msgid ""
 "delay (in milliseconds) to grab a mouse event: WeeChat will wait this delay "
@@ -2720,6 +2731,10 @@ msgid ""
 "scroll position in windows); the scroll is done only for buffers with "
 "formatted content (not free content)"
 msgstr ""
+"scorri verso il fondo della finestra dopo essere passati ad un altro buffer "
+"non ricordare la posizione di scorrimento nelle finestre); lo scorrimento "
+"viene eseguito solo per i buffer con contenuto formattato (contenuto non "
+"libero)"
 
 msgid ""
 "percent of screen to scroll when scrolling one page up or down (for example "
@@ -3480,9 +3495,9 @@ msgstr "%s-ANCORA(%d)-"
 msgid "Act: "
 msgstr "Attività: "
 
-#, fuzzy, c-format
+#, c-format
 msgid "Notify changed for \"%s%s%s\": \"%s%s%s\" to \"%s%s%s\""
-msgstr "Notifica modificata per \"%s%s,%s%s\": \"%s%s%s\" a \"%s%s%s\""
+msgstr "Notifica modificata per \"%s%s%s\": \"%s%s%s\" a \"%s%s%s\""
 
 #, c-format
 msgid "%sError: a buffer with same name (%s) already exists"
@@ -3587,6 +3602,8 @@ msgstr "[-completion <completamento>] <alias> [<comando> [;<comando>...]]"
 msgid ""
 "completion: completion for alias (optional, by default completion is done "
 "with target command)\n"
+"            note: you can use %%command to use completion of an existing "
+"command\n"
 "     alias: name of alias (can start or end with \"*\" for alias listing)\n"
 "   command: command name with arguments (many commands can be separated by "
 "semicolons)\n"
@@ -3617,10 +3634,12 @@ msgid ""
 msgstr ""
 "completamento: completamento per l'alias (opzionale, per default il "
 "completamento viene eseguito con il comando di destinazione)\n"
+"\t     nota: è possibile usare %%comando per usare il completamento di un "
+"comando esistente\n"
 "        alias: nome dell'alias (può iniziare o terminare con \"*\" per "
 "elencare gli alias)\n"
-"      comando: nome del comando (comandi multipli vanno separati da punto e "
-"virgola)\n"
+"      comando: nome del comando con gli argomenti (più comandi vanno "
+"separati da punto e virgola)\n"
 "\n"
 "Senza argomento, questo comando elenca tutti gli alias definiti.\n"
 "\n"
@@ -4516,6 +4535,7 @@ msgstr "ignora nick/host dai server o dai canali"
 msgid "list || add [re:]<nick> [<server> [<channel>]] || del <number>|-all"
 msgstr "list || add [re:]<nick> [<server> [<canale>]] || del <numero>|-all"
 
+#, fuzzy
 msgid ""
 "     list: list all ignores\n"
 "      add: add an ignore\n"
@@ -4526,6 +4546,9 @@ msgid ""
 "     -all: delete all ignores\n"
 "   server: internal server name where ignore is working\n"
 "  channel: channel name where ignore is working\n"
+"\n"
+"Note: the regular expression can start with \"(?-i)\" to become case "
+"sensitive.\n"
 "\n"
 "Examples:\n"
 "  ignore nick \"toto\" everywhere:\n"
@@ -4677,10 +4700,12 @@ msgstr "elenca i canali ed i loro argomenti"
 msgid "[<channel>[,<channel>...]] [<server>] [-re <regex>]"
 msgstr "[<canale>[,<canale>...]] [<server>] [-re <regexp>]"
 
+#, fuzzy
 msgid ""
 "channel: channel to list\n"
 " server: server name\n"
-"  regex: regular expression used to filter results\n"
+"  regex: regular expression used to filter results (case insensitive, can "
+"start by \"(?-i)\" to become case sensitive)\n"
 "\n"
 "Examples:\n"
 "  list all channels on server (can be very slow on large networks):\n"
@@ -5742,6 +5767,36 @@ msgid "hide password displayed by nickserv"
 msgstr "nascondi password visualizzata da nickserv"
 
 msgid ""
+"comma separated list of words to highlight in server buffers (case "
+"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"sensitive; special variables $nick, $channel and $server are replaced by "
+"their value), these words are added to buffer local variable "
+"\"highlight_words\" only when buffer is created (it does not affect current "
+"buffers), an empty string disables default highlight on nick, examples: "
+"\"$nick\", \"(?-i)$nick\""
+msgstr ""
+
+msgid ""
+"comma separated list of words to highlight in channel buffers (case "
+"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"sensitive; special variables $nick, $channel and $server are replaced by "
+"their value), these words are added to buffer local variable "
+"\"highlight_words\" only when buffer is created (it does not affect current "
+"buffers), an empty string disables default highlight on nick, examples: "
+"\"$nick\", \"(?-i)$nick\""
+msgstr ""
+
+msgid ""
+"comma separated list of words to highlight in private buffers (case "
+"insensitive, use \"(?-i)\" at beginning of words to make them case "
+"sensitive; special variables $nick, $channel and $server are replaced by "
+"their value), these words are added to buffer local variable "
+"\"highlight_words\" only when buffer is created (it does not affect current "
+"buffers), an empty string disables default highlight on nick, examples: "
+"\"$nick\", \"(?-i)$nick\""
+msgstr ""
+
+msgid ""
 "comma separated list of tags for messages that may produce highlight "
 "(usually any message from another user, not server messages,..)"
 msgstr ""
@@ -6034,11 +6089,11 @@ msgid_plural "channels"
 msgstr[0] "canale"
 msgstr[1] "canali"
 
-msgid "1 if string is a valid IRC channel name"
-msgstr "1 se la stringa è nome valido di un canale IRC"
+msgid "1 if string is a valid IRC channel name for server"
+msgstr "1 se la stringa è il nome di un canale IRC valido per il server"
 
-msgid "channel name"
-msgstr "nome canale"
+msgid "server,channel (server is optional)"
+msgstr "server,canale (server è opzionale)"
 
 msgid "1 if string is a valid IRC nick name"
 msgstr "1 se la stringa è un nick IRC valido"
@@ -6083,8 +6138,8 @@ msgstr ""
 msgid "parse an IRC message"
 msgstr "controlla un messaggio IRC"
 
-msgid "\"message\": IRC message"
-msgstr "\"messaggio\": messaggio IRC"
+msgid "\"message\": IRC message, \"server\": server name (optional)"
+msgstr "\"message\": messaggio IRC, \"server\": nome server (opzionale)"
 
 #. TRANSLATORS: please do not translate key names (enclosed by quotes)
 msgid ""
@@ -6096,9 +6151,6 @@ msgstr ""
 
 msgid "split an IRC message (to fit in 512 bytes)"
 msgstr "divide un messaggio IRC (per adattarlo in 512 byte)"
-
-msgid "\"message\": IRC message, \"server\": server name (optional)"
-msgstr "\"message\": messaggio IRC, \"server\": nome server (opzionale)"
 
 #. TRANSLATORS: please do not translate key names (enclosed by quotes)
 msgid ""
@@ -7194,6 +7246,9 @@ msgstr ""
 "nome plugin (può iniziare o terminare con \"*\" come carattere jolly) "
 "(opzionale)"
 
+msgid "options for URL"
+msgstr "opzioni per la URL"
+
 msgid "list of windows"
 msgstr "elenco delle finestre"
 
@@ -7381,20 +7436,20 @@ msgstr "autenticazione fallita"
 msgid "disconnected"
 msgstr "disconnesso"
 
-#, c-format
-msgid "%s: new client from %s%s%s on port %d (id: %d, relaying: %s.%s)"
+#, fuzzy, c-format
+msgid "%s: new client from %s%s%s on port %d (id: %d, relaying: %s%s%s)"
 msgstr "%s: nuovo client da %s%s%s sulla porta %d (id: %d, relay: %s,%s)"
 
 #, c-format
 msgid "%s%s: not enough memory for new client"
 msgstr "%s%s: memoria insufficiente per il nuovo client"
 
-#, c-format
-msgid "%s%s: authentication failed with client %s%s%s (%s.%s)"
+#, fuzzy, c-format
+msgid "%s%s: authentication failed with client %s%s%s (%s%s%s)"
 msgstr "%s%s: autenticazione fallita con il client %s%s%s (%s,%s)"
 
-#, c-format
-msgid "%s: disconnected from client %s%s%s (%s.%s)"
+#, fuzzy, c-format
+msgid "%s: disconnected from client %s%s%s (%s%s%s)"
 msgstr "%s: disconnesso dal client %s%s%s (%s,%s)"
 
 msgid "Clients for relay:"
@@ -7418,8 +7473,8 @@ msgstr "Nessun client per il relay"
 msgid "Listening on ports:"
 msgstr "In ascolto sulle porte:"
 
-#, c-format
-msgid "  port %s%d%s, relay: %s%s.%s%s, started on: %s"
+#, fuzzy, c-format
+msgid "  port %s%d%s, relay: %s%s%s%s%s, started on: %s"
 msgstr "  porta %s%d%s, relay: %s%s.%s%s, avviato il: %s"
 
 msgid "No server for relay"
@@ -7447,23 +7502,26 @@ msgstr ""
 "list|listfull|listrelay || add <protocollo.nome> <porta> || del <protocollo."
 "nome> || raw"
 
+#, fuzzy
 msgid ""
 "         list: list relay clients (only active relays)\n"
 "     listfull: list relay clients (verbose, all relays)\n"
 "    listrelay: list relays (name and port)\n"
 "          add: add relay for a protocol + name\n"
 "          del: remove relay for a protocol + name\n"
-"protocol.name: protocol and name to relay\n"
-"               currently, only protocol \"irc\" is supported\n"
-"               for example: irc.freenode\n"
+"protocol.name: protocol and name to relay:\n"
+"                 - protocol \"irc\": name is the server to share\n"
+"                 - protocol \"weechat\" (name is not used)\n"
 "         port: port used for relay\n"
 "          raw: open buffer with raw Relay data\n"
 "\n"
 "Without argument, this command opens buffer with list of relay clients.\n"
 "\n"
-"Example:\n"
+"Examples:\n"
 "  irc proxy, for server \"freenode\":\n"
-"    /relay add irc.freenode 8000"
+"    /relay add irc.freenode 8000\n"
+"  weechat protocol:\n"
+"    /relay add weechat 8001"
 msgstr ""
 "           list: elenca i client relay (solo quelli attivi)\n"
 "       listfull: elenca i client relay (dettagliato, tutti i relay)\n"
@@ -7499,6 +7557,14 @@ msgstr "%s%s: errore: la porta \"%d\" è già in uso"
 msgid "%s%s: error: unknown protocol \"%s\""
 msgstr "%s%s: errore: protocollo \"%s\" sconosciuto"
 
+#, fuzzy, c-format
+msgid "%s%s: error: name is not allowed for protocol \"%s\""
+msgstr "%s%s: errore: protocollo \"%s\" sconosciuto"
+
+#, fuzzy, c-format
+msgid "%s%s: error: name is not required for protocol \"%s\""
+msgstr "%s%s: errore: protocollo \"%s\" sconosciuto"
+
 #, c-format
 msgid "%s%s: error: relay for \"%s\" already exists"
 msgstr "%s%s: errore: il relay per \"%s\" esiste già"
@@ -7531,10 +7597,14 @@ msgstr "colore del testo per lo status \"autenticazione fallita\""
 msgid "text color for \"disconnected\" status"
 msgstr "colore del testo per lo status \"disconnesso\""
 
+#, fuzzy
 msgid ""
-"regular expression with IPs allowed to use relay, example: \"^(123.45.67.89|"
+"regular expression with IPs allowed to use relay (case insensitive, use \"(?-"
+"i)\" at beginning to make it case sensitive), example: \"^(123.45.67.89|"
 "192.160.*)$\""
 msgstr ""
+"espressione regolare con gli indirizzi IP a cui è consentito usare il relay, "
+"esempio: \"^(123.45.67.89|192.160.*)$\""
 
 msgid ""
 "address for bind (if empty, connection is possible on all interfaces, use "
@@ -7548,6 +7618,9 @@ msgid ""
 "compression level for packets sent to client with WeeChat protocol (0 = "
 "disable compression, 1 = low compression ... 9 = best compression)"
 msgstr ""
+"livello di compressione per i pacchetti inviati al client con il protocollo "
+"WeeChat (0 = disabilita compressione, 1 = compressione bassa ... 9 = "
+"compressione migliore)"
 
 msgid "maximum number of clients connecting to a port"
 msgstr "numero massimo di client connessi ad una porta"
@@ -7568,24 +7641,24 @@ msgstr "puntatore al relay (opzionale)"
 msgid "Relay raw messages"
 msgstr "messaggi raw Relay"
 
-#, c-format
-msgid "%s: socket closed for %s.%s (port %d)"
+#, fuzzy, c-format
+msgid "%s: socket closed for %s%s%s (port %d)"
 msgstr "%s: socket chiuso per %s.%s (porta %d)"
 
-#, c-format
-msgid "%s%s: cannot accept client on port %d (%s.%s)"
+#, fuzzy, c-format
+msgid "%s%s: cannot accept client on port %d (%s%s%s)"
 msgstr "%s%s: impossibile accettare il client sulla porta \"%d\" (%s.%s)"
 
-#, fuzzy, c-format
-msgid "%s%s: IP address \"%s\" not allowed for relay"
-msgstr "%s%s: indirizzo \"%s\" non trovato"
-
 #, c-format
-msgid "%s%s: error with \"bind\" on port %d (%s.%s)"
+msgid "%s%s: IP address \"%s\" not allowed for relay"
+msgstr "%s%s: indirizzo IP \"%s\" non consentito per il relay"
+
+#, fuzzy, c-format
+msgid "%s%s: error with \"bind\" on port %d (%s%s%s)"
 msgstr "%s%s: errore con \"bind\" sulla porta %d (%s.%s)"
 
-#, c-format
-msgid "%s: listening on port %d (relay: %s.%s, max %d clients)"
+#, fuzzy, c-format
+msgid "%s: listening on port %d (relay: %s%s%s, max %d clients)"
 msgstr "%s: in ascolto sulla porta %d (relay: %s,%s, massimo %d client)"
 
 #, c-format
@@ -7600,22 +7673,20 @@ msgstr "%s%s: memoria non sufficiente per verificare il messaggio"
 msgid "%s%s: error sending data to client: %s"
 msgstr "%s%s: errore durante l'invio dei dati al client: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%s: error sending data to client %d (%s)"
-msgstr "%s%s: errore nell'invio dei dati al client %s"
+msgstr "%s%s: errore nell'invio dei dati al client %d (%s)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s%s: failed to execute command \"%s\" for client %d"
-msgstr ""
-"%s%s: impossibile verificare il comando \"%s\" (per favore segnalare agli "
-"sviluppatori):"
+msgstr "%s%s: impossibile eseguire il comando \"%s\" per il client %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s%s: too few arguments received from client %d for command \"%s"
 "\" (received: %d arguments, expected: at least %d)"
 msgstr ""
-"%s%s: pochi argomenti ricevuti dal server IRC per il comando \"%s"
+"%s%s: argomenti non sufficienti ricevuti dal client %d per il comando \"%s"
 "\" (ricevuti: %d argomenti, attesi: %d come minimo)"
 
 #, c-format
@@ -7672,6 +7743,7 @@ msgstr ""
 "list|listdefault || add <nome> <modifier> <gruppi> <regex> || del <nome>|-"
 "all [<nome>...] || default -yes"
 
+#, fuzzy
 msgid ""
 "       list: list all rmodifiers\n"
 "listdefault: list default rmodifiers\n"
@@ -7680,7 +7752,8 @@ msgid ""
 "  modifiers: comma separated list of modifiers\n"
 "     groups: action on groups found: comma separated list of groups (from 1 "
 "to 9) with optional \"*\" after number to hide group\n"
-"      regex: regular expression\n"
+"      regex: regular expression (case insensitive, can start by \"(?-i)\" to "
+"become case sensitive)\n"
 "        del: delete a rmodifier\n"
 "       -all: delete all rmodifiers\n"
 "    default: restore default rmodifiers\n"
@@ -8067,26 +8140,29 @@ msgstr "%s: chat con %s (%d.%d.%d.%d) chiusa"
 msgid "%s%s: not enough memory for new xfer"
 msgstr "%s%s: memoria non sufficiente per nuovo xfer"
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: incoming file from %s (%s.%s), ip: %d.%d.%d.%d, name: %s, %llu bytes "
 "(protocol: %s)"
-msgstr "%s: file in arrivo da %s (%d.%d.%d.%d): %s, %llu byte (protocollo: %s)"
+msgstr ""
+"%s: file in arrivo da %s (%s.%s), ip: %d.%d.%d.%d, nome: %s, %llu byte "
+"(protocollo: %s)"
 
 #, fuzzy, c-format
 msgid ""
 "%s: sending file to %s (%s.%s): %s (local filename: %s), %llu bytes "
 "(protocol: %s)"
 msgstr ""
-"%s: invio file a %s: %s (nome file locale: %s), %llu byte (protocollo: %s)"
+"%s: invio file a %s (%s.%s), ip: %d.%d.%d.%d, nome: %s, %llu byte "
+"(protocollo: %s)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s: incoming chat request from %s (%s.%s), ip: %d.%d.%d.%d"
-msgstr "%s: richiesta di chat in arrivo da %s (%d.%d.%d.%d)"
+msgstr "%s: richiesta di chat in arrivo da %s (%s.%s), ip: %d.%d.%d.%d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s: sending chat request to %s (%s.%s)"
-msgstr "%s: invio richiesta di chat a %s"
+msgstr "%s: invio richiesta di chat a %s (%s.%s)"
 
 #, c-format
 msgid "%s: file %s (local filename: %s) will be resumed at position %llu"
@@ -8393,19 +8469,11 @@ msgstr "Variabili"
 msgid "Lists"
 msgstr "Liste"
 
-#~ msgid ""
-#~ "standard plugins extension in filename (for example \".so\" under Linux "
-#~ "or \".dll\" under Microsoft Windows)"
-#~ msgstr ""
-#~ "estensione standard dei plugin nei nomi file (per esempio \".so\" sotto "
-#~ "Linux oppure \".dll\" sotto Microsoft Windows)"
+msgid "Option"
+msgstr "Opzione"
 
-#~ msgid "%sWarning: %s, line %d: unknown option \"%s\" (outside a section)"
-#~ msgstr ""
-#~ "%sAttenzione: %s, riga %d: opzione \"%s\" sconosciuta (fuori dalla "
-#~ "sezione)"
+msgid "Type"
+msgstr "Tipo"
 
-#~ msgid "condition(s) for displaying bar (for bars of type \"window\")"
-#~ msgstr ""
-#~ "condizione(i) per la visualizzazione della barra (barre di tipo \"window"
-#~ "\")"
+msgid "Constants"
+msgstr "Costanti"

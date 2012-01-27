@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -39,6 +39,7 @@ wee-proxy.c wee-proxy.h
 wee-string.c wee-string.h
 wee-upgrade.c wee-upgrade.h
 wee-upgrade-file.c wee-upgrade-file.h
+wee-url.c wee-url.h
 wee-utf8.c wee-utf8.h
 wee-util.c wee-util.h)
 
@@ -58,6 +59,8 @@ ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 IF(GNUTLS_FOUND)
   INCLUDE_DIRECTORIES(${GNUTLS_INCLUDE_PATH})
 ENDIF(GNUTLS_FOUND)
+
+INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIRS})
 
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 ADD_LIBRARY(weechat_core STATIC ${LIB_CORE_SRC})

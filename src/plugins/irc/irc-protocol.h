@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -79,6 +79,8 @@ struct t_irc_protocol_msg
 
 extern const char *irc_protocol_tags (const char *command, const char *tags,
                                       const char *nick);
+extern int irc_protocol_redirection_mode_cb (void *data, const char *signal,
+                                             struct t_hashtable *hashtable);
 extern void irc_protocol_recv_command (struct t_irc_server *server,
                                        const char *irc_message,
                                        const char *msg_command,

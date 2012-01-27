@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -110,8 +110,8 @@ typedef struct protect_call_arg {
 void
 weechat_ruby_hashtable_map_cb (void *data,
                                struct t_hashtable *hashtable,
-                               const void *key,
-                               const void *value)
+                               const char *key,
+                               const char *value)
 {
     VALUE *hash;
 
@@ -120,8 +120,7 @@ weechat_ruby_hashtable_map_cb (void *data,
 
     hash = (VALUE *)data;
 
-    rb_hash_aset (hash[0], rb_str_new2 ((char *)key),
-                  rb_str_new2 ((char *)value));
+    rb_hash_aset (hash[0], rb_str_new2 (key), rb_str_new2 (value));
 }
 
 /*
@@ -137,9 +136,9 @@ weechat_ruby_hashtable_to_hash (struct t_hashtable *hashtable)
     if (NIL_P (hash))
         return Qnil;
 
-    weechat_hashtable_map (hashtable,
-                           &weechat_ruby_hashtable_map_cb,
-                           &hash);
+    weechat_hashtable_map_string (hashtable,
+                                  &weechat_ruby_hashtable_map_cb,
+                                  &hash);
 
     return hash;
 }

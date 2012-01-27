@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -511,7 +511,7 @@ COMMAND_CALLBACK(buffer)
     struct t_gui_buffer *ptr_buffer, *weechat_buffer;
     long number, number1, number2;
     char *error, *value, *pos, *str_number1, *pos_number2;
-    int i, target_buffer;
+    int i, target_buffer, error_main_buffer, num_buffers;
 
     /* make C compiler happy */
     (void) data;
@@ -744,6 +744,8 @@ COMMAND_CALLBACK(buffer)
                 }
                 if ((number1 >= 1) && (number2 >= 1) && (number2 >= number1))
                 {
+                    error_main_buffer = 0;
+                    num_buffers = 0;
                     for (i = number2; i >= number1; i--)
                     {
                         for (ptr_buffer = last_gui_buffer; ptr_buffer;
@@ -751,12 +753,10 @@ COMMAND_CALLBACK(buffer)
                         {
                             if (ptr_buffer->number == i)
                             {
+                                num_buffers++;
                                 if (ptr_buffer == weechat_buffer)
                                 {
-                                    gui_chat_printf (NULL,
-                                                     _("%sError: WeeChat main "
-                                                       "buffer can't be closed"),
-                                                     gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+                                    error_main_buffer = 1;
                                 }
                                 else
                                 {
@@ -764,6 +764,17 @@ COMMAND_CALLBACK(buffer)
                                 }
                             }
                         }
+                    }
+                    /*
+                     * display error for main buffer if it was the only
+                     * buffer to close with matching number
+                     */
+                    if (error_main_buffer && (num_buffers <= 1))
+                    {
+                        gui_chat_printf (NULL,
+                                         _("%sError: WeeChat main "
+                                           "buffer can't be closed"),
+                                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
                     }
                 }
             }
@@ -2365,8 +2376,6 @@ COMMAND_CALLBACK(input)
             gui_input_grab_mouse (buffer, 0);
         else if (string_strcasecmp (argv[1], "grab_mouse_area") == 0)
             gui_input_grab_mouse (buffer, 1);
-        else if (string_strcasecmp (argv[1], "scroll_unread") == 0)
-            gui_input_scroll_unread (buffer);
         else if (string_strcasecmp (argv[1], "set_unread") == 0)
             gui_input_set_unread ();
         else if (string_strcasecmp (argv[1], "set_unread_current_buffer") == 0)
@@ -3115,9 +3124,15 @@ command_mouse_timer_cb (void *data, int remaining_calls)
     (void) remaining_calls;
 
     if (gui_mouse_enabled)
+    {
         gui_mouse_disable ();
+        config_file_option_set (config_look_mouse, "0", 1);
+    }
     else
+    {
         gui_mouse_enable ();
+        config_file_option_set (config_look_mouse, "1", 1);
+    }
 
     return WEECHAT_RC_OK;
 }
@@ -3161,6 +3176,7 @@ COMMAND_CALLBACK(mouse)
     if (string_strcasecmp (argv[1], "enable") == 0)
     {
         gui_mouse_enable ();
+        config_file_option_set (config_look_mouse, "1", 1);
         gui_chat_printf (NULL, _("Mouse enabled"));
         if (argc > 2)
             command_mouse_timer (argv[2]);
@@ -3171,6 +3187,7 @@ COMMAND_CALLBACK(mouse)
     if (string_strcasecmp (argv[1], "disable") == 0)
     {
         gui_mouse_disable ();
+        config_file_option_set (config_look_mouse, "0", 1);
         gui_chat_printf (NULL, _("Mouse disabled"));
         if (argc > 2)
             command_mouse_timer (argv[2]);
@@ -3183,11 +3200,13 @@ COMMAND_CALLBACK(mouse)
         if (gui_mouse_enabled)
         {
             gui_mouse_disable ();
+            config_file_option_set (config_look_mouse, "0", 1);
             gui_chat_printf (NULL, _("Mouse disabled"));
         }
         else
         {
             gui_mouse_enable ();
+            config_file_option_set (config_look_mouse, "1", 1);
             gui_chat_printf (NULL, _("Mouse enabled"));
         }
         if (argc > 2)
@@ -4478,6 +4497,13 @@ COMMAND_CALLBACK(unset)
 
     if (argc >= 2)
     {
+        if (strcmp (argv_eol[1], "*") == 0)
+        {
+            gui_chat_printf (NULL,
+                             _("%sReset of all options is not allowed"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+            return WEECHAT_RC_OK;
+        }
         for (ptr_config = config_files; ptr_config;
              ptr_config = ptr_config->next_config)
         {
@@ -5115,6 +5141,13 @@ COMMAND_CALLBACK(window)
         return WEECHAT_RC_OK;
     }
 
+    /* scroll to unread marker */
+    if (string_strcasecmp (argv[1], "scroll_unread") == 0)
+    {
+        gui_window_scroll_unread (ptr_win);
+        return WEECHAT_RC_OK;
+    }
+
     /* split window horizontally */
     if (string_strcasecmp (argv[1], "splith") == 0)
     {
@@ -5610,7 +5643,9 @@ command_init ()
                      "         - if regex starts with '!', then matching "
                      "result is reversed (use '\\!' to start with '!')\n"
                      "         - two regular expressions are created: one for "
-                     "prefix and one for message\n\n"
+                     "prefix and one for message\n"
+                     "         - regex are case insensitive, they can start by "
+                     "\"(?-i)\" to become case sensitive\n\n"
                      "The default key alt+'=' toggles filtering on/off.\n\n"
                      "Tags most commonly used:\n"
                      "  no_filter, no_highlight, no_log, log0..log9 (log level),\n"
@@ -5721,7 +5756,6 @@ command_init ()
                      "default is 500 milliseconds)\n"
                      "  grab_mouse: grab mouse event code\n"
                      "  grab_mouse_area: grab mouse event code with area\n"
-                     "  scroll_unread: scroll to unread marker\n"
                      "  set_unread: set unread marker for all buffers\n"
                      "  set_unread_current_buffer: set unread marker for "
                      "current buffer\n"
@@ -5847,8 +5881,7 @@ command_init ()
                      " toggle: toggle mouse\n"
                      "  delay: delay (in seconds) after which initial mouse "
                      "state is restored (useful to temporarily disable mouse)\n\n"
-                     "To enable/disable mouse at startup, use:\n"
-                     "  /set weechat.look.mouse on/off\n\n"
+                     "The mouse state is saved in option \"weechat.look.mouse\".\n\n"
                      "Examples:\n"
                      "  enable mouse:\n"
                      "    /mouse enable\n"
@@ -6098,7 +6131,7 @@ command_init ()
                      " || scroll_horiz [-window <number>] [+/-]<value>[%]"
                      " || scroll_up|scroll_down|scroll_top|"
                      "scroll_bottom|scroll_previous_highlight|"
-                     "scroll_next_highlight [-window <number>]"
+                     "scroll_next_highlight|scroll_unread [-window <number>]"
                      " || swap [-window <number>] [up|down|left|right]"
                      " || zoom[-window <number>]"),
                   N_("         list: list opened windows (without argument, "
@@ -6132,6 +6165,7 @@ command_init ()
                      "scroll_bottom: scroll to bottom of buffer\n"
                      "scroll_previous_highlight: scroll to previous highlight\n"
                      "scroll_next_highlight: scroll to next highlight\n"
+                     "scroll_unread: scroll to unread marker\n"
                      "         swap: swap buffers of two windows (with optional "
                      "direction for target window)\n"
                      "         zoom: zoom on window\n\n"
@@ -6172,6 +6206,7 @@ command_init ()
                   " || scroll_bottom -window %(windows_numbers)"
                   " || scroll_previous_highlight -window %(windows_numbers)"
                   " || scroll_next_highlight -window %(windows_numbers)"
+                  " || scroll_unread  -window %(windows_numbers)"
                   " || swap up|down|left|right|-window %(windows_numbers)"
                   " || zoom -window %(windows_numbers)"
                   " || merge all|-window %(windows_numbers)",

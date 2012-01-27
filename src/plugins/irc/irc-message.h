@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -23,10 +23,11 @@
 struct t_irc_server;
 struct t_irc_channel;
 
-extern void irc_message_parse (const char *message, char **nick, char **host,
-                               char **command, char **channel,
-                               char **arguments);
-extern struct t_hashtable *irc_message_parse_to_hashtable (const char *message);
+extern void irc_message_parse (struct t_irc_server *server, const char *message,
+                               char **nick, char **host, char **command,
+                               char **channel, char **arguments);
+extern struct t_hashtable *irc_message_parse_to_hashtable (struct t_irc_server *server,
+                                                           const char *message);
 extern const char *irc_message_get_nick_from_host (const char *host);
 extern const char *irc_message_get_address_from_host (const char *host);
 extern char *irc_message_replace_vars (struct t_irc_server *server,

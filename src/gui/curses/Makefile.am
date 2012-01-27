@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -31,6 +31,7 @@ weechat_curses_LDADD = ./../../core/lib_weechat_core.a \
                        $(NCURSES_LFLAGS) \
                        $(GCRYPT_LFLAGS) \
                        $(GNUTLS_LFLAGS) \
+                       $(CURL_LFLAGS) \
                        -lm
 
 weechat_curses_SOURCES = gui-curses-bar-window.c \

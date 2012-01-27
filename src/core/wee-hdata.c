@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -38,8 +38,9 @@
 
 struct t_hashtable *weechat_hdata = NULL;
 
-char *hdata_type_string[7] =
-{ "other", "char", "integer", "long", "string", "pointer", "time" };
+char *hdata_type_string[8] =
+{ "other", "char", "integer", "long", "string", "pointer", "time",
+  "hashtable" };
 
 
 /*
@@ -236,6 +237,33 @@ hdata_get_list (struct t_hdata *hdata, const char *name)
 }
 
 /*
+ * hdata_check_pointer: check if a pointer is valid for a given hdata/list
+ *                      return 1 if pointer exists in list
+ *                             0 if pointer does not exist
+ */
+
+int
+hdata_check_pointer (struct t_hdata *hdata, void *list, void *pointer)
+{
+    void *ptr_current;
+
+    if (hdata && list && pointer)
+    {
+        if (pointer == list)
+            return 1;
+        ptr_current = list;
+        while (ptr_current)
+        {
+            ptr_current = hdata_move (hdata, ptr_current, 1);
+            if (ptr_current && (ptr_current == pointer))
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
+/*
  * hdata_move: move pointer to another element in list
  */
 
@@ -373,6 +401,25 @@ hdata_time (struct t_hdata *hdata, void *pointer, const char *name)
     }
 
     return 0;
+}
+
+/*
+ * hdata_hashtable: get hashtable value of a variable in structure using hdata
+ */
+
+struct t_hashtable *
+hdata_hashtable (struct t_hdata *hdata, void *pointer, const char *name)
+{
+    int offset;
+
+    if (hdata && pointer)
+    {
+        offset = hdata_get_var_offset (hdata, name);
+        if (offset >= 0)
+            return *((struct t_hashtable **)(pointer + offset));
+    }
+
+    return NULL;
 }
 
 /*

@@ -4,8 +4,9 @@
 /alias  [-completion <completamento>] <alias> [<comando> [;<comando>...]]
 
 completamento: completamento per l'alias (opzionale, per default il completamento viene eseguito con il comando di destinazione)
+	     nota: è possibile usare %%comando per usare il completamento di un comando esistente
         alias: nome dell'alias (può iniziare o terminare con "*" per elencare gli alias)
-      comando: nome del comando (comandi multipli vanno separati da punto e virgola)
+      comando: nome del comando con gli argomenti (più comandi vanno separati da punto e virgola)
 
 Senza argomento, questo comando elenca tutti gli alias definiti.
 

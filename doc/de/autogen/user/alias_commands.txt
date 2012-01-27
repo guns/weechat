@@ -4,6 +4,7 @@
 /alias  [-completion <completion>] <alias> [<command> [;<command>...]]
 
 completion: optionale Vervollständigung für einen Alias-Befehl (Standardverhalten: Vervollständigung wird auf den Zielbefehl angewendet)
+            Hinweis: Mit der Variablen "%%command" kann eine Vervollständigung eines vorhandenen Befehls durchgeführt werden
      alias: Name des Alias (kann mit Joker "*" beginnen oder enden um Aliase aufzulisten)
    command: Name des zuzuordnenden Befehls (WeeChat- oder IRC-Befehl ohne führenden '/', mehrere Befehle müssen durch Semikolon getrennt werden)
 
@@ -20,7 +21,7 @@ Anmerkung: Im Befehl können Variablen genutzt werden, die dann durch den entspr
   $channel: aktueller Channel
    $server: aktueller Server
 
-Um ein Alias zu löschen, nutze "/unalias".
+Um ein Alias zu löschen wird der Befehl "/unalias" genutzt.
 
 Beispiele:
   Alias "/split" wird anlegt um damit ein Fenster horizontal zu teilen:

@@ -323,10 +323,10 @@ Liste des fonctions de l'API script :
   prnt_date_tags), print_y (for python: prnt_y), log_print
 | hooks                     |
   hook_command, hook_command_run, hook_timer, hook_fd, hook_process,
-  hook_connect, hook_print, hook_signal, hook_signal_send, hook_hsignal,
-  hook_hsignal_send, hook_config, hook_completion, hook_completion_list_add,
-  hook_modifier, hook_modifier_exec, hook_info, hook_info_hashtable,
-  hook_infolist, hook_focus, unhook, unhook_all
+  hook_process_hashtable, hook_connect, hook_print, hook_signal,
+  hook_signal_send, hook_hsignal, hook_hsignal_send, hook_config,
+  hook_completion, hook_completion_list_add, hook_modifier, hook_modifier_exec,
+  hook_info, hook_info_hashtable, hook_infolist, hook_focus, unhook, unhook_all
 | tampons                   |
   buffer_new, current_buffer, buffer_search, buffer_search_main, buffer_clear,
   buffer_close, buffer_merge, buffer_unmerge, buffer_get_integer,
@@ -356,8 +356,9 @@ Liste des fonctions de l'API script :
   infolist_time, infolist_free
 | hdata               |
   hdata_get, hdata_get_var_offset, hdata_get_var_type_string,
-  hdata_get_var_hdata, hdata_get_list, hdata_move, hdata_integer, hdata_long,
-  hdata_string, hdata_pointer, hdata_time, hdata_get_string
+  hdata_get_var_hdata, hdata_get_list, hdata_check_pointer, hdata_move,
+  hdata_char, hdata_integer, hdata_long, hdata_string, hdata_pointer,
+  hdata_time, hdata_hashtable, hdata_get_string
 | mise à jour               |
   upgrade_new, upgrade_write_object, upgrade_read, upgrade_close
 |========================================
@@ -620,22 +621,67 @@ Exemple :
 
 [source,python]
 ----------------------------------------
+process_output = ""
+
+def my_process_cb(data, command, rc, out, err):
+    global process_output
+    if out != "":
+        process_output += out
+    if int(rc) >= 0:
+        weechat.prnt("", process_output)
+    return weechat.WEECHAT_RC_OK
+
+weechat.hook_process("/bin/ls -l /etc", 10 * 1000, "my_process_cb", "")
+----------------------------------------
+
+[[url_transfer]]
+Transfert d'URL
+^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.7._
+
+Pour télécharger une URL (ou poster vers une URL), vous devez utiliser la
+fonction `hook_process`, ou `hook_process_hashtable` si vous avez besoin
+d'options pour le transfert d'URL.
+
+Exemple de transfert d'URL sans option : la page HTML sera reçue comme "out"
+dans le "callback" (sortie standard du processus) :
+
+[source,python]
+----------------------------------------
 # Afficher la version des noyaux Linux.
 kernel_txt = ""
 
-def kernel_process_cb(data, command, rc, stdout, stderr):
-    """ Callback qui lit la sortie de la commande. """
+def kernel_process_cb(data, command, rc, out, err):
     global kernel_txt
-    if stdout != "":
-        kernel_txt += stdout
+    if out != "":
+        kernel_txt += out
     if int(rc) >= 0:
         weechat.prnt("", kernel_txt)
     return weechat.WEECHAT_RC_OK
 
-weechat.hook_process("python -c \"import urllib; "
-                     "print urllib.urlopen('http://www.kernel.org/kdist/finger_banner').read()\"",
-                     10 * 1000, "kernel_process_cb", "")
+weechat.hook_process("url:http://www.kernel.org/kdist/finger_banner",
+                     30 * 1000, "kernel_process_cb", "")
 ----------------------------------------
+
+Exemple de transfert d'URL avec une option : télécharger le dernier paquet de
+développement WeeChat dans le fichier '/tmp/weechat-devel.tar.gz' :
+
+[source,python]
+----------------------------------------
+def my_process_cb(data, command, rc, out, err):
+    if int(rc) >= 0:
+        weechat.prnt("", "Fin du transfert (rc=%s)" % rc)
+    return weechat.WEECHAT_RC_OK
+
+weechat.hook_process_hashtable("url:http://weechat.org/files/src/weechat-devel.tar.gz",
+                               { "file_out": "/tmp/weechat-devel.tar.gz" },
+                               30 * 1000, "my_process_cb", "")
+----------------------------------------
+
+Pour plus d'information sur le transfert d'URL et les options disponibles, voir
+les fonctions `hook_process` et `hook_process_hashtable` dans la
+'Référence API Extension WeeChat'.
 
 [[config_options]]
 Config / options
@@ -678,7 +724,7 @@ SCRIPT_NAME = "monscript"
 # ...
 
 def config_cb(data, option, value):
-    """ Callback appelé lorsqu'une option du script est modifiée. """
+    """Callback appelé lorsqu'une option du script est modifiée."""
     # par exemple, relire toutes les options du script dans des variables du script...
     # ...
     return weechat.WEECHAT_RC_OK

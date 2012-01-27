@@ -156,7 +156,7 @@ stop: beendet den Cursor-Modus
 
 Ohne Angabe von Argumenten wird der Cursor-Modus umgeschaltet.
 
-Ist die Mausfunktion aktiviert (siehe /help mouse), aktiviert man den Cursor-Modus man mit der mittleren Maustaste und positioniert den Cursor an diesen Punkt.
+Ist die Mausfunktion aktiviert (siehe /help mouse), startet man den Cursor-Modus mit der mittleren Maustaste und positioniert den Cursor an diesen Punkt.
 
 Beispiele:
   gehe zur Nickliste:
@@ -175,22 +175,22 @@ Beispiele:
         mouse|cursor [verbose]
         hdata [free]
 
-     list: list plugins with debug levels
-      set: set debug level for plugin
-   plugin: name of plugin ("core" for WeeChat core)
-    level: debug level for plugin (0 = disable debug)
-     dump: save memory dump in WeeChat log file (same dump is written when WeeChat crashes)
-   buffer: dump buffer content with hexadecimal values in log file
-    color: display infos about current color pairs
-   cursor: toggle debug for cursor mode
-    hdata: display infos about hdata (with free: remove all hdata in memory)
-    hooks: display infos about hooks
-infolists: display infos about infolists
-   memory: display infos about memory usage
-    mouse: toggle debug for mouse
-     tags: display tags for lines
-     term: display infos about terminal
-  windows: display windows tree
+     list: zeigt alle Erweiterungen mit Debuglevel an
+      set: setzt den Level der Protokollierung für eine Erweiterung
+   plugin: Name der Erweiterung ("core" für den WeeChat Kern)
+    level: Debuglevel der Erweiterung (0 = deaktiviert das Debug)
+     dump: Speicherabbild in die WeeChat Protokolldatei schreiben (wie bei einem Programmabsturz)
+   buffer: speichert den Bufferinhalt als hexadezimale Ausgabe in die Protokolldatei
+    color: zeigt Informationen über die aktuellen Farbpaarungen an
+   cursor: schaltet den debug-Modus für den Cursor-Modus ein/aus
+    hdata: zeigt Informationen zu hdata an (mittels free werden alle hdata Informationen aus dem Speicher entfernt)
+    hooks: zeigt die aktiven Hooks an
+infolists: zeigt Information über die Infolists an
+   memory: gibt Informationen über den genutzten Speicher aus
+    mouse: schaltet den debug-Modus für den Maus-Modus ein/aus
+     tags: zeigt für jede einzelne Zeile die dazugehörigen Tags an
+     term: gibt Informationen über das Terminal und verfügbare Farben aus
+  windows: zeigt die Fensterstruktur an
 ........................................
 
 [[command_weechat_filter]]
@@ -201,47 +201,48 @@ infolists: display infos about infolists
          add <name> <buffer>[,<buffer>...] <tags> <regex>
          del <name>|-all
 
-   list: alle Filter auflisten
- enable: Filter wird aktiviert (Filter werden standardmässig aktiviert)
-disable: Filter deaktivieren
- toggle: Filter de-/aktivieren
-   name: Name des Filters
-    add: Filter hinzufügen
-    del: Filter entfernen
-   -all: entfernt alle Filter
- buffer: durch Kommata getrennte Liste von Buffern in denen der Filter aktiv sein soll:
-         - ist der vollständige Name eines Buffers inklusive seiner Erweiterung (Beispiel: "irc.freenode.#weechat")
-         - "*" bedeutet alle Buffer
-         - beginnt ein Name mit '!' wird für diesen Buffer kein Filter genutzt
-         - ein Name darf mit '*' beginnen oder enden um mehrere Buffer auszuwählen
-   tags: durch Kommata  getrennte Liste mit Tags. Zum Beispiel: "irc_join,irc_part,irc_quit"
-        regex: regulärer Ausdruck um in einer Zeile zu suchen
-               - das Präfix (z.B. Nick) wird mittels '\t' von der Nachricht getrennt. Sonderzeichen wie '|' müssen mit einer Escapesequenz : '\|' eingebunden werden)
-               - wird ein regulärer Ausdruck mit '!' eingeleitet dann wird das übereinstimmende Ergebnis umgekehrt  (nutze '\!' um mit '!' zu beginnen)
-               - es werden zwei reguläre Ausdrücke erstellt: Der erste für den Präfix und der zweite für die eigentliche Nachricht
+   list: list all filters
+ enable: enable filters (filters are enabled by default)
+disable: disable filters
+ toggle: toggle filters
+   name: filter name
+    add: add a filter
+    del: delete a filter
+   -all: delete all filters
+ buffer: comma separated list of buffers where filter is active:
+         - this is full name including plugin (example: "irc.freenode.#weechat")
+         - "*" means all buffers
+         - a name starting with '!' is excluded
+         - name can start or end with '*' to match many buffers
+   tags: comma separated list of tags, for example: "irc_join,irc_part,irc_quit"
+  regex: regular expression to search in line
+         - use '\t' to separate prefix from message, special chars like '|' must be escaped: '\|'
+         - if regex starts with '!', then matching result is reversed (use '\!' to start with '!')
+         - two regular expressions are created: one for prefix and one for message
+         - regex are case insensitive, they can start by "(?-i)" to become case sensitive
 
-Die Tastenvoreinstellung alt+'=' schaltet die Filterfunktion an/aus.
+The default key alt+'=' toggles filtering on/off.
 
-Die am häufigsten gebrauchten Tags lauten:
-  no_filter, no_highlight, no_log, log0..log9 (log Level),
+Tags most commonly used:
+  no_filter, no_highlight, no_log, log0..log9 (log level),
   notify_none, notify_message, notify_private, notify_highlight,
-  nick_xxx (xxx ist durch den Nicknamen zu ersetzen),
-  irc_xxx (xxx ist durch einen IRC-Befehl/-Nummer zu ersetzen, siehe /server raw)
+  nick_xxx (xxx is nick in message),
+  irc_xxx (xxx is command name or number, see /server raw),
   irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, irc_smart_filter, away_info.
-Um sich die Tags jeder einzelnen Zeile darstellen zu lassen: /debug tags
+To see tags for lines in buffers: /debug tags
 
-Beispiele:
-  aktiviert einen einfachen IRC Filter für join/part/quit/nick Nachrichten für alle Buffer:
+Examples:
+  use IRC smart filter on all buffers:
     /filter add irc_smart * irc_smart_filter *
-  aktiviert einen einfachen IRC Filter für join/part/quit/nick Nachrichten der für alle Buffer genutzt wird, außer Buffer die "#weechat" im Namen tragen:
+  use IRC smart filter on all buffers except those with "#weechat" in name:
     /filter add irc_smart *,!*#weechat* irc_smart_filter *
-  filtert alle IRC join/part/quit Nachrichten:
+  filter all IRC join/part/quit messages:
     /filter add joinquit * irc_join,irc_part,irc_quit *
-  filtert Nicks wenn diese den Channel betreten oder durch den Befehl "/names:" angezeigt werden:
+  filter nicks displayed when joining channels or with /names:
     /filter add nicks * irc_366 *
-  filtert Nick "toto" im IRC Channel #weechat:
+  filter nick "toto" on IRC channel #weechat:
     /filter add toto irc.freenode.#weechat nick_toto *
-  filtert Zeilen die "weechat sucks" im IRC Channel #weechat enthalten:
+  filter lines containing "weechat sucks" on IRC channel #weechat:
     /filter add sucks irc.freenode.#weechat * weechat sucks
 ........................................
 
@@ -274,54 +275,53 @@ value: Anzahl der gewünschten Einträgen im Befehlsverlauf anzeigen
 ........................................
 /input  <action> [<arguments>]
 
-Auflistung der Aktionen:
-  return: simuliert die "enter" Taste
-  complete_next: vervollständigt Wort mit nächster Komplettierung
-  complete_previous: vervollständigt Word mit vorheriger Komplettierung
-  search_text: sucht nach Text im Buffer
-  search_switch_case: schaltet Groß-/Kleinschreibung ein und aus
-  search_previous: sucht vorheriger Zeile
-  search_next: sucht nächste Zeile
-  search_stop: suche stoppen
-  delete_previous_char: entfernt vorheriges Zeichen
-  delete_next_char: entfernt nächstes Zeichen
-  delete_previous_word: entfernt vorheriges Wort
-  delete_next_word: entfernt nächstes Wort
-  delete_beginning_of_line: entfernt alle Zeichen ab Zeilenanfang bis zum Cursor
-  delete_end_of_line: entfernt alle Zeichen ab Cursor bis zum Ende der Zeile
-  delete_line: löscht die komplette Eingabezeile
-  clipboard_paste: fügt Zeichenkette aus der Zwischenablage ein
-  transpose_chars: Zeichen austauschen
-  undo: letzten Befehl in der Eingabezeile rückgängig machen
-  redo: letzten Befehl in der Eingabezeile wiederherstellen
-  move_beginning_of_line: springt an den Anfang der Eingabezeile
-  move_end_of_line: springt ans Ende der Eingabezeile
-  move_previous_char: setzt den Cursor eine Position nach links
-  move_next_char: setzt den Cursor eine Position nach rechts
-  move_previous_word: springt zum Anfang des vorherigen Wortes, in der Eingabezeile
-  move_next_word: springt zum Anfang des nächsten Wortes, in der Eingabezeile
-  history_previous: ruft vorherigen Befehl oder Nachricht aus dem Befehlsspeicher auf (im Such-Modus: rückwärts suchen)
-  history_next: ruft nächsten Befehl oder Nachricht aus dem Befehlsspeicher auf (im Such-Modus: vorwärts suchen)
-  history_global_previous: ruft vorherigen Befehl/Nachricht aus dem globalen Befehlsspeicher auf (für alle Buffer)
-  history_global_next: ruft nächsten Befehl/Nachricht aus dem globalen Befehlsspeicher auf (für alle Buffer)
-  jump_smart: wechselt zum nächsten Buffer mit Aktivität (nach Priorität: highlight, Nachricht, …)
-  jump_last_buffer: springt zum letzten Buffer, in der Bufferliste
-  jump_last_buffer_displayed: wechselt zum jeweils zuletzt angezeigten Buffer
-  jump_previously_visited_buffer: springt zum letzten besuchten Buffer
-  jump_next_visited_buffer: springt zum nächsten besuchten Buffer
-  hotlist_clear: löscht Hotliste (Aktivitätsanzeige für die Buffer)
-  grab_key: fängt eine Taste (optionales Argument: Verzögerung um eine Taste einzufangen. Standard sind 500 Millisekunden)
-  grab_key_command: zeigt den Tastencode (inklusive des eingebundenen Befehls) einer Tastenkombination an und fügt ihn in die Befehlszeile ein (optionales Argument: Verzögerung um eine Taste einzufangen. Standard sind 500 Millisekunden)
-  grab_mouse: fängt den Code einer Maus Aktivität
-  grab_mouse_area: fängt den Code einer Maus Aktivität mit Bereich
-  scroll_unread: springe zur ersten ungelesenen Zeile im Buffer
-  set_unread: setzt die ungelesen Markierung für alle Buffer
-  set_unread_current_buffer: setzt die ungelesen Markierung für den aktuellen Buffer
-  switch_active_buffer: springt zum nächsten zusammengefügten Buffer
-  switch_active_buffer_previous: springt zum vorherigen zusammengefügten Buffer
-  insert: fügt einen Text in die Eingabezeile ein
+list of actions:
+  return: simulate key "enter"
+  complete_next: complete word with next completion
+  complete_previous: complete word with previous completion
+  search_text: search text in buffer
+  search_switch_case: switch exact case for search
+  search_previous: search previous line
+  search_next: search next line
+  search_stop: stop search
+  delete_previous_char: delete previous char
+  delete_next_char: delete next char
+  delete_previous_word: delete previous word
+  delete_next_word: delete next word
+  delete_beginning_of_line: delete from beginning of line until cursor
+  delete_end_of_line: delete from cursor until end of line
+  delete_line: delete entire line
+  clipboard_paste: paste from clipboard
+  transpose_chars: transpose two chars
+  undo: undo last command line action
+  redo: redo last command line action
+  move_beginning_of_line: move cursor to beginning of line
+  move_end_of_line: move cursor to end of line
+  move_previous_char: move cursor to previous char
+  move_next_char: move cursor to next char
+  move_previous_word: move cursor to previous word
+  move_next_word: move cursor to next word
+  history_previous: recall previous command in current buffer history
+  history_next: recall next command in current buffer history
+  history_global_previous: recall previous command in global history
+  history_global_next: recall next command in global history
+  jump_smart: jump to next buffer with activity
+  jump_last_buffer: jump to last buffer
+  jump_last_buffer_displayed: jump to last buffer displayed (before last jump to a buffer)
+  jump_previously_visited_buffer: jump to previously visited buffer
+  jump_next_visited_buffer: jump to next visited buffer
+  hotlist_clear: clear hotlist
+  grab_key: grab a key (optional argument: delay for end of grab, default is 500 milliseconds)
+  grab_key_command: grab a key with its associated command (optional argument: delay for end of grab, default is 500 milliseconds)
+  grab_mouse: grab mouse event code
+  grab_mouse_area: grab mouse event code with area
+  set_unread: set unread marker for all buffers
+  set_unread_current_buffer: set unread marker for current buffer
+  switch_active_buffer: switch to next merged buffer
+  switch_active_buffer_previous: switch to previous merged buffer
+  insert: insert text in command line
 
-Dieser Befehl wird durch Tastenbelegungen oder Erweiterungen genutzt.
+This command is used by key bindings or plugins.
 ........................................
 
 [[command_weechat_key]]
@@ -401,10 +401,9 @@ Wird der Befehl ohne Argumente aufgerufen wird das gespeicherte Layout dargestel
  enable: aktiviert Maus
 disable: deaktiviert Maus
  toggle: umschalten der Mausunterstützung
-  delay: Verzögerung (in Sekunden) nach der der ursprüngliche Status wiederhergestellt wird (nützlich um zeitgesteuert die Mausunterstützung zu deaktivieren)
+  delay: Verzögerung (in Sekunden) nach welcher der ursprüngliche Status wiederhergestellt wird (sinnvoll um die Mausunterstützung zeitabhängig zu deaktivieren)
 
-Um die Mausunterstützung beim Programmstart ein-/auszuschalten:
-  /set weechat.look.mouse on/off
+Die Mausunterstützung wird in der Option  "weechat.look.mouse" gesichert.
 
 Beispiele:
   Mausunterstützung aktivieren:
@@ -444,14 +443,14 @@ Beispiele:
          reload [<name> [<arguments>]]
          unload [<name>]
 
-    list: installierte Erweiterungen werden aufgelistet
-listfull: detaillierte Auflistung aller installierten Erweiterungen
-    load: installiert eine Erweiterung
-autoload: installiert automatisch alle Erweiterungen aus dem System- oder Benutzerverzeichnis
-  reload: installiert eine Erweiterung erneut (falls kein Name angegeben wird, werden alle Erweiterungen entfernt und neu installiert)
-  unload: deinstalliere eine oder alle Erweiterungen (wird kein Name angegeben dann werden alle Erweiterung entfernt)
-filename: Erweiterung (Datei) welche installiert werden soll
-    name: Name einer Erweiterung
+     list: installierte Erweiterungen werden aufgelistet
+ listfull: detaillierte Auflistung aller installierten Erweiterungen
+     load: installiert eine Erweiterung
+ autoload: installiert automatisch alle Erweiterungen aus dem System- oder Benutzerverzeichnis
+   reload: installiert eine Erweiterung erneut (falls kein Name angegeben wird, werden alle Erweiterungen entfernt und neu installiert)
+   unload: deinstalliere eine oder alle Erweiterungen (wird kein Name angegeben dann werden alle Erweiterung entfernt)
+ filename: Erweiterung (Datei) welche installiert werden soll
+     name: Name einer Erweiterung
 arguments: Argumente die der Erweiterung beim installieren übergeben werden sollen
 
 Ohne Angabe eines Arguments werden alle installierten Erweiterungen angezeigt.
@@ -495,7 +494,7 @@ Beispiele:
 ........................................
 /quit  [-yes] [<arguments>]
 
-     -yes: Option muß genutzt werden falls weechat.look.confirm_quit aktiviert sein sollte
+     -yes: Option muss genutzt werden falls weechat.look.confirm_quit aktiviert sein sollte
 arguments: Text der beim Signal "quit" verschickt wird
            (zum Beispiel sendet die IRC Erweiterung diesen Text als Quit-Nachricht an den Server)
 ........................................
@@ -649,50 +648,51 @@ Beispiele:
          refresh
          scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]
          scroll_horiz [-window <number>] [+/-]<value>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight [-window <number>]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
          swap [-window <number>] [up|down|left|right]
          zoom[-window <number>]
 
-         list: listet die geöffneten Fenster (ohne Angabe von Parametern wird diese Funktion aufgerufen)
-           -1: springt zum vorherigen Fenster
-           +1: springt zum nächsten Fenster
-           b#: springt zum nächsten Fenster, welches die Buffer Nummer # besitzt
-           up: wechselt zum Fenster über dem aktuellen
-         down: wechselt zum Fenster unter dem aktuellen
-         left: wechselt zum linken Fenster
-        right: wechselt zum rechten Fenster
-       number: Nummer des Fensters (siehe /window list)
-       splith: teilt das aktuelle Fenster horizontal
-       splitv: teilt das aktuelle Fenster vertikal
-       resize: verändert die Größe des aktuellen Fensters. Die neue Größe des Fensters ist prozentual <pct> zum Stammfensters groß
-      balance: passt die Größe aller Fenster an
-        merge: vereinigt Fenster miteinander (all = alle Fenster vereinigen)
-      page_up: scrollt eine Seite nach oben
-    page_down: scrollt eine Seite nach unten
-      refresh: Seite wird neu aufgebaut
-       scroll: scrollt eine Anzahl an Zeilen (+/-N) oder zu einer gewissen Zeit: s=Sekunden, m=Minuten, h=Stunden, d=Tage, M=Monate, y=Jahre
- scroll_horiz: scrollt horizontal eine Anzahl an Spalten (+/-N) oder prozentual von der Fenstergröße ausgehend (dieses scrolling ist nur in Buffern möglich die über einen freien Inhalt verfügen)
-    scroll_up: scrollt ein paar Zeilen nach oben
-  scroll_down: scrollt ein paar Zeilen nach unten
-   scroll_top: scrollt zum Anfang des Buffers
-scroll_bottom: scrollt zum Ende des  Buffers
-scroll_previous_highlight: scrollt zum vorherigen Hightlight
-scroll_next_highlight: scrollt zum nächsten Highlight
-         swap: tauscht die Buffer von zwei Fenstern (mit optionaler Angabe für das Zielfenster)
-         zoom: vergrößert ein Fenster auf 100%
+         list: list opened windows (without argument, this list is displayed)
+           -1: jump to previous window
+           +1: jump to next window
+           b#: jump to next window displaying buffer number #
+           up: switch to window above current one
+         down: switch to window below current one
+         left: switch to window on the left
+        right: switch to window on the right
+       number: window number (see /window list)
+       splith: split current window horizontally
+       splitv: split current window vertically
+       resize: resize window size, new size is <pct> percentage of parent window
+      balance: balance the sizes of all windows
+        merge: merge window with another (all = keep only one window)
+      page_up: scroll one page up
+    page_down: scroll one page down
+      refresh: refresh screen
+       scroll: scroll a number of lines (+/-N) or with time: s=seconds, m=minutes, h=hours, d=days, M=months, y=years
+ scroll_horiz: scroll horizontally a number of columns (+/-N) or percentage of window size (this scrolling is possible only on buffers with free content)
+    scroll_up: scroll a few lines up
+  scroll_down: scroll a few lines down
+   scroll_top: scroll to top of buffer
+scroll_bottom: scroll to bottom of buffer
+scroll_previous_highlight: scroll to previous highlight
+scroll_next_highlight: scroll to next highlight
+scroll_unread: scroll to unread marker
+         swap: swap buffers of two windows (with optional direction for target window)
+         zoom: zoom on window
 
-Bei splith und splitv gibt "pct" die neue Größe des Fensters im Verhältnis zur aktuellen Größe an. Zum Beispiel würde ein Wert von 25 bedeuten, dass das neue Fenster nur noch ein Viertel der Größe des alten Fensters hat.
+For splith and splitv, pct is a percentage which represents size of new window, computed with current window as size reference. For example 25 means create a new window with size = current_size / 4
 
-Beispiele:
-  springt zum Fenster mit dem Buffer #1:
+Examples:
+  jump to window displaying buffer #1:
     /window b1
-   scrollt zwei Zeilen hoch:
+  scroll 2 lines up:
     /window scroll -2
-  scrollt zwei Tage hoch: /window scroll -2d
+  scroll 2 days up:
     /window scroll -2d
-  scrollt zum Beginn des aktuellen Tages:
+  scroll to beginning of current day:
     /window scroll -d
-  Fenster #2 wird vergrößert:
+  zoom on window #2:
     /window zoom -window 2
 ........................................
 

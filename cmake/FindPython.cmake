@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2009 Julien Louis <ptitlouis@sysif.net>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -40,17 +40,17 @@ FIND_PROGRAM(PYTHON_EXECUTABLE
 
 IF(PYTHON_EXECUTABLE)
   EXECUTE_PROCESS(
-    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import *; print get_config_var('CONFINCLUDEPY')"
+    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import *; print(get_config_var('CONFINCLUDEPY'))"
     OUTPUT_VARIABLE PYTHON_INC_DIR
     )
 
   EXECUTE_PROCESS(
-    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import *; print get_config_var('LIBPL')"
+    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import *; print(get_config_var('LIBPL'))"
     OUTPUT_VARIABLE PYTHON_POSSIBLE_LIB_PATH
     )
 
   EXECUTE_PROCESS(
-    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import *; print get_config_var('LINKFORSHARED')"
+    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import *; print(get_config_var('LINKFORSHARED'))"
     OUTPUT_VARIABLE PYTHON_LFLAGS
     )
 

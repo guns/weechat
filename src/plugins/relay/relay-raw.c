@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -276,14 +276,15 @@ relay_raw_message_add (struct t_relay_client *client, int flags,
 
     if (client)
     {
-        snprintf (prefix, sizeof (prefix), "%s[%s%d%s] %s%s.%s %s%s",
+        snprintf (prefix, sizeof (prefix), "%s[%s%d%s] %s%s%s%s %s%s",
                   weechat_color ("chat_delimiters"),
                   weechat_color ("chat"),
                   client->id,
                   weechat_color ("chat_delimiters"),
                   weechat_color ("chat_server"),
                   relay_protocol_string[client->protocol],
-                  client->protocol_args,
+                  (client->protocol_args) ? "." : "",
+                  (client->protocol_args) ? client->protocol_args : "",
                   (flags & RELAY_RAW_FLAG_SEND) ?
                   weechat_color ("chat_prefix_quit") :
                   weechat_color ("chat_prefix_join"),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -640,7 +640,7 @@ irc_command_ban (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             pos_channel = argv[1];
             pos_args = 2;
@@ -1002,7 +1002,7 @@ irc_command_cycle (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             channel_name = argv[1];
             pos_args = argv_eol[2];
@@ -1855,7 +1855,7 @@ irc_command_join_server (struct t_irc_server *server, const char *arguments,
             if (manual_join)
             {
                 snprintf (new_args, length, "%s%s",
-                          (irc_channel_is_channel (channels[0])) ? "" : "#",
+                          (irc_channel_is_channel (server, channels[0])) ? "" : "#",
                           channels[0]);
                 ptr_channel = irc_channel_search (server, new_args);
                 if (ptr_channel)
@@ -1871,7 +1871,7 @@ irc_command_join_server (struct t_irc_server *server, const char *arguments,
                 if (i > 0)
                     strcat (new_args, ",");
                 if (((num_channels > 1) || (strcmp (channels[i], "0") != 0))
-                    && !irc_channel_is_channel (channels[i]))
+                    && !irc_channel_is_channel (server, channels[i]))
                 {
                     strcat (new_args, "#");
                 }
@@ -1959,7 +1959,7 @@ irc_command_kick (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             if (argc < 3)
             {
@@ -2033,7 +2033,7 @@ irc_command_kickban (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             if (argc < 3)
             {
@@ -2245,8 +2245,8 @@ irc_command_list (void *data, struct t_gui_buffer *buffer, int argc,
                 ptr_server->cmd_list_regexp = malloc (sizeof (*ptr_server->cmd_list_regexp));
                 if (ptr_server->cmd_list_regexp)
                 {
-                    if ((ret = regcomp (ptr_server->cmd_list_regexp, ptr_regex,
-                                        REG_NOSUB | REG_ICASE)) != 0)
+                    if ((ret = weechat_string_regcomp (ptr_server->cmd_list_regexp, ptr_regex,
+                                                       REG_EXTENDED | REG_ICASE | REG_NOSUB)) != 0)
                     {
                         regerror (ret, ptr_server->cmd_list_regexp,
                                   buf, sizeof(buf));
@@ -2377,19 +2377,20 @@ irc_command_me (void *data, struct t_gui_buffer *buffer, int argc, char **argv,
 
 void
 irc_command_mode_server (struct t_irc_server *server,
-                         struct t_irc_channel *channel, const char *arguments)
+                         struct t_irc_channel *channel, const char *arguments,
+                         int flags)
 {
     if (server && (channel || arguments))
     {
         if (channel && arguments)
         {
-            irc_server_sendf (server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+            irc_server_sendf (server, flags, NULL,
                               "MODE %s %s",
                               channel->name, arguments);
         }
         else
         {
-            irc_server_sendf (server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+            irc_server_sendf (server, flags, NULL,
                               "MODE %s",
                               (channel) ? channel->name : arguments);
         }
@@ -2424,17 +2425,28 @@ irc_command_mode (void *data, struct t_gui_buffer *buffer, int argc,
                                 "mode");
                 return WEECHAT_RC_OK;
             }
-            irc_command_mode_server (ptr_server, ptr_channel, argv_eol[1]);
+            irc_command_mode_server (ptr_server, ptr_channel, argv_eol[1],
+                                     IRC_SERVER_SEND_OUTQ_PRIO_HIGH);
         }
         else
         {
             /* user gives channel, use arguments as-is */
-            irc_command_mode_server (ptr_server, NULL, argv_eol[1]);
+            irc_command_mode_server (ptr_server, NULL, argv_eol[1],
+                                     IRC_SERVER_SEND_OUTQ_PRIO_HIGH);
         }
     }
     else
     {
-        IRC_COMMAND_TOO_FEW_ARGUMENTS(ptr_server->buffer, "mode");
+        if (ptr_channel)
+        {
+            irc_command_mode_server (ptr_server, ptr_channel, NULL,
+                                     IRC_SERVER_SEND_OUTQ_PRIO_HIGH);
+        }
+        else
+        {
+            irc_command_mode_server (ptr_server, NULL, ptr_server->nick,
+                                     IRC_SERVER_SEND_OUTQ_PRIO_HIGH);
+        }
     }
 
     return WEECHAT_RC_OK;
@@ -2540,7 +2552,7 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
             }
             else
             {
-                if (irc_channel_is_channel (targets[i]))
+                if (irc_channel_is_channel (ptr_server, targets[i]))
                 {
                     ptr_channel = irc_channel_search (ptr_server,
                                                       targets[i]);
@@ -2763,7 +2775,7 @@ irc_command_notice (void *data, struct t_gui_buffer *buffer, int argc,
         IRC_COMMAND_CHECK_SERVER("notice", 1);
         is_channel = 0;
         if (((argv[arg_target][0] == '@') || (argv[arg_target][0] == '+'))
-            && irc_channel_is_channel (argv[arg_target] + 1))
+            && irc_channel_is_channel (ptr_server, argv[arg_target] + 1))
         {
             ptr_channel = irc_channel_search (ptr_server, argv[arg_target] + 1);
             is_channel = 1;
@@ -3117,7 +3129,7 @@ irc_command_part (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             channel_name = argv[1];
             pos_args = argv_eol[2];
@@ -4236,7 +4248,7 @@ irc_command_topic (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             channel_name = argv[1];
             new_topic = argv_eol[2];
@@ -4334,7 +4346,7 @@ irc_command_unban (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             pos_channel = argv[1];
             pos_args = 2;
@@ -4538,7 +4550,7 @@ irc_command_wallchops (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 1)
     {
-        if (irc_channel_is_channel (argv[1]))
+        if (irc_channel_is_channel (ptr_server, argv[1]))
         {
             pos_channel = argv[1];
             pos_args = 2;
@@ -4934,6 +4946,8 @@ irc_command_init ()
                              "is working\n"
                              "  channel: channel name where ignore is "
                              "working\n\n"
+                             "Note: the regular expression can start with "
+                             "\"(?-i)\" to become case sensitive.\n\n"
                              "Examples:\n"
                              "  ignore nick \"toto\" everywhere:\n"
                              "    /ignore add toto\n"
@@ -5017,7 +5031,8 @@ irc_command_init ()
                           N_("channel: channel to list\n"
                              " server: server name\n"
                              "  regex: regular expression used to filter "
-                             "results\n\n"
+                             "results (case insensitive, can start by \"(?-i)\" "
+                             "to become case sensitive)\n\n"
                              "Examples:\n"
                              "  list all channels on server (can be very slow "
                              "on large networks):\n"
@@ -5144,8 +5159,7 @@ irc_command_init ()
                              "  notify when \"toto\" is away or back on "
                              "freenode server:\n"
                              "    /notify add toto freenode -away"),
-                          "list"
-                          " || add %(irc_channel_nicks) %(irc_servers) "
+                          "add %(irc_channel_nicks) %(irc_servers) "
                           "-away %-"
                           " || del -all|%(irc_notify_nicks) %(irc_servers) %-",
                           &irc_command_notify, NULL);

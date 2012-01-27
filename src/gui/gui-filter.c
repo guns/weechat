@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -284,8 +284,8 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
             regex1 = malloc (sizeof (*regex1));
             if (regex1)
             {
-                if (regcomp (regex1, regex_prefix,
-                             REG_NOSUB | REG_ICASE) != 0)
+                if (string_regcomp (regex1, regex_prefix,
+                                    REG_EXTENDED | REG_ICASE | REG_NOSUB) != 0)
                 {
                     free (regex_prefix);
                     free (regex1);
@@ -297,8 +297,8 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
         regex2 = malloc (sizeof (*regex2));
         if (regex2)
         {
-            if (regcomp (regex2, pos_regex_message,
-                         REG_NOSUB | REG_ICASE) != 0)
+            if (string_regcomp (regex2, pos_regex_message,
+                                REG_EXTENDED | REG_ICASE | REG_NOSUB) != 0)
             {
                 if (regex_prefix)
                     free (regex_prefix);

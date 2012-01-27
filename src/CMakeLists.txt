@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2007-2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2008-2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -123,6 +123,9 @@ FIND_PACKAGE(Iconv)
 IF(ICONV_FOUND)
   ADD_DEFINITIONS( -DHAVE_ICONV )
 ENDIF(ICONV_FOUND)
+
+# Check for CURL
+FIND_PACKAGE(CURL REQUIRED)
 
 FIND_LIBRARY(DL_LIBRARY
   NAMES dl

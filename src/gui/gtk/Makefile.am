@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -30,7 +30,8 @@ weechat_gtk_LDADD = ./../../core/lib_weechat_core.a \
                     $(PLUGINS_LFLAGS) \
                     $(GTK_LFLAGS) \
                     $(GCRYPT_LFLAGS) \
-                    $(GNUTLS_LFLAGS)
+                    $(GNUTLS_LFLAGS) \
+                    $(CURL_LFLAGS)
 
 weechat_gtk_SOURCES = gui-gtk-bar-window.c \
                       gui-gtk-chat.c \

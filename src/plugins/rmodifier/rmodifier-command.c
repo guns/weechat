@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -246,7 +246,8 @@ rmodifier_command_init ()
                              "     groups: action on groups found: comma separated "
                              "list of groups (from 1 to 9) with optional \"*\" "
                              "after number to hide group\n"
-                             "      regex: regular expression\n"
+                             "      regex: regular expression (case insensitive, "
+                             "can start by \"(?-i)\" to become case sensitive)\n"
                              "        del: delete a rmodifier\n"
                              "       -all: delete all rmodifiers\n"
                              "    default: restore default rmodifiers\n\n"

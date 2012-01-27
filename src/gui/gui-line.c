@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -950,6 +950,9 @@ gui_line_add (struct t_gui_buffer *buffer, time_t date,
             }
         }
     }
+
+    hook_signal_send ("buffer_line_added",
+                      WEECHAT_HOOK_SIGNAL_POINTER, new_line);
 
     return new_line;
 }

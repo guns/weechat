@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -372,6 +372,11 @@ irc_upgrade_read_cb (void *data,
                             free (irc_upgrade_current_server->prefix_chars);
                         irc_upgrade_current_server->prefix_chars = strdup (str);
                     }
+                    irc_upgrade_current_server->nick_max_length = weechat_infolist_integer (infolist, "nick_max_length");
+                    irc_upgrade_current_server->casemapping = weechat_infolist_integer (infolist, "casemapping");
+                    str = weechat_infolist_string (infolist, "chantypes");
+                    if (str)
+                        irc_upgrade_current_server->chantypes = strdup (str);
                     irc_upgrade_current_server->reconnect_delay = weechat_infolist_integer (infolist, "reconnect_delay");
                     irc_upgrade_current_server->reconnect_start = weechat_infolist_time (infolist, "reconnect_start");
                     irc_upgrade_current_server->command_time = weechat_infolist_time (infolist, "command_time");
@@ -418,7 +423,6 @@ irc_upgrade_read_cb (void *data,
                         irc_upgrade_current_channel->has_quit_server = weechat_infolist_integer (infolist, "has_quit_server");
                         irc_upgrade_current_channel->cycle = weechat_infolist_integer (infolist, "cycle");
                         irc_upgrade_current_channel->part = weechat_infolist_integer (infolist, "part");
-                        irc_upgrade_current_channel->display_creation_date = weechat_infolist_integer (infolist, "display_creation_date");
                         irc_upgrade_current_channel->nick_completion_reset = weechat_infolist_integer (infolist, "nick_completion_reset");
                         for (i = 0; i < 2; i++)
                         {
