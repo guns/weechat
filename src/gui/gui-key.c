@@ -278,6 +278,11 @@ gui_key_get_internal_code (const char *key)
                 strcat (result, "\x01[[");
                 key += 6;
             }
+            if (strncmp (key, "mod4-", 5) == 0)
+            {
+                strcat (result, "\x01[\x01G");
+                key += 5;
+            }
             if (strncmp (key, "meta-", 5) == 0)
             {
                 strcat (result, "\x01[");
@@ -324,6 +329,11 @@ gui_key_get_expanded_name (const char *key)
             {
                 strcat (result, "meta2-");
                 key += 3;
+            }
+            if (strncmp (key, "\x01[\x01G", 4) == 0)
+            {
+                strcat (result, "mod4-");
+                key += 4;
             }
             if (strncmp (key, "\x01[", 2) == 0)
             {
