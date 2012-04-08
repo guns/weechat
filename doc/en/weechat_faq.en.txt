@@ -109,9 +109,9 @@ It's common issue, please read carefully and check *ALL* solutions below:
   distributions but not all): `ldd /path/to/weechat-curses`
 * check that the "Charset" plugin is loaded with `/plugin` command (if it is
   not, then you probably need the "weechat-plugins" package)
-* check the charset line (on server buffer). You should see 'ISO-XXXXXX' or
-  'UTF-8' for terminal charset. If you see 'ANSI_X3.4-1968' or other values,
-  your locale is probably wrong.
+* check the output of command `/charset` (on core buffer). You should see
+  'ISO-XXXXXX' or 'UTF-8' for terminal charset. If you see 'ANSI_X3.4-1968' or
+  other values, your locale is probably wrong (fix your $LANG).
 * setup global decode value, for example:
   `/set charset.default.decode "ISO-8859-15"`
 * if you are using UTF-8 locale:
@@ -265,6 +265,7 @@ remove alignment on nick:
 ----------------------------------------
 /set weechat.bar.nicklist.position top
 /set weechat.look.prefix_align none
+/set weechat.look.align_end_of_lines time
 ----------------------------------------
 
 With WeeChat ≥ 0.3.6, you can enable option "eat_newline_glitch", so that
@@ -634,6 +635,18 @@ connection will be less secure by doing that):
 
 ----------------------------------------
 /set irc.server.freenode.ssl_verify off
+----------------------------------------
+
+
+[[irc_ssl_handshake_error]]
+When connecting to server with SSL, I see only error "TLS handshake failed", what can I do?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can try a different priority string (WeeChat ≥ 0.3.5 only), replace "xxx"
+by your server name:
+
+----------------------------------------
+/set irc.server.xxx.ssl_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
 ----------------------------------------
 
 

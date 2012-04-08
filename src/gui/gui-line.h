@@ -67,6 +67,9 @@ struct t_gui_lines
 
 extern struct t_gui_lines *gui_lines_alloc ();
 extern void gui_lines_free (struct t_gui_lines *lines);
+extern void gui_line_get_prefix_for_display (struct t_gui_line *line,
+                                             char **prefix, int *length,
+                                             char **color);
 extern int gui_line_get_align (struct t_gui_buffer *buffer,
                                struct t_gui_line *line,
                                int with_suffix, int first_line);
@@ -82,11 +85,14 @@ extern int gui_line_match_regex (struct t_gui_line *line,
                                  regex_t *regex_message);
 extern int gui_line_match_tags (struct t_gui_line *line, int tags_count,
                                 char **tags_array);
+extern const char *gui_line_search_tag_starting_with (struct t_gui_line *line,
+                                                      const char *tag);
 extern const char *gui_line_get_nick_tag (struct t_gui_line *line);
 extern int gui_line_has_highlight (struct t_gui_line *line);
 extern void gui_line_compute_buffer_max_length (struct t_gui_buffer *buffer,
                                                 struct t_gui_lines *lines);
 extern void gui_line_compute_prefix_max_length (struct t_gui_lines *lines);
+extern void gui_line_set_prefix_same_nick (struct t_gui_line *line);
 extern void gui_line_mixed_free_buffer (struct t_gui_buffer *buffer);
 extern void gui_line_mixed_free_all (struct t_gui_buffer *buffer);
 extern void gui_line_free (struct t_gui_buffer *buffer,

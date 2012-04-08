@@ -32,6 +32,7 @@
 #include <time.h>
 
 #include "../core/weechat.h"
+#include "../core/wee-config.h"
 #include "../core/wee-hashtable.h"
 #include "../core/wee-hdata.h"
 #include "../core/wee-hook.h"
@@ -83,6 +84,9 @@ int gui_key_buffer_size = 0;        /* input buffer size in bytes           */
 
 int gui_key_paste_pending = 0;      /* 1 is big paste was detected and      */
                                     /* WeeChat is asking user what to do    */
+int gui_key_paste_bracketed = 0;    /* bracketed paste mode detected        */
+struct t_hook *gui_key_paste_bracketed_timer = NULL;
+                                    /* timer for bracketed paste            */
 int gui_key_paste_lines = 0;        /* number of lines for pending paste    */
 
 time_t gui_key_last_activity_time = 0; /* last activity time (key)          */
@@ -1407,6 +1411,115 @@ gui_key_buffer_add (unsigned char key)
 }
 
 /*
+ * gui_key_buffer_search: search a string in gui_key_buffer (array of integers)
+ *                        start_index must be >= 0
+ *                        if max_index is negative, the search is until end of buffer
+ *                        return index for string found in gui_key_buffer
+ *                        (not from "start_index" but from beginning of gui_key_buffer)
+ *                        or -1 if string is not found
+ */
+
+int
+gui_key_buffer_search (int start_index, int max_index, const char *string)
+{
+    int i, j, length, found;
+
+    if ((gui_key_buffer_size == 0) || !string || !string[0])
+        return -1;
+
+    length = strlen (string);
+
+    if (gui_key_buffer_size < length)
+        return -1;
+
+    if (max_index < 0)
+        max_index = gui_key_buffer_size - length;
+    else if (max_index > gui_key_buffer_size - length)
+        max_index = gui_key_buffer_size - length;
+
+    for (i = start_index; i <= max_index; i++)
+    {
+        found = 1;
+        for (j = 0; j < length; j++)
+        {
+            if (gui_key_buffer[i + j] != string[j])
+            {
+                found = 0;
+                break;
+            }
+        }
+        if (found)
+            return i;
+    }
+
+    /* string not found */
+    return -1;
+}
+
+/*
+ * gui_key_buffer_remove: remove some chars from gui_key_buffer
+ */
+
+void
+gui_key_buffer_remove (int index, int number)
+{
+    int i;
+
+    for (i = index; i < gui_key_buffer_size - number; i++)
+    {
+        gui_key_buffer[i] = gui_key_buffer[i + number];
+    }
+    gui_key_buffer_size -= number;
+}
+
+/*
+ * gui_key_paste_remove_newline: remove final newline at enf of paste if there
+ *                               is only one line to paste
+ */
+
+void
+gui_key_paste_remove_newline ()
+{
+    if ((gui_key_paste_lines <= 1)
+        && (gui_key_buffer_size > 0)
+        && ((gui_key_buffer[gui_key_buffer_size - 1] == '\r')
+            || (gui_key_buffer[gui_key_buffer_size - 1] == '\n')))
+    {
+        gui_key_buffer_size--;
+        gui_key_paste_lines = 0;
+    }
+}
+
+/*
+ * gui_key_paste_replace_tabs: replace tabs by spaces in paste
+ */
+
+void
+gui_key_paste_replace_tabs ()
+{
+    int i;
+
+    for (i = 0; i < gui_key_buffer_size; i++)
+    {
+        if (gui_key_buffer[i] == '\t')
+            gui_key_buffer[i] = ' ';
+    }
+}
+
+/*
+ * gui_key_paste_start: start paste of text
+ */
+
+void
+gui_key_paste_start ()
+{
+    gui_key_paste_remove_newline ();
+    gui_key_paste_replace_tabs ();
+    gui_key_paste_pending = 1;
+    gui_input_paste_pending_signal ();
+}
+
+/*
  * gui_key_get_paste_lines: return real number of lines in buffer
  *                          if last key is not Return, then this is lines + 1
  *                          else it's lines
@@ -1415,14 +1528,126 @@ gui_key_buffer_add (unsigned char key)
 int
 gui_key_get_paste_lines ()
 {
-    if ((gui_key_buffer_size > 0)
-        && (gui_key_buffer[gui_key_buffer_size - 1] != '\r')
-        && (gui_key_buffer[gui_key_buffer_size - 1] != '\n'))
+    int length;
+
+    length = gui_key_buffer_size;
+
+    if (length >= GUI_KEY_BRACKETED_PASTE_LENGTH)
+    {
+        if (gui_key_buffer_search (length - GUI_KEY_BRACKETED_PASTE_LENGTH, -1,
+                                   GUI_KEY_BRACKETED_PASTE_END) >= 0)
+            length -= GUI_KEY_BRACKETED_PASTE_LENGTH;
+    }
+
+    if ((length > 0)
+        && (gui_key_buffer[length - 1] != '\r')
+        && (gui_key_buffer[length - 1] != '\n'))
     {
         return gui_key_paste_lines + 1;
     }
 
-    return gui_key_paste_lines;
+    return (gui_key_paste_lines > 0) ? gui_key_paste_lines : 1;
+}
+
+/*
+ * gui_key_paste_check: check pasted lines: if more than N lines, then enable
+ *                      paste mode and ask confirmation to user
+ *                      (ctrl-Y=paste, ctrl-N=cancel)
+ *                      (N is option weechat.look.paste_max_lines)
+ *                      return 1 if paste mode has been enabled, 0 otherwise
+ */
+
+int
+gui_key_paste_check (int bracketed_paste)
+{
+    int max_lines;
+
+    max_lines = CONFIG_INTEGER(config_look_paste_max_lines);
+    if (max_lines >= 0)
+    {
+        if (!bracketed_paste && (max_lines == 0))
+            max_lines = 1;
+        if (gui_key_get_paste_lines () > max_lines)
+        {
+            /* ask user what to do */
+            gui_key_paste_start ();
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * gui_key_paste_bracketed_timer_cb: callback for bracketed paste timer
+ */
+
+int
+gui_key_paste_bracketed_timer_cb (void *data, int remaining_calls)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) remaining_calls;
+
+    gui_key_paste_bracketed_timer = NULL;
+
+    if (gui_key_paste_bracketed)
+        gui_key_paste_bracketed_stop ();
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * gui_key_paste_bracketed_timer_remove: remove timer for bracketed paste
+ */
+
+void
+gui_key_paste_bracketed_timer_remove ()
+{
+    if (gui_key_paste_bracketed_timer)
+    {
+        unhook (gui_key_paste_bracketed_timer);
+        gui_key_paste_bracketed_timer = NULL;
+    }
+}
+
+/*
+ * gui_key_paste_bracketed_timer_add: add timer for bracketed paste
+ */
+
+void
+gui_key_paste_bracketed_timer_add ()
+{
+    gui_key_paste_bracketed_timer_remove ();
+    gui_key_paste_bracketed_timer = hook_timer (NULL,
+                                                CONFIG_INTEGER(config_look_paste_bracketed_timer_delay) * 1000,
+                                                0, 1,
+                                                &gui_key_paste_bracketed_timer_cb, NULL);
+}
+
+/*
+ * gui_key_paste_bracketed_start: start bracketed paste of text
+ *                                (ESC[200~ detected)
+ */
+
+void
+gui_key_paste_bracketed_start ()
+{
+    gui_key_paste_bracketed = 1;
+    gui_key_paste_bracketed_timer_add ();
+}
+
+/*
+ * gui_key_paste_bracketed_stop: stop bracketed paste of text
+ *                               (ESC[201~ detected or timeout while waiting for
+ *                               this code)
+ */
+
+void
+gui_key_paste_bracketed_stop ()
+{
+    gui_key_paste_check (1);
+    gui_key_paste_bracketed = 0;
 }
 
 /*
@@ -1432,6 +1657,18 @@ gui_key_get_paste_lines ()
 void
 gui_key_paste_accept ()
 {
+    /*
+     * add final newline if there is not in pasted text
+     * (for at least 2 lines pasted)
+     */
+    if ((gui_key_get_paste_lines () > 1)
+        && (gui_key_buffer_size > 0)
+        && (gui_key_buffer[gui_key_buffer_size - 1] != '\r')
+        && (gui_key_buffer[gui_key_buffer_size - 1] != '\n'))
+    {
+        gui_key_buffer_add ('\n');
+    }
+
     gui_key_paste_pending = 0;
     gui_input_paste_pending_signal ();
 }

@@ -476,8 +476,11 @@ string_expand_home (const char *path)
     if (!path)
         return NULL;
 
-    if (!path[0] || (path[0] != '~') || (path[1] != DIR_SEPARATOR_CHAR))
+    if (!path[0] || (path[0] != '~')
+        || ((path[1] && path[1] != DIR_SEPARATOR_CHAR)))
+    {
         return strdup (path);
+    }
 
     ptr_home = getenv ("HOME");
 
@@ -757,7 +760,7 @@ string_regex_flags (const char *regex, int default_flags, int *flags)
         pos = strchr (ptr_regex, ')');
         if (!pos)
             break;
-        if (!isalpha (ptr_regex[2]) && (ptr_regex[2] != '-'))
+        if (!isalpha ((unsigned char)ptr_regex[2]) && (ptr_regex[2] != '-'))
             break;
         if (flags)
         {

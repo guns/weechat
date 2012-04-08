@@ -14,17 +14,17 @@
 ** Werte: on, off (Standardwert: `off`)
 
 * [[option_aspell.check.real_time]] *aspell.check.real_time*
-** Beschreibung: `Echtzeit Korrektur während der Texteingabe (da dies langsamer ist, ist diese Funktion standardmäßig deaktiviert. Wörter werden erst überprüft wenn ein Leerzeichen dem Wort folgt)`
+** Beschreibung: `Eine Korrektur findet während der Texteingabe statt (da dies langsamer ist, ist diese Funktion standardmäßig deaktiviert. Wörter werden erst überprüft sobald ein Leerzeichen dem vorangegangenen Wort folgt)`
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
 * [[option_aspell.check.word_min_length]] *aspell.check.word_min_length*
-** Beschreibung: `Minimallänge für ein Wort welches auf Rechtschreibung überprüft werden soll (bei 0 werden alle Wörter überprüft)`
+** Beschreibung: `Mindestlänge für ein Wort, welches auf Rechtschreibung überprüft werden soll (bei 0 werden alle Wörter überprüft)`
 ** Typ: integer
 ** Werte: 0 .. 2147483647 (Standardwert: `2`)
 
 * [[option_aspell.look.color]] *aspell.look.color*
 ** Beschreibung: `In dieser Farbe wird ein Wort mit einem Rechtschreibfehler hervorgehoben`
 ** Typ: Farbe
-** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute werden vor einer Farbe gesetzt (ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `lightred`)
+** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `lightred`)
 

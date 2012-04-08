@@ -113,9 +113,10 @@ points ci-dessous :
 * vérifiez que l'extension "Charset" est chargée avec la commande `/plugin`
   (s'il ne l'est pas, vous devez peut-être installer le paquet
   "weechat-plugins")
-* vérifiez la ligne charset (sur le tampon serveur), vous devriez voir
-  'ISO-XXXXXX' ou 'UTF-8' pour le charset du terminal. Si vous voyez
-  'ANSI_X3.4-1968' ou d'autres valeurs, votre locale est probablement erronée.
+* vérifiez la sortie de la commande `/charset` (sur le tampon "core"), vous
+  devriez voir 'ISO-XXXXXX' ou 'UTF-8' pour le charset du terminal. Si vous
+  voyez 'ANSI_X3.4-1968' ou d'autres valeurs, votre locale est probablement
+  erronée (corrigez votre $LANG).
 * affectez la valeur pour le décodage global, par exemple :
   `/set charset.default.decode "ISO-8859-15"`
 * si vous utilisez la locale UTF-8 :
@@ -273,6 +274,7 @@ supprimer l'alignement sur les pseudos :
 ----------------------------------------
 /set weechat.bar.nicklist.position top
 /set weechat.look.prefix_align none
+/set weechat.look.align_end_of_lines time
 ----------------------------------------
 
 Avec WeeChat ≥ 0.3.6, vous pouvez activer l'option "eat_newline_glitch", pour
@@ -658,6 +660,18 @@ Si vous voyez des erreurs à propos du certificat, vous pouvez désactiver
 
 ----------------------------------------
 /set irc.server.freenode.ssl_verify off
+----------------------------------------
+
+
+[[irc_ssl_handshake_error]]
+Lors de la connexion SSL à un serveur, je vois juste une erreur "TLS handshake failed", que puis-je faire ?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Vous pouvez essayer une chaîne de priorité différente (WeeChat ≥ 0.3.5
+seulement), remplacez "xxx" par le nom de votre serveur :
+
+----------------------------------------
+/set irc.server.xxx.ssl_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
 ----------------------------------------
 
 

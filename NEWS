@@ -1,17 +1,41 @@
-WeeChat News
-============
+WeeChat Release Notes
+=====================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.7-dev, 2012-01-24
+v0.3.8-dev, 2012-04-07
 
 
-Version 0.3.7 (under dev!)
+Version 0.3.8 (under dev!)
 --------------------------
+
+Important release notes:
+
+* options weechat.look.prefix_align_more and weechat.look.prefix_buffer_align_more
+  have been converted from type boolean to string:
+** if the value was on (default), new value is "+" and you can now customize
+   this char
+** if the value was off, you have to set " " (string with one space)
+* option weechat.look.paste_max_lines can now be used with value 0 to detect
+  paste with one line (only if terminal "bracketed paste mode" is enabled when
+  option 'weechat.look.paste_bracketed' is on); so now the value -1 is used
+  to disable paste detection: if your value was 0, you should set it to -1:
+** `weechat.look.paste_max_lines -1`
+* rmodifier "nickserv" has a new default regex which includes option "release"
+  for command "/msg nickserv". If you never added/changed rmodifiers, you can
+  just reset all rmodifiers (command: `/rmodifier default -yes`).
+  If you added/changed some rmodifiers, do it manually with these two commannds:
+** `/rmodifier del nickserv`
+** `/rmodifier add nickserv history_add,input_text_display 1,4* ^(/(msg|quote) +nickserv +(id|identify|ghost \S+|release \S+) +)(.*)`
+
+Version 0.3.7 (2012-02-26)
+--------------------------
+
+Important release notes:
 
 * option `scroll_unread` has been moved from command `/input` to `/window`,
   therefore default command of key alt-u has been updated. To bind key with new
   default value:
 ** `/key bind meta-u /window scroll_unread`
-* extented regex is used in filters and irc ignore, so some chars that
+* extended regex is used in filters and irc ignore, so some chars that
   needed escape in past do not need any more (for example `[0-9]\+` becomes
   `[0-9]+`), filters and ignore have to be manually fixed
 * option 'weechat.look.highlight_regex' becomes case insensitive by default,
@@ -19,6 +43,9 @@ Version 0.3.7 (under dev!)
   "(?-i)FlashCode|flashy"
 * option 'weechat.history.max_lines' has been renamed to
   'weechat.history.max_buffer_lines_number'
+* option 'weechat.plugin.extension' now supports list of extensions, and new
+  default value is ".so,.dll" (with this value, weechat.conf is compatible with
+  Cygwin)
 
 Version 0.3.6 (2011-10-22)
 --------------------------

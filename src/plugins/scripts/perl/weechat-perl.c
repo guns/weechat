@@ -265,7 +265,7 @@ weechat_perl_exec (struct t_plugin_script *script,
                     break;
                 case 'h': /* hash */
                     hash = weechat_perl_hashtable_to_hash (argv[i]);
-                    XPUSHs(sv_2mortal((SV *)hash));
+                    XPUSHs(sv_2mortal(newRV_inc((SV *)hash)));
                     break;
             }
         }
@@ -390,7 +390,7 @@ weechat_perl_load (const char *filename)
         return 0;
     }
 
-    if ((weechat_perl_plugin->debug >= 1) || !perl_quiet)
+    if ((weechat_perl_plugin->debug >= 2) || !perl_quiet)
     {
         weechat_printf (NULL,
                         weechat_gettext ("%s: loading script \"%s\""),
@@ -557,7 +557,7 @@ weechat_perl_unload (struct t_plugin_script *script)
     int *rc;
     void *interpreter;
 
-    if ((weechat_perl_plugin->debug >= 1) || !perl_quiet)
+    if ((weechat_perl_plugin->debug >= 2) || !perl_quiet)
     {
         weechat_printf (NULL,
                         weechat_gettext ("%s: unloading script \"%s\""),
@@ -939,6 +939,7 @@ weechat_perl_signal_quit_upgrade_cb (void *data, const char *signal,
 int
 weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 {
+    struct t_plugin_script_init init;
 #ifdef PERL_SYS_INIT3
     int a;
     char **perl_args_local;
@@ -971,17 +972,16 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     eval_pv (perl_weechat_code, TRUE);
 #endif
 
+    init.callback_command = &weechat_perl_command_cb;
+    init.callback_completion = &weechat_perl_completion_cb;
+    init.callback_infolist = &weechat_perl_infolist_cb;
+    init.callback_signal_debug_dump = &weechat_perl_signal_debug_dump_cb;
+    init.callback_signal_buffer_closed = &weechat_perl_signal_buffer_closed_cb;
+    init.callback_signal_script_action = &weechat_perl_signal_script_action_cb;
+    init.callback_load_file = &weechat_perl_load_cb;
+
     perl_quiet = 1;
-    script_init (weechat_perl_plugin,
-                 argc,
-                 argv,
-                 &weechat_perl_command_cb,
-                 &weechat_perl_completion_cb,
-                 &weechat_perl_infolist_cb,
-                 &weechat_perl_signal_debug_dump_cb,
-                 &weechat_perl_signal_buffer_closed_cb,
-                 &weechat_perl_signal_script_action_cb,
-                 &weechat_perl_load_cb);
+    script_init (weechat_perl_plugin, argc, argv, &init);
     perl_quiet = 0;
 
     script_display_short_list (weechat_perl_plugin,
@@ -1016,7 +1016,7 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     }
 #endif
 
-#if defined(PERL_SYS_TERM) && !defined(__FreeBSD__) && !defined(WIN32) && !defined(__CYGWIN__)
+#if defined(PERL_SYS_TERM) && !defined(__FreeBSD__) && !defined(WIN32) && !defined(__CYGWIN__) && !(defined(__APPLE__) && defined(__MACH__))
     /*
      * we call this function on all OS, but NOT on FreeBSD or Cygwin,
      * because it crashes with no reason (bug in Perl?)

@@ -546,6 +546,7 @@ void weechat_python_init_module_weechat ()
     PyDict_SetItemString(weechat_dict, "WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR", PyLong_FromLong((long) WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR));
     PyDict_SetItemString(weechat_dict, "WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR", PyLong_FromLong((long) WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR));
     PyDict_SetItemString(weechat_dict, "WEECHAT_HOOK_CONNECT_MEMORY_ERROR", PyLong_FromLong((long) WEECHAT_HOOK_CONNECT_MEMORY_ERROR));
+    PyDict_SetItemString(weechat_dict, "WEECHAT_HOOK_CONNECT_TIMEOUT", PyLong_FromLong((long) WEECHAT_HOOK_CONNECT_TIMEOUT));
 
     PyDict_SetItemString(weechat_dict, "WEECHAT_HOOK_SIGNAL_STRING", PyUnicode_FromString(WEECHAT_HOOK_SIGNAL_STRING));
     PyDict_SetItemString(weechat_dict, "WEECHAT_HOOK_SIGNAL_INT", PyUnicode_FromString(WEECHAT_HOOK_SIGNAL_INT));
@@ -582,7 +583,7 @@ weechat_python_load (const char *filename)
         return 0;
     }
 
-    if ((weechat_python_plugin->debug >= 1) || !python_quiet)
+    if ((weechat_python_plugin->debug >= 2) || !python_quiet)
     {
         weechat_printf (NULL,
                         weechat_gettext ("%s: loading script \"%s\""),
@@ -766,7 +767,7 @@ weechat_python_unload (struct t_plugin_script *script)
     void *interpreter;
     PyThreadState *old_interpreter;
 
-    if ((weechat_python_plugin->debug >= 1) || !python_quiet)
+    if ((weechat_python_plugin->debug >= 2) || !python_quiet)
     {
         weechat_printf (NULL,
                         weechat_gettext ("%s: unloading script \"%s\""),
@@ -1139,6 +1140,8 @@ weechat_python_signal_script_action_cb (void *data, const char *signal,
 int
 weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 {
+    struct t_plugin_script_init init;
+
     weechat_python_plugin = plugin;
 
     /*
@@ -1181,17 +1184,16 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
         return WEECHAT_RC_ERROR;
     }
 
+    init.callback_command = &weechat_python_command_cb;
+    init.callback_completion = &weechat_python_completion_cb;
+    init.callback_infolist = &weechat_python_infolist_cb;
+    init.callback_signal_debug_dump = &weechat_python_signal_debug_dump_cb;
+    init.callback_signal_buffer_closed = &weechat_python_signal_buffer_closed_cb;
+    init.callback_signal_script_action = &weechat_python_signal_script_action_cb;
+    init.callback_load_file = &weechat_python_load_cb;
+
     python_quiet = 1;
-    script_init (weechat_python_plugin,
-                 argc,
-                 argv,
-                 &weechat_python_command_cb,
-                 &weechat_python_completion_cb,
-                 &weechat_python_infolist_cb,
-                 &weechat_python_signal_debug_dump_cb,
-                 &weechat_python_signal_buffer_closed_cb,
-                 &weechat_python_signal_script_action_cb,
-                 &weechat_python_load_cb);
+    script_init (weechat_python_plugin, argc, argv, &init);
     python_quiet = 0;
 
     script_display_short_list (weechat_python_plugin,

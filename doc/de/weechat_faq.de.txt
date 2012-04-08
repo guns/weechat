@@ -277,6 +277,7 @@ die Ausrichtung der Nicknamen entfernen:
 ----------------------------------------
 /set weechat.bar.nicklist.position top
 /set weechat.look.prefix_align none
+/set weechat.look.align_end_of_lines time
 ----------------------------------------
 
 Ab der WeeChat Version ≥ 0.3.6, kann die Option "eat_newline_glitch" aktiviert
@@ -667,6 +668,18 @@ Fall weniger sicher):
 
 ----------------------------------------
 /set irc.server.freenode.ssl_verify off
+----------------------------------------
+
+
+[[irc_ssl_handshake_error]]
+Bei einem Verbindungsaufbau zum Server, via SSL, erhalte ich "TLS Handshake fehlgeschlagen". Wie kann ich das beheben?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Man sollte versuchen eine andere Priorität zu nutzen (nur WeeChat ≥ 0.3.5); Im Beispiel
+muss "xxx" durch den internen Servernamen ersetzt werden:
+
+----------------------------------------
+/set irc.server.xxx.ssl_priorities "NORMAL:-VERS-TLS-ALL:+VERS-TLS1.0:+VERS-SSL3.0:%COMPAT"
 ----------------------------------------
 
 

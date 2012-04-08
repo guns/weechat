@@ -42,6 +42,7 @@
 #include "wee-hook.h"
 #include "wee-log.h"
 #include "wee-network.h"
+#include "wee-utf8.h"
 #include "wee-util.h"
 #include "wee-list.h"
 #include "wee-proxy.h"
@@ -125,6 +126,8 @@ struct t_config_option *config_look_mouse;
 struct t_config_option *config_look_mouse_timer_delay;
 struct t_config_option *config_look_nickmode;
 struct t_config_option *config_look_nickmode_empty;
+struct t_config_option *config_look_paste_bracketed;
+struct t_config_option *config_look_paste_bracketed_timer_delay;
 struct t_config_option *config_look_paste_max_lines;
 struct t_config_option *config_look_prefix[GUI_CHAT_NUM_PREFIXES];
 struct t_config_option *config_look_prefix_align;
@@ -134,6 +137,7 @@ struct t_config_option *config_look_prefix_align_more;
 struct t_config_option *config_look_prefix_buffer_align;
 struct t_config_option *config_look_prefix_buffer_align_max;
 struct t_config_option *config_look_prefix_buffer_align_more;
+struct t_config_option *config_look_prefix_same_nick;
 struct t_config_option *config_look_prefix_suffix;
 struct t_config_option *config_look_read_marker;
 struct t_config_option *config_look_read_marker_always_show;
@@ -225,6 +229,7 @@ struct t_config_option *config_history_display_default;
 
 /* config, network section */
 
+struct t_config_option *config_network_connection_timeout;
 struct t_config_option *config_network_gnutls_ca_file;
 struct t_config_option *config_network_gnutls_handshake_timeout;
 
@@ -238,6 +243,7 @@ struct t_config_option *config_plugin_save_config_on_unload;
 
 /* other */
 
+int config_length_prefix_same_nick = 0;
 struct t_hook *config_day_change_timer = NULL;
 int config_day_change_old_day = -1;
 regex_t *config_highlight_regex = NULL;
@@ -363,6 +369,44 @@ config_change_buffer_time_format (void *data, struct t_config_option *option)
 }
 
 /*
+ * config_compute_prefix_max_length_all_buffers: compute the "prefix_max_length"
+ *                                               on all buffers
+ */
+
+void
+config_compute_prefix_max_length_all_buffers ()
+{
+    struct t_gui_buffer *ptr_buffer;
+
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        if (ptr_buffer->own_lines)
+            gui_line_compute_prefix_max_length (ptr_buffer->own_lines);
+        if (ptr_buffer->mixed_lines)
+            gui_line_compute_prefix_max_length (ptr_buffer->mixed_lines);
+    }
+}
+
+/*
+ * config_change_prefix_same_nick: called when "prefix for same nick" changes
+ */
+
+void
+config_change_prefix_same_nick (void *data, struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    config_length_prefix_same_nick =
+        gui_chat_strlen_screen (CONFIG_STRING(config_look_prefix_same_nick));
+
+    config_compute_prefix_max_length_all_buffers ();
+    gui_window_ask_refresh (1);
+}
+
+/*
  * config_change_eat_newline_glitch: called when eat_newline_glitch changes
  */
 
@@ -464,6 +508,21 @@ config_change_hotlist (void *data, struct t_config_option *option)
 }
 
 /*
+ * config_change_paste_bracketed: called when bracketed paste mode is changed
+ */
+
+void
+config_change_paste_bracketed (void *data, struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (gui_ok)
+        gui_window_set_bracketed_paste_mode (CONFIG_BOOLEAN(config_look_paste_bracketed));
+}
+
+/*
  * config_change_read_marker: called when read marker is changed
  */
 
@@ -498,21 +557,45 @@ config_change_prefix (void *data, struct t_config_option *option)
 void
 config_change_prefix_align_min (void *data, struct t_config_option *option)
 {
-    struct t_gui_buffer *ptr_buffer;
-
     /* make C compiler happy */
     (void) data;
     (void) option;
 
-    for (ptr_buffer = gui_buffers; ptr_buffer;
-         ptr_buffer = ptr_buffer->next_buffer)
-    {
-        if (ptr_buffer->own_lines)
-            gui_line_compute_prefix_max_length (ptr_buffer->own_lines);
-        if (ptr_buffer->mixed_lines)
-            gui_line_compute_prefix_max_length (ptr_buffer->mixed_lines);
-    }
+    config_compute_prefix_max_length_all_buffers ();
     gui_window_ask_refresh (1);
+}
+
+/*
+ * config_check_prefix_align_more: check string "prefix align more" (must be
+ *                                 max one char wide on screen)
+ */
+
+int
+config_check_prefix_align_more (void *data, struct t_config_option *option,
+                                const char *value)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    return (utf8_strlen_screen (value) == 1) ? 1 : 0;
+}
+
+/*
+ * config_check_prefix_buffer_align_more: check string "prefix buffer align more"
+ *                                        (must be max one char wide on screen)
+ */
+
+int
+config_check_prefix_buffer_align_more (void *data,
+                                       struct t_config_option *option,
+                                       const char *value)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    return (utf8_strlen_screen (value) == 1) ? 1 : 0;
 }
 
 /*
@@ -1956,12 +2039,28 @@ config_weechat_init_options ()
         "nickmode_empty", "boolean",
         N_("display space if nick mode is not (half)op/voice"),
         NULL, 0, 0, "off", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
+    config_look_paste_bracketed = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "paste_bracketed", "boolean",
+        N_("enable terminal \"bracketed paste mode\" (not supported in all "
+           "terminals/multiplexers): in this mode, pasted text is bracketed "
+           "with control sequences so that WeeChat can differentiate pasted "
+           "text from typed-in text (\"ESC[200~\", followed by the pasted text, "
+           "followed by \"ESC[201~\")"),
+        NULL, 0, 0, "off", NULL, 0, NULL, NULL, &config_change_paste_bracketed, NULL, NULL, NULL);
+    config_look_paste_bracketed_timer_delay = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "paste_bracketed_timer_delay", "integer",
+        N_("force end of bracketed paste after this delay (in seconds) if the "
+           "control sequence for end of bracketed paste (\"ESC[201~\") was not "
+           "received in time"),
+        NULL, 1, 60, "10", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_paste_max_lines = config_file_new_option (
         weechat_config_file, ptr_section,
         "paste_max_lines", "integer",
         N_("max number of lines for paste without asking user "
-           "(0 = disable this feature)"),
-        NULL, 0, INT_MAX, "3", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+           "(-1 = disable this feature)"),
+        NULL, -1, INT_MAX, "1", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_prefix[GUI_CHAT_PREFIX_ERROR] = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_error", "string",
@@ -2004,9 +2103,11 @@ config_weechat_init_options ()
         NULL, 0, 128, "0", NULL, 0, NULL, NULL, &config_change_prefix_align_min, NULL, NULL, NULL);
     config_look_prefix_align_more = config_file_new_option (
         weechat_config_file, ptr_section,
-        "prefix_align_more", "boolean",
-        N_("display '+' if prefix is truncated"),
-        NULL, 0, 0, "on", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
+        "prefix_align_more", "string",
+        N_("char to display if prefix is truncated (must be exactly one char "
+           "on screen)"),
+        NULL, 0, 0, "+", NULL, 0,
+        &config_check_prefix_align_more, NULL, &config_change_buffers, NULL, NULL, NULL);
     config_look_prefix_buffer_align = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_buffer_align", "integer",
@@ -2021,10 +2122,19 @@ config_weechat_init_options ()
         NULL, 0, 128, "0", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
     config_look_prefix_buffer_align_more = config_file_new_option (
         weechat_config_file, ptr_section,
-        "prefix_buffer_align_more", "boolean",
-        N_("display '+' if buffer name is truncated (when many buffers are "
-           "merged with same number)"),
-        NULL, 0, 0, "on", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
+        "prefix_buffer_align_more", "string",
+        N_("char to display if buffer name is truncated (when many buffers are "
+           "merged with same number) (must be exactly one char on screen)"),
+        NULL, 0, 0, "+", NULL, 0,
+        &config_check_prefix_buffer_align_more, NULL, &config_change_buffers, NULL, NULL, NULL);
+    config_look_prefix_same_nick = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "prefix_same_nick", "string",
+        N_("prefix displayed for a message with same nick as previous "
+           "message: use a space \" \" to hide prefix, another string to "
+           "display this string instead of prefix, or an empty string to "
+           "disable feature (display prefix)"),
+        NULL, 0, 0, "", NULL, 0, NULL, NULL, &config_change_prefix_same_nick, NULL, NULL, NULL);
     config_look_prefix_suffix = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_suffix", "string",
@@ -2612,6 +2722,12 @@ config_weechat_init_options ()
         return 0;
     }
 
+    config_network_connection_timeout = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "connection_timeout", "integer",
+        N_("timeout (in seconds) for connection to a remote host (made in a "
+           "child process)"),
+        NULL, 1, INT_MAX, "60", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_network_gnutls_ca_file = config_file_new_option (
         weechat_config_file, ptr_section,
         "gnutls_ca_file", "string",

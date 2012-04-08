@@ -32,6 +32,7 @@
 #include "irc-color.h"
 #include "irc-config.h"
 #include "irc-message.h"
+#include "irc-nick.h"
 #include "irc-redirect.h"
 #include "irc-server.h"
 
@@ -193,7 +194,7 @@ irc_notify_new (struct t_irc_server *server, const char *nick, int check_away)
         new_notify->server = server;
         new_notify->nick = strdup (nick);
         new_notify->check_away = check_away;
-        new_notify->is_on_server = 0;
+        new_notify->is_on_server = -1;
         new_notify->away_message = NULL;
         new_notify->ison_received = 0;
 
@@ -208,6 +209,35 @@ irc_notify_new (struct t_irc_server *server, const char *nick, int check_away)
     }
 
     return new_notify;
+}
+
+/*
+ * irc_notify_check_now: check now ison/whois for a notify (called when a
+ *                       notify is added)
+ */
+
+void
+irc_notify_check_now (struct t_irc_notify *notify)
+{
+    if (notify->server->is_connected)
+    {
+        /* send the ISON for nick */
+        irc_redirect_new (notify->server, "ison", "notify", 1,
+                          NULL, 0, NULL);
+        irc_server_sendf (notify->server,
+                          IRC_SERVER_SEND_OUTQ_PRIO_LOW, NULL,
+                          "ISON :%s", notify->nick);
+
+        if (notify->check_away)
+        {
+            /* send the WHOIS for nick */
+            irc_redirect_new (notify->server, "whois", "notify", 1,
+                              notify->nick, 0, "301,401");
+            irc_server_sendf (notify->server,
+                              IRC_SERVER_SEND_OUTQ_PRIO_LOW, NULL,
+                              "WHOIS :%s", notify->nick);
+        }
+    }
 }
 
 /*
@@ -330,26 +360,33 @@ irc_notify_free_all (struct t_irc_server *server)
  */
 
 void
-irc_notify_display (struct t_gui_buffer *buffer, struct t_irc_notify *notify)
+irc_notify_display (struct t_irc_server *server, struct t_gui_buffer *buffer,
+                    struct t_irc_notify *notify)
 {
-    if (!notify->is_on_server && !notify->away_message)
+    if ((notify->is_on_server < 0)
+        || (!notify->is_on_server && !notify->away_message))
     {
         weechat_printf (buffer,
                         "  %s%s%s @ %s%s%s: %s%s",
-                        IRC_COLOR_CHAT_NICK,
+                        irc_nick_color_for_server_message (server, NULL,
+                                                           notify->nick),
                         notify->nick,
                         IRC_COLOR_RESET,
                         IRC_COLOR_CHAT_SERVER,
                         notify->server->name,
                         IRC_COLOR_RESET,
-                        IRC_COLOR_MESSAGE_QUIT,
+                        (notify->is_on_server < 0) ? "" : IRC_COLOR_MESSAGE_QUIT,
+                        (notify->is_on_server < 0) ?
+                        /* TRANSLATORS: "unknown" is the status for /notify when ison answer has not been received (check pending) */
+                        _("unknown") :
                         _("offline"));
     }
     else
     {
         weechat_printf (buffer,
                         "  %s%s%s @ %s%s%s: %s%s %s%s%s%s%s%s",
-                        IRC_COLOR_CHAT_NICK,
+                        irc_nick_color_for_server_message (server, NULL,
+                                                           notify->nick),
                         notify->nick,
                         IRC_COLOR_RESET,
                         IRC_COLOR_CHAT_SERVER,
@@ -391,7 +428,7 @@ irc_notify_display_list (struct t_irc_server *server)
             for (ptr_notify = server->notify_list; ptr_notify;
                  ptr_notify = ptr_notify->next_notify)
             {
-                irc_notify_display (server->buffer, ptr_notify);
+                irc_notify_display (server, server->buffer, ptr_notify);
             }
         }
         else
@@ -414,7 +451,7 @@ irc_notify_display_list (struct t_irc_server *server)
                     weechat_printf (NULL, "");
                     weechat_printf (NULL, _("Notify list for all servers:"));
                 }
-                irc_notify_display (NULL, ptr_notify);
+                irc_notify_display (ptr_server, NULL, ptr_notify);
                 count++;
             }
         }
@@ -432,18 +469,53 @@ irc_notify_display_list (struct t_irc_server *server)
  */
 
 const char *
-irc_notify_get_tags (struct t_config_option *option)
+irc_notify_get_tags (struct t_config_option *option, const char *type,
+                     const char *nick)
 {
     static char string[1024];
     const char *tags;
 
     tags = weechat_config_string (option);
 
-    snprintf (string, sizeof (string), "irc_notify%s%s",
+    snprintf (string, sizeof (string), "irc_notify,irc_notify_%s,nick_%s%s%s",
+              type,
+              nick,
               (tags && tags[0]) ? "," : "",
               (tags && tags[0]) ? tags : "");
 
     return string;
+}
+
+/*
+ * irc_notify_send_signal: send signal on notify event
+ */
+
+void
+irc_notify_send_signal (struct t_irc_notify *notify,
+                        const char *type,
+                        const char *away_message)
+{
+    char signal[128], *data;
+    int length;
+
+    snprintf (signal, sizeof (signal), "irc_notify_%s", type);
+
+    length = strlen (notify->server->name) + 1 + strlen (notify->nick) + 1
+        + ((away_message) ? strlen (away_message) : 0) + 1;
+    data = malloc (length);
+    if (data)
+    {
+        snprintf (data, length, "%s,%s%s%s",
+                  notify->server->name,
+                  notify->nick,
+                  (away_message && away_message[0]) ? "," : "",
+                  (away_message && away_message[0]) ? away_message : "");
+    }
+
+    weechat_hook_signal_send (signal, WEECHAT_HOOK_SIGNAL_STRING, data);
+
+    if (data)
+        free (data);
 }
 
 /*
@@ -462,20 +534,27 @@ irc_notify_set_is_on_server (struct t_irc_notify *notify,
     if (notify->is_on_server == is_on_server)
         return;
 
-    notify->is_on_server = is_on_server;
-
     weechat_printf_tags (notify->server->buffer,
-                         irc_notify_get_tags (irc_config_look_notify_tags_ison),
-                         (notify->is_on_server) ?
-                         _("%snotify: %s%s%s has joined %s%s") :
-                         _("%snotify: %s%s%s has quit %s%s"),
+                         irc_notify_get_tags (irc_config_look_notify_tags_ison,
+                                              (is_on_server) ? "join" : "quit",
+                                              notify->nick),
+                         (notify->is_on_server < 0) ?
+                         ((is_on_server) ?
+                          _("%snotify: %s%s%s is connected") :
+                          _("%snotify: %s%s%s is offline")) :
+                         ((is_on_server) ?
+                          _("%snotify: %s%s%s has joined") :
+                          _("%snotify: %s%s%s has quit")),
                          weechat_prefix ("network"),
-                         IRC_COLOR_CHAT_NICK,
+                         irc_nick_color_for_server_message (notify->server,
+                                                            NULL,
+                                                            notify->nick),
                          notify->nick,
-                         (notify->is_on_server) ?
-                         IRC_COLOR_MESSAGE_JOIN : IRC_COLOR_MESSAGE_QUIT,
-                         IRC_COLOR_CHAT_SERVER,
-                         notify->server->name);
+                         (is_on_server) ?
+                         IRC_COLOR_MESSAGE_JOIN : IRC_COLOR_MESSAGE_QUIT);
+    irc_notify_send_signal (notify, (is_on_server) ? "join" : "quit", NULL);
+
+    notify->is_on_server = is_on_server;
 }
 
 /*
@@ -499,34 +578,49 @@ irc_notify_set_away_message (struct t_irc_notify *notify,
     if (!notify->away_message && away_message)
     {
         weechat_printf_tags (notify->server->buffer,
-                             irc_notify_get_tags (irc_config_look_notify_tags_whois),
+                             irc_notify_get_tags (irc_config_look_notify_tags_whois,
+                                                  "away",
+                                                  notify->nick),
                              _("%snotify: %s%s%s is now away: \"%s\""),
                              weechat_prefix ("network"),
-                             IRC_COLOR_CHAT_NICK,
+                             irc_nick_color_for_server_message (notify->server,
+                                                                NULL,
+                                                                notify->nick),
                              notify->nick,
                              IRC_COLOR_RESET,
                              away_message);
+        irc_notify_send_signal (notify, "away", away_message);
     }
     else if (notify->away_message && !away_message)
     {
         weechat_printf_tags (notify->server->buffer,
-                             irc_notify_get_tags (irc_config_look_notify_tags_whois),
+                             irc_notify_get_tags (irc_config_look_notify_tags_whois,
+                                                  "back",
+                                                  notify->nick),
                              _("%snotify: %s%s%s is back"),
                              weechat_prefix ("network"),
-                             IRC_COLOR_CHAT_NICK,
+                             irc_nick_color_for_server_message (notify->server,
+                                                                NULL,
+                                                                notify->nick),
                              notify->nick,
                              IRC_COLOR_RESET);
+        irc_notify_send_signal (notify, "back", NULL);
     }
     else if (notify->away_message && away_message)
     {
         weechat_printf_tags (notify->server->buffer,
-                             irc_notify_get_tags (irc_config_look_notify_tags_whois),
+                             irc_notify_get_tags (irc_config_look_notify_tags_whois,
+                                                  "still_away",
+                                                  notify->nick),
                              _("%snotify: %s%s%s is still away: \"%s\""),
                              weechat_prefix ("network"),
-                             IRC_COLOR_CHAT_NICK,
+                             irc_nick_color_for_server_message (notify->server,
+                                                                NULL,
+                                                                notify->nick),
                              notify->nick,
                              IRC_COLOR_RESET,
                              away_message);
+        irc_notify_send_signal (notify, "still_away", away_message);
     }
 
     if (notify->away_message)

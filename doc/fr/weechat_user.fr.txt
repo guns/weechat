@@ -92,7 +92,7 @@ compiler WeeChat.
 | Paquet ^(1)^           | Version     | Requis | Fonctionnalité
 | cmake                  |             | *oui*  | construction (autotools toujours possible, mais cmake est recommandé)
 | libncursesw5-dev ^(2)^ |             | *oui*  | interface ncurses
-| libcurl4-xxxxx-dev     |             | *oui*  | transfert d'URL
+| libcurl4-gnutls-dev    |             | *oui*  | transfert d'URL
 | gettext                |             |        | internationalisation (traduction des messages; la langue de base est l'anglais)
 | libgcrypt11-dev        |             |        | authentification SASL avec le serveur IRC, en utilisant le mécanisme DH-BLOWFISH
 | libgnutls-dev          | ≥ 2.2.0     |        | connexion SSL au serveur IRC
@@ -254,6 +254,9 @@ Puis sous gdb, utilisez la commande `bt full` pour afficher la trace.
 Vous verrez quelque chose comme ceci :
 
 ----------------------------------------
+(gdb) set logging file /tmp/crash.txt
+(gdb) set logging on
+Copying output to /tmp/crash.txt.
 (gdb) bt full
 #0  0x00007f9dfb04a465 in raise () from /lib/libc.so.6
 #1  0x00007f9dfb04b8e6 in abort () from /lib/libc.so.6
@@ -627,7 +630,6 @@ Ces touches sont utilisées dans le contexte "mouse", c'est-à-dire lorsqu'un
 | ◽◾◽        | -            | n'importe où      | Démarrer le mode curseur ("cursor") à ce point | /cursor go ${_x},${_y}
 |========================================
 
-// TRANSLATION MISSING
 [[mouse]]
 Support souris
 ~~~~~~~~~~~~~~
@@ -1410,12 +1412,13 @@ Pour plus d'informations, consulter http://www.oftc.net/oftc/NickServ/CertFP
 Authentification avec SASL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-WeeChat supporte l'authentification avec SASL, en utilisant deux mécanismes :
-"plain" (par défaut) ou "dh-blowfish" (mot de passe chiffré).
+WeeChat supporte l'authentification avec SASL, en utilisant trois mécanismes :
+"plain" (mot de passe en clair), "dh-blowfish" (mot de passe chiffré) ou
+"external" (certificat SSL côté client).
 
 Les options dans le serveur sont :
 
-* 'sasl_mechanism' : mécanisme à utiliser ("plain" ou "dh-blowfish")
+* 'sasl_mechanism' : mécanisme à utiliser ("plain", "dh-blowfish" ou "external")
 * 'sasl_timeout' : délai d'attente maximum (en secondes) pour l'authentification
 * 'sasl_username' : nom d'utilisateur (pseudo)
 * 'sasl_password' : mot de passe
@@ -2091,13 +2094,14 @@ Empaqueteurs::
     Emmanuel Bouthenot (kolter), Julien Louis (ptitlouis), Odin
 
 Traductions::
-    Jiri Golembiovsky, soltys, Nils Görs, rettub, Frank Zacharias,
-    Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi, Marco Paolone,
-    Ivan Sichmann Freitas, Lázaro A.
+    Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
+    Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
+    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi
 
 Patchs::
     Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
-    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n
+    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
+    Quentin Glidic (SardemFF7)
 
 
 [[support]]

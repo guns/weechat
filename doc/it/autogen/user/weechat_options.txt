@@ -449,17 +449,17 @@
 ** valori: on, off (valore predefinito: `off`)
 
 * [[option_weechat.look.highlight]] *weechat.look.highlight*
-** descrizione: `comma separated list of words to highlight; case insensitive comparison (use "(?-i)" at beginning of words to make them case sensitive), words may begin or end with "*" for partial match; example: "test,(?-i)*toto*,flash*"`
+** descrizione: `elenco separato da virgole di parole da evidenziare; confronto non sensibile alle maiuscole (usare "(?-i)" all'inizio delle parole per renderle sensibili alle maiuscole), le parole possono iniziare o terminare con "*" per la corrispondenza parziale; ad esempio: "test,(?-i)*tizio*,flash*"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_weechat.look.highlight_regex]] *weechat.look.highlight_regex*
-** descrizione: `regular expression used to check if a message has highlight or not, at least one match in string must be surrounded by word chars (alphanumeric, "-", "_" or "|"), regular expression is case insensitive (use "(?-i)" at beginning to make it case sensitive), examples: "flashcode|flashy", "(?-i)FlashCode|flashy"`
+** descrizione: `espressione regolare usata per verificare se un messaggio contiene un evento oppure no, almeno una corrispondenza nella stringa deve essere circondata da caratteri :(alfanumerici, "-", "_" or "|"), l'espressione regolare non è sensibile alle maiuscole (usare "(?-i)" all'inizio per renderla sensibile alle maiuscole), ad esempio: "flashcode|flashy", "(?-i)Flashcode|flashy"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_weechat.look.highlight_tags]] *weechat.look.highlight_tags*
-** descrizione: `elenco separato da virgole di tag da evidenziare (senza differenza tra maiuscole/minuscole, esempi: "irc_notice" per gli annunci IRC, "nick_flashcode" per i messaggi dal nick "FlashCode")`
+** descrizione: `elenco separato da virgole di tag da evidenziare (confronto non sensibile alle maiuscole, esempi: "irc_notice" per gli annunci IRC, "nick_flashcode" per i messaggi dal nick "FlashCode")`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -578,10 +578,20 @@
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
-* [[option_weechat.look.paste_max_lines]] *weechat.look.paste_max_lines*
-** descrizione: `numero massimo di righe da incollare senza conferma dell'utente (0 = disabilita questa caratteristica)`
+* [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
+** descrizione: `enable terminal "bracketed paste mode" (not supported in all terminals/multiplexers): in this mode, pasted text is bracketed with control sequences so that WeeChat can differentiate pasted text from typed-in text ("ESC[200~", followed by the pasted text, followed by "ESC[201~")`
+** tipo: bool
+** valori: on, off (valore predefinito: `off`)
+
+* [[option_weechat.look.paste_bracketed_timer_delay]] *weechat.look.paste_bracketed_timer_delay*
+** descrizione: `force end of bracketed paste after this delay (in seconds) if the control sequence for end of bracketed paste ("ESC[201~") was not received in time`
 ** tipo: intero
-** valori: 0 .. 2147483647 (valore predefinito: `3`)
+** valori: 1 .. 60 (valore predefinito: `10`)
+
+* [[option_weechat.look.paste_max_lines]] *weechat.look.paste_max_lines*
+** descrizione: `max number of lines for paste without asking user (-1 = disable this feature)`
+** tipo: intero
+** valori: -1 .. 2147483647 (valore predefinito: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
 ** descrizione: `prefisso per i messaggi di azione`
@@ -604,9 +614,9 @@
 ** valori: 0 .. 128 (valore predefinito: `0`)
 
 * [[option_weechat.look.prefix_align_more]] *weechat.look.prefix_align_more*
-** descrizione: `mostra '+' se il prefisso è troncato`
-** tipo: bool
-** valori: on, off (valore predefinito: `on`)
+** descrizione: `char to display if prefix is truncated (must be exactly one char on screen)`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `"+"`)
 
 * [[option_weechat.look.prefix_buffer_align]] *weechat.look.prefix_buffer_align*
 ** descrizione: `prefisso di allineamento per il nome del buffer, quando più buffer vengono uniti con lo stesso numero (none (nessuno), left(sinistra), right(destra - predefinito)`
@@ -619,9 +629,9 @@
 ** valori: 0 .. 128 (valore predefinito: `0`)
 
 * [[option_weechat.look.prefix_buffer_align_more]] *weechat.look.prefix_buffer_align_more*
-** descrizione: `visualizza '+' se il nome del buffer è troncato (quando più buffer sono uniti con lo stesso numero)`
-** tipo: bool
-** valori: on, off (valore predefinito: `on`)
+** descrizione: `char to display if buffer name is truncated (when many buffers are merged with same number) (must be exactly one char on screen)`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
 ** descrizione: `prefisso per i messaggi di errore`
@@ -643,18 +653,23 @@
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"<--"`)
 
+* [[option_weechat.look.prefix_same_nick]] *weechat.look.prefix_same_nick*
+** descrizione: `prefix displayed for a message with same nick as previous message: use a space " " to hide prefix, another string to display this string instead of prefix, or an empty string to disable feature (display prefix)`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `""`)
+
 * [[option_weechat.look.prefix_suffix]] *weechat.look.prefix_suffix*
 ** descrizione: `stringa visualizzata dopo il prefisso`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"|"`)
 
 * [[option_weechat.look.read_marker]] *weechat.look.read_marker*
-** descrizione: `usa evidenziatore (riga o carattere) sui buffer per mostrare la prima riga non letta`
+** descrizione: `usa segnalibro (riga o carattere) sui buffer per mostrare la prima riga non letta`
 ** tipo: intero
 ** valori: none, line, char (valore predefinito: `line`)
 
 * [[option_weechat.look.read_marker_always_show]] *weechat.look.read_marker_always_show*
-** descrizione: `mostra sempre l'evidenziatore di lettura, anche se si trova dopo l'ultima riga del buffer`
+** descrizione: `mostra sempre il segnalibro, anche se si trova dopo l'ultima riga del buffer`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
 
@@ -712,6 +727,11 @@
 ** descrizione: `formato dell'ora per le date convertite a stringhe e visualizzate nei messaggi`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"%a, %d %b %Y %T"`)
+
+* [[option_weechat.network.connection_timeout]] *weechat.network.connection_timeout*
+** descrizione: `timeout (in seconds) for connection to a remote host (made in a child process)`
+** tipo: intero
+** valori: 1 .. 2147483647 (valore predefinito: `60`)
 
 * [[option_weechat.network.gnutls_ca_file]] *weechat.network.gnutls_ca_file*
 ** descrizione: `file contenente le autorità certificative ("%h" sarà sostituito dalla home di WeeChat, "~/.weechat come predefinita)`

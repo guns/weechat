@@ -68,7 +68,8 @@ struct t_irc_message *irc_msgq_last_msg = NULL;
 char *irc_server_option_string[IRC_SERVER_NUM_OPTIONS] =
 { "addresses", "proxy", "ipv6",
   "ssl", "ssl_cert", "ssl_priorities", "ssl_dhkey_size", "ssl_verify",
-  "password", "sasl_mechanism", "sasl_username", "sasl_password", "sasl_timeout",
+  "password", "capabilities",
+  "sasl_mechanism", "sasl_username", "sasl_password", "sasl_timeout",
   "autoconnect", "autoreconnect", "autoreconnect_delay",
   "nicks", "username", "realname", "local_hostname",
   "command", "command_delay", "autojoin", "autorejoin", "autorejoin_delay",
@@ -82,7 +83,8 @@ char *irc_server_option_string[IRC_SERVER_NUM_OPTIONS] =
 char *irc_server_option_default[IRC_SERVER_NUM_OPTIONS] =
 { "", "", "off",
   "off", "", "NORMAL", "2048", "on",
-  "", "plain", "", "", "15",
+  "", "",
+  "plain", "", "", "15",
   "off", "on", "10",
   "", "", "", "",
   "", "0", "", "off", "30",
@@ -132,6 +134,53 @@ irc_server_valid (struct t_irc_server *server)
 
     /* server not found */
     return 0;
+}
+
+/*
+ * irc_server_search: return pointer on a server with a name
+ */
+
+struct t_irc_server *
+irc_server_search (const char *server_name)
+{
+    struct t_irc_server *ptr_server;
+
+    if (!server_name)
+        return NULL;
+
+    for (ptr_server = irc_servers; ptr_server;
+         ptr_server = ptr_server->next_server)
+    {
+        if (strcmp (ptr_server->name, server_name) == 0)
+            return ptr_server;
+    }
+
+    /* server not found */
+    return NULL;
+}
+
+/*
+ * irc_server_casesearch: return pointer on a server with a name
+ *                        (case insensitive search)
+ */
+
+struct t_irc_server *
+irc_server_casesearch (const char *server_name)
+{
+    struct t_irc_server *ptr_server;
+
+    if (!server_name)
+        return NULL;
+
+    for (ptr_server = irc_servers; ptr_server;
+         ptr_server = ptr_server->next_server)
+    {
+        if (weechat_strcasecmp (ptr_server->name, server_name) == 0)
+            return ptr_server;
+    }
+
+    /* server not found */
+    return NULL;
 }
 
 /*
@@ -249,16 +298,23 @@ irc_server_strncasecmp (struct t_irc_server *server,
 int
 irc_server_sasl_enabled (struct t_irc_server *server)
 {
+    int sasl_mechanism;
     const char *sasl_username, *sasl_password;
 
+    sasl_mechanism = IRC_SERVER_OPTION_INTEGER(server,
+                                               IRC_SERVER_OPTION_SASL_MECHANISM);
     sasl_username = IRC_SERVER_OPTION_STRING(server,
                                              IRC_SERVER_OPTION_SASL_USERNAME);
     sasl_password = IRC_SERVER_OPTION_STRING(server,
                                              IRC_SERVER_OPTION_SASL_PASSWORD);
 
-    /* SASL is enabled if username AND password are set */
-    return (sasl_username && sasl_username[0]
-            && sasl_password && sasl_password[0]) ? 1 : 0;
+    /*
+     * SASL is enabled if using mechanism "external"
+     * or if both username AND password are set
+     */
+    return ((sasl_mechanism == IRC_SASL_MECHANISM_EXTERNAL)
+            || (sasl_username && sasl_username[0]
+                && sasl_password && sasl_password[0])) ? 1 : 0;
 }
 
 /*
@@ -665,7 +721,7 @@ irc_server_alloc (const char *name)
     int i, length;
     char *option_name;
 
-    if (irc_server_search (name))
+    if (irc_server_casesearch (name))
         return NULL;
 
     /* alloc memory for new server */
@@ -1179,6 +1235,8 @@ irc_server_free_data (struct t_irc_server *server)
         free (server->prefix_modes);
     if (server->prefix_chars)
         free (server->prefix_chars);
+    if (server->chantypes)
+        free (server->chantypes);
     if (server->away_message)
         free (server->away_message);
     if (server->cmd_list_regexp)
@@ -1211,8 +1269,13 @@ irc_server_free (struct t_irc_server *server)
     if (!server)
         return;
 
-    /* close all channels/privates */
-    irc_channel_free_all (server);
+    /*
+     * close server buffer (and all channels/privates)
+     * (only if we are not in a /upgrade, because during upgrade we want to
+     * keep connections and closing server buffer would disconnect from server)
+     */
+    if (server->buffer && !irc_signal_upgrade_received)
+        weechat_buffer_close (server->buffer);
 
     /* remove server from queue */
     if (last_irc_server == server)
@@ -1262,7 +1325,7 @@ irc_server_copy (struct t_irc_server *server, const char *new_name)
     int length, index_option;
 
     /* check if another server exists with this name */
-    if (irc_server_search (new_name))
+    if (irc_server_casesearch (new_name))
         return NULL;
 
     new_server = irc_server_alloc (new_name);
@@ -1320,7 +1383,7 @@ irc_server_rename (struct t_irc_server *server, const char *new_server_name)
     struct t_irc_channel *ptr_channel;
 
     /* check if another server exists with this name */
-    if (irc_server_search (new_server_name))
+    if (irc_server_casesearch (new_server_name))
         return 0;
 
     /* rename options */
@@ -1640,20 +1703,21 @@ irc_server_outqueue_send (struct t_irc_server *server)
 
 int
 irc_server_send_one_msg (struct t_irc_server *server, int flags,
-                         const char *message, const char *tags)
+                         const char *message, const char *nick,
+                         const char *command, const char *channel,
+                         const char *tags)
 {
     static char buffer[4096];
-    const char *ptr_msg;
-    char *new_msg, *pos, *nick, *command, *channel, *tags_to_send;
-    char *ptr_chan_nick, *msg_encoded;
-    char str_modifier[64], modifier_data[256];
+    const char *ptr_msg, *ptr_chan_nick;
+    char *new_msg, *pos, *tags_to_send, *msg_encoded;
+    char str_modifier[128], modifier_data[256];
     int rc, queue_msg, add_to_queue, first_message, anti_flood;
     time_t time_now;
     struct t_irc_redirect *ptr_redirect;
 
     rc = 1;
 
-    irc_message_parse (server, message, &nick, NULL, &command, &channel, NULL);
+    /* run modifier "irc_out_xxx" */
     snprintf (str_modifier, sizeof (str_modifier),
               "irc_out_%s",
               (command) ? command : "unknown");
@@ -1752,6 +1816,9 @@ irc_server_send_one_msg (struct t_irc_server *server, int flags,
                                          (new_msg) ? 1 : 0,
                                          tags_to_send,
                                          ptr_redirect);
+                /* mark redirect as "used" */
+                if (ptr_redirect)
+                    ptr_redirect->assigned_to_command = 1;
             }
             else
             {
@@ -1809,12 +1876,6 @@ irc_server_send_one_msg (struct t_irc_server *server, int flags,
                        _("(message dropped)"));
     }
 
-    if (nick)
-        free (nick);
-    if (command)
-        free (command);
-    if (channel)
-        free (channel);
     if (new_msg)
         free (new_msg);
 
@@ -1834,7 +1895,8 @@ struct t_hashtable *
 irc_server_sendf (struct t_irc_server *server, int flags, const char *tags,
                   const char *format, ...)
 {
-    char **items, hash_key[32], value[32];
+    char **items, hash_key[32], value[32], *nick, *command, *channel, *new_msg;
+    char str_modifier[128];
     const char *str_message, *str_args;
     int i, items_count, number, ret_number, rc;
     struct t_hashtable *hashtable, *ret_hashtable;
@@ -1861,46 +1923,83 @@ irc_server_sendf (struct t_irc_server *server, int flags, const char *tags,
     items = weechat_string_split (vbuffer, "\n", 0, 0, &items_count);
     for (i = 0; i < items_count; i++)
     {
-        /* split message if needed (max is 512 bytes including final "\r\n") */
-        hashtable = irc_message_split (server, items[i]);
-        if (hashtable)
+        /* run modifier "irc_out1_xxx" (like "irc_out_xxx", but before split) */
+        irc_message_parse (server, items[i],
+                           &nick, NULL, &command, &channel, NULL);
+        snprintf (str_modifier, sizeof (str_modifier),
+                  "irc_out1_%s",
+                  (command) ? command : "unknown");
+        new_msg = weechat_hook_modifier_exec (str_modifier,
+                                              server->name,
+                                              items[i]);
+
+        /* no changes in new message */
+        if (new_msg && (strcmp (items[i], new_msg) == 0))
         {
-            number = 1;
-            while (1)
+            free (new_msg);
+            new_msg = NULL;
+        }
+
+        /* message not dropped? */
+        if (!new_msg || new_msg[0])
+        {
+            /* send signal with command that will be sent to server (before split) */
+            irc_server_send_signal (server, "irc_out1",
+                                    (command) ? command : "unknown",
+                                    (new_msg) ? new_msg : items[i],
+                                    NULL);
+
+            /* split message if needed (max is 512 bytes including final "\r\n") */
+            hashtable = irc_message_split (server,
+                                           (new_msg) ? new_msg : items[i]);
+            if (hashtable)
             {
-                snprintf (hash_key, sizeof (hash_key), "msg%d", number);
-                str_message = weechat_hashtable_get (hashtable, hash_key);
-                if (!str_message)
-                    break;
-                snprintf (hash_key, sizeof (hash_key), "args%d", number);
-                str_args = weechat_hashtable_get (hashtable, hash_key);
+                number = 1;
+                while (1)
+                {
+                    snprintf (hash_key, sizeof (hash_key), "msg%d", number);
+                    str_message = weechat_hashtable_get (hashtable, hash_key);
+                    if (!str_message)
+                        break;
+                    snprintf (hash_key, sizeof (hash_key), "args%d", number);
+                    str_args = weechat_hashtable_get (hashtable, hash_key);
 
-                rc = irc_server_send_one_msg (server, flags, str_message, tags);
-                if (!rc)
-                    break;
+                    rc = irc_server_send_one_msg (server, flags, str_message,
+                                                  nick, command, channel, tags);
+                    if (!rc)
+                        break;
 
+                    if (ret_hashtable)
+                    {
+                        snprintf (hash_key, sizeof (hash_key), "msg%d", ret_number);
+                        weechat_hashtable_set (ret_hashtable, hash_key, str_message);
+                        if (str_args)
+                        {
+                            snprintf (hash_key, sizeof (hash_key), "args%d", ret_number);
+                            weechat_hashtable_set (ret_hashtable, hash_key, str_args);
+                        }
+                        ret_number++;
+                    }
+                    number++;
+                }
                 if (ret_hashtable)
                 {
-                    snprintf (hash_key, sizeof (hash_key), "msg%d", ret_number);
-                    weechat_hashtable_set (ret_hashtable, hash_key, str_message);
-                    if (str_args)
-                    {
-                        snprintf (hash_key, sizeof (hash_key), "args%d", ret_number);
-                        weechat_hashtable_set (ret_hashtable, hash_key, str_args);
-                    }
-                    ret_number++;
+                    snprintf (value, sizeof (value), "%d", ret_number - 1);
+                    weechat_hashtable_set (ret_hashtable, "count", value);
                 }
-                number++;
+                weechat_hashtable_free (hashtable);
+                if (!rc)
+                    break;
             }
-            if (ret_hashtable)
-            {
-                snprintf (value, sizeof (value), "%d", ret_number - 1);
-                weechat_hashtable_set (ret_hashtable, "count", value);
-            }
-            weechat_hashtable_free (hashtable);
-            if (!rc)
-                break;
         }
+        if (nick)
+            free (nick);
+        if (command)
+            free (command);
+        if (channel)
+            free (channel);
+        if (new_msg)
+            free (new_msg);
     }
     if (items)
         weechat_string_free_split (items);
@@ -2057,7 +2156,7 @@ irc_server_msgq_flush ()
     char *ptr_data, *new_msg, *new_msg2, *ptr_msg, *ptr_msg2, *pos;
     char *nick, *host, *command, *channel, *arguments;
     char *msg_decoded, *msg_decoded_without_color;
-    char str_modifier[64], modifier_data[256];
+    char str_modifier[128], modifier_data[256];
 
     while (irc_recv_msgq)
     {
@@ -2674,11 +2773,12 @@ irc_server_reconnect_schedule (struct t_irc_server *server)
 void
 irc_server_login (struct t_irc_server *server)
 {
-    const char *password, *username, *realname;
+    const char *password, *username, *realname, *capabilities;
 
     password = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_PASSWORD);
     username = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_USERNAME);
     realname = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_REALNAME);
+    capabilities = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_CAPABILITIES);
 
     if (password && password[0])
         irc_server_sendf (server, 0, NULL, "PASS %s", password);
@@ -2693,7 +2793,7 @@ irc_server_login (struct t_irc_server *server)
     else
         server->nick_first_tried = irc_server_get_nick_index (server);
 
-    if (irc_server_sasl_enabled (server))
+    if (irc_server_sasl_enabled (server) || (capabilities && capabilities[0]))
     {
         irc_server_sendf (server, 0, NULL, "CAP LS");
     }
@@ -2922,6 +3022,20 @@ irc_server_connect_cb (void *data, int status, int gnutls_rc,
             irc_server_close_connection (server);
             irc_server_reconnect_schedule (server);
             break;
+        case WEECHAT_HOOK_CONNECT_TIMEOUT:
+            weechat_printf (server->buffer,
+                            _("%s%s: timeout"),
+                            weechat_prefix ("error"), IRC_PLUGIN_NAME);
+            if (error && error[0])
+            {
+                weechat_printf (server->buffer,
+                                _("%s%s: error: %s"),
+                                weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                                error);
+            }
+            irc_server_close_connection (server);
+            irc_server_reconnect_schedule (server);
+            break;
     }
 
     return WEECHAT_RC_OK;
@@ -3031,6 +3145,9 @@ irc_server_create_buffer (struct t_irc_server *server)
     {
         weechat_buffer_merge (server->buffer, ptr_buffer_for_merge);
     }
+
+    weechat_hook_signal_send ("irc_server_opened",
+                              WEECHAT_HOOK_SIGNAL_POINTER, server->buffer);
 
     return server->buffer;
 }
@@ -3757,29 +3874,6 @@ irc_server_autojoin_channels (struct t_irc_server *server)
 }
 
 /*
- * irc_server_search: return pointer on a server with a name
- */
-
-struct t_irc_server *
-irc_server_search (const char *server_name)
-{
-    struct t_irc_server *ptr_server;
-
-    if (!server_name)
-        return NULL;
-
-    for (ptr_server = irc_servers; ptr_server;
-         ptr_server = ptr_server->next_server)
-    {
-        if (strcmp (ptr_server->name, server_name) == 0)
-            return ptr_server;
-    }
-
-    /* server not found */
-    return NULL;
-}
-
-/*
  * irc_server_get_number_connected: returns number of connected server
  */
 
@@ -4269,6 +4363,9 @@ irc_server_add_to_infolist (struct t_infolist *infolist,
     if (!weechat_infolist_new_var_string (ptr_item, "password",
                                           IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_PASSWORD)))
         return 0;
+    if (!weechat_infolist_new_var_string (ptr_item, "capabilities",
+                                          IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_CAPABILITIES)))
+        return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "sasl_mechanism",
                                           IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_SASL_MECHANISM)))
         return 0;
@@ -4486,6 +4583,13 @@ irc_server_print_log ()
             weechat_log_printf ("  password . . . . . . : null");
         else
             weechat_log_printf ("  password . . . . . . : (hidden)");
+        /* client capabilities */
+        if (weechat_config_option_is_null (ptr_server->options[IRC_SERVER_OPTION_CAPABILITIES]))
+            weechat_log_printf ("  capabilities . . . . : null ('%s')",
+                                IRC_SERVER_OPTION_STRING(ptr_server, IRC_SERVER_OPTION_CAPABILITIES));
+        else
+            weechat_log_printf ("  capabilities . . . . : '%s'",
+                                weechat_config_string (ptr_server->options[IRC_SERVER_OPTION_CAPABILITIES]));
         /* sasl_mechanism */
         if (weechat_config_option_is_null (ptr_server->options[IRC_SERVER_OPTION_SASL_MECHANISM]))
             weechat_log_printf ("  sasl_mechanism . . . : null ('%s')",

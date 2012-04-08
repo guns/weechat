@@ -578,10 +578,20 @@
 ** type: boolean
 ** values: on, off (default value: `off`)
 
-* [[option_weechat.look.paste_max_lines]] *weechat.look.paste_max_lines*
-** description: `max number of lines for paste without asking user (0 = disable this feature)`
+* [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
+** description: `enable terminal "bracketed paste mode" (not supported in all terminals/multiplexers): in this mode, pasted text is bracketed with control sequences so that WeeChat can differentiate pasted text from typed-in text ("ESC[200~", followed by the pasted text, followed by "ESC[201~")`
+** type: boolean
+** values: on, off (default value: `off`)
+
+* [[option_weechat.look.paste_bracketed_timer_delay]] *weechat.look.paste_bracketed_timer_delay*
+** description: `force end of bracketed paste after this delay (in seconds) if the control sequence for end of bracketed paste ("ESC[201~") was not received in time`
 ** type: integer
-** values: 0 .. 2147483647 (default value: `3`)
+** values: 1 .. 60 (default value: `10`)
+
+* [[option_weechat.look.paste_max_lines]] *weechat.look.paste_max_lines*
+** description: `max number of lines for paste without asking user (-1 = disable this feature)`
+** type: integer
+** values: -1 .. 2147483647 (default value: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
 ** description: `prefix for action messages`
@@ -604,9 +614,9 @@
 ** values: 0 .. 128 (default value: `0`)
 
 * [[option_weechat.look.prefix_align_more]] *weechat.look.prefix_align_more*
-** description: `display '+' if prefix is truncated`
-** type: boolean
-** values: on, off (default value: `on`)
+** description: `char to display if prefix is truncated (must be exactly one char on screen)`
+** type: string
+** values: any string (default value: `"+"`)
 
 * [[option_weechat.look.prefix_buffer_align]] *weechat.look.prefix_buffer_align*
 ** description: `prefix alignment for buffer name, when many buffers are merged with same number (none, left, right (default))`
@@ -619,9 +629,9 @@
 ** values: 0 .. 128 (default value: `0`)
 
 * [[option_weechat.look.prefix_buffer_align_more]] *weechat.look.prefix_buffer_align_more*
-** description: `display '+' if buffer name is truncated (when many buffers are merged with same number)`
-** type: boolean
-** values: on, off (default value: `on`)
+** description: `char to display if buffer name is truncated (when many buffers are merged with same number) (must be exactly one char on screen)`
+** type: string
+** values: any string (default value: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
 ** description: `prefix for error messages`
@@ -642,6 +652,11 @@
 ** description: `prefix for quit messages`
 ** type: string
 ** values: any string (default value: `"<--"`)
+
+* [[option_weechat.look.prefix_same_nick]] *weechat.look.prefix_same_nick*
+** description: `prefix displayed for a message with same nick as previous message: use a space " " to hide prefix, another string to display this string instead of prefix, or an empty string to disable feature (display prefix)`
+** type: string
+** values: any string (default value: `""`)
 
 * [[option_weechat.look.prefix_suffix]] *weechat.look.prefix_suffix*
 ** description: `string displayed after prefix`
@@ -712,6 +727,11 @@
 ** description: `time format for dates converted to strings and displayed in messages`
 ** type: string
 ** values: any string (default value: `"%a, %d %b %Y %T"`)
+
+* [[option_weechat.network.connection_timeout]] *weechat.network.connection_timeout*
+** description: `timeout (in seconds) for connection to a remote host (made in a child process)`
+** type: integer
+** values: 1 .. 2147483647 (default value: `60`)
 
 * [[option_weechat.network.gnutls_ca_file]] *weechat.network.gnutls_ca_file*
 ** description: `file containing the certificate authorities ("%h" will be replaced by WeeChat home, "~/.weechat" by default)`

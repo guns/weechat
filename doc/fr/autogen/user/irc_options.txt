@@ -34,7 +34,7 @@
 ** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `red`)
 
 * [[option_irc.color.mirc_remap]] *irc.color.mirc_remap*
-** description: `réassigner les couleurs mirc dans les messages en utilisant une hashtable: les clés sont "fg,bg" sous forme d'entiers entre -1 (non spécifié) et 15, les valeurs sont des noms de couleur WeeChat ou nombres (le format est: "1,-1:couleur1;2,7:couleur2"), exemple: "1,-1:darkgray;1,2:white,blue" pour réassigner le noir sur n'importe quel fond en "darkgray" et le noir sur bleu en "white,blue"; les couleurs WeeChat par défaut pour les codes IRC sont: 0:white, 1:black, 2:blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9:lightgreen, 10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, 15:white`
+** description: `réassigner les couleurs mirc dans les messages en utilisant une hashtable: les clés sont "fg,bg" sous forme d'entiers entre -1 (non spécifié) et 15, les valeurs sont des noms de couleur WeeChat ou nombres (le format est: "1,-1:couleur1;2,7:couleur2"), exemple: "1,-1:darkgray;1,2:white,blue" pour réassigner le noir en "darkgray" et le noir sur bleu en "white,blue"; les couleurs WeeChat par défaut pour les codes IRC sont: 0:white, 1:black, 2:blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9:lightgreen, 10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, 15:white`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"1,-1:darkgray"`)
 
@@ -224,7 +224,7 @@
 ** valeurs: none, next, near_server (valeur par défaut: `none`)
 
 * [[option_irc.look.nick_color_force]] *irc.look.nick_color_force*
-** description: `force la couleur pour certains pseudos: le hash calculé avec le pseudo pour trouver la couleur ne sera pas utilisé pour ces pseudos (le format est: "pseudo1:couleur1;pseudo2:couleur2")`
+** description: `force la couleur pour certains pseudos: le hash calculé avec le pseudo pour trouver la couleur ne sera pas utilisé pour ces pseudos (le format est: "pseudo1:couleur1;pseudo2:couleur2"); la recherche de pseudos s'effectue avec la casse exacte puis en minuscules, donc il est possible d'utiliser uniquement des minuscules pour les pseudos dans cette option`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -418,6 +418,11 @@
 ** type: entier
 ** valeurs: 0 .. 1000000 (valeur par défaut: `25`)
 
+* [[option_irc.server_default.capabilities]] *irc.server_default.capabilities*
+** description: `liste séparée par des virgules de capacités client ("client capabilities") à activer sur le serveur si elles sont disponibles (exemple: "multi-prefix,extended-join")`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
+
 * [[option_irc.server_default.command]] *irc.server_default.command*
 ** description: `commande(s) à exécuter lorsque connecté au serveur (plusieurs commandes doivent être séparées par ";", utilisez "\;" pour un point-virgule, les variables spéciales $nick, $channel et $server sont remplacées par leur valeur)`
 ** type: chaîne
@@ -479,9 +484,9 @@
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_irc.server_default.sasl_mechanism]] *irc.server_default.sasl_mechanism*
-** description: `mécanisme pour l'authentification SASL`
+** description: `mécanisme pour l'authentification SASL: "plain" pour un mot de passe en clair, "dh-blowfish" pour un mot de passe chiffré, "external" pour une authentification en utilisant un certificat SSL côté client`
 ** type: entier
-** valeurs: plain, dh-blowfish (valeur par défaut: `plain`)
+** valeurs: plain, dh-blowfish, external (valeur par défaut: `plain`)
 
 * [[option_irc.server_default.sasl_password]] *irc.server_default.sasl_password*
 ** description: `mot de passe pour l'authentification SASL`

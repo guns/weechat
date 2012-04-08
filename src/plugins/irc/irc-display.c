@@ -142,7 +142,7 @@ irc_display_away (struct t_irc_server *server, const char *string1,
                                  "away_info",
                                  "%s[%s%s%s %s: %s%s]",
                                  IRC_COLOR_CHAT_DELIMITERS,
-                                 IRC_COLOR_CHAT_NICK,
+                                 IRC_COLOR_CHAT_NICK_SELF,
                                  server->nick,
                                  IRC_COLOR_RESET,
                                  string1,
@@ -253,6 +253,14 @@ irc_display_server (struct t_irc_server *server, int with_detail)
             weechat_printf (NULL, "  password . . . . . . : %s%s",
                             IRC_COLOR_CHAT_VALUE,
                             _("(hidden)"));
+        /* client capabilities */
+        if (weechat_config_option_is_null (server->options[IRC_SERVER_OPTION_CAPABILITIES]))
+            weechat_printf (NULL, "  capabilities . . . . :   ('%s')",
+                            IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_CAPABILITIES));
+        else
+            weechat_printf (NULL, "  capabilities . . . . : %s'%s'",
+                            IRC_COLOR_CHAT_VALUE,
+                            weechat_config_string (server->options[IRC_SERVER_OPTION_CAPABILITIES]));
         /* sasl_mechanism */
         if (weechat_config_option_is_null (server->options[IRC_SERVER_OPTION_SASL_MECHANISM]))
             weechat_printf (NULL, "  sasl_mechanism . . . :   ('%s')",

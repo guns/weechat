@@ -19,10 +19,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WeeChat 0.3.7-dev\n"
+"Project-Id-Version: WeeChat 0.3.8-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2012-01-24 21:20+0100\n"
-"PO-Revision-Date: 2011-12-25 22:56+0100\n"
+"POT-Creation-Date: 2012-04-07 13:04+0200\n"
+"PO-Revision-Date: 2012-02-26 09:16+0100\n"
 "Last-Translator: Sergio Durigan Junior <sergiosdj@gmail.com>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: Portuguese\n"
@@ -1282,7 +1282,8 @@ msgid ""
 "Tags most commonly used:\n"
 "  no_filter, no_highlight, no_log, log0..log9 (log level),\n"
 "  notify_none, notify_message, notify_private, notify_highlight,\n"
-"  nick_xxx (xxx is nick in message),\n"
+"  nick_xxx (xxx is nick in message), prefix_nick_ccc (ccc is color of "
+"nick),\n"
 "  irc_xxx (xxx is command name or number, see /server raw),\n"
 "  irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, "
 "irc_smart_filter, away_info.\n"
@@ -1445,6 +1446,8 @@ msgid ""
 "  switch_active_buffer: switch to next merged buffer\n"
 "  switch_active_buffer_previous: switch to previous merged buffer\n"
 "  insert: insert text in command line\n"
+"  paste_start: start paste (bracketed paste mode)\n"
+"  paste_stop: stop paste (bracketed paste mode)\n"
 "\n"
 "This command is used by key bindings or plugins."
 msgstr ""
@@ -2590,7 +2593,20 @@ msgid "display space if nick mode is not (half)op/voice"
 msgstr "mostra espaço se o modo do apelido não é (half)op/voice"
 
 msgid ""
-"max number of lines for paste without asking user (0 = disable this feature)"
+"enable terminal \"bracketed paste mode\" (not supported in all terminals/"
+"multiplexers): in this mode, pasted text is bracketed with control sequences "
+"so that WeeChat can differentiate pasted text from typed-in text (\"ESC[200~"
+"\", followed by the pasted text, followed by \"ESC[201~\")"
+msgstr ""
+
+msgid ""
+"force end of bracketed paste after this delay (in seconds) if the control "
+"sequence for end of bracketed paste (\"ESC[201~\") was not received in time"
+msgstr ""
+
+#, fuzzy
+msgid ""
+"max number of lines for paste without asking user (-1 = disable this feature)"
 msgstr ""
 "número máximo de linhas para serem coladas sem perguntar ao usuário (0 = "
 "desabilita essa característica)"
@@ -2622,8 +2638,9 @@ msgstr "tamanho máximo para o prefixo (0 = sem tamanho máximo)"
 msgid "min size for prefix"
 msgstr "tamanho mínimo para o prefixo"
 
-msgid "display '+' if prefix is truncated"
-msgstr "mostra '+' se o prefixo está truncado"
+msgid ""
+"char to display if prefix is truncated (must be exactly one char on screen)"
+msgstr ""
 
 msgid ""
 "prefix alignment for buffer name, when many buffers are merged with same "
@@ -2639,12 +2656,19 @@ msgstr ""
 "tamanho máximo para o nome do buffer, quando muitos buffers estão mesclados "
 "com o mesmo número (0 = sem tamanho máximo)"
 
+#, fuzzy
 msgid ""
-"display '+' if buffer name is truncated (when many buffers are merged with "
-"same number)"
+"char to display if buffer name is truncated (when many buffers are merged "
+"with same number) (must be exactly one char on screen)"
 msgstr ""
 "mostra '+' se o nome do buffer está truncado (quando muitos buffers estão "
 "mesclados com o mesmo número)"
+
+msgid ""
+"prefix displayed for a message with same nick as previous message: use a "
+"space \" \" to hide prefix, another string to display this string instead of "
+"prefix, or an empty string to disable feature (display prefix)"
+msgstr ""
 
 # Find a better translation to "string"
 #, fuzzy
@@ -2986,6 +3010,13 @@ msgid ""
 msgstr ""
 "número máximo de comandos para mostrar por padrão na listagem de histórico "
 "(0 = ilimitado)"
+
+# better not translate handshake
+#, fuzzy
+msgid ""
+"timeout (in seconds) for connection to a remote host (made in a child "
+"process)"
+msgstr "tempo de espera (em segundos) pelo handshake do gnutls"
 
 msgid ""
 "file containing the certificate authorities (\"%h\" will be replaced by "
@@ -3404,9 +3435,11 @@ msgstr ""
 msgid "Bar \"%s\" updated"
 msgstr "Barra \"%s\" atualizada"
 
-#, c-format
-msgid "%sPaste %d lines ? [ctrl-Y] Yes [ctrl-N] No"
-msgstr "%sColar %d linhas ? [ctrl-Y] Sim [ctrl-N] Não"
+#, fuzzy, c-format
+msgid "%sPaste %d line ? [ctrl-Y] Yes [ctrl-N] No"
+msgid_plural "%sPaste %d lines ? [ctrl-Y] Yes [ctrl-N] No"
+msgstr[0] "%sColar %d linhas ? [ctrl-Y] Sim [ctrl-N] Não"
+msgstr[1] "%sColar %d linhas ? [ctrl-Y] Sim [ctrl-N] Não"
 
 msgid "Text search"
 msgstr "Busca de texto"
@@ -4346,8 +4379,9 @@ msgstr ""
 msgid "invite a nick on a channel"
 msgstr ""
 
-msgid "<nick> <channel>"
-msgstr ""
+#, fuzzy
+msgid "<nick> [<nick>...] [<channel>]"
+msgstr "<apelido> [<apelido>...]"
 
 msgid ""
 "   nick: nick to invite\n"
@@ -5075,8 +5109,17 @@ msgstr "verificar que a conexão SSL é totalmente confiável"
 msgid "password for server"
 msgstr "senha para o servidor"
 
-msgid "mechanism for SASL authentication"
-msgstr "mecanismo para autenticação SASL"
+#. TRANSLATORS: please keep words "client capabilities" between brackets if translation is different (see fr.po)
+msgid ""
+"comma-separated list of client capabilities to enable for server if they are "
+"available (example: \"multi-prefix,extended-join\")"
+msgstr ""
+
+msgid ""
+"mechanism for SASL authentication: \"plain\" for plain text password, \"dh-"
+"blowfish\" for crypted password, \"external\" for authentication using "
+"client side SSL cert"
+msgstr ""
 
 msgid "username for SASL authentication"
 msgstr "nome de usuário para autenticação SASL"
@@ -5256,9 +5299,12 @@ msgstr "texto a ser exibido antes do apelido na janela de chat"
 msgid "text to display after nick in chat window"
 msgstr "texto a ser exibido depois do apelido na janela de chat"
 
+#, fuzzy
 msgid ""
 "force color for some nicks: hash computed with nickname to find color will "
-"not be used for these nicks (format is: \"nick1:color1;nick2:color2\")"
+"not be used for these nicks (format is: \"nick1:color1;nick2:color2\"); "
+"lookup for nicks is with exact case then lower case, so it's possible to use "
+"only lower case for nicks in this option"
 msgstr ""
 "forçar cor para alguns apelidos: hash computado com apelido para encontar "
 "cor não será utilizado para estes apelidos (formato: \"apelido1:cor1;"
@@ -5429,9 +5475,9 @@ msgid ""
 "remap mirc colors in messages using a hashtable: keys are \"fg,bg\" as "
 "integers between -1 (not specified) and 15, values are WeeChat color names "
 "or numbers (format is: \"1,-1:color1;2,7:color2\"), example: \"1,-1:"
-"darkgray;1,2:white,blue\" to remap black on any bg to \"darkgray\" and black "
-"on blue to \"white,blue\"; default WeeChat colors for IRC codes: 0:white, 1:"
-"black, 2:blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: "
+"darkgray;1,2:white,blue\" to remap black to \"darkgray\" and black on blue "
+"to \"white,blue\"; default WeeChat colors for IRC codes: 0:white, 1:black, 2:"
+"blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: "
 "lightgreen, 10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, "
 "15:white"
 msgstr ""
@@ -5746,6 +5792,11 @@ msgstr "%s%s: você não está conectado ao servidor"
 msgid "%s%s: this buffer is not a channel!"
 msgstr "%s%s: este buffer não é um canal!"
 
+#. TRANSLATORS: "unknown" is the status for /notify when ison answer has not been received (check pending)
+#, fuzzy
+msgid "unknown"
+msgstr "(desconhecido)"
+
 msgid "offline"
 msgstr ""
 
@@ -5765,12 +5816,20 @@ msgstr "Lista de notificação para todos os servidores:"
 msgid "Notify list is empty on all servers"
 msgstr "Lista de notificação está vazia em todos os servidores"
 
-#, c-format
-msgid "%snotify: %s%s%s has joined %s%s"
+#, fuzzy, c-format
+msgid "%snotify: %s%s%s is connected"
 msgstr "%snotificação: %s%s%s entrou %s%s"
 
-#, c-format
-msgid "%snotify: %s%s%s has quit %s%s"
+#, fuzzy, c-format
+msgid "%snotify: %s%s%s is offline"
+msgstr "%snotificação: %s%s%s entrou %s%s"
+
+#, fuzzy, c-format
+msgid "%snotify: %s%s%s has joined"
+msgstr "%snotificação: %s%s%s entrou %s%s"
+
+#, fuzzy, c-format
+msgid "%snotify: %s%s%s has quit"
 msgstr "%snotificação: %s%s%s saiu %s%s"
 
 #, c-format
@@ -5797,7 +5856,7 @@ msgid "%s%s: client capability, server supports: %s"
 msgstr ""
 
 #, c-format
-msgid "%s%s: client capability, requesting: sasl"
+msgid "%s%s: client capability, requesting: %s"
 msgstr ""
 
 #, c-format
@@ -6273,6 +6332,10 @@ msgstr ""
 msgid "%s%s: not enough memory"
 msgstr "%s%s: memória insuficiente"
 
+#, fuzzy, c-format
+msgid "%s%s: timeout"
+msgstr "%s%s: tempo esgotado para \"%s\" com %s"
+
 #, c-format
 msgid "gnutls: connected using %d-bit Diffie-Hellman shared secret exchange"
 msgstr ""
@@ -6455,8 +6518,8 @@ msgstr "registro não iniciou"
 msgid "%s: \"%s\" => level %d"
 msgstr "%s: \"%s\" => nível %d"
 
-#, c-format
-msgid "===\t========== End of backlog (%d lines) =========="
+#, fuzzy, c-format
+msgid "%s===\t%s========== End of backlog (%d lines) =========="
 msgstr "===\t========== Fim do backlog (%d linhas) =========="
 
 msgid "logger plugin configuration"
@@ -6511,6 +6574,14 @@ msgid ""
 msgstr ""
 "número máximo de linhas a exibir do arquivo de registro (backlog) quando um "
 "novo buffer for criado (0 = sem backlog)"
+
+#, fuzzy
+msgid "color for backlog lines"
+msgstr "cor de texto para valores"
+
+#, fuzzy
+msgid "color for line ending the backlog"
+msgstr "cor para o apelido na barra de entrada"
 
 msgid ""
 "automatically save content of buffers to files (unless a buffer disables log)"
@@ -7438,6 +7509,11 @@ msgstr ""
 "nome do script (pode começar ou terminar com \"*\" como um coringa) "
 "(opcional)"
 
+#, fuzzy, c-format
+msgid ""
+"%s%s: warning, invalid pointer (\"%s\") for function \"%s\" (script: %s)"
+msgstr "%s%s: argumentos inválidos para a função \"%s\" (script: %s)"
+
 #, c-format
 msgid "%s: error loading script \"%s\" (bad name, spaces are forbidden)"
 msgstr ""
@@ -7912,3 +7988,9 @@ msgstr ""
 
 msgid "Constants"
 msgstr ""
+
+#~ msgid "display '+' if prefix is truncated"
+#~ msgstr "mostra '+' se o prefixo está truncado"
+
+#~ msgid "mechanism for SASL authentication"
+#~ msgstr "mecanismo para autenticação SASL"

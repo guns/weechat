@@ -9,6 +9,7 @@
   'modes' (string) +
   'limit' (integer) +
   'key' (string) +
+  'names_received' (integer) +
   'checking_away' (integer) +
   'away_message' (string) +
   'has_quit_server' (integer) +
@@ -78,6 +79,7 @@
   'string' (string) +
   'timeout' (integer) +
   'command' (string) +
+  'assigned_to_command' (integer) +
   'start_time' (time) +
   'cmd_start' (hashtable) +
   'cmd_stop' (hashtable) +
@@ -286,6 +288,7 @@
   'local_variables' (hashtable) +
   'prev_buffer' (pointer, hdata: 'buffer') +
   'next_buffer' (pointer, hdata: 'buffer') |
+  'gui_buffer_last_displayed' +
   'gui_buffers' +
   'last_gui_buffer'
 

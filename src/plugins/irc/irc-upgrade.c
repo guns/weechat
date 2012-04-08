@@ -416,6 +416,7 @@ irc_upgrade_read_cb (void *data,
                         str = weechat_infolist_string (infolist, "key");
                         if (str)
                             irc_upgrade_current_channel->key = strdup (str);
+                        irc_upgrade_current_channel->names_received = weechat_infolist_integer (infolist, "names_received");
                         irc_upgrade_current_channel->checking_away = weechat_infolist_integer (infolist, "checking_away");
                         str = weechat_infolist_string (infolist, "away_message");
                         if (str)
@@ -568,6 +569,7 @@ irc_upgrade_read_cb (void *data,
                         str = weechat_infolist_string (infolist, "command");
                         if (str)
                             ptr_redirect->command = strdup (str);
+                        ptr_redirect->assigned_to_command = weechat_infolist_integer (infolist, "assigned_to_command");
                         ptr_redirect->start_time = weechat_infolist_time (infolist, "start_time");
                         ptr_redirect->cmd_start_received = weechat_infolist_integer (infolist, "cmd_start_received");
                         ptr_redirect->cmd_stop_received = weechat_infolist_integer (infolist, "cmd_stop_received");

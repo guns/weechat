@@ -19,10 +19,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WeeChat 0.3.7-dev\n"
+"Project-Id-Version: WeeChat 0.3.8-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2012-01-24 21:20+0100\n"
-"PO-Revision-Date: 2012-01-07 09:24+0100\n"
+"POT-Creation-Date: 2012-04-07 13:04+0200\n"
+"PO-Revision-Date: 2012-02-26 09:16+0100\n"
 "Last-Translator: Aleksey V Zapparov AKA ixti <ixti@member.fsf.org>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: Russian\n"
@@ -1170,7 +1170,8 @@ msgid ""
 "Tags most commonly used:\n"
 "  no_filter, no_highlight, no_log, log0..log9 (log level),\n"
 "  notify_none, notify_message, notify_private, notify_highlight,\n"
-"  nick_xxx (xxx is nick in message),\n"
+"  nick_xxx (xxx is nick in message), prefix_nick_ccc (ccc is color of "
+"nick),\n"
 "  irc_xxx (xxx is command name or number, see /server raw),\n"
 "  irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, "
 "irc_smart_filter, away_info.\n"
@@ -1279,6 +1280,8 @@ msgid ""
 "  switch_active_buffer: switch to next merged buffer\n"
 "  switch_active_buffer_previous: switch to previous merged buffer\n"
 "  insert: insert text in command line\n"
+"  paste_start: start paste (bracketed paste mode)\n"
+"  paste_stop: stop paste (bracketed paste mode)\n"
 "\n"
 "This command is used by key bindings or plugins."
 msgstr ""
@@ -2179,7 +2182,20 @@ msgid "display space if nick mode is not (half)op/voice"
 msgstr "оставлять пробел, если ник не op/voice"
 
 msgid ""
-"max number of lines for paste without asking user (0 = disable this feature)"
+"enable terminal \"bracketed paste mode\" (not supported in all terminals/"
+"multiplexers): in this mode, pasted text is bracketed with control sequences "
+"so that WeeChat can differentiate pasted text from typed-in text (\"ESC[200~"
+"\", followed by the pasted text, followed by \"ESC[201~\")"
+msgstr ""
+
+msgid ""
+"force end of bracketed paste after this delay (in seconds) if the control "
+"sequence for end of bracketed paste (\"ESC[201~\") was not received in time"
+msgstr ""
+
+#, fuzzy
+msgid ""
+"max number of lines for paste without asking user (-1 = disable this feature)"
 msgstr ""
 "максимальное количество строк, вставляемых без подтверждения (0 = отключить "
 "подтверждение)"
@@ -2215,7 +2231,8 @@ msgstr ""
 msgid "min size for prefix"
 msgstr "строка, вставляемая после автодополнения ника"
 
-msgid "display '+' if prefix is truncated"
+msgid ""
+"char to display if prefix is truncated (must be exactly one char on screen)"
 msgstr ""
 
 msgid ""
@@ -2229,8 +2246,14 @@ msgid ""
 msgstr ""
 
 msgid ""
-"display '+' if buffer name is truncated (when many buffers are merged with "
-"same number)"
+"char to display if buffer name is truncated (when many buffers are merged "
+"with same number) (must be exactly one char on screen)"
+msgstr ""
+
+msgid ""
+"prefix displayed for a message with same nick as previous message: use a "
+"space \" \" to hide prefix, another string to display this string instead of "
+"prefix, or an empty string to disable feature (display prefix)"
 msgstr ""
 
 #, fuzzy
@@ -2580,6 +2603,12 @@ msgid ""
 msgstr ""
 "максимальное количество отображаемых команд в листинге истории (0 = не "
 "ограничено)"
+
+#, fuzzy
+msgid ""
+"timeout (in seconds) for connection to a remote host (made in a child "
+"process)"
+msgstr "использовать SSL при связи с сервером"
 
 #, fuzzy
 msgid ""
@@ -3008,8 +3037,11 @@ msgid "Bar \"%s\" updated"
 msgstr "Сокращение \"%s\" => \"%s\" создано\n"
 
 #, fuzzy, c-format
-msgid "%sPaste %d lines ? [ctrl-Y] Yes [ctrl-N] No"
-msgstr "  Вставить %d строк ? [ctrl-Y] Да  [ctrl-N] Нет"
+msgid "%sPaste %d line ? [ctrl-Y] Yes [ctrl-N] No"
+msgid_plural "%sPaste %d lines ? [ctrl-Y] Yes [ctrl-N] No"
+msgstr[0] "  Вставить %d строк ? [ctrl-Y] Да  [ctrl-N] Нет"
+msgstr[1] "  Вставить %d строк ? [ctrl-Y] Да  [ctrl-N] Нет"
+msgstr[2] "  Вставить %d строк ? [ctrl-Y] Да  [ctrl-N] Нет"
 
 #, fuzzy
 msgid "Text search"
@@ -4018,8 +4050,8 @@ msgid "invite a nick on a channel"
 msgstr "пригласить ник на канал"
 
 #, fuzzy
-msgid "<nick> <channel>"
-msgstr "ник канал"
+msgid "<nick> [<nick>...] [<channel>]"
+msgstr "ник [ник ...]"
 
 #, fuzzy
 msgid ""
@@ -4940,9 +4972,17 @@ msgstr ""
 msgid "password for server"
 msgstr "пароль, используемый при подключении к IRC серверу"
 
-#, fuzzy
-msgid "mechanism for SASL authentication"
-msgstr "использовать SSL при связи с сервером"
+#. TRANSLATORS: please keep words "client capabilities" between brackets if translation is different (see fr.po)
+msgid ""
+"comma-separated list of client capabilities to enable for server if they are "
+"available (example: \"multi-prefix,extended-join\")"
+msgstr ""
+
+msgid ""
+"mechanism for SASL authentication: \"plain\" for plain text password, \"dh-"
+"blowfish\" for crypted password, \"external\" for authentication using "
+"client side SSL cert"
+msgstr ""
 
 #, fuzzy
 msgid "username for SASL authentication"
@@ -5121,7 +5161,9 @@ msgstr "текст, который отображать после ника в �
 
 msgid ""
 "force color for some nicks: hash computed with nickname to find color will "
-"not be used for these nicks (format is: \"nick1:color1;nick2:color2\")"
+"not be used for these nicks (format is: \"nick1:color1;nick2:color2\"); "
+"lookup for nicks is with exact case then lower case, so it's possible to use "
+"only lower case for nicks in this option"
 msgstr ""
 
 msgid ""
@@ -5296,9 +5338,9 @@ msgid ""
 "remap mirc colors in messages using a hashtable: keys are \"fg,bg\" as "
 "integers between -1 (not specified) and 15, values are WeeChat color names "
 "or numbers (format is: \"1,-1:color1;2,7:color2\"), example: \"1,-1:"
-"darkgray;1,2:white,blue\" to remap black on any bg to \"darkgray\" and black "
-"on blue to \"white,blue\"; default WeeChat colors for IRC codes: 0:white, 1:"
-"black, 2:blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: "
+"darkgray;1,2:white,blue\" to remap black to \"darkgray\" and black on blue "
+"to \"white,blue\"; default WeeChat colors for IRC codes: 0:white, 1:black, 2:"
+"blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: "
 "lightgreen, 10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, "
 "15:white"
 msgstr ""
@@ -5635,6 +5677,11 @@ msgstr "%s вы не подключены к серверу\n"
 msgid "%s%s: this buffer is not a channel!"
 msgstr "Это окно не является каналом!\n"
 
+#. TRANSLATORS: "unknown" is the status for /notify when ison answer has not been received (check pending)
+#, fuzzy
+msgid "unknown"
+msgstr "(неизвестен)"
+
 msgid "offline"
 msgstr ""
 
@@ -5656,11 +5703,19 @@ msgid "Notify list is empty on all servers"
 msgstr ""
 
 #, fuzzy, c-format
-msgid "%snotify: %s%s%s has joined %s%s"
+msgid "%snotify: %s%s%s is connected"
 msgstr "%s%s%s выкинул %s%s%s с канала %s%s"
 
 #, fuzzy, c-format
-msgid "%snotify: %s%s%s has quit %s%s"
+msgid "%snotify: %s%s%s is offline"
+msgstr "%s%s%s выкинул %s%s%s с канала %s%s"
+
+#, fuzzy, c-format
+msgid "%snotify: %s%s%s has joined"
+msgstr "%s%s%s выкинул %s%s%s с канала %s%s"
+
+#, fuzzy, c-format
+msgid "%snotify: %s%s%s has quit"
 msgstr "%s%s%s выкинул %s%s%s с канала %s%s"
 
 #, fuzzy, c-format
@@ -5684,9 +5739,9 @@ msgstr ""
 msgid "%s%s: client capability, server supports: %s"
 msgstr ""
 
-#, c-format
-msgid "%s%s: client capability, requesting: sasl"
-msgstr ""
+#, fuzzy, c-format
+msgid "%s%s: client capability, requesting: %s"
+msgstr "Не могу записать лог-файл \"%s\"\n"
 
 #, c-format
 msgid "%s%s: client capability: sasl not supported"
@@ -6158,6 +6213,10 @@ msgstr ""
 msgid "%s%s: not enough memory"
 msgstr "Недостаточно памяти для новой строчки\n"
 
+#, fuzzy, c-format
+msgid "%s%s: timeout"
+msgstr "%s нет аргумента для параметра \"%s\"\n"
+
 #, c-format
 msgid "gnutls: connected using %d-bit Diffie-Hellman shared secret exchange"
 msgstr ""
@@ -6331,7 +6390,7 @@ msgid "%s: \"%s\" => level %d"
 msgstr "Сокращение \"%s\" удалено\n"
 
 #, c-format
-msgid "===\t========== End of backlog (%d lines) =========="
+msgid "%s===\t%s========== End of backlog (%d lines) =========="
 msgstr ""
 
 #, fuzzy
@@ -6384,6 +6443,14 @@ msgid ""
 "maximum number of lines to display from log file when creating new buffer (0 "
 "= no backlog)"
 msgstr "максимальное количество команд в истории (0 = не ограничено)"
+
+#, fuzzy
+msgid "color for backlog lines"
+msgstr "цвет отошедших ников"
+
+#, fuzzy
+msgid "color for line ending the backlog"
+msgstr "цвет ников"
 
 msgid ""
 "automatically save content of buffers to files (unless a buffer disables log)"
@@ -7330,6 +7397,11 @@ msgstr ""
 msgid "script name (can start or end with \"*\" as wildcard) (optional)"
 msgstr ""
 
+#, fuzzy, c-format
+msgid ""
+"%s%s: warning, invalid pointer (\"%s\") for function \"%s\" (script: %s)"
+msgstr "%s некорректные аргументы команды \"%s\"\n"
+
 #, c-format
 msgid "%s: error loading script \"%s\" (bad name, spaces are forbidden)"
 msgstr ""
@@ -7809,3 +7881,11 @@ msgstr ""
 
 msgid "Constants"
 msgstr ""
+
+#, fuzzy
+#~ msgid "<nick> <channel>"
+#~ msgstr "ник канал"
+
+#, fuzzy
+#~ msgid "mechanism for SASL authentication"
+#~ msgstr "использовать SSL при связи с сервером"

@@ -84,8 +84,8 @@ Beispiele:
 ........................................
 /ctcp  <target> <type> [<arguments>]
 
- target: User oder Channel an welchen eine CTCP-Nachricht geschickt werden soll
-   type: CTCP-Nachricht (z.B. "version", "ping", ..)
+   target: User oder Channel an welchen eine CTCP-Nachricht geschickt werden soll
+     type: CTCP-Nachricht (z.B. "version", "ping", ..)
 arguments: Argumente für CTCP
 ........................................
 
@@ -163,23 +163,23 @@ reason: Begründung der Trennung
          add [re:]<nick> [<server> [<channel>]]
          del <number>|-all
 
-     list: list all ignores
-      add: add an ignore
-     nick: nick or hostname (can be regular expression if "re:" is given or a mask using "*" to replace one or more chars)
-      del: delete an ignore
-   number: number of ignore to delete (look at list to find it)
-     -all: delete all ignores
-   server: internal server name where ignore is working
-  channel: channel name where ignore is working
+     list: zeigt alle Ignorierungen an
+      add: fügt eine Ignorierung hinzu
+     nick: Nick oder Hostname (dies kann ein regulärer Ausdruck sein, sofern "re:" angegeben wird oder eine Maske mittels "*" genutzt wird um ein oder mehrere Zeichen zu ersetzen)
+      del: entfernt eine Ignorierung
+   number: Nummer der Ignorierung die entfernt werden soll (nutze "list" um den entsprechenden Eintrag zu finden)
+     -all: entfernt alle Einträge
+   server: interner Name des Server auf welchem die Ignorierung statt finden soll
+  channel: Name des Channel, in dem die Ignorierung statt finden soll
 
-Note: the regular expression can start with "(?-i)" to become case sensitive.
+Hinweis: Um zwischen Groß-und Kleinschreibung zu unterscheiden muss am Wortanfang "(?-i)" genutzt werden.
 
-Examples:
-  ignore nick "toto" everywhere:
+Beispiele:
+  ignoriert den Nick "toto" global:
     /ignore add toto
-  ignore host "toto@domain.com" on freenode server:
+  ignoriert den Host "toto@domain.com" auf dem freenode Server:
     /ignore add toto@domain.com freenode
-  ignore host "toto*@*.domain.com" on freenode/#weechat:
+  ignoriert den Host "toto*@*.domain.com" im Chat  freenode/#weechat:
     /ignore add toto*@*.domain.com freenode #weechat
 ........................................
 
@@ -194,7 +194,7 @@ Ziel: Servername
 [[command_irc_invite]]
 [command]*`invite`* Jemanden in einen Channel einladen::
 ........................................
-/invite  <nick> <channel>
+/invite  <nick> [<nick>...] [<channel>]
 
    nick: Nick welcher eingeladen werden soll
 channel: Channel für den die Einladung gelten soll
@@ -272,16 +272,16 @@ Servermaske: die aufzulistenden Server sollen diesem Muster entsprechen
 ........................................
 /list  [<channel>[,<channel>...]] [<server>] [-re <regex>]
 
-channel: channel to list
- server: server name
-  regex: regular expression used to filter results (case insensitive, can start by "(?-i)" to become case sensitive)
+channel: aufzulistender Channel
+ server: Servername
+ regexp: regulärer Ausdruck der auf die Ausgabe angewendet werden soll (zwischen Groß- und Kleinschreibung wird nicht unterschieden. Um zwischen Groß- und Kleinschreibung zu unterscheiden muss zu Beginn "(?-i)" genutzt werden)
 
-Examples:
-  list all channels on server (can be very slow on large networks):
+Beispiele:
+  listet alle Channels des Servers auf (dies kann bei großen Netzwerken sehr lange dauern):
     /list
-  list channel #weechat:
+  listet den Channel #weechat auf:
     /list #weechat
-  list all channels beginning with "#weechat" (can be very slow on large networks):
+  listet alle Channels auf die mit "#weechat" beginnen (dies kann bei großen Netzwerken sehr lange dauern):
     /list -re #weechat.*
 ........................................
 
@@ -315,18 +315,18 @@ Message: zu sendende Nachricht
 
 Channel-Modi:
   channel: zu ändernder Channel (standardmäßig der erste Channel)
-  o: vergebe/nehme Operator Privilegien
+  o: vergebt oder entzieht Operator Privilegien
   p: privater Channel
   s: geheimer Channel
   i: geschlossener Channel (Zutritt nur mit Einladung)
   t: nur Operatoren dürfen das Thema setzen
-  n: keine Channeln-Nachrichten von außerhalb des Channels
+  n: keine Nachrichten von außerhalb des Channels zulassen
   m: moderierter Channel (schreiben nur mit Voice)
   l: maximale Anzahl an Usern im Channel festlegen
   b: Bannmaske für zu sperrende User (in nick!ident@host-Form)
-  e: lege Ausnahmemaske fest
-  v: vergebe/nehme Voice (d.h. Schreibrechte bei moderierten Channels)
-  k: lege ein Passwort für den Channel fest
+  e: legt Ausnahmemaske fest
+  v: vergibt oder entzieht Voice (d.h. Schreibrechte bei moderierten Channels)
+  k: legt ein Passwort für den Channel fest
 User-Modi:
   nick: zu ändernder Nickname
   i: User als unsichtbar kennzeichnen
@@ -337,9 +337,9 @@ User-Modi:
 Die Liste der hier dargestellten Modi ist nicht vollständig. Es sollte die Dokumentation des jeweiligen Servers zu Rate gezogen werden um alle verfügbaren Modi zu erfahren.
 
 Beispiele:
-  Schützt das Thema des Channels #weechat:
+  schützt das Thema des Channels #weechat:
     /mode #weechat +t
-  sich auf dem Server unsichtbar machen:
+  um sich auf dem Server unsichtbar machen:
     /mode nick +i
 ........................................
 
@@ -529,7 +529,7 @@ new_nick: neuer Nickname
 ........................................
 
 [[command_irc_sapart]]
-[command]*`sapart`* Zwingt einen User den/die Channel(s) zu verlassen::
+[command]*`sapart`* Zwingt einen User den oder die Channel(s) zu verlassen::
 ........................................
 /sapart  <nick> <channel>[,<channel>...]
 
@@ -538,7 +538,7 @@ channel: Name des Channels
 ........................................
 
 [[command_irc_saquit]]
-[command]*`saquit`* Zwingt einen User den Server zu verlassen, mit Begründung::
+[command]*`saquit`* Zwingt einen User den Server mit Begründung zu verlassen::
 ........................................
 /saquit  <nick> <reason>
 
@@ -555,7 +555,7 @@ reason: Grund der Abmeldung
          del|keep <server>
          deloutq|jump|raw
 
-    list: listet Server auf (Standardaufruf)
+    list: listet Server auf (ohne Angabe von Argumente wird diese Liste standardmäßig ausgegeben)
 listfull: listet Server mit detaillierten Informationen über jeden einzelnen Server auf
      add: erstellt einen neuen Server
   server: Servername, dient der internen Nutzung und zur Darstellung
@@ -740,7 +740,7 @@ server: Servername
 ........................................
 
 [[command_irc_whowas]]
-[command]*`whowas`* Informationen über einem Nicknamen abfragen welcher nicht mehr angemeldet ist::
+[command]*`whowas`* Informationen über einen nicht mehr angemeldeten Nicknamen abfragen::
 ........................................
 /whowas  <nick>[,<nick>...] [<count> [<target>]]
 

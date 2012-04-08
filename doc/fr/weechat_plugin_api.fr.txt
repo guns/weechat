@@ -563,7 +563,7 @@ Exemple en C :
 [source,C]
 ----------------------------------------
 char *str = "AbCdé";
-weechat_string_tolower (str); /* str vaut maintenant : "ABCDé" */
+weechat_string_toupper (str); /* str vaut maintenant : "ABCDé" */
 ----------------------------------------
 
 [NOTE]
@@ -4312,7 +4312,7 @@ option4 = weechat.config_new_option(config_file, section, "option4", "string",
 
 option5 = weechat.config_new_option(config_file, section, "option5", "color",
     "Mon option, type couleur",
-    "", 0, 100, "lightblue", "lightblue", 0,
+    "", 0, 0, "lightblue", "lightblue", 0,
     "", "",
     "", "",
     "", "")
@@ -6384,6 +6384,31 @@ Paramètres :
 * 'tags' : liste d'étiquettes ("tags") séparées par des virgules
 * 'message' : message à afficher
 
+Tags couramment utilisés (liste non exhaustive) :
+
+[width="70%",cols="1m,4",options="header"]
+|========================================
+| Tag              | Description
+| no_filter        | La ligne ne peut pas être filtrée
+| no_highlight     | Aucun highlight n'est possible sur cette ligne
+| no_log           | La ligne n'est pas écrite dans le fichier de log
+| log0 ... log9    | Niveau de log pour la ligne (voir `/help logger`)
+| notify_none      | Le tampon avec la ligne ne sera pas ajouté à la "hotlist"
+| notify_message   | Le tampon avec la ligne sera ajouté à la "hotlist" avec le niveau "message"
+| notify_private   | Le tampon avec la ligne sera ajouté à la "hotlist" avec le niveau "private"
+| notify_highlight | Le tampon avec la ligne sera ajouté à la "hotlist" avec le niveau "highlight"
+| nick_xxx         | Le message vient du pseudo "xxx"
+| prefix_nick_ccc  | Le préfixe est un pseudo avec la couleur "ccc"
+| irc_xxx          | Message IRC "xxx" (peut-être une commande ou un numérique sur 3 chiffres)
+| irc_numeric      | Message IRC numérique
+| irc_error        | Erreur du serveur IRC
+| irc_action       | Action d'un pseudo (commande `/me`)
+| irc_ctcp         | Message CTCP
+| irc_ctcp_reply   | Réponse à un message CTCP
+| irc_smart_filter | Message IRC qui peut être filtré avec le "smart filter" (filtre intelligent)
+| away_info        | Message avec une info d'absence
+|========================================
+
 Exemple en C :
 
 [source,C]
@@ -7196,6 +7221,7 @@ Paramètres :
 *** 'WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR' : erreur avec la
     "poignée de main" GnuTLS
 *** 'WEECHAT_HOOK_CONNECT_MEMORY_ERROR' : mémoire insuffisante
+*** 'WEECHAT_HOOK_CONNECT_TIMEOUT' : temps maximum dépassé
 ** 'gnutls_rc' : valeur retour de 'gnutls_handshake()'
 ** 'const char *error' : valeur retour de 'gnutls_strerror(gnutls_rc)'
 ** 'const char *ip_address' : adresse IP trouvée
@@ -7246,6 +7272,9 @@ my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
         case WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
             /* ... */
             break;
+        case WEECHAT_HOOK_CONNECT_TIMEOUT:
+            /* ... */
+            break;
     }
     return WEECHAT_RC_OK;
 }
@@ -7285,6 +7314,8 @@ def my_connect_cb(data, status, gnutls_rc, error, ip_address):
     elif status == WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR:
         # ...
     elif status == WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
+        # ...
+    elif status == WEECHAT_HOOK_CONNECT_TIMEOUT:
         # ...
     return weechat.WEECHAT_RC_OK
 
@@ -7431,9 +7462,14 @@ Paramètres :
   message irc du serveur (après utilisation par l'extension irc,
   signal envoyé même si le message est ignoré)
 
+| irc | xxx,irc_out1_yyy ^(1)^ +
+  (_nouveau dans la version 0.3.7_) |
+  chaîne : message |
+  message irc envoyé au serveur (avant découpage automatique pour tenir dans les 512 octets)
+
 | irc | xxx,irc_out_yyy ^(1)^ |
   chaîne : message |
-  message irc envoyé au serveur
+  message irc envoyé au serveur (après découpage automatique pour tenir dans les 512 octets)
 
 | irc | xxx,irc_outtags_yyy ^(1)^ +
   (_nouveau dans la version 0.3.4_) |
@@ -7460,6 +7496,11 @@ Paramètres :
   pointeur : tampon |
   discussion privée ouverte
 
+| irc | irc_server_opened +
+  (_nouveau dans la version 0.3.7_) |
+  pointeur : tampon |
+  tampon du serveur ouvert
+
 | irc | irc_server_connecting |
   chaîne : nom du serveur |
   connexion en cours au serveur
@@ -7479,6 +7520,31 @@ Paramètres :
 | irc | irc_ignore_removed |
   - |
   ignore supprimé
+
+| irc | irc_notify_join +
+  (_nouveau dans la version 0.3.8_) |
+  chaîne: nom du serveur + "," + pseudo |
+  un pseudo dans la liste de notifications a rejoint le serveur
+
+| irc | irc_notify_quit +
+  (_nouveau dans la version 0.3.8_) |
+  chaîne: nom du serveur + "," + pseudo |
+  un pseudo dans la liste de notifications a quitté le serveur
+
+| irc | irc_notify_away +
+  (_nouveau dans la version 0.3.8_) |
+  chaîne: nom du serveur + "," + pseudo + "," + message d'absence |
+  un pseudo dans la liste de notifications est maintenant absent sur le serveur
+
+| irc | irc_notify_still_away +
+  (_nouveau dans la version 0.3.8_) |
+  chaîne: nom du serveur + "," + pseudo + "," + message d'absence |
+  un pseudo dans la liste de notifications est toujours absent sur le serveur (le message d'absence a changé)
+
+| irc | irc_notify_back +
+  (_nouveau dans la version 0.3.8_) |
+  chaîne: nom du serveur + "," + pseudo |
+  un pseudo dans la liste de notifications est de retour (statut d'absence supprimé)
 
 | logger | logger_start |
   pointeur : tampon |
@@ -8570,9 +8636,15 @@ Paramètres :
   contenu du message reçu du serveur IRC (après décodage du jeu de caractères) |
   nouveau contenu du message
 
+| irc | irc_out1_xxx ^(1)^ +
+  (_nouveau dans la version 0.3.7_) |
+  nom de serveur |
+  contenu du message qui va être envoyé au serveur IRC (avant découpage automatique pour tenir dans les 512 octets) |
+  nouveau contenu du message
+
 | irc | irc_out_xxx ^(1)^ |
   nom de serveur |
-  contenu du message qui va être envoyé au serveur IRC |
+  contenu du message qui va être envoyé au serveur IRC (après découpage automatique pour tenir dans les 512 octets) |
   nouveau contenu du message
 
 | weechat | bar_condition_yyy ^(2)^ |
@@ -10383,9 +10455,6 @@ Paramètres :
 * 'parent_group' : pointeur vers le parent du groupe, NULL si le groupe n'a pas
   de parent (racine de la liste des pseudos)
 * 'name' : nom du groupe
-* 'visible' :
-** '1' : le groupe et ses sous-groupes/pseudos sont visibles
-** '0' : le groupe et ses sous-groupes/pseudos sont cachés
 * 'color' : nom de l'option contenant la couleur :
 ** une option WeeChat, par exemple 'weechat.color.nicklist_group'
 ** une couleur avec un fond optionnel, par exemple 'yellow' ou 'yellow,red'
@@ -10393,6 +10462,9 @@ Paramètres :
 *** 'bar_fg' : couleur de texte pour la barre
 *** 'bar_delim' : couleur des délimiteurs pour la barre
 *** 'bar_bg' : couleur de fond pour la barre
+* 'visible' :
+** '1' : le groupe et ses sous-groupes/pseudos sont visibles
+** '0' : le groupe et ses sous-groupes/pseudos sont cachés
 
 [NOTE]
 Le nom du groupe peut commencer par un ou plusieurs chiffres, suivis d'un pipe

@@ -94,8 +94,7 @@ compilare WeeChat.
 | Pacchetto ^(1)^        | Versione    | Richiesto | Caratteristica
 | cmake                  |             | *sì*      | compilazione (ancora possibile con autotools, ma si raccomanda cmake)
 | libncursesw5-dev ^(2)^ |             | *sì*      | interfaccia ncurses
-// TRANSLATION MISSING
-| libcurl4-xxxxx-dev     |             | *sì*      | URL transfer
+| libcurl4-gnutls-dev    |             | *sì*      | trasferimento URL
 | gettext                |             |           | internazionalizzazione (traduzione dei messaggi; la lingua base è l'inglese)
 | libgcrypt11-dev        |             |           | autenticazione SASL per i server IRC che utilizzano il meccanismo DH-BLOWFISH
 | libgnutls-dev          | ≥ 2.2.0     |           | connessione SSL al server IRC
@@ -116,9 +115,9 @@ compilare WeeChat.
 potrebbero essere differenti in versioni e distribuzioni differenti. +
 ^(2)^ WeeChat può essere compilato con libncurses5-dev, ma *NON* è raccomandato
 (potrebbero verificarsi bug di visualizzazione). +
-// TRANSLATION MISSING
-^(3)^ WeeChat can compile with Python 3.x, but recommended Python version is 2.7
-(all scripts run fine with version 2.x, but not with version 3.x).
+^(3)^ WeeChat può compilare con Python 3.x, ma si raccomanda di usare la
+versione 2.7 (tutti gli script vengono eseguiti correttamente con la versione
+2.x, ma non con la 3.x).
 
 [[compile_with_cmake]]
 Compilazione con cmake
@@ -256,6 +255,9 @@ All'interno di gdb, usare il comando `bt full` per visualizzare
 il backtrace. Verrà mostrato qualcosa di simile a questo:
 
 ----------------------------------------
+(gdb) set logging file /tmp/crash.txt
+(gdb) set logging on
+Copying output to /tmp/crash.txt.
 (gdb) bt full
 #0  0x00007f9dfb04a465 in raise () from /lib/libc.so.6
 #1  0x00007f9dfb04b8e6 in abort () from /lib/libc.so.6
@@ -1394,12 +1396,13 @@ Per maggiori informazioni consultare http://www.oftc.net/oftc/NickServ/CertFP
 Autenticazione SASL
 ^^^^^^^^^^^^^^^^^^^
 
-WeeChat supporta l'autenticazione SASL, usando due meccanismi: "plain"
-(predefinito) o "dh-blowfish" (password codificata).
+WeeChat supporta l'autenticazione SASL, usando tre meccanismi: "plain" (password
+in chiaro), "dh-blowfish" (password cifrata)" o "external" (certificato SSL da
+lato client).
 
 Le opzioni nel server sono:
 
-* 'sasl_mechanism': meccanismo da usare ("plain" o "dh-blowfish")
+* 'sasl_mechanism': meccanismo da usare ("plain", "dh-blowfish" o "external")
 * 'sasl_timeout': timeout (in secondi) per l'autenticazione
 * 'sasl_username': nome utente (nick)
 * 'sasl_password': password
@@ -1425,7 +1428,7 @@ utenti e gruppi di migliorare la propria privacy e la sicurezza su Internet.
 Per prima cosa, assicurarsi che WeeChat sia compilato con
 <<dependencies,libgcrypt11-dev>> (se compilato da sorgenti); non è
 obbligatorio, ma "dh-blowfish" assicura una maggiore sicurezza rispetto al
-sistema di autenticazione con SASL.
+sistema di autenticazione "plain" (in chiaro) con SASL.
 
 Il primo passo consiste nell'installare TOR. Per Debian (e derivate):
 
@@ -1617,7 +1620,7 @@ personalizzare:
 | messaggio | alias         | descrizione
 | error     |               | errore
 | invite    |               | invitato su un canale
-| join      |               | channel join
+| join      |               | ingresso nel canale
 | kick      |               | kick
 | kill      |               | kill
 | mode      |               | mode
@@ -1626,8 +1629,7 @@ personalizzare:
 | quit      |               | quit
 | topic     |               | topic
 | wallops   |               | wallops
-// TRANSLATION MISSING
-|           | ctcp          | ctcp (sent or received, in a privmsg or notice message)
+|           | ctcp          | ctcp (inviato o ricevuto, in un messaggio privato o di notifica)
 | 221       |               | stringa modalità utente
 | 275       | whois         | whois (connessione sicura)
 | 301       | whois         | whois (assente)
@@ -2077,13 +2079,14 @@ Packagers::
     Emmanuel Bouthenot (kolter), Julien Louis (ptitlouis), Odin
 
 Traduzioni::
-    Jiri Golembiovsky, soltys, Nils Görs, rettub, Frank Zacharias,
-    Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi, Marco Paolone,
-    Ivan Sichmann Freitas, Lázaro A.
+    Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
+    Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
+    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi
 
 Patches::
     Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
-    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n
+    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
+    Quentin Glidic (SardemFF7)
 
 
 [[support]]

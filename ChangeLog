@@ -1,18 +1,87 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.7-dev, 2012-01-28
+v0.3.8-dev, 2012-04-07
 
 
-Version 0.3.7 (under dev!)
+Version 0.3.8 (under dev!)
 --------------------------
 
+* core: convert options weechat.look.prefix_align_more and
+  weechat.look.prefix_buffer_align_more from boolean to string (task #11197)
+* core: fix display bug with prefix when length is greater than max and prefix
+  is ending with a wide char (bug #36032)
+* core: add option weechat.look.prefix_same_nick (hide or change prefix on
+  messages whose nick is the same as previous message) (task #11965)
+* core: convert tabs to spaces in text pasted (bug #25028)
+* core: add a connection timeout for child process in hook_connect (bug #35966)
+* core: follow symbolic links when writing configuration files (.conf)
+  (task #11779)
+* core: fix lost scroll when switching to a buffer with a pending search
+* core: add support of terminal "bracketed paste mode", new options
+  weechat.look.paste_bracketed and weechat.look.paste_bracketed_timer_delay
+  (task #11316)
+* core: fix display of wide chars on last column of chat area (patch #7733)
+* api: display warning in scripts when invalid pointers (malformed strings) are
+  given to plugin API functions (warning displayed if debug for plugin is >= 1)
+* api: add list "gui_buffer_last_displayed" in hdata "buffer"
+* guile: add missing function "hook_process_hashtable" in API
+* irc: set user modes only if target nick is self nick in message 221
+  (patch #7754)
+* irc: force the clear of nicklist when joining a channel (nicklist was not sync
+  after znc reconnection) (bug #36008)
+* irc: allow more than one nick in command /invite
+* irc: do not send command "MODE #channel" on manual /names (do it only when
+  names are received on join of channel) (bug #35930)
+* irc: do not allow the creation of two servers with same name but different
+  case (fix error when writing file irc.conf) (bug #35840)
+* irc: update away flag for nicks on manual /who
+* irc: display privmsg messages to "@#channel" and "+#channel" in channel buffer
+  (bug #35331)
+* irc: fix redirection of message when message is queued for sending on server
+* irc: add signals and tags in messages for irc notify (task #11887)
+* irc: check notify immediately when adding a nick to notify list, improve
+  first notify message for a nick (bug #35731)
+* irc: fix display of color in hostname (join/part/quit messages)
+* irc: compute hash to find nick color for nick in server message when nick
+  is not in nicklist
+* irc: add support of "external" SASL mechanism (task #11864)
+* irc: close server buffer when server is deleted
+* irc: add search for lower case nicks in option irc.look.nick_color_force
+* logger: add colors for backlog lines and end of backlog, new options:
+  logger.color.backlog_line and logger.color.backlog_end (task #11966)
+* perl: fix compilation on OS X (bug #30701)
+* perl: fix crash on quit on OS X
+* relay: redirect some irc messages from clients to hide output (messages: mode,
+  ison, list, names, topic, who, whois, whowas, time, userhost) (bug #33516)
+* relay: add "date_printed" and "highlight" in signal "_buffer_line_added"
+  (WeeChat protocol)
+* rmodifier: add option "release" in default rmodifier "nickserv" (used to hide
+  passwords in command "/msg nickserv") (bug #35705)
+* tcl: add missing function "hdata_char" in API
+* tcl: fix pointer sent to function hook_signal_send when type of data is
+  a pointer
+
+Version 0.3.7 (2012-02-26)
+--------------------------
+
+* core: add japanese translations
+* core: fix expand of path `~` to home of user in function string_expand_home
+  (`~/xxx` was ok, but not `~`)
+* core: fix memory leak when closing buffer
+* core: fix memory leak in function util_search_full_lib_name
+* core: automatically add newline char after last pasted line (when pasting many
+  lines with confirmation) (task #10703)
+* core: fix bug with layout: assign layout number in buffers when doing
+  /layout save
+* core: do not auto add space after nick completer if option
+  weechat.completion.nick_add_space is off
 * core: fix signal "buffer_switch": send it only once when switching buffer
   (bug #31158)
 * core: move option "scroll_unread" from command /input to /window
 * core: add support of flags in regular expressions and highlight options
 * core: add library "pthread" in cmake file for link on OpenBSD
-* core: use extended regex in filters (patch #7616)
+* core: use extended regex in filters (task #9497, patch #7616)
 * core: save current mouse state in option weechat.look.mouse (set option when
   mouse state is changed with command /mouse)
 * core: add type "hashtable" for hdata
@@ -53,6 +122,15 @@ Version 0.3.7 (under dev!)
   nicklist_get_next_item
 * alias: add default alias umode => /mode $nick
 * aspell: fix URL detection (do not check spelling of URLs) (bug #34040)
+* irc: fix memory leak in SASL/blowfish authentication
+* irc: fix memory leak when a server is deleted
+* irc: add option "capabilities" in servers to enable client capabilities on
+  connection
+* irc: add signal "irc_server_opened"
+* irc: add signal "xxx,irc_out1_yyy" and modifier "irc_out1_xxx" (outgoing
+  message before automatic split to fit in 512 bytes)
+* irc: fix self-highlight when using /me with an IRC bouncer like znc
+  (bug #35123)
 * irc: add alias "ctcp" for target buffer of CTCP messages
 * irc: add options irc.look.highlight_{server|channel|pv} to customize or
   disable default nick highlight (task #11128)
@@ -83,6 +161,8 @@ Version 0.3.7 (under dev!)
 * irc: auto-connect to servers created with "irc://" on command line but not
   other servers if "-a" ("--no-connect") is given
 * guile: new script plugin for scheme (task #7289)
+* perl: increment count of hash returned by API (fix crash when script tries to
+  read hash without making a copy)
 * python: add support of Python 3.x (task #11704)
 * relay: do not create relay if there is a problem with socket creation
   (bug #35345)

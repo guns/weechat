@@ -578,10 +578,20 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
-* [[option_weechat.look.paste_max_lines]] *weechat.look.paste_max_lines*
-** description: `nombre maximum de lignes pour la détection de collage sans demander à l'utilisateur (0 = désactiver cette fonctionnalité)`
+* [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
+** description: `activer le mode du terminal "bracketed paste" (pas supporté par tous les terminaux/multiplexeurs): dans ce mode, le texte collé est entouré avec des séquences de contrôle de sorte que WeeChat puisse différencier le texte collé du texté tapé ("ESC[200~", suivi par le texte collé, suivi par "ESC[201~")`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `off`)
+
+* [[option_weechat.look.paste_bracketed_timer_delay]] *weechat.look.paste_bracketed_timer_delay*
+** description: `forcer la fin du "bracketed paste" après ce délai (en secondes) si la séquence de contrôle pour la fin du "bracketed paste" ("ESC[201~") n'a pas été reçue à temps`
 ** type: entier
-** valeurs: 0 .. 2147483647 (valeur par défaut: `3`)
+** valeurs: 1 .. 60 (valeur par défaut: `10`)
+
+* [[option_weechat.look.paste_max_lines]] *weechat.look.paste_max_lines*
+** description: `nombre maximum de lignes pour la détection de collage sans demander à l'utilisateur (-1 = désactiver cette fonctionnalité)`
+** type: entier
+** valeurs: -1 .. 2147483647 (valeur par défaut: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
 ** description: `préfixe pour les messages d'action`
@@ -604,9 +614,9 @@
 ** valeurs: 0 .. 128 (valeur par défaut: `0`)
 
 * [[option_weechat.look.prefix_align_more]] *weechat.look.prefix_align_more*
-** description: `afficher '+' si le préfixe est tronqué`
-** type: booléen
-** valeurs: on, off (valeur par défaut: `on`)
+** description: `caractère à afficher si le préfixe est tronqué (doit être exactement un caractère à l'écran)`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"+"`)
 
 * [[option_weechat.look.prefix_buffer_align]] *weechat.look.prefix_buffer_align*
 ** description: `alignement de préfixe pour le nom du tampon, quand plusieurs tampons sont mélangés avec le même numéro (none, left, right (par défaut))`
@@ -619,9 +629,9 @@
 ** valeurs: 0 .. 128 (valeur par défaut: `0`)
 
 * [[option_weechat.look.prefix_buffer_align_more]] *weechat.look.prefix_buffer_align_more*
-** description: `afficher '+' si le nom du tampon est tronqué (quand plusieurs tampons sont mélangés avec le même numéro)`
-** type: booléen
-** valeurs: on, off (valeur par défaut: `on`)
+** description: `caractère à afficher si le nom du tampon est tronqué (lorsque plusieurs tampons sont mélangés avec le même numéro) (doit être exactement un caractère à l'écran)`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
 ** description: `préfixe pour les messages d'erreur`
@@ -642,6 +652,11 @@
 ** description: `préfixe pour les messages de départ`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"<--"`)
+
+* [[option_weechat.look.prefix_same_nick]] *weechat.look.prefix_same_nick*
+** description: `préfixe affiché pour un message avec le même pseudo que le précédent message: utiliser un espace " " pour cacher le préfixe, une autre chaîne pour l'afficher à la place du préfixe, ou une chaîne vide pour désactiver cette fonctionnalité (afficher le préfixe)`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_weechat.look.prefix_suffix]] *weechat.look.prefix_suffix*
 ** description: `chaîne affichée après le préfixe`
@@ -712,6 +727,11 @@
 ** description: `format de date/heure pour les dates converties en chaînes et affichées dans les messages`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"%a, %d %b %Y %T"`)
+
+* [[option_weechat.network.connection_timeout]] *weechat.network.connection_timeout*
+** description: `délai d'attente maximum (en secondes) pour la connexion à une machine distante (effectuée dans un processus fils)`
+** type: entier
+** valeurs: 1 .. 2147483647 (valeur par défaut: `60`)
 
 * [[option_weechat.network.gnutls_ca_file]] *weechat.network.gnutls_ca_file*
 ** description: `fichier contenant les autorités de certification ("%h" sera remplacé par le répertoire de base WeeChat, par défaut: "~/.weechat")`

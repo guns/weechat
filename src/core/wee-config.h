@@ -149,6 +149,8 @@ extern struct t_config_option *config_look_mouse;
 extern struct t_config_option *config_look_mouse_timer_delay;
 extern struct t_config_option *config_look_nickmode;
 extern struct t_config_option *config_look_nickmode_empty;
+extern struct t_config_option *config_look_paste_bracketed;
+extern struct t_config_option *config_look_paste_bracketed_timer_delay;
 extern struct t_config_option *config_look_paste_max_lines;
 extern struct t_config_option *config_look_prefix[];
 extern struct t_config_option *config_look_prefix_align;
@@ -158,6 +160,7 @@ extern struct t_config_option *config_look_prefix_align_more;
 extern struct t_config_option *config_look_prefix_buffer_align;
 extern struct t_config_option *config_look_prefix_buffer_align_max;
 extern struct t_config_option *config_look_prefix_buffer_align_more;
+extern struct t_config_option *config_look_prefix_same_nick;
 extern struct t_config_option *config_look_prefix_suffix;
 extern struct t_config_option *config_look_read_marker;
 extern struct t_config_option *config_look_read_marker_always_show;
@@ -241,6 +244,7 @@ extern struct t_config_option *config_history_max_commands;
 extern struct t_config_option *config_history_max_visited_buffers;
 extern struct t_config_option *config_history_display_default;
 
+extern struct t_config_option *config_network_connection_timeout;
 extern struct t_config_option *config_network_gnutls_ca_file;
 extern struct t_config_option *config_network_gnutls_handshake_timeout;
 
@@ -250,6 +254,7 @@ extern struct t_config_option *config_plugin_extension;
 extern struct t_config_option *config_plugin_path;
 extern struct t_config_option *config_plugin_save_config_on_unload;
 
+extern int config_length_prefix_same_nick;
 extern regex_t *config_highlight_regex;
 extern char **config_highlight_tags;
 extern int config_num_highlight_tags;

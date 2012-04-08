@@ -1446,12 +1446,29 @@ irc_config_server_new_option (struct t_config_file *config_file,
                 callback_change, callback_change_data,
                 NULL, NULL);
             break;
+        case IRC_SERVER_OPTION_CAPABILITIES:
+            new_option = weechat_config_new_option (
+                config_file, section,
+                option_name, "string",
+                /* TRANSLATORS: please keep words "client capabilities" between brackets if translation is different (see fr.po) */
+                N_("comma-separated list of client capabilities to enable for "
+                   "server if they are available (example: "
+                   "\"multi-prefix,extended-join\")"),
+                NULL, 0, 0,
+                default_value, value,
+                null_value_allowed,
+                callback_check_value, callback_check_value_data,
+                callback_change, callback_change_data,
+                NULL, NULL);
+            break;
         case IRC_SERVER_OPTION_SASL_MECHANISM:
             new_option = weechat_config_new_option (
                 config_file, section,
                 option_name, "integer",
-                N_("mechanism for SASL authentication"),
-                "plain|dh-blowfish", 0, 0,
+                N_("mechanism for SASL authentication: \"plain\" for plain text "
+                   "password, \"dh-blowfish\" for crypted password, \"external\" "
+                   "for authentication using client side SSL cert"),
+                "plain|dh-blowfish|external", 0, 0,
                 default_value, value,
                 null_value_allowed,
                 callback_check_value, callback_check_value_data,
@@ -2072,7 +2089,9 @@ irc_config_init ()
         "nick_color_force", "string",
         N_("force color for some nicks: hash computed with nickname "
            "to find color will not be used for these nicks (format is: "
-           "\"nick1:color1;nick2:color2\")"),
+           "\"nick1:color1;nick2:color2\"); lookup for nicks is with "
+           "exact case then lower case, so it's possible to use only lower "
+           "case for nicks in this option"),
         NULL, 0, 0, "", NULL, 0, NULL, NULL,
         &irc_config_change_look_nick_color_force, NULL, NULL, NULL);
     irc_config_look_nick_color_stop_chars = weechat_config_new_option (
@@ -2346,8 +2365,8 @@ irc_config_init ()
         N_("remap mirc colors in messages using a hashtable: keys are \"fg,bg\" "
            "as integers between -1 (not specified) and 15, values are WeeChat "
            "color names or numbers (format is: \"1,-1:color1;2,7:color2\"), "
-           "example: \"1,-1:darkgray;1,2:white,blue\" to remap black on any bg "
-           "to \"darkgray\" and black on blue to \"white,blue\"; default "
+           "example: \"1,-1:darkgray;1,2:white,blue\" to remap black to "
+           "\"darkgray\" and black on blue to \"white,blue\"; default "
            "WeeChat colors for IRC codes: 0:white, 1:black, 2:blue, 3:green, "
            "4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: lightgreen, "
            "10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, "

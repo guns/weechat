@@ -948,7 +948,8 @@ irc_command_ctcp (void *data, struct t_gui_buffer *buffer, int argc,
                                                              NULL),
                             _("%sCTCP query to %s%s%s: %s%s%s%s%s"),
                             weechat_prefix ("network"),
-                            IRC_COLOR_CHAT_NICK,
+                            irc_nick_color_for_message (ptr_server,
+                                                        NULL, argv[1]),
                             argv[1],
                             IRC_COLOR_RESET,
                             IRC_COLOR_CHAT_CHANNEL,
@@ -971,7 +972,8 @@ irc_command_ctcp (void *data, struct t_gui_buffer *buffer, int argc,
                                                              NULL),
                             _("%sCTCP query to %s%s%s: %s%s%s%s%s"),
                             weechat_prefix ("network"),
-                            IRC_COLOR_CHAT_NICK,
+                            irc_nick_color_for_message (ptr_server, NULL,
+                                                        argv[1]),
                             argv[1],
                             IRC_COLOR_RESET,
                             IRC_COLOR_CHAT_CHANNEL,
@@ -1748,6 +1750,9 @@ int
 irc_command_invite (void *data, struct t_gui_buffer *buffer, int argc,
                     char **argv, char **argv_eol)
 {
+    int i, arg_last_nick;
+    char *ptr_channel_name;
+
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
     IRC_COMMAND_CHECK_SERVER("invite", 1);
 
@@ -1757,8 +1762,26 @@ irc_command_invite (void *data, struct t_gui_buffer *buffer, int argc,
 
     if (argc > 2)
     {
-        irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
-                          "INVITE %s %s", argv[1], argv[2]);
+        if (irc_channel_is_channel (ptr_server, argv[argc - 1]))
+        {
+            arg_last_nick = argc - 2;
+            ptr_channel_name = argv[argc - 1];
+        }
+        else
+        {
+            if (ptr_channel && (ptr_channel->type == IRC_CHANNEL_TYPE_CHANNEL))
+            {
+                arg_last_nick = argc - 1;
+                ptr_channel_name = ptr_channel->name;
+            }
+            else
+                goto error;
+        }
+        for (i = 1; i <= arg_last_nick; i++)
+        {
+            irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+                              "INVITE %s %s", argv[i], ptr_channel_name);
+        }
     }
     else
     {
@@ -1769,17 +1792,16 @@ irc_command_invite (void *data, struct t_gui_buffer *buffer, int argc,
                               argv[1], ptr_channel->name);
         }
         else
-        {
-            weechat_printf (ptr_server->buffer,
-                            _("%s%s: \"%s\" command can only be "
-                              "executed in a channel buffer"),
-                            weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                            "invite");
-            return WEECHAT_RC_OK;
-        }
-
+            goto error;
     }
+    return WEECHAT_RC_OK;
 
+error:
+    weechat_printf (ptr_server->buffer,
+                    _("%s%s: \"%s\" command can only be "
+                      "executed in a channel buffer"),
+                    weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                    "invite");
     return WEECHAT_RC_OK;
 }
 
@@ -2497,7 +2519,7 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
                  char **argv, char **argv_eol)
 {
     char **targets;
-    int num_targets, i, arg_target, arg_text;
+    int num_targets, i, arg_target, arg_text, is_channel, msg_op_voice;
     char *msg_pwd_hidden;
     char *string;
 
@@ -2559,16 +2581,51 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
             }
             else
             {
-                if (irc_channel_is_channel (ptr_server, targets[i]))
+                is_channel = 0;
+                ptr_channel = NULL;
+                msg_op_voice = 0;
+                if (((targets[i][0] == '@') || (targets[i][0] == '+'))
+                    && irc_channel_is_channel (ptr_server, targets[i] + 1))
                 {
-                    ptr_channel = irc_channel_search (ptr_server,
-                                                      targets[i]);
+                    ptr_channel = irc_channel_search (ptr_server, targets[i] + 1);
+                    is_channel = 1;
+                    msg_op_voice = 1;
+                }
+                else
+                {
+                    ptr_channel = irc_channel_search (ptr_server, targets[i]);
+                    if (ptr_channel)
+                        is_channel = 1;
+                }
+                if (is_channel)
+                {
                     if (ptr_channel)
                     {
                         string = irc_color_decode (argv_eol[arg_text],
                                                    weechat_config_boolean (irc_config_network_colors_receive));
-                        irc_input_user_message_display (ptr_channel->buffer,
-                                                        (string) ? string : argv_eol[arg_text]);
+                        if (msg_op_voice)
+                        {
+                            /*
+                             * message to channel ops/voiced
+                             * (to "@#channel" or "+#channel")
+                             */
+                            weechat_printf_tags (ptr_channel->buffer,
+                                                 "notify_none,no_highlight",
+                                                 "%s%s%s -> %s%s%s: %s",
+                                                 weechat_prefix ("network"),
+                                                 "Msg",
+                                                 IRC_COLOR_RESET,
+                                                 IRC_COLOR_CHAT_CHANNEL,
+                                                 targets[i],
+                                                 IRC_COLOR_RESET,
+                                                 (string) ? string : argv_eol[arg_text]);
+                        }
+                        else
+                        {
+                            /* standard message (to "#channel") */
+                            irc_input_user_message_display (ptr_channel->buffer,
+                                                            (string) ? string : argv_eol[arg_text]);
+                        }
                         if (string)
                             free (string);
                     }
@@ -2593,7 +2650,9 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
                                         "%sMSG%s(%s%s%s)%s: %s",
                                         weechat_prefix ("network"),
                                         IRC_COLOR_CHAT_DELIMITERS,
-                                        IRC_COLOR_CHAT_NICK,
+                                        irc_nick_color_for_message (ptr_server,
+                                                                    NULL,
+                                                                    targets[i]),
                                         targets[i],
                                         IRC_COLOR_CHAT_DELIMITERS,
                                         IRC_COLOR_RESET,
@@ -2625,7 +2684,9 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
                                                  "%sMSG%s(%s%s%s)%s: %s",
                                                  weechat_prefix ("network"),
                                                  IRC_COLOR_CHAT_DELIMITERS,
-                                                 IRC_COLOR_CHAT_NICK,
+                                                 irc_nick_color_for_message (ptr_server,
+                                                                             NULL,
+                                                                             targets[i]),
                                                  targets[i],
                                                  IRC_COLOR_CHAT_DELIMITERS,
                                                  IRC_COLOR_RESET,
@@ -2821,7 +2882,7 @@ irc_command_notice (void *data, struct t_gui_buffer *buffer, int argc,
                                      /* TRANSLATORS: "Notice" is command name in IRC protocol (translation is frequently the same word) */
                                      _("Notice"),
                                      IRC_COLOR_RESET,
-                                     (is_channel) ? IRC_COLOR_CHAT_CHANNEL : IRC_COLOR_CHAT_NICK,
+                                     (is_channel) ? IRC_COLOR_CHAT_CHANNEL : irc_nick_color_for_message (ptr_server, NULL, argv[arg_target]),
                                      argv[arg_target],
                                      IRC_COLOR_RESET,
                                      (string) ? string : str_args);
@@ -2928,8 +2989,11 @@ irc_command_notify (void *data, struct t_gui_buffer *buffer, int argc,
             weechat_printf (ptr_server->buffer,
                             _("%s: notification added for %s%s"),
                             IRC_PLUGIN_NAME,
-                            IRC_COLOR_CHAT_NICK,
+                            irc_nick_color_for_server_message (ptr_server,
+                                                               NULL,
+                                                               ptr_notify->nick),
                             ptr_notify->nick);
+            irc_notify_check_now (ptr_notify);
         }
         else
         {
@@ -3765,13 +3829,14 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
         {
             IRC_COMMAND_TOO_FEW_ARGUMENTS(NULL, "server add");
         }
-        if (irc_server_search (argv[2]))
+        ptr_server2 = irc_server_casesearch (argv[2]);
+        if (ptr_server2)
         {
             weechat_printf (NULL,
                             _("%s%s: server \"%s\" already exists, "
                               "can't create it!"),
                             weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                            argv[2]);
+                            ptr_server2->name);
             return WEECHAT_RC_OK;
         }
         if (argv[2][0] == '#')
@@ -3831,13 +3896,14 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
         }
 
         /* check if target name already exists */
-        if (irc_server_search (argv[3]))
+        ptr_server2 = irc_server_casesearch (argv[3]);
+        if (ptr_server2)
         {
             weechat_printf (NULL,
                             _("%s%s: server \"%s\" already exists for "
                               "\"%s\" command"),
                             weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                            argv[3], "server copy");
+                            ptr_server2->name, "server copy");
             return WEECHAT_RC_OK;
         }
 
@@ -3881,13 +3947,14 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
         }
 
         /* check if target name already exists */
-        if (irc_server_search (argv[3]))
+        ptr_server2 = irc_server_casesearch (argv[3]);
+        if (ptr_server2)
         {
             weechat_printf (NULL,
                             _("%s%s: server \"%s\" already exists for "
                               "\"%s\" command"),
                             weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                            argv[3], "server rename");
+                            ptr_server2->name, "server rename");
             return WEECHAT_RC_OK;
         }
 
@@ -4977,7 +5044,7 @@ irc_command_init ()
                           NULL, &irc_command_info, NULL);
     weechat_hook_command ("invite",
                           N_("invite a nick on a channel"),
-                          N_("<nick> <channel>"),
+                          N_("<nick> [<nick>...] [<channel>]"),
                           N_("   nick: nick to invite\n"
                              "channel: channel to invite"),
                           "%(nicks) %(irc_server_channels)", &irc_command_invite, NULL);

@@ -2185,12 +2185,16 @@ gui_buffer_close (struct t_gui_buffer *buffer)
         free (buffer->mixed_lines);
 
     /* free some data */
-    if (buffer->title)
-        free (buffer->title);
+    if (buffer->plugin_name_for_upgrade)
+        free (buffer->plugin_name_for_upgrade);
     if (buffer->name)
         free (buffer->name);
+    if (buffer->full_name)
+        free (buffer->full_name);
     if (buffer->short_name)
         free (buffer->short_name);
+    if (buffer->title)
+        free (buffer->title);
     if (buffer->input_buffer)
         free (buffer->input_buffer);
     gui_buffer_undo_free_all (buffer);
@@ -3149,6 +3153,7 @@ gui_buffer_hdata_buffer_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_buffer, next_buffer, POINTER, hdata_name);
         HDATA_LIST(gui_buffers);
         HDATA_LIST(last_gui_buffer);
+        HDATA_LIST(gui_buffer_last_displayed);
     }
     return hdata;
 }
@@ -3359,8 +3364,10 @@ gui_buffer_dump_hexa (struct t_gui_buffer *buffer)
             free (message_without_colors);
         tags = string_build_with_split_string ((const char **)ptr_line->data->tags_array,
                                                ",");
-        log_printf ("  tags: %s, highlight: %d",
-                    (tags) ? tags : "(none)", ptr_line->data->highlight);
+        log_printf ("  tags: '%s', displayed: %d, highlight: %d",
+                    (tags) ? tags : "(none)",
+                    ptr_line->data->displayed,
+                    ptr_line->data->highlight);
         if (tags)
             free (tags);
         snprintf (buf, sizeof (buf), "%s", ctime (&ptr_line->data->date));
@@ -3546,7 +3553,8 @@ gui_buffer_print_log ()
             tags = string_build_with_split_string ((const char **)ptr_line->data->tags_array,
                                                    ",");
             log_printf ("       line N-%05d: y:%d, str_time:'%s', tags:'%s', "
-                        "displayed:%d, highlight:%d, refresh_needed:%d, prefix:'%s'",
+                        "displayed:%d, highlight:%d, refresh_needed:%d, "
+                        "prefix:'%s'",
                         num, ptr_line->data->y, ptr_line->data->str_time,
                         (tags) ? tags  : "",
                         (int)(ptr_line->data->displayed),

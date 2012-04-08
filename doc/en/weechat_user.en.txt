@@ -90,7 +90,7 @@ compile WeeChat.
 | Package ^(1)^          | Version     | Required | Feature
 | cmake                  |             | *yes*    | build (autotools still possible, but cmake is recommended)
 | libncursesw5-dev ^(2)^ |             | *yes*    | ncurses interface
-| libcurl4-xxxxx-dev     |             | *yes*    | URL transfer
+| libcurl4-gnutls-dev    |             | *yes*    | URL transfer
 | gettext                |             |          | internationalization (translation of messages; base language is english)
 | libgcrypt11-dev        |             |          | SASL authentication with IRC server using DH-BLOWFISH mechanism
 | libgnutls-dev          | ≥ 2.2.0     |          | SSL connection to IRC server
@@ -247,6 +247,9 @@ Then under gdb, use command `bt full` to display backtrace.
 You will see something like that:
 
 ----------------------------------------
+(gdb) set logging file /tmp/crash.txt
+(gdb) set logging on
+Copying output to /tmp/crash.txt.
 (gdb) bt full
 #0  0x00007f9dfb04a465 in raise () from /lib/libc.so.6
 #1  0x00007f9dfb04b8e6 in abort () from /lib/libc.so.6
@@ -1365,12 +1368,13 @@ For more information, look at http://www.oftc.net/oftc/NickServ/CertFP
 SASL authentication
 ^^^^^^^^^^^^^^^^^^^
 
-WeeChat supports SASL authentication, using two mechanisms: "plain" (default)
-or "dh-blowfish" (crypted password).
+WeeChat supports SASL authentication, using three mechanisms: "plain" (plain
+text password), "dh-blowfish" (crypted password) or "external" (client side SSL
+cert).
 
 Options in servers are:
 
-* 'sasl_mechanism': mechanism to use ("plain" or "dh-blowfish")
+* 'sasl_mechanism': mechanism to use ("plain", "dh-blowfish" or "external")
 * 'sasl_timeout': timeout (in seconds) for authentication
 * 'sasl_username': username (nick)
 * 'sasl_password': password
@@ -2029,13 +2033,14 @@ Packagers::
     Emmanuel Bouthenot (kolter), Julien Louis (ptitlouis), Odin
 
 Translations::
-    Jiri Golembiovsky, soltys, Nils Görs, rettub, Frank Zacharias,
-    Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi, Marco Paolone,
-    Ivan Sichmann Freitas, Lázaro A.
+    Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
+    Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
+    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi
 
 Patches::
     Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
-    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n
+    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
+    Quentin Glidic (SardemFF7)
 
 
 [[support]]

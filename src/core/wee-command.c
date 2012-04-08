@@ -2393,6 +2393,14 @@ COMMAND_CALLBACK(input)
             gui_input_undo (buffer);
         else if (string_strcasecmp (argv[1], "redo") == 0)
             gui_input_redo (buffer);
+        else if (string_strcasecmp (argv[1], "paste_start") == 0)
+        {
+            /* do nothing here */
+        }
+        else if (string_strcasecmp (argv[1], "paste_stop") == 0)
+        {
+            /* do nothing here */
+        }
     }
 
     return WEECHAT_RC_OK;
@@ -5651,7 +5659,8 @@ command_init ()
                      "  no_filter, no_highlight, no_log, log0..log9 (log level),\n"
                      "  notify_none, notify_message, notify_private, "
                      "notify_highlight,\n"
-                     "  nick_xxx (xxx is nick in message),\n"
+                     "  nick_xxx (xxx is nick in message), "
+                     "prefix_nick_ccc (ccc is color of nick),\n"
                      "  irc_xxx (xxx is command name or number, see /server raw),\n"
                      "  irc_numeric, irc_error, irc_action, irc_ctcp, "
                      "irc_ctcp_reply, irc_smart_filter, away_info.\n"
@@ -5762,7 +5771,9 @@ command_init ()
                      "  switch_active_buffer: switch to next merged buffer\n"
                      "  switch_active_buffer_previous: switch to previous "
                      "merged buffer\n"
-                     "  insert: insert text in command line\n\n"
+                     "  insert: insert text in command line\n"
+                     "  paste_start: start paste (bracketed paste mode)\n"
+                     "  paste_stop: stop paste (bracketed paste mode)\n\n"
                      "This command is used by key bindings or plugins."),
                   "return|complete_next|complete_previous|search_text|"
                   "search_switch_case|search_previous|search_next|search_stop|"
@@ -5776,9 +5787,9 @@ command_init ()
                   "history_global_previous|history_global_next|"
                   "jump_smart|jump_last_buffer|jump_previously_visited_buffer|"
                   "jump_next_visited_buffer|hotlist_clear|grab_key|"
-                  "grab_key_command|grab_mouse|grab_mouse_area|scroll_unread|"
-                  "set_unread|set_unread_current_buffer|switch_active_buffer|"
-                  "switch_active_buffer_previous|insert",
+                  "grab_key_command|grab_mouse|grab_mouse_area|set_unread|"
+                  "set_unread_current_buffer|switch_active_buffer|"
+                  "switch_active_buffer_previous|insert|paste_start|paste_stop",
                   &command_input, NULL);
     hook_command (NULL, "key",
                   N_("bind/unbind keys"),

@@ -290,7 +290,7 @@ weechat_tcl_load (const char *filename)
         return 0;
     }
 
-    if ((weechat_tcl_plugin->debug >= 1) || !tcl_quiet)
+    if ((weechat_tcl_plugin->debug >= 2) || !tcl_quiet)
     {
         weechat_printf (NULL,
                         weechat_gettext ("%s: loading script \"%s\""),
@@ -369,7 +369,7 @@ weechat_tcl_unload (struct t_plugin_script *script)
     Tcl_Interp* interp;
     int *rc;
 
-    if ((weechat_tcl_plugin->debug >= 1) || !tcl_quiet)
+    if ((weechat_tcl_plugin->debug >= 2) || !tcl_quiet)
     {
         weechat_printf (NULL,
                         weechat_gettext ("%s: unloading script \"%s\""),
@@ -714,19 +714,20 @@ weechat_tcl_signal_script_action_cb (void *data, const char *signal,
 int
 weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 {
+    struct t_plugin_script_init init;
+
     weechat_tcl_plugin = plugin;
 
+    init.callback_command = &weechat_tcl_command_cb;
+    init.callback_completion = &weechat_tcl_completion_cb;
+    init.callback_infolist = &weechat_tcl_infolist_cb;
+    init.callback_signal_debug_dump = &weechat_tcl_signal_debug_dump_cb;
+    init.callback_signal_buffer_closed = &weechat_tcl_signal_buffer_closed_cb;
+    init.callback_signal_script_action = &weechat_tcl_signal_script_action_cb;
+    init.callback_load_file = &weechat_tcl_load_cb;
+
     tcl_quiet = 1;
-    script_init (weechat_tcl_plugin,
-                 argc,
-                 argv,
-                 &weechat_tcl_command_cb,
-                 &weechat_tcl_completion_cb,
-                 &weechat_tcl_infolist_cb,
-                 &weechat_tcl_signal_debug_dump_cb,
-                 &weechat_tcl_signal_buffer_closed_cb,
-                 &weechat_tcl_signal_script_action_cb,
-                 &weechat_tcl_load_cb);
+    script_init (weechat_tcl_plugin, argc, argv, &init);
     tcl_quiet = 0;
 
     script_display_short_list (weechat_tcl_plugin,
