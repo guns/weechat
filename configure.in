@@ -24,10 +24,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(WeeChat, 0.3.8-dev, flashcode@flashtux.org)
+AC_INIT(WeeChat, 0.3.9-dev, flashcode@flashtux.org)
 AC_CONFIG_SRCDIR([src/core/weechat.c])
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE([weechat], [0.3.8-dev])
+AM_INIT_AUTOMAKE([weechat], [0.3.9-dev])
 LICENSE="GPL3"
 
 # Checks for programs
@@ -68,7 +68,7 @@ AC_CHECK_LIB(ncursesw, initscr, LIBNCURSESW_FOUND=1, LIBNCURSESW_FOUND=0)
 
 # Checks for header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h libintl.h limits.h locale.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h sys/types.h unistd.h pwd.h errno.h regex.h wchar.h sys/file.h])
+AC_CHECK_HEADERS([arpa/inet.h libintl.h limits.h locale.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h sys/types.h unistd.h pwd.h errno.h regex.h wchar.h sys/file.h sys/resource.h])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_HEADER_TIME
@@ -459,7 +459,7 @@ fi
 PYTHON_VERSION=
 
 if test "x$enable_python" = "xyes" ; then
-    AC_PATH_PROGS(PYTHON, python python2.7 python2.6 python2.5 python2.4 python2.3 python2.2)
+    AC_PATH_PROGS(PYTHON, python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python)
     if test -z $PYTHON ; then
         AC_MSG_WARN([
 *** Python must be installed on your system but python interpreter couldn't be found in path.
@@ -520,7 +520,7 @@ fi
 RUBY_VERSION=
 
 if test "x$enable_ruby" = "xyes" ; then
-    AC_PATH_PROGS(RUBY, ruby1.9.2 ruby1.9.1 ruby1.9 ruby1.8 ruby)
+    AC_PATH_PROGS(RUBY, ruby1.9.3 ruby1.9.2 ruby1.9.1 ruby1.9 ruby1.8 ruby)
     if test -z $RUBY ; then
         AC_MSG_WARN([
 *** Ruby must be installed on your system but ruby interpreter couldn't be found in path.
@@ -837,7 +837,7 @@ fi
 # ------------------------------------------------------------------------------
 
 enable_flock="no"
-AC_CACHE_CHECK([for flock() support], ac_have_flock, [
+AC_CACHE_CHECK([for flock() support], ac_cv_have_flock, [
 AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [[ #include <sys/file.h>]],
 [[ flock(0, LOCK_SH); ]])],
@@ -866,7 +866,7 @@ fi
 
 enable_backtrace="no"
 if test "x$debug" != "x0" ; then
-    AC_CACHE_CHECK([for execinfo.h and backtrace], ac_have_backtrace, [
+    AC_CACHE_CHECK([for execinfo.h and backtrace], ac_cv_have_backtrace, [
         AC_LINK_IFELSE([AC_LANG_PROGRAM(
             [[ #include <execinfo.h> ]],
             [[ void *trace[128]; int n = backtrace(trace, 128); ]])],
@@ -885,7 +885,7 @@ fi
 # ------------------------------------------------------------------------------
 
 enable_eatnewlineglitch="no"
-AC_CACHE_CHECK([for eat_newline_glitch support], ac_have_eatnewlineglitch, [
+AC_CACHE_CHECK([for eat_newline_glitch support], ac_cv_have_eatnewlineglitch, [
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [[ #include <term.h> ]],
 [[ eat_newline_glitch = 0; ]])],
@@ -1108,13 +1108,12 @@ AC_OUTPUT([Makefile
            src/plugins/logger/Makefile
            src/plugins/relay/Makefile
            src/plugins/rmodifier/Makefile
-           src/plugins/scripts/Makefile
-           src/plugins/scripts/perl/Makefile
-           src/plugins/scripts/python/Makefile
-           src/plugins/scripts/ruby/Makefile
-           src/plugins/scripts/lua/Makefile
-           src/plugins/scripts/tcl/Makefile
-           src/plugins/scripts/guile/Makefile
+           src/plugins/perl/Makefile
+           src/plugins/python/Makefile
+           src/plugins/ruby/Makefile
+           src/plugins/lua/Makefile
+           src/plugins/tcl/Makefile
+           src/plugins/guile/Makefile
            src/plugins/xfer/Makefile
            src/gui/Makefile
            src/gui/curses/Makefile

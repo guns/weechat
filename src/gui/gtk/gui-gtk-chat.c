@@ -176,13 +176,15 @@ gui_chat_set_weechat_color (struct t_gui_window *window, int weechat_color)
 char *
 gui_chat_string_next_char (struct t_gui_window *window, struct t_gui_line *line,
                            const unsigned char *string, int apply_style,
-                           int apply_style_inactive)
+                           int apply_style_inactive,
+                           int nick_offline)
 {
     /* TODO: write this function for Gtk */
     (void) window;
     (void) line;
     (void) apply_style;
     (void) apply_style_inactive;
+    (void) nick_offline;
 
     return (char *)string;
 }
@@ -352,7 +354,7 @@ gui_chat_calculate_line_diff (struct t_gui_window *window, struct t_gui_line **l
  */
 
 void
-gui_chat_draw (struct t_gui_buffer *buffer, int erase)
+gui_chat_draw (struct t_gui_buffer *buffer, int clear_chat)
 {
     /*struct t_gui_window *ptr_win;
     struct t_gui_line *ptr_line;
@@ -366,46 +368,10 @@ gui_chat_draw (struct t_gui_buffer *buffer, int erase)
     char format[32], date[128], *buf;
     struct tm *date_tmp;*/
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     /* TODO: write this function for Gtk */
     (void) buffer;
-    (void) erase;
-}
-
-/*
- * gui_chat_draw_line: add a line to chat window for a buffer
- */
-
-void
-gui_chat_draw_line (struct t_gui_buffer *buffer, struct t_gui_line *line)
-{
-    /*
-    struct t_gui_window *ptr_win;
-    unsigned char *message_without_color;
-    GtkTextIter start, end;
-    */
-
-    (void) buffer;
-    (void) line;
-
-    /*
-    ptr_win = gui_buffer_find_window (buffer);
-    if (ptr_win)
-    {
-        message_without_color = gui_color_decode ((unsigned char *)(line->message));
-        if (message_without_color)
-        {
-            gtk_text_buffer_insert_at_cursor (GUI_WINDOW_OBJECTS(ptr_win)->textbuffer_chat,
-                                              (char *)message_without_color, -1);
-            gtk_text_buffer_insert_at_cursor (GUI_WINDOW_OBJECTS(ptr_win)->textbuffer_chat,
-                                              "\n", -1);
-            gtk_text_buffer_get_bounds (GUI_WINDOW_OBJECTS(ptr_win)->textbuffer_chat,
-                                        &start, &end);
-            gtk_text_buffer_apply_tag (ptr_win->textbuffer_chat, ptr_win->texttag_chat, &start, &end);
-            free (message_without_color);
-        }
-    }
-    */
+    (void) clear_chat;
 }

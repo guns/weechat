@@ -5,6 +5,7 @@
         add <protocol.name> <port>
         del <protocol.name>
         raw
+        sslcertkey
 
          list: Auflistung der Relay-Clients (nur aktive Relays)
      listfull: detaillierte Auflistung der Relay-Clients (alle Relays)
@@ -14,15 +15,21 @@
 protocol.name: Protokoll und Name des Relay:
                  - Protokoll "irc": und der Name des Servers welcher geteilt werden soll
                  - Protokoll "weechat" (Name wird nicht unterstützt)
+               Hinweis: Das SSL Protokoll kann durch voranstellen von "ssl." aktiviert werden
          port: Port den das Relay nutzen soll
           raw: öffnet Buffer mit RAW-Relay Daten
+   sslcertkey: setzt SSL Zertifikat/Schlüssel mittels Eintrag in Option relay.network.ssl_cert_key
 
 Ohne Angabe von Argumenten werden alle Relay-Clients in einem neuen Buffer dargestellt.
 
-Beispiel:
+Beispiele:
   IRC Proxy für Server "freenode":
     /relay add irc.freenode 8000
-  weechat protocol:
-    /relay add weechat 8001
+  IRC Proxy, für Server "freenode", mit SSL:
+    /relay add ssl.irc.freenode 8001
+  WeeChat Protokoll:
+    /relay add weechat 9000
+  WeeChat Protokoll, mit SSL:
+    /relay add ssl.weechat 9001
 ........................................
 

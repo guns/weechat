@@ -62,13 +62,12 @@ The main WeeChat directories are:
 |       logger/    | Logger plugin (write messages displayed to files)
 |       relay/     | Relay plugin (irc proxy + relay for remote interfaces)
 |       rmodifier/ | Rmodifier plugin (alter modifier strings with regular expressions)
-|       scripts/   | Script plugins
-|          python/ | Python scripting API
-|          perl/   | Perl scripting API
-|          ruby/   | Ruby scripting API
-|          lua/    | Lua scripting API
-|          tcl/    | Tcl scripting API
-|          guile/  | Guile (scheme) scripting API
+|       python/    | Python scripting API
+|       perl/      | Perl scripting API
+|       ruby/      | Ruby scripting API
+|       lua/       | Lua scripting API
+|       tcl/       | Tcl scripting API
+|       guile/     | Guile (scheme) scripting API
 |       xfer/      | Xfer (IRC DCC file/chat)
 | doc/             | Documentation
 | po/              | Translations files (gettext)
@@ -85,8 +84,8 @@ Core
 
 WeeChat "core" reside in following directories:
 
-* 'src/core': core functions (for data manipulation)
-* 'src/gui': functions about interface (buffers, windows, ...)
+* 'src/core/': core functions (for data manipulation)
+* 'src/gui/': functions about interface (buffers, windows, ...)
 
 [width="100%",cols="1l,5",options="header"]
 |========================================
@@ -165,6 +164,9 @@ Plugins
 |    plugin.c                       | Plugins management (load/unload dynamic C libraries)
 |    plugin-api.c                   | Extra functions for plugin API (wrapper around WeeChat core functions)
 |    plugin-config.c                | Plugin configuration options (file plugins.conf)
+|    plugin-script.c                | Common functions used by script plugins
+|    plugin-script-api.c            | Script API functions: wrappers around some plugin API functions
+|    plugin-script-callback.c       | Callback management for scripts
 |    weechat-plugin.h               | Header designed to be distributed with WeeChat plugins, in order to compile them
 |    alias/                         | Alias plugin
 |       alias.c                     | Main alias functions
@@ -181,6 +183,9 @@ Plugins
 |    fifo/                          | Fifo plugin
 |       fifo.c                      | Main fifo functions
 |       fifo-info.c                 | Info and infolists from fifo plugin
+|    guile/                         | Guile (scheme) plugin
+|       weechat-guile.c             | Main guile functions (load/unload scripts, execute guile code)
+|       weechat-guile-api.c         | Guile scripting API functions
 |    irc/                           | IRC (Internet Relay Chat) plugin
 |       irc.c                       | Main IRC functions
 |       irc-bar-item.c              | IRC bar items
@@ -213,6 +218,15 @@ Plugins
 |       logger-config.c             | Logger config options
 |       logger-info.c               | Info and infolists from logger plugin
 |       logger-tail.c               | Return last lines of a file
+|    lua/                           | Lua plugin
+|       weechat-lua.c               | Main lua functions (load/unload scripts, execute lua code)
+|       weechat-lua-api.c           | Lua scripting API functions
+|    perl/                          | Perl plugin
+|       weechat-perl.c              | Main perl functions (load/unload scripts, execute perl code)
+|       weechat-perl-api.c          | Perl scripting API functions
+|    python/                        | Python plugin
+|       weechat-python.c            | Main python functions (load/unload scripts, execute python code)
+|       weechat-python-api.c        | Python scripting API functions
 |    relay/                         | Relay plugin (IRC proxy and relay for remote interfaces)
 |       relay.c                     | Main relay functions
 |       relay-buffer.c              | Relay buffer
@@ -221,6 +235,7 @@ Plugins
 |       relay-completion.c          | Relay completions
 |       relay-config.c              | Relay config options
 |       relay-info.c                | Info and infolists from relay plugin
+|       relay-network.c             | Network functions for relay
 |       relay-raw.c                 | Relay raw buffer
 |       relay-server.c              | Relay server
 |       relay-upgrade.c             | Save/restore relay data when upgrading WeeChat
@@ -237,28 +252,12 @@ Plugins
 |       rmodifier-config.c          | Rmodifier config options
 |       rmodifier-debug.c           | Rmodifier debug functions
 |       rmodifier-info.c            | Info and infolists from rmodifier plugin
-|    scripts/                       | Scripting API
-|       script.c                    | Common functions used by script plugins
-|       script-api.c                | Script API functions: wrappers around some plugin API functions
-|       script-callback.c           | Callback management for scripts
-|       python/                     | Python plugin
-|          weechat-python.c         | Main python functions (load/unload scripts, execute python code)
-|          weechat-python-api.c     | Python scripting API functions
-|       perl/                       | Perl plugin
-|          weechat-perl.c           | Main perl functions (load/unload scripts, execute perl code)
-|          weechat-perl-api.c       | Perl scripting API functions
-|       ruby/                       | Ruby plugin
-|          weechat-ruby.c           | Main ruby functions (load/unload scripts, execute ruby code)
-|          weechat-ruby-api.c       | Ruby scripting API functions
-|       lua/                        | Lua plugin
-|          weechat-lua.c            | Main lua functions (load/unload scripts, execute lua code)
-|          weechat-lua-api.c        | Lua scripting API functions
-|       tcl/                        | Tcl plugin
-|          weechat-tcl.c            | Main tcl functions (load/unload scripts, execute tcl code)
-|          weechat-tcl-api.c        | Tcl scripting API functions
-|       guile/                      | Guile (scheme) plugin
-|          weechat-guile.c          | Main guile functions (load/unload scripts, execute guile code)
-|          weechat-guile-api.c      | Guile scripting API functions
+|    ruby/                          | Ruby plugin
+|       weechat-ruby.c              | Main ruby functions (load/unload scripts, execute ruby code)
+|       weechat-ruby-api.c          | Ruby scripting API functions
+|    tcl/                           | Tcl plugin
+|       weechat-tcl.c               | Main tcl functions (load/unload scripts, execute tcl code)
+|       weechat-tcl-api.c           | Tcl scripting API functions
 |    xfer/                          | Xfer plugin (IRC DCC file/chat)
 |       xfer.c                      | Main xfer functions
 |       xfer-buffer.c               | Xfer buffer
@@ -273,9 +272,11 @@ Plugins
 |       xfer-upgrade.c              | Save/restore xfer data when upgrading WeeChat
 |========================================
 
-[[documentation]]
-Documentation
-~~~~~~~~~~~~~
+[[documentation_translations]]
+Documentation / translations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Documentation files:
 
 [width="100%",cols="1l,5",options="header"]
 |========================================
@@ -298,10 +299,6 @@ Documentation
 |          user/                      | Files auto-built for user's guide
 |          plugin_api/                | Files auto-built for plugin API
 |========================================
-
-[[translations]]
-Translations
-~~~~~~~~~~~~
 
 Translations for WeeChat and plugins are done with gettext, files are in 'po/' directory:
 
@@ -588,14 +585,13 @@ Examples:
 
 [width="100%",cols="1l,5",options="header"]
 |========================================
-| Directory                   | Files
-| src/core/                   | weechat.c, wee-backtrace.c, wee-command.c, ...
-| src/gui/                    | gui-bar.c, gui-bar-item.c, gui-bar-window.c, ...
-| src/gui/curses/             | gui-curses-bar.c, gui-curses-bar-window.c, gui-curses-chat.c, ...
-| src/plugins/                | plugin.c, plugin-api.c, plugin-config.c, ...
-| src/plugins/irc/            | irc.c, irc-bar-item.c, irc-buffer.c, ...
-| src/plugins/scripts/        | script.c, script-api.c, script-callback.c, ...
-| src/plugins/scripts/python/ | weechat-python.c, weechat-python-api.c, ...
+| Directory           | Files
+| src/core/           | weechat.c, wee-backtrace.c, wee-command.c, ...
+| src/gui/            | gui-bar.c, gui-bar-item.c, gui-bar-window.c, ...
+| src/gui/curses/     | gui-curses-bar.c, gui-curses-bar-window.c, gui-curses-chat.c, ...
+| src/plugins/        | plugin.c, plugin-api.c, plugin-config.c, plugin-script.c, ...
+| src/plugins/irc/    | irc.c, irc-bar-item.c, irc-buffer.c, ...
+| src/plugins/python/ | weechat-python.c, weechat-python-api.c, ...
 |========================================
 
 The headers of C files have same name as file, for example 'wee-command.h' for
@@ -790,7 +786,7 @@ All combinations are summarized in this table:
 
 Color codes using options (see 't_gui_color_enum', in file 'src/gui/gui-color.h'):
 
-[width="40%",cols="^1m,5",options="header"]
+[width="60%",cols="^1m,10",options="header"]
 |========================================
 | Code | Option
 | 00   | weechat.color.separator
@@ -827,15 +823,17 @@ Color codes using options (see 't_gui_color_enum', in file 'src/gui/gui-color.h'
 | 31   | weechat.color.chat_text_found
 | 32   | weechat.color.chat_value
 | 33   | weechat.color.chat_prefix_buffer
-| 34   | weechat.color.chat_tags
-| 35   | weechat.color.chat_inactive_window
-| 36   | weechat.color.chat_inactive_buffer
-| 37   | weechat.color.chat_prefix_buffer_inactive_buffer
+| 34   | weechat.color.chat_tags _(new in version 0.3.6)_
+| 35   | weechat.color.chat_inactive_window _(new in version 0.3.6)_
+| 36   | weechat.color.chat_inactive_buffer _(new in version 0.3.6)_
+| 37   | weechat.color.chat_prefix_buffer_inactive_buffer _(new in version 0.3.6)_
+| 38   | weechat.color.chat_nick_offline _(new in version 0.3.9)_
+| 39   | weechat.color.chat_nick_offline_highlight _(new in version 0.3.9)_
 |========================================
 
 WeeChat colors are:
 
-[width="40%",cols="^1m,5",options="header"]
+[width="40%",cols="^1m,6",options="header"]
 |========================================
 | Code | Color
 | 00   | default (terminal foreground/background)
@@ -930,7 +928,36 @@ Git repository
 Git repository is at this URL: http://git.savannah.gnu.org/gitweb/?p=weechat.git
 
 Any patch for bug or new feature must be done on master branch, preferred format
-is a patch made with `git diff` or `git-format-patch`, sent by e-mail.
+is a patch made with `git diff` or `git format-patch`, sent by e-mail.
+
+Format of commit message is the following:
+
+----------------------------------------
+component: fix a problem (bug #12345)
+----------------------------------------
+
+Where 'component' is one of following:
+
+* WeeChat core: 'core' (files in directory 'src/' except doc and plugins)
+* documentation files: 'doc' (files in directory 'doc/')
+* name of a plugin: 'irc', 'python', 'relay', ... (files in directory 'src/plugins/')
+
+Some rules to follow:
+
+* use only english
+* use infinitive form of verb
+* if commit is related to something in tracker (bug, task, patch), write it
+  in parenthesis after the message (format: bug #12345, task #12345, patch #12345)
+
+Examples of commit messages:
+
+----------------------------------------
+core: add callback "nickcmp" for nick comparison in buffers
+irc: fix freeze when reading on socket with SSL enabled (bug #35097)
+ruby: add detection of ruby version 1.9.3 in cmake
+python: fix crash when unloading a script without pointer to interpreter
+core: update japanese translations (patch #7783)
+----------------------------------------
 
 [[translations]]
 Translations
@@ -962,7 +989,7 @@ $ msg_check_lines.py xx.po
 The `msgfmt` will perform checks on message catalog and display errors, like bad
 use of format specifiers in strings.
 
-The scripts msg_check_lines.py (http://www.weechat.org/files/temp/po/msg_check_lines.py)
+The script msg_check_lines.py (http://www.weechat.org/files/temp/po/msg_check_lines.py)
 will check number of lines in translated strings (which must be the same as
 string in english).
 

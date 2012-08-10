@@ -46,7 +46,7 @@ struct timeval;
  */
 
 /* API version (used to check that plugin has same API and can be loaded) */
-#define WEECHAT_PLUGIN_API_VERSION "20120323-01"
+#define WEECHAT_PLUGIN_API_VERSION "20120804-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -279,6 +279,7 @@ struct t_weechat_plugin
     long (*util_timeval_diff) (struct timeval *tv1, struct timeval *tv2);
     void (*util_timeval_add) (struct timeval *tv, long interval);
     char *(*util_get_time_string) (const time_t *date);
+    int (*util_version_number) (const char *version);
 
     /* sorted lists */
     struct t_weelist *(*list_new) ();
@@ -647,6 +648,8 @@ struct t_weechat_plugin
                                   struct t_hashtable *(*callback)(void *data,
                                                                   struct t_hashtable *info),
                                   void *callback_data);
+    void (*hook_set) (struct t_hook *hook, const char *property,
+                      const char *value);
     void (*unhook) (struct t_hook *hook);
     void (*unhook_all) (struct t_weechat_plugin *plugin);
 
@@ -832,7 +835,8 @@ struct t_weechat_plugin
                                   const char *hdata_name, const char *var_prev,
                                   const char *var_next);
     void (*hdata_new_var) (struct t_hdata *hdata, const char *name, int offset,
-                           int type, const char *hdata_name);
+                           int type, const char *array_size,
+                           const char *hdata_name);
     void (*hdata_new_list) (struct t_hdata *hdata, const char *name,
                             void *pointer);
     struct t_hdata *(*hdata_get) (struct t_weechat_plugin *plugin,
@@ -841,6 +845,11 @@ struct t_weechat_plugin
     int (*hdata_get_var_type) (struct t_hdata *hdata, const char *name);
     const char *(*hdata_get_var_type_string) (struct t_hdata *hdata,
                                               const char *name);
+    int (*hdata_get_var_array_size) (struct t_hdata *hdata, void *pointer,
+                                     const char *name);
+    const char *(*hdata_get_var_array_size_string) (struct t_hdata *hdata,
+                                                    void *pointer,
+                                                    const char *name);
     const char *(*hdata_get_var_hdata) (struct t_hdata *hdata,
                                         const char *name);
     void *(*hdata_get_var) (struct t_hdata *hdata, void *pointer,
@@ -903,11 +912,15 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 #ifndef __WEECHAT_H
 #ifndef _
 #define _(string) weechat_plugin->gettext(string)
+#endif /* _ */
+#ifndef N_
 #define N_(string) (string)
+#endif /* N_ */
+#ifndef NG_
 #define NG_(single,plural,number)                                       \
     weechat_plugin->ngettext(single, plural, number)
-#endif
-#endif
+#endif /* NG_ */
+#endif /* __WEECHAT_H */
 #define weechat_gettext(string) weechat_plugin->gettext(string)
 #define weechat_ngettext(single,plural,number)                          \
     weechat_plugin->ngettext(single, plural, number)
@@ -1040,6 +1053,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->util_timeval_add(__time, __interval)
 #define weechat_util_get_time_string(__date)                            \
     weechat_plugin->util_get_time_string(__date)
+#define weechat_util_version_number(__version)                          \
+    weechat_plugin->util_version_number(__version)
 
 /* sorted list */
 #define weechat_list_new()                                              \
@@ -1383,6 +1398,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 #define weechat_hook_focus(__area, __callback, __data)                  \
     weechat_plugin->hook_focus(weechat_plugin, __area, __callback,      \
                                __data)
+#define weechat_hook_set(__hook, __property, __value)                   \
+    weechat_plugin->hook_set(__hook, __property, __value)
 #define weechat_unhook(__hook)                                          \
     weechat_plugin->unhook( __hook)
 #define weechat_unhook_all()                                            \
@@ -1587,12 +1604,14 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->hdata_new(weechat_plugin, __hdata_name, __var_prev, \
                               __var_next)
 #define weechat_hdata_new_var(__hdata, __name, __offset, __type,        \
-                              __hdata_name)                             \
+                              __array_size, __hdata_name)               \
     weechat_plugin->hdata_new_var(__hdata, __name, __offset, __type,    \
-                                  __hdata_name)
-#define WEECHAT_HDATA_VAR(__struct, __name, __type, __hdata_name)       \
+                                  __array_size, __hdata_name)
+#define WEECHAT_HDATA_VAR(__struct, __name, __type, __array_size,       \
+                          __hdata_name)                                 \
     weechat_hdata_new_var (hdata, #__name, offsetof (__struct, __name), \
-                           WEECHAT_HDATA_##__type, __hdata_name)
+                           WEECHAT_HDATA_##__type, __array_size,        \
+                           __hdata_name)
 #define weechat_hdata_new_list(__hdata, __name, __pointer)              \
     weechat_plugin->hdata_new_list(__hdata, __name, __pointer)
 #define WEECHAT_HDATA_LIST(__name)                                      \
@@ -1605,6 +1624,13 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->hdata_get_var_type(__hdata, __name)
 #define weechat_hdata_get_var_type_string(__hdata, __name)              \
     weechat_plugin->hdata_get_var_type_string(__hdata, __name)
+#define weechat_hdata_get_var_array_size(__hdata, __pointer, __name)    \
+    weechat_plugin->hdata_get_var_array_size(__hdata, __pointer,        \
+                                             __name)
+#define weechat_hdata_get_var_array_size_string(__hdata, __pointer,     \
+                                                __name)                 \
+    weechat_plugin->hdata_get_var_array_size_string(__hdata, __pointer, \
+                                                    __name)
 #define weechat_hdata_get_var_hdata(__hdata, __name)                    \
     weechat_plugin->hdata_get_var_hdata(__hdata, __name)
 #define weechat_hdata_get_var(__hdata, __pointer, __name)               \

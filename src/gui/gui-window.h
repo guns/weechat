@@ -20,17 +20,10 @@
 #ifndef __WEECHAT_GUI_WINDOW_H
 #define __WEECHAT_GUI_WINDOW_H 1
 
-#define GUI_WINDOW_MIN_WIDTH          10
-#define GUI_WINDOW_MIN_HEIGHT         5
-
-#define GUI_WINDOW_CHAT_MIN_WIDTH     5
-#define GUI_WINDOW_CHAT_MIN_HEIGHT    2
-
 struct t_infolist;
 struct t_gui_bar_window;
 
 extern int gui_init_ok;
-extern int gui_ok;
 extern int gui_window_refresh_needed;
 extern int gui_window_cursor_x, gui_window_cursor_y;
 
@@ -207,7 +200,7 @@ extern int gui_window_get_width ();
 extern int gui_window_get_height ();
 extern int gui_window_objects_init (struct t_gui_window *window);
 extern void gui_window_objects_free (struct t_gui_window *window,
-                                     int free_separator);
+                                     int free_separators);
 extern void gui_window_save_style ();
 extern void gui_window_restore_style ();
 extern void gui_window_calculate_pos_size (struct t_gui_window *window);

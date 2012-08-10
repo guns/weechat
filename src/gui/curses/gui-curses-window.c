@@ -27,11 +27,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <libgen.h>
 #include <sys/ioctl.h>
+#include <sys/termios.h>
 
 #include "../../core/weechat.h"
 #include "../../core/wee-config.h"
@@ -106,9 +108,6 @@ gui_window_read_terminal_size ()
         gui_term_cols = new_width;
         gui_term_lines = new_height;
     }
-
-    gui_ok = ((gui_term_cols >= GUI_WINDOW_MIN_WIDTH)
-              && (gui_term_lines >= GUI_WINDOW_MIN_HEIGHT));
 }
 
 /*
@@ -125,7 +124,8 @@ gui_window_objects_init (struct t_gui_window *window)
     {
         window->gui_objects = new_objects;
         GUI_WINDOW_OBJECTS(window)->win_chat = NULL;
-        GUI_WINDOW_OBJECTS(window)->win_separator = NULL;
+        GUI_WINDOW_OBJECTS(window)->win_separator_horiz = NULL;
+        GUI_WINDOW_OBJECTS(window)->win_separator_vertic = NULL;
         return 1;
     }
     return 0;
@@ -136,17 +136,25 @@ gui_window_objects_init (struct t_gui_window *window)
  */
 
 void
-gui_window_objects_free (struct t_gui_window *window, int free_separator)
+gui_window_objects_free (struct t_gui_window *window, int free_separators)
 {
     if (GUI_WINDOW_OBJECTS(window)->win_chat)
     {
         delwin (GUI_WINDOW_OBJECTS(window)->win_chat);
         GUI_WINDOW_OBJECTS(window)->win_chat = NULL;
     }
-    if (free_separator && GUI_WINDOW_OBJECTS(window)->win_separator)
+    if (free_separators)
     {
-        delwin (GUI_WINDOW_OBJECTS(window)->win_separator);
-        GUI_WINDOW_OBJECTS(window)->win_separator = NULL;
+        if  (GUI_WINDOW_OBJECTS(window)->win_separator_horiz)
+        {
+            delwin (GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
+            GUI_WINDOW_OBJECTS(window)->win_separator_horiz = NULL;
+        }
+        if  (GUI_WINDOW_OBJECTS(window)->win_separator_vertic)
+        {
+            delwin (GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
+            GUI_WINDOW_OBJECTS(window)->win_separator_vertic = NULL;
+        }
     }
 }
 
@@ -157,7 +165,7 @@ gui_window_objects_free (struct t_gui_window *window, int free_separator)
 void
 gui_window_clear_weechat (WINDOW *window, int weechat_color)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     wbkgdset (window, ' ' | COLOR_PAIR (gui_color_weechat_get_pair (weechat_color)));
@@ -172,7 +180,7 @@ gui_window_clear_weechat (WINDOW *window, int weechat_color)
 void
 gui_window_clear (WINDOW *window, int fg, int bg)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if ((fg > 0) && (fg & GUI_COLOR_EXTENDED_FLAG))
@@ -932,13 +940,6 @@ gui_window_calculate_pos_size (struct t_gui_window *window)
     struct t_gui_bar_window *ptr_bar_win;
     int add_top, add_bottom, add_left, add_right;
 
-    if ((window->win_width < GUI_WINDOW_MIN_WIDTH)
-        || (window->win_height < GUI_WINDOW_MIN_HEIGHT))
-    {
-        gui_ok = 0;
-        return;
-    }
-
     for (ptr_bar_win = window->bar_windows; ptr_bar_win;
          ptr_bar_win = ptr_bar_win->next_bar_window)
     {
@@ -957,44 +958,85 @@ gui_window_calculate_pos_size (struct t_gui_window *window)
     window->win_chat_cursor_x = window->win_x + add_left;
     window->win_chat_cursor_y = window->win_y + add_top;
 
-    if ((window->win_chat_width <= 1) || (window->win_chat_height <= 0))
-        gui_ok = 0;
+    /* chat area too small? (not enough space left) */
+    if ((window->win_chat_width < 1) || (window->win_chat_height < 1))
+    {
+        /* invalidate the chat area, it will not be displayed */
+        window->win_chat_x = -1;
+        window->win_chat_y = -1;
+        window->win_chat_width = 0;
+        window->win_chat_height = 0;
+        window->win_chat_cursor_x = 0;
+        window->win_chat_cursor_y = 0;
+    }
 }
 
 /*
- * gui_window_draw_separator: draw window separation
+ * gui_window_draw_separators: draw window separators
  */
 
 void
-gui_window_draw_separator (struct t_gui_window *window)
+gui_window_draw_separators (struct t_gui_window *window)
 {
-    int separator_vertical;
+    int separator;
 
-    if (GUI_WINDOW_OBJECTS(window)->win_separator)
+    /* remove separators */
+    if (GUI_WINDOW_OBJECTS(window)->win_separator_horiz)
     {
-        delwin (GUI_WINDOW_OBJECTS(window)->win_separator);
-        GUI_WINDOW_OBJECTS(window)->win_separator = NULL;
+        delwin (GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
+        GUI_WINDOW_OBJECTS(window)->win_separator_horiz = NULL;
+    }
+    if (GUI_WINDOW_OBJECTS(window)->win_separator_vertic)
+    {
+        delwin (GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
+        GUI_WINDOW_OBJECTS(window)->win_separator_vertic = NULL;
     }
 
-    if (window->win_x > gui_bar_root_get_size (NULL, GUI_BAR_POSITION_LEFT))
+    /* create/draw horizontal separator */
+    if (CONFIG_BOOLEAN(config_look_window_separator_horizontal)
+        && (window->win_y + window->win_height <
+            gui_window_get_height () - gui_bar_root_get_size (NULL, GUI_BAR_POSITION_BOTTOM)))
     {
-        GUI_WINDOW_OBJECTS(window)->win_separator = newwin (window->win_height,
-                                                            1,
-                                                            window->win_y,
-                                                            window->win_x - 1);
-        gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator,
+        GUI_WINDOW_OBJECTS(window)->win_separator_horiz = newwin (1,
+                                                                  window->win_width,
+                                                                  window->win_y + window->win_height,
+                                                                  window->win_x);
+        gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator_horiz,
                                       GUI_COLOR_SEPARATOR);
-        separator_vertical = ACS_VLINE;
+        separator = ACS_HLINE;
+        if (CONFIG_STRING(config_look_separator_horizontal)
+            && CONFIG_STRING(config_look_separator_horizontal)[0])
+        {
+            separator = utf8_char_int (CONFIG_STRING(config_look_separator_horizontal));
+            if (separator > 127)
+                separator = ACS_VLINE;
+        }
+        mvwhline (GUI_WINDOW_OBJECTS(window)->win_separator_horiz, 0, 0,
+                  separator, window->win_width);
+        wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
+    }
+
+    /* create/draw vertical separator */
+    if (CONFIG_BOOLEAN(config_look_window_separator_vertical)
+        && (window->win_x > gui_bar_root_get_size (NULL, GUI_BAR_POSITION_LEFT)))
+    {
+        GUI_WINDOW_OBJECTS(window)->win_separator_vertic = newwin (window->win_height,
+                                                                   1,
+                                                                   window->win_y,
+                                                                   window->win_x - 1);
+        gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator_vertic,
+                                      GUI_COLOR_SEPARATOR);
+        separator = ACS_VLINE;
         if (CONFIG_STRING(config_look_separator_vertical)
             && CONFIG_STRING(config_look_separator_vertical)[0])
         {
-            separator_vertical = utf8_char_int (CONFIG_STRING(config_look_separator_vertical));
-            if (separator_vertical > 127)
-                separator_vertical = ACS_VLINE;
+            separator = utf8_char_int (CONFIG_STRING(config_look_separator_vertical));
+            if (separator > 127)
+                separator = ACS_VLINE;
         }
-        mvwvline (GUI_WINDOW_OBJECTS(window)->win_separator, 0, 0,
-                  separator_vertical, window->win_height);
-        wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator);
+        mvwvline (GUI_WINDOW_OBJECTS(window)->win_separator_vertic, 0, 0,
+                  separator, window->win_height);
+        wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
     }
 }
 
@@ -1005,7 +1047,7 @@ gui_window_draw_separator (struct t_gui_window *window)
 void
 gui_window_redraw_buffer (struct t_gui_buffer *buffer)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     gui_chat_draw (buffer, 1);
@@ -1020,7 +1062,7 @@ gui_window_redraw_all_buffers ()
 {
     struct t_gui_buffer *ptr_buffer;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     for (ptr_buffer = gui_buffers; ptr_buffer;
@@ -1042,7 +1084,7 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
     struct t_gui_bar_window *ptr_bar_window;
     struct t_gui_buffer *old_buffer;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     gui_buffer_add_value_num_displayed (window->buffer, -1);
@@ -1087,35 +1129,38 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
     if (!weechat_upgrading && (old_buffer != buffer))
         gui_hotlist_remove_buffer (buffer);
 
-    if (gui_ok)
+    gui_bar_window_remove_unused_bars (window);
+    gui_bar_window_add_missing_bars (window);
+
+    /* create bar windows */
+    for (ptr_bar_window = window->bar_windows; ptr_bar_window;
+         ptr_bar_window = ptr_bar_window->next_bar_window)
     {
-        gui_bar_window_remove_unused_bars (window);
-        gui_bar_window_add_missing_bars (window);
+        gui_bar_window_content_build (ptr_bar_window, window);
+        gui_bar_window_calculate_pos_size (ptr_bar_window, window);
+        gui_bar_window_create_win (ptr_bar_window);
+    }
 
-        /* create bar windows */
-        for (ptr_bar_window = window->bar_windows; ptr_bar_window;
-             ptr_bar_window = ptr_bar_window->next_bar_window)
-        {
-            gui_bar_window_content_build (ptr_bar_window, window);
-            gui_bar_window_calculate_pos_size (ptr_bar_window, window);
-            gui_bar_window_create_win (ptr_bar_window);
-        }
+    gui_window_calculate_pos_size (window);
 
-        gui_window_calculate_pos_size (window);
+    /* destroy Curses windows */
+    gui_window_objects_free (window, 0);
 
-        /* destroy Curses windows */
-        gui_window_objects_free (window, 0);
-
-        /* create Curses windows */
-        if (GUI_WINDOW_OBJECTS(window)->win_chat)
-            delwin (GUI_WINDOW_OBJECTS(window)->win_chat);
+    /* create Curses windows */
+    if (GUI_WINDOW_OBJECTS(window)->win_chat)
+    {
+        delwin (GUI_WINDOW_OBJECTS(window)->win_chat);
+        GUI_WINDOW_OBJECTS(window)->win_chat = NULL;
+    }
+    if ((window->win_chat_x >= 0) && (window->win_chat_y >= 0))
+    {
         GUI_WINDOW_OBJECTS(window)->win_chat = newwin (window->win_chat_height,
                                                        window->win_chat_width,
                                                        window->win_chat_y,
                                                        window->win_chat_x);
-        gui_window_draw_separator (window);
-        gui_buffer_ask_chat_refresh (window->buffer, 2);
     }
+    gui_window_draw_separators (window);
+    gui_buffer_ask_chat_refresh (window->buffer, 2);
 
     if (window->buffer->type == GUI_BUFFER_TYPE_FREE)
     {
@@ -1193,7 +1238,7 @@ gui_window_page_up (struct t_gui_window *window)
     char scroll[32];
     int num_lines;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     num_lines = ((window->win_chat_height - 1) *
@@ -1243,7 +1288,7 @@ gui_window_page_down (struct t_gui_window *window)
     int line_pos, num_lines;
     char scroll[32];
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     num_lines = ((window->win_chat_height - 1) *
@@ -1298,7 +1343,7 @@ gui_window_scroll_up (struct t_gui_window *window)
 {
     char scroll[32];
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     switch (window->buffer->type)
@@ -1342,7 +1387,7 @@ gui_window_scroll_down (struct t_gui_window *window)
     int line_pos;
     char scroll[32];
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     switch (window->buffer->type)
@@ -1389,7 +1434,7 @@ gui_window_scroll_down (struct t_gui_window *window)
 void
 gui_window_scroll_top (struct t_gui_window *window)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     switch (window->buffer->type)
@@ -1426,7 +1471,7 @@ gui_window_scroll_bottom (struct t_gui_window *window)
 {
     char scroll[32];
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     switch (window->buffer->type)
@@ -1472,17 +1517,17 @@ gui_window_auto_resize (struct t_gui_window_tree *tree,
                         int x, int y, int width, int height,
                         int simulate)
 {
-    int size1, size2;
+    int size1, size2, separator;
     struct t_gui_window_tree *parent;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return 0;
 
     if (tree)
     {
         if (tree->window)
         {
-            if ((width < GUI_WINDOW_MIN_WIDTH) || (height < GUI_WINDOW_MIN_HEIGHT))
+            if ((width < 1) || (height < 2))
                 return -1;
             if (!simulate)
             {
@@ -1512,9 +1557,10 @@ gui_window_auto_resize (struct t_gui_window_tree *tree,
         {
             if (tree->split_horizontal)
             {
-                size1 = (height * tree->split_pct) / 100;
-                size2 = height - size1;
-                if (gui_window_auto_resize (tree->child1, x, y + size1,
+                separator = (CONFIG_BOOLEAN(config_look_window_separator_horizontal)) ? 1 : 0;
+                size1 = ((height - separator) * tree->split_pct) / 100;
+                size2 = height - size1 - separator;
+                if (gui_window_auto_resize (tree->child1, x, y + size1 + separator,
                                             width, size2, simulate) < 0)
                     return -1;
                 if (gui_window_auto_resize (tree->child2, x, y,
@@ -1523,12 +1569,13 @@ gui_window_auto_resize (struct t_gui_window_tree *tree,
             }
             else
             {
+                separator = (CONFIG_BOOLEAN(config_look_window_separator_vertical)) ? 1 : 0;
                 size1 = (width * tree->split_pct) / 100;
-                size2 = width - size1 - 1;
+                size2 = width - size1 - separator;
                 if (gui_window_auto_resize (tree->child1, x, y,
                                             size1, height, simulate) < 0)
                     return -1;
-                if (gui_window_auto_resize (tree->child2, x + size1 + 1, y,
+                if (gui_window_auto_resize (tree->child2, x + size1 + separator, y,
                                             size2, height, simulate) < 0)
                     return -1;
             }
@@ -1549,7 +1596,7 @@ gui_window_refresh_windows ()
     struct t_gui_bar *ptr_bar;
     int add_bottom, add_top, add_left, add_right;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     old_current_window = gui_current_window;
@@ -1606,22 +1653,26 @@ struct t_gui_window *
 gui_window_split_horizontal (struct t_gui_window *window, int percentage)
 {
     struct t_gui_window *new_window;
-    int height1, height2;
+    int height1, height2, separator;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return NULL;
 
     new_window = NULL;
 
-    height1 = (window->win_height * percentage) / 100;
-    height2 = window->win_height - height1;
+    separator = (CONFIG_BOOLEAN(config_look_window_separator_horizontal)) ? 1 : 0;
 
-    if ((height1 >= GUI_WINDOW_MIN_HEIGHT) && (height2 >= GUI_WINDOW_MIN_HEIGHT)
+    height1 = ((window->win_height - separator) * percentage) / 100;
+    height2 = window->win_height - height1 - separator;
+
+    if ((height1 >= 2) && (height2 >= 2)
         && (percentage > 0) && (percentage < 100))
     {
         new_window = gui_window_new (window, window->buffer,
-                                     window->win_x, window->win_y,
-                                     window->win_width, height1,
+                                     window->win_x,
+                                     window->win_y,
+                                     window->win_width,
+                                     height1,
                                      100, percentage);
         if (new_window)
         {
@@ -1651,22 +1702,26 @@ struct t_gui_window *
 gui_window_split_vertical (struct t_gui_window *window, int percentage)
 {
     struct t_gui_window *new_window;
-    int width1, width2;
+    int width1, width2, separator;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return NULL;
 
     new_window = NULL;
 
-    width1 = (window->win_width * percentage) / 100;
-    width2 = window->win_width - width1 - 1;
+    separator = (CONFIG_BOOLEAN(config_look_window_separator_vertical)) ? 1 : 0;
 
-    if ((width1 >= GUI_WINDOW_MIN_WIDTH) && (width2 >= GUI_WINDOW_MIN_WIDTH)
+    width1 = (window->win_width * percentage) / 100;
+    width2 = window->win_width - width1 - separator;
+
+    if ((width1 >= 1) && (width2 >= 1)
         && (percentage > 0) && (percentage < 100))
     {
         new_window = gui_window_new (window, window->buffer,
-                                     window->win_x + width1 + 1, window->win_y,
-                                     width2, window->win_height,
+                                     window->win_x + width1 + separator,
+                                     window->win_y,
+                                     width2,
+                                     window->win_height,
                                      percentage, 100);
         if (new_window)
         {
@@ -1682,8 +1737,8 @@ gui_window_split_vertical (struct t_gui_window *window, int percentage)
 
             gui_window_switch (new_window);
 
-            /* create & draw separator */
-            gui_window_draw_separator (gui_current_window);
+            /* create & draw separators */
+            gui_window_draw_separators (gui_current_window);
         }
     }
 
@@ -1700,7 +1755,7 @@ gui_window_resize (struct t_gui_window *window, int percentage)
     struct t_gui_window_tree *parent;
     int old_split_pct, add_bottom, add_top, add_left, add_right;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     parent = window->ptr_tree->parent_node;
@@ -1742,7 +1797,7 @@ gui_window_resize_delta (struct t_gui_window *window, int delta_percentage)
     struct t_gui_window_tree *parent;
     int old_split_pct, add_bottom, add_top, add_left, add_right;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     parent = window->ptr_tree->parent_node;
@@ -1786,8 +1841,9 @@ int
 gui_window_merge (struct t_gui_window *window)
 {
     struct t_gui_window_tree *parent, *sister;
+    int separator;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return 0;
 
     parent = window->ptr_tree->parent_node;
@@ -1802,13 +1858,15 @@ gui_window_merge (struct t_gui_window *window)
         if (window->win_y == sister->window->win_y)
         {
             /* horizontal merge */
-            window->win_width += sister->window->win_width + 1;
+            separator = (CONFIG_BOOLEAN(config_look_window_separator_horizontal)) ? 1 : 0;
+            window->win_width += sister->window->win_width + separator;
             window->win_width_pct += sister->window->win_width_pct;
         }
         else
         {
             /* vertical merge */
-            window->win_height += sister->window->win_height;
+            separator = (CONFIG_BOOLEAN(config_look_window_separator_vertical)) ? 1 : 0;
+            window->win_height += sister->window->win_height + separator;
             window->win_height_pct += sister->window->win_height_pct;
         }
         if (sister->window->win_x < window->win_x)
@@ -1834,7 +1892,7 @@ gui_window_merge_all (struct t_gui_window *window)
 {
     int num_deleted, add_bottom, add_top, add_left, add_right;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     num_deleted = 0;
@@ -1879,11 +1937,16 @@ gui_window_merge_all (struct t_gui_window *window)
 int
 gui_window_side_by_side (struct t_gui_window *win1, struct t_gui_window *win2)
 {
-    if (!gui_ok)
+    int separator_horizontal, separator_vertical;
+
+    if (!gui_init_ok)
         return 0;
 
+    separator_horizontal = (CONFIG_BOOLEAN(config_look_window_separator_horizontal)) ? 1 : 0;
+    separator_vertical = (CONFIG_BOOLEAN(config_look_window_separator_vertical)) ? 1 : 0;
+
     /* win2 over win1 ? */
-    if (win2->win_y + win2->win_height == win1->win_y)
+    if (win2->win_y + win2->win_height + separator_horizontal == win1->win_y)
     {
         if (win2->win_x >= win1->win_x + win1->win_width)
             return 0;
@@ -1893,7 +1956,7 @@ gui_window_side_by_side (struct t_gui_window *win1, struct t_gui_window *win2)
     }
 
     /* win2 on the right ? */
-    if (win2->win_x == win1->win_x + win1->win_width + 1)
+    if (win2->win_x == win1->win_x + win1->win_width + separator_vertical)
     {
         if (win2->win_y >= win1->win_y + win1->win_height)
             return 0;
@@ -1903,7 +1966,7 @@ gui_window_side_by_side (struct t_gui_window *win1, struct t_gui_window *win2)
     }
 
     /* win2 below win1 ? */
-    if (win2->win_y == win1->win_y + win1->win_height)
+    if (win2->win_y == win1->win_y + win1->win_height + separator_horizontal)
     {
         if (win2->win_x >= win1->win_x + win1->win_width)
             return 0;
@@ -1913,7 +1976,7 @@ gui_window_side_by_side (struct t_gui_window *win1, struct t_gui_window *win2)
     }
 
     /* win2 on the left ? */
-    if (win2->win_x + win2->win_width + 1 == win1->win_x)
+    if (win2->win_x + win2->win_width + separator_vertical == win1->win_x)
     {
         if (win2->win_y >= win1->win_y + win1->win_height)
             return 0;
@@ -1934,7 +1997,7 @@ gui_window_switch_up (struct t_gui_window *window)
 {
     struct t_gui_window *ptr_win;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     for (ptr_win = gui_windows; ptr_win;
@@ -1958,7 +2021,7 @@ gui_window_switch_down (struct t_gui_window *window)
 {
     struct t_gui_window *ptr_win;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     for (ptr_win = gui_windows; ptr_win;
@@ -1982,7 +2045,7 @@ gui_window_switch_left (struct t_gui_window *window)
 {
     struct t_gui_window *ptr_win;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     for (ptr_win = gui_windows; ptr_win;
@@ -2006,7 +2069,7 @@ gui_window_switch_right (struct t_gui_window *window)
 {
     struct t_gui_window *ptr_win;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     for (ptr_win = gui_windows; ptr_win;
@@ -2102,7 +2165,7 @@ gui_window_swap (struct t_gui_window *window, int direction)
     struct t_gui_window *window2, *ptr_win;
     struct t_gui_buffer *buffer1;
 
-    if (!window || !gui_ok)
+    if (!window || !gui_init_ok)
         return;
 
     window2 = NULL;
@@ -2331,6 +2394,9 @@ void
 gui_window_objects_print_log (struct t_gui_window *window)
 {
     log_printf ("  window specific objects for Curses:");
-    log_printf ("    win_chat. . . . . : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_chat);
-    log_printf ("    win_separator . . : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_separator);
+    log_printf ("    win_chat. . . . . . . : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_chat);
+    log_printf ("    win_separator_horiz . : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
+    log_printf ("    win_separator_vertic. : 0x%lx", GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
+    log_printf ("    first_line_with_prefix: 0x%lx", GUI_WINDOW_OBJECTS(window)->first_line_with_prefix);
+    log_printf ("    force_prefix_for_line : %d",    GUI_WINDOW_OBJECTS(window)->force_prefix_for_line);
 }

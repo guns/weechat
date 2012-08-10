@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(ZLIB_CFLAGS)
+INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(ZLIB_CFLAGS) $(GNUTLS_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -45,6 +45,8 @@ relay_la_SOURCES = relay.c \
                    relay-config.h \
                    relay-info.c \
                    relay-info.h \
+                   relay-network.c \
+                   relay-network.h \
                    relay-raw.c \
                    relay-raw.h \
                    relay-server.c \
@@ -53,6 +55,6 @@ relay_la_SOURCES = relay.c \
                    relay-upgrade.h
 
 relay_la_LDFLAGS = -module
-relay_la_LIBADD  = $(RELAY_LFLAGS) $(ZLIB_LFLAGS)
+relay_la_LIBADD  = $(RELAY_LFLAGS) $(ZLIB_LFLAGS) $(GNUTLS_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

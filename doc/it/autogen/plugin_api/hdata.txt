@@ -2,6 +2,23 @@
 |========================================
 | Plugin | Nome | Descrizione | Variabili | Liste
 
+| guile | guile_script | elenco degli script |
+  'filename' (string) +
+  'interpreter' (pointer) +
+  'name' (string) +
+  'author' (string) +
+  'version' (string) +
+  'license' (string) +
+  'description' (string) +
+  'shutdown_func' (string) +
+  'charset' (string) +
+  'callbacks' (pointer) +
+  'unloading' (integer) +
+  'prev_script' (pointer, hdata: 'guile_script') +
+  'next_script' (pointer, hdata: 'guile_script') |
+  'last_script' +
+  'scripts'
+
 | irc | irc_channel | canale irc |
   'type' (integer) +
   'name' (string) +
@@ -112,8 +129,8 @@
   'reloading_from_config' (integer) +
   'reloaded_from_config' (integer) +
   'addresses_count' (integer) +
-  'addresses_array' (pointer) +
-  'ports_array' (pointer) +
+  'addresses_array' (string, array_size: 'addresses_count') +
+  'ports_array' (integer, array_size: 'addresses_count') +
   'index_current_address' (integer) +
   'current_address' (string) +
   'current_ip' (string) +
@@ -130,7 +147,7 @@
   'tls_cert_key' (other) +
   'unterminated_message' (string) +
   'nicks_count' (integer) +
-  'nicks_array' (pointer) +
+  'nicks_array' (string, array_size: 'nicks_count') +
   'nick_first_tried' (integer) +
   'nick' (string) +
   'nick_modes' (string) +
@@ -140,6 +157,7 @@
   'nick_max_length' (integer) +
   'casemapping' (integer) +
   'chantypes' (string) +
+  'chanmodes' (string) +
   'reconnect_delay' (integer) +
   'reconnect_start' (time) +
   'command_time' (time) +
@@ -171,11 +189,96 @@
   'irc_servers' +
   'last_irc_server'
 
+| lua | lua_script | elenco degli script |
+  'filename' (string) +
+  'interpreter' (pointer) +
+  'name' (string) +
+  'author' (string) +
+  'version' (string) +
+  'license' (string) +
+  'description' (string) +
+  'shutdown_func' (string) +
+  'charset' (string) +
+  'callbacks' (pointer) +
+  'unloading' (integer) +
+  'prev_script' (pointer, hdata: 'lua_script') +
+  'next_script' (pointer, hdata: 'lua_script') |
+  'last_script' +
+  'scripts'
+
+| perl | perl_script | elenco degli script |
+  'filename' (string) +
+  'interpreter' (pointer) +
+  'name' (string) +
+  'author' (string) +
+  'version' (string) +
+  'license' (string) +
+  'description' (string) +
+  'shutdown_func' (string) +
+  'charset' (string) +
+  'callbacks' (pointer) +
+  'unloading' (integer) +
+  'prev_script' (pointer, hdata: 'perl_script') +
+  'next_script' (pointer, hdata: 'perl_script') |
+  'last_script' +
+  'scripts'
+
+| python | python_script | elenco degli script |
+  'filename' (string) +
+  'interpreter' (pointer) +
+  'name' (string) +
+  'author' (string) +
+  'version' (string) +
+  'license' (string) +
+  'description' (string) +
+  'shutdown_func' (string) +
+  'charset' (string) +
+  'callbacks' (pointer) +
+  'unloading' (integer) +
+  'prev_script' (pointer, hdata: 'python_script') +
+  'next_script' (pointer, hdata: 'python_script') |
+  'last_script' +
+  'scripts'
+
+| ruby | ruby_script | elenco degli script |
+  'filename' (string) +
+  'interpreter' (pointer) +
+  'name' (string) +
+  'author' (string) +
+  'version' (string) +
+  'license' (string) +
+  'description' (string) +
+  'shutdown_func' (string) +
+  'charset' (string) +
+  'callbacks' (pointer) +
+  'unloading' (integer) +
+  'prev_script' (pointer, hdata: 'ruby_script') +
+  'next_script' (pointer, hdata: 'ruby_script') |
+  'last_script' +
+  'scripts'
+
+| tcl | tcl_script | elenco degli script |
+  'filename' (string) +
+  'interpreter' (pointer) +
+  'name' (string) +
+  'author' (string) +
+  'version' (string) +
+  'license' (string) +
+  'description' (string) +
+  'shutdown_func' (string) +
+  'charset' (string) +
+  'callbacks' (pointer) +
+  'unloading' (integer) +
+  'prev_script' (pointer, hdata: 'tcl_script') +
+  'next_script' (pointer, hdata: 'tcl_script') |
+  'last_script' +
+  'scripts'
+
 | weechat | bar | barra |
   'name' (string) +
   'options' (pointer) +
   'conditions_count' (integer) +
-  'conditions_array' (pointer) +
+  'conditions_array' (string, array_size: 'conditions_count') +
   'items_count' (integer) +
   'items_subcount' (pointer) +
   'items_array' (pointer) +
@@ -251,6 +354,8 @@
   'nicklist_max_length' (integer) +
   'nicklist_display_groups' (integer) +
   'nicklist_visible_count' (integer) +
+  'nickcmp_callback' (pointer) +
+  'nickcmp_callback_data' (pointer) +
   'input' (integer) +
   'input_callback' (pointer) +
   'input_callback_data' (pointer) +
@@ -280,7 +385,7 @@
   'highlight_regex_compiled' (pointer) +
   'highlight_tags' (string) +
   'highlight_tags_count' (integer) +
-  'highlight_tags_array' (pointer) +
+  'highlight_tags_array' (string, array_size: 'highlight_tags_count') +
   'hotlist_max_level_nicks' (hashtable) +
   'keys' (pointer, hdata: 'key') +
   'last_key' (pointer, hdata: 'key') +
@@ -341,7 +446,7 @@
   'name' (string) +
   'type' (integer) +
   'description' (string) +
-  'string_values' (pointer) +
+  'string_values' (string, array_size: '*') +
   'min' (integer) +
   'max' (integer) +
   'default_value' (pointer) +
@@ -387,7 +492,7 @@
   'buffers' (pointer) +
   'tags' (string) +
   'tags_count' (integer) +
-  'tags_array' (pointer) +
+  'tags_array' (string, array_size: 'tags_count') +
   'regex' (string) +
   'regex_prefix' (pointer) +
   'regex_message' (pointer) +
@@ -402,6 +507,17 @@
   'prev_history' (pointer, hdata: 'history') |
   -
 
+| weechat | hotlist | hotlist |
+  'priority' (integer) +
+  'creation_time.tv_sec' (time) +
+  'creation_time.tv_usec' (long) +
+  'buffer' (pointer) +
+  'count' (integer, array_size: '4') +
+  'prev_hotlist' (pointer, hdata: 'hotlist') +
+  'next_hotlist' (pointer, hdata: 'hotlist') |
+  'gui_hotlist' +
+  'last_gui_hotlist'
+
 | weechat | input_undo | struttura con "undo"per la riga di input |
   'data' (string) +
   'pos' (integer) +
@@ -415,6 +531,7 @@
   'area_name' (pointer) +
   'area_key' (string) +
   'command' (string) +
+  'score' (integer) +
   'prev_key' (pointer, hdata: 'key') +
   'next_key' (pointer, hdata: 'key') |
   'gui_default_keys' +
@@ -447,7 +564,7 @@
   'date_printed' (time) +
   'str_time' (string) +
   'tags_count' (integer) +
-  'tags_array' (pointer) +
+  'tags_array' (string, array_size: 'tags_count') +
   'displayed' (char) +
   'highlight' (char) +
   'refresh_needed' (char) +

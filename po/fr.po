@@ -19,10 +19,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WeeChat 0.3.8-dev\n"
+"Project-Id-Version: WeeChat 0.3.9-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2012-04-07 13:04+0200\n"
-"PO-Revision-Date: 2012-04-07 13:05+0200\n"
+"POT-Creation-Date: 2012-08-02 22:48+0200\n"
+"PO-Revision-Date: 2012-08-02 22:50+0200\n"
 "Last-Translator: Sebastien Helleu <flashcode@flashtux.org>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: French\n"
@@ -45,41 +45,46 @@ msgid "Usage: %s [option...] [plugin:option...]\n"
 msgstr "Utilisation: %s [option...] [extension:option...]\n"
 
 msgid ""
-"  -a, --no-connect  disable auto-connect to servers at startup\n"
-"  -c, --colors      display default colors in terminal\n"
-"  -d, --dir <path>  set WeeChat home directory (default: ~/.weechat)\n"
-"  -h, --help        this help\n"
-"  -k, --keys        display WeeChat default keys\n"
-"  -l, --license     display WeeChat license\n"
-"  -p, --no-plugin   don't load any plugin at startup\n"
-"  -s, --no-script   don't load any script at startup\n"
-"  -v, --version     display WeeChat version\n"
-"  plugin:option     option for plugin\n"
-"                    for example, irc plugin can connect\n"
-"                    to server with url like:\n"
-"                    irc[6][s]://[nickname[:password]@]irc.example.org[:port]"
+"  -a, --no-connect   disable auto-connect to servers at startup\n"
+"  -c, --colors       display default colors in terminal\n"
+"  -d, --dir <path>   set WeeChat home directory (default: ~/.weechat)\n"
+"  -h, --help         this help\n"
+"  -k, --keys         display WeeChat default keys\n"
+"  -l, --license      display WeeChat license\n"
+"  -p, --no-plugin    don't load any plugin at startup\n"
+"  -r, --run-command  run command(s) after startup\n"
+"                     (many commands can be separated by semicolons)\n"
+"  -s, --no-script    don't load any script at startup\n"
+"  -v, --version      display WeeChat version\n"
+"  plugin:option      option for plugin\n"
+"                     for example, irc plugin can connect\n"
+"                     to server with url like:\n"
+"                     irc[6][s]://[nickname[:password]@]irc.example.org[:port]"
 "[/#channel1][,#channel2[...]]\n"
-"                    (look at plugins documentation for more information\n"
-"                    about possible options)\n"
+"                     (look at plugins documentation for more information\n"
+"                     about possible options)\n"
 msgstr ""
-"  -a, --no-connect  désactiver l'auto-connexion aux serveurs au démarrage\n"
-"  -c, --colors      afficher les couleurs par défaut du terminal\n"
-"  -d, --dir <rep>   définir le répertoire de base pour WeeChat (défaut: ~/."
+"  -a, --no-connect   désactiver l'auto-connexion aux serveurs au démarrage\n"
+"  -c, --colors       afficher les couleurs par défaut du terminal\n"
+"  -d, --dir <rep>    définir le répertoire de base pour WeeChat (défaut: ~/."
 "weechat)\n"
-"  -h, --help        cette aide\n"
-"  -k, --keys        afficher les touches WeeChat par défaut\n"
-"  -l, --license     afficher la licence WeeChat\n"
-"  -p, --no-plugin   ne charger aucune extension au démarrage\n"
-"  -s, --no-script   ne charger aucun script au démarrage\n"
-"  -v, --version     afficher la version de WeeChat\n"
-"  extension:option  option pour une extension\n"
-"                    par exemple, l'extension irc peut se connecter\n"
-"                    à un serveur avec une url comme:\n"
-"                    irc[6][s]://[pseudo[:mot_passe]@]irc.example.org[:port][/"
-"#canal1][,#canal2[...]]\n"
-"                    (consulter la documentation des extensions pour plus "
+"  -h, --help         cette aide\n"
+"  -k, --keys         afficher les touches WeeChat par défaut\n"
+"  -l, --license      afficher la licence WeeChat\n"
+"  -p, --no-plugin    ne charger aucune extension au démarrage\n"
+"  -r, --run-command  lancer la/les commande(s) après le démarrage\n"
+"                     (plusieurs commandes peuvent être séparées par des "
+"points-virgules)\n"
+"  -s, --no-script    ne charger aucun script au démarrage\n"
+"  -v, --version      afficher la version de WeeChat\n"
+"  extension:option   option pour une extension\n"
+"                     par exemple, l'extension irc peut se connecter\n"
+"                     à un serveur avec une url comme:\n"
+"                     irc[6][s]://[pseudo[:mot_passe]@]irc.example.org[:port]"
+"[/#canal1][,#canal2[...]]\n"
+"                     (consulter la documentation des extensions pour plus "
 "d'information\n"
-"                    sur les options possibles)\n"
+"                     sur les options possibles)\n"
 
 #. TRANSLATORS: first "%s" is "weechat"
 #, c-format
@@ -152,10 +157,6 @@ msgid "No bar item defined"
 msgstr "Pas d'objet de barre défini"
 
 #, c-format
-msgid "%sError: name can not start with \"#\""
-msgstr "%sErreur: le nom ne peut pas commencer par \"#\""
-
-#, c-format
 msgid "%sNot enough memory"
 msgstr "%sPas assez de mémoire"
 
@@ -215,6 +216,10 @@ msgstr "  %s[%s%d%s]%s (%s) %s%s%s (notification: %s)"
 #, c-format
 msgid "%sError: incorrect buffer number"
 msgstr "%sErreur: numéro de tampon incorrect"
+
+#, c-format
+msgid "%sError: buffer not found"
+msgstr "%sErreur: tampon non trouvé"
 
 #, c-format
 msgid "%sError: WeeChat main buffer can't be closed"
@@ -943,19 +948,23 @@ msgid "manage buffers"
 msgstr "gestion des tampons"
 
 msgid ""
-"list || clear [<number>|<name>|-merged|-all] || move|merge <number> || "
-"unmerge [<number>|-all] || close [<n1>[-<n2>]|<name>] || notify <level> || "
-"localvar || set <property> <value> || get <property> || <number>|<name>"
+"list || clear [<number>|<name>|-merged|-all] || move|merge <number> || swap "
+"<number1>|<name1> [<number2>|<name2>] || unmerge [<number>|-all] || close "
+"[<n1>[-<n2>]|<name>] || notify <level> || localvar || set <property> <value> "
+"|| get <property> || <number>|<name>"
 msgstr ""
-"list || clear [<nombre>|<nom>|-merged|-all] || move|merge <nombre> || "
-"unmerge [<nombre>|-all] || close [<n1>[-<n2>]|<nom>] || notify <niveau> || "
-"localvar || set <propriété> <valeur> || get <propriété> || <nombre>|<nom>"
+"list || clear [<nombre>|<nom>|-merged|-all] || move|merge <nombre> || swap "
+"<nombre1>|<nom1> [<nombre2>|<nom2>] || unmerge [<nombre>|-all] || close [<n1>"
+"[-<n2>]|<nom>] || notify <niveau> || localvar || set <propriété> <valeur> || "
+"get <propriété> || <nombre>|<nom>"
 
 msgid ""
 "    list: list buffers (without argument, this list is displayed)\n"
 "   clear: clear buffer content (number for a buffer, -merged for merged "
 "buffers, -all for all buffers, or nothing for current buffer)\n"
 "    move: move buffer in the list (may be relative, for example -1)\n"
+"    swap: swap two buffers (swap with current buffer if only one number/name "
+"given)\n"
 "   merge: merge current buffer to another buffer (chat area will be mix of "
 "both buffers)\n"
 "          (by default ctrl-x switches between merged buffers)\n"
@@ -983,6 +992,10 @@ msgid ""
 "    /buffer clear\n"
 "  move buffer to number 5:\n"
 "    /buffer move 5\n"
+"  swap buffer 1 with 3:\n"
+"    /buffer swap 1 3\n"
+"  swap buffer #weechat with current buffer:\n"
+"    /buffer swap #weechat\n"
 "  merge with core buffer:\n"
 "    /buffer merge 1\n"
 "  unmerge buffer:\n"
@@ -1003,6 +1016,8 @@ msgstr ""
 "tampon courant)\n"
 "    move: déplacer le tampon dans la liste (peut être relatif, par exemple "
 "-1)\n"
+"    swap: échanger deux tampons (échanger avec le tampon courant si un seul "
+"numéro/nom donné)\n"
 "   merge: mélanger le tampon courant avec un autre tampon (la zone de "
 "discussion sera un mélange des deux tampons)\n"
 "          (par défaut ctrl-x bascule entre les tampons mélangés)\n"
@@ -1031,6 +1046,10 @@ msgstr ""
 "    /buffer clear\n"
 "  déplacer le tampon vers le numéro 5:\n"
 "    /buffer move 5\n"
+"  échanger le tampon 1 avec le 3:\n"
+"    /buffer swap 1 3\n"
+"  échanger le tampon #weechat avec le tampon courant:\n"
+"    /buffer swap #weechat\n"
 "  mélanger avec le tampon core:\n"
 "    /buffer merge 1\n"
 "  détacher le tampon:\n"
@@ -1497,6 +1516,7 @@ msgid ""
 "context \"default\")\n"
 "   bindctxt: bind a command to a key or display command bound to key, for "
 "given context\n"
+"    command: command (many commands can be separated by semicolons)\n"
 "     unbind: remove a key binding (for context \"default\")\n"
 " unbindctxt: remove a key binding for given context\n"
 "      reset: reset a key to default binding (for context \"default\")\n"
@@ -1550,6 +1570,8 @@ msgstr ""
 "associée à la touche\n"
 "   bindctxt: associer une commande à une touche ou affiche la commande "
 "associée à la touche pour le contexte donné\n"
+"   commande: commande (plusieurs commandes peuvent êtres séparées par des "
+"points-virgules)\n"
 "     unbind: supprimer l'association à une touche\n"
 " unbindctxt: supprimer l'association à une touche pour le contexte donné\n"
 "      reset: réinitialiser une touche à son association par défaut\n"
@@ -1857,6 +1879,9 @@ msgstr ""
 "  nombre: nombre de fois que la commande sera exécutée\n"
 "commande: commande à exécuter (un '/' est automatiquement ajouté s'il n'est "
 "pas trouvé au début de la commande)\n"
+"\n"
+"Toutes les commandes sont exécutées sur le tampon où la commande a été "
+"lancée.\n"
 "\n"
 "Exemple:\n"
 "  faire défiler de 2 pages vers le haut:\n"
@@ -2327,6 +2352,20 @@ msgid "display WeeChat version at startup"
 msgstr "afficher la version de WeeChat au démarrage"
 
 msgid ""
+"set resource limits for WeeChat process, format is: \"res1:limit1,res2:"
+"limit2\"; resource name is the end of constant (RLIMIT_XXX) in lower case "
+"(see man setrlimit for values); limit -1 means \"unlimited\"; example: set "
+"unlimited size for core file and max 1GB of virtual memory: \"core:-1,"
+"as:1000000000\""
+msgstr ""
+"définir les limites de ressource pour le processus WeeChat, le format est: "
+"\"res1:limite1,res2:limite2\"; le nom de ressource est la fin de la "
+"constante (RLIMIT_XXX) en minuscules (voir man setrlimit pour les valeurs); "
+"une limite de -1 siginifie \"illimitée\"; exemple: définir une taille "
+"illimitée pour le fichier core et max 1 Go de mémoire virtuelle: \"core:-1,"
+"as:1000000000\""
+
+msgid ""
 "alignment for end of lines (all lines after the first): they are starting "
 "under this data (time, buffer, prefix, suffix, message (default))"
 msgstr ""
@@ -2438,6 +2477,11 @@ msgstr ""
 "utiliser une couleur différente pour un message inactif (quand la fenêtre "
 "n'est pas la fenêtre courante, ou si la ligne est d'un tampon mélangé et le "
 "tampon n'est pas sélectionné)"
+
+msgid "use a different color for offline nicks (not in nicklist any more)"
+msgstr ""
+"utiliser une couleur différente pour les pseudos déconnectés (qui ne sont "
+"plus dans la liste de pseudos)"
 
 msgid ""
 "automatically reset table of color pairs when number of available pairs is "
@@ -2650,6 +2694,9 @@ msgstr ""
 "sauter au tampon précédemment visité lors de la fermeture d'un tampon (si "
 "désactivé, alors le saut se fait vers le numéro de tampon - 1)"
 
+msgid "jump back to initial buffer after reaching end of hotlist"
+msgstr "retourner au tampon initial après avoir atteint la fin de la hotlist"
+
 msgid "enable mouse support"
 msgstr "activer le support de la souris"
 
@@ -2805,22 +2852,22 @@ msgstr ""
 "tampon"
 
 msgid ""
-"char used to draw horizontal separators around bars (empty value will draw a "
-"real line with ncurses, but may cause bugs with URL selection under some "
-"terminals), wide chars are NOT allowed here"
+"char used to draw horizontal separators around bars and windows (empty value "
+"will draw a real line with ncurses, but may cause bugs with URL selection "
+"under some terminals), wide chars are NOT allowed here"
 msgstr ""
 "caractère utilisé pour tracer les séparateurs horizontaux autour des barres "
-"(une valeur vide tracera une vraie ligne avec ncurses, mais peut causer des "
-"problèmes d'affichage avec la sélection d'URL sous certains terminaux), les "
-"caractères larges ne sont PAS autorisés ici"
+"et fenêtres (une valeur vide tracera une vraie ligne avec ncurses, mais peut "
+"causer des problèmes d'affichage avec la sélection d'URL sous certains "
+"terminaux), les caractères larges ne sont PAS autorisés ici"
 
 msgid ""
-"char used to draw vertical separators around bars (empty value will draw a "
-"real line with ncurses), wide chars are NOT allowed here"
+"char used to draw vertical separators around bars and windows (empty value "
+"will draw a real line with ncurses), wide chars are NOT allowed here"
 msgstr ""
-"caractère utilisé pour tracer les séparateurs verticaux autour des barres "
-"(une valeur vide tracera une vraie ligne avec ncurses), les caractères "
-"larges ne sont PAS autorisés ici"
+"caractère utilisé pour tracer les séparateurs verticaux autour des barres et "
+"fenêtres (une valeur vide tracera une vraie ligne avec ncurses), les "
+"caractères larges ne sont PAS autorisés ici"
 
 msgid "set title for window (terminal for Curses GUI) with name and version"
 msgstr ""
@@ -2831,6 +2878,12 @@ msgid "time format for dates converted to strings and displayed in messages"
 msgstr ""
 "format de date/heure pour les dates converties en chaînes et affichées dans "
 "les messages"
+
+msgid "display an horizontal separator between windows"
+msgstr "afficher un séparateur horizontal entre les fenêtres"
+
+msgid "display a vertical separator between windows"
+msgstr "afficher un séparateur vertical entre les fenêtres"
 
 msgid "background color for window separators (when split)"
 msgstr "couleur du fond pour les séparateurs de fenêtres (quand divisé)"
@@ -2922,6 +2975,17 @@ msgstr ""
 
 msgid "text color for local nick in chat window"
 msgstr "couleur du texte pour le pseudo local dans la fenêtre de discussion"
+
+msgid "text color for offline nick (not in nicklist any more)"
+msgstr ""
+"couleur du texte pour un pseudo déconnecté (qui n'est plus dans la liste de "
+"pseudos)"
+
+msgid "text color for offline nick with highlight"
+msgstr "couleur du texte pour un pseudo déconnecté avec highlight"
+
+msgid "background color for offline nick with highlight"
+msgstr "couleur du fond pour un pseudo déconnecté avec highlight"
 
 msgid "text color for other nick in private buffer"
 msgstr "couleur du texte pour l'autre pseudo dans le tampon privée"
@@ -3058,8 +3122,12 @@ msgstr ""
 "ajouter un espace après la complétion du pseudo (quand le pseudo n'est pas "
 "le premier mot sur la ligne de commande)"
 
-msgid "string inserted after nick completion"
-msgstr "chaîne affichée après la complétion des pseudos"
+msgid ""
+"string inserted after nick completion (when nick is first word on command "
+"line)"
+msgstr ""
+"chaîne insérée après la complétion du pseudo (quand le pseudo est le premier "
+"mot sur la ligne de commande)"
 
 msgid "complete only with first nick found"
 msgstr "compléter seulement avec le premier pseudo trouvé"
@@ -3407,6 +3475,27 @@ msgstr ""
 "changé depuis la dernière version)"
 
 #, c-format
+msgid "%sError: invalid limit for resource \"%s\": %s (must be >= -1)"
+msgstr "%sErreur: limite de ressource \"%s\" invalide: %s (doit être >= 1)"
+
+#, c-format
+msgid "Limit for resource \"%s\" has been set to %s"
+msgstr "La limite de ressource \"%s\" a été modifiée en %s"
+
+#, c-format
+msgid "%sError: unable to set resource limit \"%s\" to %s: error %d %s"
+msgstr ""
+"%sErreur: impossible de définir la limite de ressource \"%s\" à %s: erreur "
+"%d %s"
+
+#, c-format
+msgid ""
+"%sError: unknown resource limit \"%s\" (see /help weechat.startup.sys_rlimit)"
+msgstr ""
+"%sErreur: limite de ressource \"%s\" inconnue (voir /help weechat.startup."
+"sys_rlimit)"
+
+#, c-format
 msgid ""
 "Warning: the %d color pairs are used, do \"/color reset\" to remove unused "
 "pairs"
@@ -3645,6 +3734,9 @@ msgstr "Debug activé pour la souris (%s)"
 msgid "Debug disabled for mouse"
 msgstr "Debug désactivé pour la souris"
 
+msgid "Alias commands"
+msgstr "Commandes d'alias"
+
 #, c-format
 msgid "%s%s: error, circular reference when calling alias \"%s\""
 msgstr "%s%s: erreur, référence circulaire lors de l'appel à l'alias \"%s\""
@@ -3726,7 +3818,7 @@ msgstr ""
 "     alias: nom de l'alias (peut démarrer ou se terminer par \"*\" pour une "
 "liste d'alias)\n"
 "  commande: nom de la commande avec les paramètres (plusieurs commandes "
-"peuvent être séparées par des point-virgules)\n"
+"peuvent être séparées par des points-virgules)\n"
 "\n"
 "Sans paramètre, cette commande liste tous les alias définis.\n"
 "\n"
@@ -3781,6 +3873,9 @@ msgid "alias name (can start or end with \"*\" as wildcard) (optional)"
 msgstr ""
 "nom d'alias (peut démarrer ou se terminer par \"*\" comme joker) (optionnel)"
 
+msgid "Spell checker for input (with Aspell)"
+msgstr "Vérificateur d'orthographe pour la saisie (avec Aspell)"
+
 #, c-format
 msgid "%s: \"%s\" removed"
 msgstr "%s: \"%s\" supprimé"
@@ -3803,6 +3898,28 @@ msgstr "%s: mot \"%s\" ajouté dans le dictionnaire personnel"
 msgid "%s%s: failed to add word to personal dictionary"
 msgstr "%s%s: impossible d'ajouter le mot dans le dictionnaire personnel"
 
+msgid "Aspell is enabled"
+msgstr "Aspell est activé"
+
+msgid "Aspell is disabled"
+msgstr "Aspell est désactivé"
+
+#, c-format
+msgid "Default dictionary: %s"
+msgstr "Dictionnaire par défaut: %s"
+
+msgid "(not set)"
+msgstr "(non défini)"
+
+msgid "Specific dictionaries on buffers:"
+msgstr "Dictionnaires spécifiques sur les tampons :"
+
+msgid "Aspell enabled"
+msgstr "Aspell activé"
+
+msgid "Aspell disabled"
+msgstr "Aspell désactivé"
+
 #, c-format
 msgid "%s%s: no dictionary on this buffer for adding word"
 msgstr "%s%s: pas de dictionnaire sur ce tampon pour ajouter le mot"
@@ -3818,24 +3935,38 @@ msgstr ""
 msgid "aspell plugin configuration"
 msgstr "configuration de l'extension aspell"
 
-msgid "dictlist || enable <lang> || disable || addword [<lang>] <word>"
-msgstr "dictlist || enable <langue> || disable || addword [<langue>] <mot>"
+msgid ""
+"enable|disable|toggle || listdict || setdict <lang> || deldict || addword "
+"[<lang>] <word>"
+msgstr ""
+"enable|disable|toggle || listdict || setdict <langue> || deldict || addword "
+"[<langue>] <mot>"
 
 msgid ""
-"dictlist: show installed dictionaries\n"
-"  enable: enable aspell on current buffer\n"
-" disable: disable aspell on current buffer\n"
-" addword: add a word in your personal aspell dictionary\n"
+"  enable: enable aspell\n"
+" disable: disable aspell\n"
+"  toggle: toggle aspell\n"
+"listdict: show installed dictionaries\n"
+" setdict: set dictionary for current buffer\n"
+" deldict: delete dictionary used on current buffer\n"
+" addword: add a word in personal aspell dictionary\n"
 "\n"
 "Input line beginning with a '/' is not checked, except for some commands "
 "(see /set aspell.check.commands).\n"
 "\n"
-"To enable aspell on all buffers, use option \"default_dict\", for example:\n"
-"  /set aspell.check.default_dict \"en\""
+"To enable aspell on all buffers, use option \"default_dict\", then enable "
+"aspell, for example:\n"
+"  /set aspell.check.default_dict \"en\"\n"
+"  /aspell enable\n"
+"\n"
+"Default key to toggle aspell is alt-s."
 msgstr ""
-"dictlist: afficher les dictionnaires installés\n"
-"  enable: activer aspell sur le tampon courant\n"
-" disable: désactiver aspell sur le tampon courant\n"
+"  enable: activer aspell\n"
+" disable: désactiver aspell\n"
+"  toggle: activer/désactiver aspell\n"
+"listdict: afficher les dictionnaires installés\n"
+" setdict: définir le dictionnaire pour le tampon courant\n"
+" deldict: supprimer le dictionnaire utilisé sur le tampon courant\n"
 " addword: ajouter un mot dans le dictionnaire personnel aspell\n"
 "\n"
 "Les lignes d'entrée commençant par '/' ne sont pas vérifiées, sauf pour "
@@ -3843,7 +3974,10 @@ msgstr ""
 "\n"
 "Pour activer aspell sur tous les tampons, utilisez l'option \"default_dict"
 "\", par exemple :\n"
-"  /set aspell.check.default_dict \"en\""
+"  /set aspell.check.default_dict \"en\"\n"
+"  /aspell enable\n"
+"\n"
+"La touche par défaut pour activer/désactiver aspell est alt-s."
 
 msgid "list of supported langs for aspell"
 msgstr "liste des langues supportées pour aspell"
@@ -3891,6 +4025,9 @@ msgstr ""
 msgid "check words during text search in buffer"
 msgstr "vérifier les mots pendant la recherche de texte dans le tampon"
 
+msgid "enable aspell check for command line"
+msgstr "activer la vérification aspell pour la ligne de commande"
+
 msgid ""
 "real-time spell checking of words (slower, disabled by default: words are "
 "checked only if there's delimiter after)"
@@ -3913,6 +4050,19 @@ msgstr ""
 #, c-format
 msgid "%s%s: not enough memory to create new speller"
 msgstr "%s%s: pas assez de mémoire pour créer un nouveau speller"
+
+msgid "Charset conversions"
+msgstr "Conversions de charset"
+
+#, c-format
+msgid ""
+"%s%s: UTF-8 is not allowed in charset options (it is internal and default "
+"charset: default encode is UTF-8 and decode of UTF-8 is OK even if you "
+"specify another charset to decode)"
+msgstr ""
+"%s%s: UTF-8 n'est pas autorisé dans les options de charset (c'est le charset "
+"interne et par défaut: l'encodage par défaut est UTF-8 et le décodage "
+"d'UTF-8 est OK même si vous spécifiez un autre charset à décoder)"
 
 #, c-format
 msgid "%s%s: error creating charset \"%s\" => \"%s\""
@@ -3956,6 +4106,9 @@ msgstr ""
 " encode: changer le charset d'encodage\n"
 "charset: nouveau charset pour le tampon courant\n"
 "  reset: réinitialiser les charsets pour le tampon courant"
+
+msgid "Demo plugin"
+msgstr "Extension de démo"
 
 msgid "demo message without prefix"
 msgstr "message de démonstration sans préfixe"
@@ -4040,6 +4193,9 @@ msgstr ""
 "\n"
 "Sans paramètre, cette commande affiche la liste des infolists disponibles"
 
+msgid "FIFO pipe for remote control"
+msgstr "Tube FIFO pour contrôle distant"
+
 #, c-format
 msgid "%s: removing old fifo pipe \"%s\""
 msgstr "%s: suppression du vieux tube \"%s\""
@@ -4069,8 +4225,8 @@ msgid "%s%s: error, buffer not found for pipe data"
 msgstr "%s%s: erreur, tampon non trouvé pour les données du tube"
 
 #, c-format
-msgid "%s%s: error reading pipe, closing it"
-msgstr "%s%s: erreur en lecture du tube, fermeture"
+msgid "%s%s: error reading pipe (%d %s), closing it"
+msgstr "%s%s: erreur en lecture du tube (%d %s), fermeture"
 
 #, c-format
 msgid "%s%s: error opening file, closing it"
@@ -4085,6 +4241,9 @@ msgstr "absent"
 msgid "Lag"
 msgstr "Lag"
 
+msgid "IRC (Internet Relay Chat) protocol"
+msgstr "Protocole IRC (Internet Relay Chat)"
+
 #, c-format
 msgid ""
 "%s%s: disconnecting from server because upgrade can't work for servers "
@@ -4094,6 +4253,7 @@ msgstr ""
 "les serveurs connectés via SSL"
 
 #. TRANSLATORS: "%s" after "%d" is "server" or "servers"
+#. TRANSLATORS: "%s" after "%d" is "client" or "clients"
 #, c-format
 msgid ""
 "%s%s: disconnected from %d %s (SSL connection not supported with upgrade)"
@@ -4314,10 +4474,6 @@ msgstr "Pas de serveur trouvé avec \"%s\""
 #, c-format
 msgid "%s%s: server \"%s\" already exists, can't create it!"
 msgstr "%s%s: le serveur \"%s\" existe déjà, impossible de le créer !"
-
-#, c-format
-msgid "%s%s: name can not start with \"#\""
-msgstr "%s%s: le nom ne peut pas commencer par \"#\""
 
 #, c-format
 msgid "%s%s: unable to create server"
@@ -4608,17 +4764,20 @@ msgstr "cible: nom du serveur"
 msgid "disconnect from one or all IRC servers"
 msgstr "se déconnecter d'un ou de tous les serveurs IRC"
 
-msgid "[<server>|-all [<reason>]]"
-msgstr "[<serveur>|-all [<raison>]]"
+msgid "[<server>|-all|-pending [<reason>]]"
+msgstr "[<serveur>|-all|-pending [<raison>]]"
 
 msgid ""
-"server: server name to disconnect\n"
-"  -all: disconnect from all servers\n"
-"reason: reason for quit"
+"  server: server name to disconnect\n"
+"    -all: disconnect from all servers\n"
+"-pending: cancel auto-reconnection on servers currently reconnecting\n"
+"  reason: reason for quit"
 msgstr ""
-"serveur: nom du serveur pour se déconecter\n"
-"   -all: se déconnecter de tous les serveurs\n"
-" raison: raison pour le quit"
+" serveur: nom du serveur pour se déconecter\n"
+"    -all: se déconnecter de tous les serveurs\n"
+"-pending: annuler la reconnexion automatique sur les serveurs en cours de "
+"reconnexion\n"
+"  raison: raison pour le quit"
 
 msgid "give channel half-operator status to nick(s)"
 msgstr "donner le statut de demi-opérateur à un/des pseudo(s)"
@@ -5581,10 +5740,10 @@ msgid "use SSL for server communication"
 msgstr "utiliser SSL pour la communication avec le serveur"
 
 msgid ""
-"ssl certificate file used to automatically identify your nick (\"%h\" will "
+"SSL certificate file used to automatically identify your nick (\"%h\" will "
 "be replaced by WeeChat home, \"~/.weechat\" by default)"
 msgstr ""
-"fichier de certificat ssl utilisé pour identifier automatiquement votre "
+"fichier de certificat SSL utilisé pour identifier automatiquement votre "
 "pseudo (\"%h\" sera remplacé par le répertoire de base WeeChat, par défaut: "
 "\"~/.weechat\")"
 
@@ -5601,8 +5760,8 @@ msgstr ""
 msgid "size of the key used during the Diffie-Hellman Key Exchange"
 msgstr "taille de clé utilisée pour l'échange de clé Diffie-Hellman"
 
-msgid "check that the ssl connection is fully trusted"
-msgstr "vérifier que la connexion ssl est entièrement de confiance"
+msgid "check that the SSL connection is fully trusted"
+msgstr "vérifier que la connexion SSL est entièrement de confiance"
 
 msgid "password for server"
 msgstr "mot de passe pour le serveur"
@@ -5786,6 +5945,13 @@ msgstr "utiliser la couleur du pseudo dans les messages du serveur"
 msgid "use same nick color for channel and private"
 msgstr "utiliser la même couleur de pseudo pour le canal et le privé"
 
+msgid ""
+"time format used in answer to message CTCP TIME (see man strftime for date/"
+"time specifiers)"
+msgstr ""
+"format de date/heure utilisé pour la réponse au message CTCP TIME (voir man "
+"strftime pour le format de date/heure)"
+
 msgid "merge server buffers"
 msgstr "mélange des tampons de serveur"
 
@@ -5836,13 +6002,22 @@ msgstr ""
 "doit être dans la chaîne avant de s'arrêter) (exemple: le pseudo \"|nick|away"
 "\" avec \"|\" dans les caractères retournera la couleur du pseudo \"|nick\")"
 
-msgid "smart completion for nicks (completes first with last speakers)"
+msgid ""
+"smart completion for nicks (completes first with last speakers): speakers = "
+"all speakers (including highlights), speakers_highlights = only speakers "
+"with highlight"
 msgstr ""
 "complétion intelligente pour les pseudos (complète d'abord avec les "
-"personnes qui ont parlé récemment)"
+"personnes qui ont parlé récemment): speakers = tous ceux qui ont parlé "
+"(incluant les highlights), speakers_highlights = seulement ceux qui ont "
+"parlé avec un highlight"
 
-msgid "display message when (un)marking as away"
-msgstr "affiche un message pour l'absence/le retour"
+msgid ""
+"display message when (un)marking as away (off: do not display/send anything, "
+"local: display locally, channel: send action to channels)"
+msgstr ""
+"afficher un message pour l'absence/retour (off: ne rien afficher/envoyer, "
+"local: afficher en local, channel: envoyer l'action aux canaux)"
 
 msgid "display CTCP message even if it is blocked"
 msgstr "afficher le message CTCP même s'il est bloqué"
@@ -5877,16 +6052,12 @@ msgid "display server away message in away bar item"
 msgstr ""
 "afficher le message d'absence du serveur dans l'objet de barre d'absence"
 
-msgid "display channel modes in \"buffer_name\" bar item"
-msgstr "affiche les modes du canal dans l'objet de barre \"buffer_name\""
-
 msgid ""
-"hide channel key if modes are displayed in \"buffer_name\" bar item (this "
-"will hide all channel modes arguments if mode +k is set on channel)"
+"hide channel key in channel modes (this will hide all channel modes "
+"arguments if mode +k is set on channel)"
 msgstr ""
-"cacher la clé du canal si les modes sont affichés dans l'objet de barre "
-"\"buffer_name\" (cela cachera tous les paramètres des modes du canal si le "
-"mode +k est défini sur le canal)"
+"cacher la clé du canal (cela cachera tous les paramètres des modes du canal "
+"si le mode +k est défini sur le canal)"
 
 msgid "display nick modes in \"input_prompt\" bar item"
 msgstr "affiche les modes du pseudo dans l'objet de barre \"input_prompt\""
@@ -6823,7 +6994,7 @@ msgstr ""
 "problème aux développeurs)"
 
 #, c-format
-msgid "%s%s: sending data to server: %d %s"
+msgid "%s%s: sending data to server: error %d %s"
 msgstr "%s%s: envoi de données au serveur: erreur %d %s"
 
 msgid "(message dropped)"
@@ -7063,6 +7234,9 @@ msgstr "%s%s: déconnecté du serveur"
 #, c-format
 msgid "%s: disconnected from server"
 msgstr "%s: déconnecté du serveur"
+
+msgid "Log buffers to files"
+msgstr "Enregistrement des tampons dans des fichiers"
 
 #, c-format
 msgid ""
@@ -7469,6 +7643,9 @@ msgstr "filtre"
 msgid "history of commands in buffer"
 msgstr "historique des commandes dans le tampon"
 
+msgid "hotlist"
+msgstr "hotlist"
+
 msgid "structure with undo for input line"
 msgstr "structure avec le \"undo\" pour la ligne de commande"
 
@@ -7590,18 +7767,33 @@ msgid "  [Q] Close this buffer"
 msgstr "  [Q] Fermer ce tampon"
 
 #, c-format
-msgid "%s%s[%s%s%s%s] %s (started on: %s%s%s%s)"
-msgstr "%s%s[%s%s%s%s] %s (démarré le: %s%s%s%s)"
-
-msgid "ended on: "
-msgstr "terminé le: "
+msgid "%s%s[%s%s%s%s] %s, received: %s, sent: %s"
+msgstr "%s%s[%s%s%s%s] %s, reçu: %s, envoyé: %s"
 
 #, c-format
-msgid "%s%-26s id: %d, protocol: %s, received: %s, sent: %s"
-msgstr "%s%-26s id: %d, protocole: %s, reçu: %s, envoyé: %s"
+msgid "%s%-26s started on: %s, ended on: %s"
+msgstr "%s%-26s démarré le: %s, terminé le: %s"
 
 msgid "List of clients for relay"
 msgstr "Liste des clients pour le relai"
+
+msgid "Relay WeeChat data to remote application (irc/weechat protocols)"
+msgstr ""
+"Relai des données WeeChat à des applications distantes (protocoles irc/"
+"weechat)"
+
+#, c-format
+msgid ""
+"%s%s: disconnecting from client %s%s%s because upgrade can't work for "
+"clients connected via SSL"
+msgstr ""
+"%s%s: déconnexion du client %s%s%s car la mise à jour ne peut pas "
+"fonctionner avec les clients connectés via SSL"
+
+msgid "client"
+msgid_plural "clients"
+msgstr[0] "client"
+msgstr[1] "clients"
 
 msgid "connecting"
 msgstr "connexion"
@@ -7616,38 +7808,73 @@ msgid "disconnected"
 msgstr "déconnecté"
 
 #, c-format
-msgid "%s: new client from %s%s%s on port %d (id: %d, relaying: %s%s%s)"
-msgstr "%s: nouveau client de %s%s%s sur le port %d (id: %d, relai: %s%s%s)"
+msgid "%s%s: TLS handshake failed for client %s%s%s: error %d %s"
+msgstr ""
+"%s%s: la poignée de main (handshake) de TLS a échoué pour le client %s%s%s: "
+"erreur %d %s"
+
+#, c-format
+msgid "%s%s: TLS handshake timeout for client %s%s%s"
+msgstr ""
+"%s%s: délai maximum dépassé pour la poignée de main (handshake) de TLS pour "
+"le client %s%s%s"
+
+#, c-format
+msgid "%s%s: reading data on socket for client %s%s%s: error %d %s"
+msgstr ""
+"%s%s: lecture de données sur la socket pour le client %s%s%s: erreur %d %s"
+
+#, c-format
+msgid "%s%s: sending data to client %s%s%s: error %d %s"
+msgstr "%s%s: envoi de données au client %s%s%s: erreur %d %s"
+
+#, c-format
+msgid ""
+"%s%s: warning: no SSL certificate/key found (option relay.network."
+"ssl_cert_key)"
+msgstr ""
+"%s%s: attention: pas de certificat/clé SSL trouvés (option relay.network."
+"ssl_cert_key)"
+
+#, c-format
+msgid "%s: new client on port %d: %s%s%s"
+msgstr "%s: nouveau client sur le port %d: %s%s%s"
 
 #, c-format
 msgid "%s%s: not enough memory for new client"
 msgstr "%s%s: pas assez de mémoire pour un nouveau client"
 
 #, c-format
-msgid "%s%s: authentication failed with client %s%s%s (%s%s%s)"
-msgstr "%s%s: l'authentification a échoué avec le client %s%s%s (%s%s%s)"
+msgid "%s%s: authentication failed with client %s%s%s"
+msgstr "%s%s: l'authentification a échoué avec le client %s%s%s"
 
 #, c-format
-msgid "%s: disconnected from client %s%s%s (%s%s%s)"
-msgstr "%s: déconnecté du client %s%s%s (%s%s%s)"
+msgid "%s: disconnected from client %s%s%s"
+msgstr "%s: déconnecté du client %s%s%s"
 
 msgid "Clients for relay:"
 msgstr "Clients pour le relai:"
 
-#, c-format
-msgid ""
-"  id: %d, %s%s%s (%s%s%s), started on: %s, last activity: %s, bytes: %lu "
-"recv, %lu sent"
-msgstr ""
-"  id: %d, %s%s%s (%s%s%s), démarré le: %s, dernière activité: %s, octets: "
-"%lu reçus, %lu envoyés"
+msgid "Connected clients for relay:"
+msgstr "Clients connectés pour le relai:"
 
 #, c-format
-msgid "  id: %d, %s%s%s, started on: %s"
-msgstr "  id: %d, %s%s%s, démarré le: %s"
+msgid ""
+"  %s%s%s (%s%s%s), started on: %s, last activity: %s, bytes: %lu recv, %lu "
+"sent"
+msgstr ""
+"  %s%s%s (%s%s%s), démarré le: %s, dernière activité: %s, octets: %lu reçus, "
+"%lu envoyés"
+
+#, c-format
+msgid "  %s%s%s (%s%s%s), started on: %s"
+msgstr "  %s%s%s (%s%s%s), démarré le: %s"
 
 msgid "No client for relay"
 msgstr "Pas de client pour le relai"
+
+msgid "No connected client for relay"
+msgstr "Pas de client connecté pour le relai"
 
 msgid "Listening on ports:"
 msgstr "Ecoute sur les ports:"
@@ -7676,10 +7903,10 @@ msgstr "contrôle du relai"
 
 msgid ""
 "list|listfull|listrelay || add <protocol.name> <port> || del <protocol.name> "
-"|| raw"
+"|| raw || sslcertkey"
 msgstr ""
 "list|listfull|listrelay || add <protocole.nom> <port> || del <protocole.nom> "
-"|| raw"
+"|| raw || sslcertkey"
 
 msgid ""
 "         list: list relay clients (only active relays)\n"
@@ -7690,16 +7917,23 @@ msgid ""
 "protocol.name: protocol and name to relay:\n"
 "                 - protocol \"irc\": name is the server to share\n"
 "                 - protocol \"weechat\" (name is not used)\n"
+"               Note: the protocol can be prefixed by \"ssl.\" to enable SSL\n"
 "         port: port used for relay\n"
 "          raw: open buffer with raw Relay data\n"
+"   sslcertkey: set SSL certificate/key using path in option relay.network."
+"ssl_cert_key\n"
 "\n"
 "Without argument, this command opens buffer with list of relay clients.\n"
 "\n"
 "Examples:\n"
 "  irc proxy, for server \"freenode\":\n"
 "    /relay add irc.freenode 8000\n"
+"  irc proxy, for server \"freenode\", with SSL:\n"
+"    /relay add ssl.irc.freenode 8001\n"
 "  weechat protocol:\n"
-"    /relay add weechat 8001"
+"    /relay add weechat 9000\n"
+"  weechat protocol with SSL:\n"
+"    /relay add ssl.weechat 9001"
 msgstr ""
 "         list: lister les clients pour le relai\n"
 "     listfull: lister les clients pour le relai (verbeux)\n"
@@ -7709,8 +7943,12 @@ msgstr ""
 "protocole.nom: protocole et nom à relayer:\n"
 "                 - protocole \"irc\": le nom est le serveur à partager\n"
 "                 - protocole \"weechat\" (le nom n'est pas utilisé)\n"
+"               Note: le protocole peut être préfixé par \"ssl.\" pour "
+"activer le SSL\n"
 "         port: port utilisé pour le relai\n"
 "          raw: ouvrir le tampon avec les données brutes Relay\n"
+"   sslcertkey: définir le certificat/clé SSL en utilisant le chemin de "
+"l'option relay.network.ssl_cert_key\n"
 "\n"
 "Sans paramètre, cette commande ouvre le tampon avec la liste des clients "
 "pour le relai.\n"
@@ -7718,8 +7956,12 @@ msgstr ""
 "Exemples:\n"
 "  proxy irc, pour le serveur \"freenode\":\n"
 "    /relay add irc.freenode 8000\n"
+"  proxy irc, pour le serveur \"freenode\", avec SSL:\n"
+"    /relay add ssl.irc.freenode 8001\n"
 "  protocole weechat:\n"
-"    /relay add weechat 8001"
+"    /relay add weechat 9000\n"
+"  protocole weechat avec SSL:\n"
+"    /relay add ssl.weechat 9001"
 
 msgid "all possible protocol.name for relay plugin"
 msgstr "tous les protocole.nom possible pour l'extension relay"
@@ -7733,6 +7975,12 @@ msgstr "premier port libre pour l'extension relay"
 #, c-format
 msgid "%s%s: error: port \"%d\" is already used"
 msgstr "%s%s: erreur: le port \"%d\" est déjà utilisé"
+
+#, c-format
+msgid "%s%s: cannot use SSL because WeeChat was not built with GnuTLS support"
+msgstr ""
+"%s%s: impossible d'utiliser SSL car WeeChat n'a pas été construit avec le "
+"support GnuTLS"
 
 #, c-format
 msgid "%s%s: error: unknown protocol \"%s\""
@@ -7755,14 +8003,17 @@ msgstr ""
 "ouvrir automatiquement le tampon des clients pour le relai lorsqu'un nouveau "
 "client est ajouté à la liste"
 
-msgid "text color"
-msgstr "couleur du texte"
+msgid "text color for client description"
+msgstr "couleur du texte pour la description du client"
 
-msgid "background color"
-msgstr "couleur du fond"
+msgid "text color in relay buffer"
+msgstr "couleur du texte dans le tampon relay"
 
-msgid "text color of selected client line"
-msgstr "couleur du texte pour la ligne client sélectionnée"
+msgid "background color in relay buffer"
+msgstr "couleur du fond dans le tampon relay"
+
+msgid "text color of selected line in relay buffer"
+msgstr "couleur du texte pour la ligne sélectionnée dans le tampon relay"
 
 msgid "text color for \"connecting\" status"
 msgstr "couleur du texte pour le statut \"connexion\""
@@ -7814,11 +8065,25 @@ msgstr ""
 "mot de passe requis par les clients pour accéder à ce relai (une valeur vide "
 "indique que le mot de passe n'est pas nécessaire)"
 
+msgid ""
+"file with SSL certificate and private key (for serving clients with SSL)"
+msgstr ""
+"fichier avec le certificat et la clé privée SSL (pour servir les clients "
+"avec SSL)"
+
 msgid "list of relay clients"
 msgstr "liste des clients pour le relai"
 
 msgid "relay pointer (optional)"
 msgstr "pointeur vers le relay (optionnel)"
+
+#, c-format
+msgid "%s: SSL certificate and key have been set"
+msgstr "%s: certificat et clé SSL ont été définis"
+
+#, c-format
+msgid "%s%s: unable to initialize priority for SSL"
+msgstr "%s%s: impossible d'initialiser la priorité pour SSL"
 
 msgid "Relay raw messages"
 msgstr "Messages bruts Relay"
@@ -7840,8 +8105,8 @@ msgid "%s%s: error with \"bind\" on port %d (%s%s%s)"
 msgstr "%s%s: erreur avec le \"bind\" sur le port %d (%s%s%s)"
 
 #, c-format
-msgid "%s: listening on port %d (relay: %s%s%s, max %d clients)"
-msgstr "%s: écoute sur le port %d (relai: %s%s%s, max %d clients)"
+msgid "%s: listening on port %d (relay: %s%s%s,%s max %d clients)"
+msgstr "%s: écoute sur le port %d (relai: %s%s%s,%s max %d clients)"
 
 #, c-format
 msgid "%s%s: not enough memory for listening on new port"
@@ -7852,24 +8117,19 @@ msgid "%s%s: not enough memory for parsing message"
 msgstr "%s%s: mémoire insuffisante pour analyser le message"
 
 #, c-format
-msgid "%s%s: error sending data to client: %s"
-msgstr "%s%s: erreur d'envoi de données au client: %s"
-
-#, c-format
-msgid "%s%s: error sending data to client %d (%s)"
-msgstr "%s%s: erreur d'envoi de données au client %d (%s)"
-
-#, c-format
-msgid "%s%s: failed to execute command \"%s\" for client %d"
-msgstr "%s%s: echec d'exécution de la commamde \"%s\" pour le client %d"
+msgid "%s%s: failed to execute command \"%s\" for client %s%s%s"
+msgstr "%s%s: echec d'exécution de la commamde \"%s\" pour le client %s%s%s"
 
 #, c-format
 msgid ""
-"%s%s: too few arguments received from client %d for command \"%s"
+"%s%s: too few arguments received from client %s%s%s for command \"%s"
 "\" (received: %d arguments, expected: at least %d)"
 msgstr ""
-"%s%s: trop peu de paramètres reçus du client %d pour la commande \"%s"
+"%s%s: trop peu de paramètres reçus du client %s%s%s pour la commande \"%s"
 "\" (reçu: %d paramètres, attendu: au moins %d)"
+
+msgid "String modifier with regular expressions"
+msgstr "Modifieur de chaîne avec expressions régulières"
 
 #, c-format
 msgid "%s%s: error compiling regular expression \"%s\""
@@ -7988,6 +8248,10 @@ msgstr ""
 "joker) (optionnel)"
 
 #, c-format
+msgid "%s%s: script \"%s\" already registered (register ignored)"
+msgstr "%s%s: script \"%s\" déjà enregistré (register ignoré)"
+
+#, c-format
 msgid ""
 "%s%s: unable to register script \"%s\" (another script already exists with "
 "this name)"
@@ -7998,6 +8262,9 @@ msgstr ""
 #, c-format
 msgid "%s: registered script \"%s\", version %s (%s)"
 msgstr "%s: script \"%s\" chargé, version %s (%s)"
+
+msgid "Support of scheme scripts (with Guile)"
+msgstr "Support des scripts scheme (avec Guile)"
 
 #, c-format
 msgid "%s: stdout/stderr: %s%s"
@@ -8036,6 +8303,9 @@ msgstr "%s%s: script \"%s\" non chargé"
 msgid "%s%s: unknown option for command \"%s\""
 msgstr "%s%s: option inconnue pour la commande \"%s\""
 
+msgid "Support of lua scripts"
+msgstr "Support des scripts lua"
+
 #, c-format
 msgid "%s%s: unable to run function \"%s\""
 msgstr "%s%s: impossible de lancer la fonction \"%s\""
@@ -8059,6 +8329,9 @@ msgstr "%s%s: impossible de charger le fichier \"%s\""
 #, c-format
 msgid "%s%s: unable to execute file \"%s\""
 msgstr "%s%s: impossible d'exécuter le fichier \"%s\""
+
+msgid "Support of perl scripts"
+msgstr "Support des scripts perl"
 
 #, c-format
 msgid "%s%s: function \"%s\" must return one valid value (%d)"
@@ -8092,6 +8365,9 @@ msgstr "%s%s: erreur inconnue en chargement du fichier \"%s\""
 msgid "%s%s: unable to initialize %s"
 msgstr "%s%s: impossible d'initialiser %s"
 
+msgid "Support of python scripts"
+msgstr "Support des scripts python"
+
 #, c-format
 msgid "%s%s: unable to initialize WeeChat module"
 msgstr "%s%s: impossible d'initialiser le module WeeChat"
@@ -8118,6 +8394,9 @@ msgstr "%s%s: impossible de lire l'état courant de l'interpréteur"
 #, c-format
 msgid "%s%s: unable to free interpreter"
 msgstr "%s%s: impossible de libérer l'interpréteur"
+
+msgid "Support of ruby scripts"
+msgstr "Support des scripts ruby"
 
 #, c-format
 msgid "%s%s: stdout/stderr: %s%s"
@@ -8265,6 +8544,9 @@ msgstr ""
 msgid "%s%s: wrong arguments for function \"%s\" (script: %s)"
 msgstr "%s%s: paramètres invalides pour la fonction \"%s\" (script: %s)"
 
+msgid "Support of tcl scripts"
+msgstr "Support des scripts tcl"
+
 #, c-format
 msgid "%s%s: unable to run function \"%s\": %s"
 msgstr "%s%s: impossible de lancer la fonction \"%s\": %s"
@@ -8291,6 +8573,9 @@ msgstr "ETA"
 
 msgid "Xfer list"
 msgstr "Liste Xfer"
+
+msgid "DCC file transfer and direct chat"
+msgstr "Transfert de fichier DCC et discussion directe"
 
 msgid "waiting"
 msgstr "attente"
@@ -8497,8 +8782,14 @@ msgstr ""
 "taille de la barre de progression, en caractères (si 0, la barre de "
 "progression est désactivée)"
 
-msgid "text color of selected xfer line"
-msgstr "couleur du texte pour la ligne xfer sélectionnée"
+msgid "text color in xfer buffer"
+msgstr "couleur du texte dans le tampon xfer"
+
+msgid "background color in xfer buffer"
+msgstr "couleur du fond dans le tampon xfer"
+
+msgid "text color of selected line in xfer buffer"
+msgstr "couleur du texte pour la ligne sélectionnée dans le tampon xfer"
 
 msgid "text color for \"waiting\" status"
 msgstr "couleur du texte pour le statut \"en attente\""
@@ -8679,27 +8970,5 @@ msgstr "Type"
 msgid "Constants"
 msgstr "Constantes"
 
-#~ msgid "display '+' if prefix is truncated"
-#~ msgstr "afficher '+' si le préfixe est tronqué"
-
-#~ msgid "<nick> <channel>"
-#~ msgstr "<pseudo> <canal>"
-
-#~ msgid ""
-#~ "delay (in seconds) to wait for control sequence ending a bracketed paste "
-#~ "(\"ESC[201~\"); if the control sequence is not received and that delay is "
-#~ "reached, WeeChat will end the bracketed paste"
-#~ msgstr ""
-#~ "délai (en secondes) à attendre pour la séquence de contrôle qui termine "
-#~ "le mode \"bracketed paste\" (\"ESC[201~\"); si la séquence de contrôle "
-#~ "n'est pas reçue et que ce délai est atteint, WeeChat terminera le "
-#~ "\"bracketed paste\""
-
-#~ msgid ""
-#~ "enable bracketed paste mode (if available, only some terminals support it)"
-#~ msgstr ""
-#~ "activer le mode \"bracketed paste\" (si disponible, seulement quelques "
-#~ "terminaux le supportent)"
-
-#~ msgid "mechanism for SASL authentication"
-#~ msgstr "mécanisme pour l'authentification SASL"
+#~ msgid "Regex modifier"
+#~ msgstr "Modifieur avec expressions régulières"

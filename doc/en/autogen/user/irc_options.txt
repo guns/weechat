@@ -103,8 +103,13 @@
 ** type: boolean
 ** values: on, off (default value: `on`)
 
+* [[option_irc.look.ctcp_time_format]] *irc.look.ctcp_time_format*
+** description: `time format used in answer to message CTCP TIME (see man strftime for date/time specifiers)`
+** type: string
+** values: any string (default value: `"%a, %d %b %Y %T %z"`)
+
 * [[option_irc.look.display_away]] *irc.look.display_away*
-** description: `display message when (un)marking as away`
+** description: `display message when (un)marking as away (off: do not display/send anything, local: display locally, channel: send action to channels)`
 ** type: integer
 ** values: off, local, channel (default value: `local`)
 
@@ -183,13 +188,8 @@
 ** type: boolean
 ** values: on, off (default value: `on`)
 
-* [[option_irc.look.item_channel_modes]] *irc.look.item_channel_modes*
-** description: `display channel modes in "buffer_name" bar item`
-** type: boolean
-** values: on, off (default value: `on`)
-
 * [[option_irc.look.item_channel_modes_hide_key]] *irc.look.item_channel_modes_hide_key*
-** description: `hide channel key if modes are displayed in "buffer_name" bar item (this will hide all channel modes arguments if mode +k is set on channel)`
+** description: `hide channel key in channel modes (this will hide all channel modes arguments if mode +k is set on channel)`
 ** type: boolean
 ** values: on, off (default value: `off`)
 
@@ -234,7 +234,7 @@
 ** values: any string (default value: `"_|["`)
 
 * [[option_irc.look.nick_completion_smart]] *irc.look.nick_completion_smart*
-** description: `smart completion for nicks (completes first with last speakers)`
+** description: `smart completion for nicks (completes first with last speakers): speakers = all speakers (including highlights), speakers_highlights = only speakers with highlight`
 ** type: integer
 ** values: off, speakers, speakers_highlights (default value: `speakers`)
 
@@ -509,7 +509,7 @@
 ** values: on, off (default value: `off`)
 
 * [[option_irc.server_default.ssl_cert]] *irc.server_default.ssl_cert*
-** description: `ssl certificate file used to automatically identify your nick ("%h" will be replaced by WeeChat home, "~/.weechat" by default)`
+** description: `SSL certificate file used to automatically identify your nick ("%h" will be replaced by WeeChat home, "~/.weechat" by default)`
 ** type: string
 ** values: any string (default value: `""`)
 
@@ -524,7 +524,7 @@
 ** values: any string (default value: `"NORMAL"`)
 
 * [[option_irc.server_default.ssl_verify]] *irc.server_default.ssl_verify*
-** description: `check that the ssl connection is fully trusted`
+** description: `check that the SSL connection is fully trusted`
 ** type: boolean
 ** values: on, off (default value: `on`)
 

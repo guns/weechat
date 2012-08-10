@@ -44,12 +44,17 @@
         {                                                               \
             weechat_printf (NULL,                                       \
                             _("%s%s: too few arguments received from "  \
-                              "client %d for command \"%s\" "           \
+                              "client %s%s%s for command \"%s\" "       \
                               "(received: %d arguments, expected: at "  \
                               "least %d)"),                             \
                             weechat_prefix ("error"),                   \
                             RELAY_PLUGIN_NAME,                          \
-                            client->id, command, argc, __min_args);     \
+                            RELAY_COLOR_CHAT_CLIENT,                    \
+                            client->desc,                               \
+                            RELAY_COLOR_CHAT,                           \
+                            command,                                    \
+                            argc,                                       \
+                            __min_args);                                \
         }                                                               \
         return WEECHAT_RC_ERROR;                                        \
     }
@@ -72,6 +77,10 @@ extern int relay_weechat_protocol_signal_nicklist_cb (void *data,
                                                       const char *signal,
                                                       const char *type_data,
                                                       void *signal_data);
+extern int relay_weechat_protocol_signal_upgrade_cb (void *data,
+                                                     const char *signal,
+                                                     const char *type_data,
+                                                     void *signal_data);
 extern int relay_weechat_protocol_timer_nicklist_cb (void *data,
                                                      int remaining_calls);
 extern void relay_weechat_protocol_recv (struct t_relay_client *client,

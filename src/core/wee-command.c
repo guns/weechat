@@ -208,13 +208,6 @@ COMMAND_CALLBACK(bar)
     if (string_strcasecmp (argv[1], "add") == 0)
     {
         COMMAND_MIN_ARGS(8, "bar add");
-        if (argv[2][0] == '#')
-        {
-            gui_chat_printf (NULL,
-                             _("%sError: name can not start with \"#\""),
-                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
-            return WEECHAT_RC_OK;
-        }
         pos_condition = strchr (argv[3], ',');
         if (pos_condition)
         {
@@ -508,7 +501,7 @@ command_buffer_display_localvar (void *data,
 
 COMMAND_CALLBACK(buffer)
 {
-    struct t_gui_buffer *ptr_buffer, *weechat_buffer;
+    struct t_gui_buffer *ptr_buffer, *ptr_buffer2, *weechat_buffer;
     long number, number1, number2;
     char *error, *value, *pos, *str_number1, *pos_number2;
     int i, target_buffer, error_main_buffer, num_buffers;
@@ -625,6 +618,55 @@ COMMAND_CALLBACK(buffer)
                              gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
             return WEECHAT_RC_OK;
         }
+
+        return WEECHAT_RC_OK;
+    }
+
+    /* swap buffers */
+    if (string_strcasecmp (argv[1], "swap") == 0)
+    {
+        COMMAND_MIN_ARGS(3, "buffer swap");
+
+        ptr_buffer = NULL;
+        ptr_buffer2 = NULL;
+
+        /* first buffer for swap */
+        number = strtol (argv[2], &error, 10);
+        if (error && !error[0])
+            ptr_buffer = gui_buffer_search_by_number (number);
+        else
+        {
+            ptr_buffer = gui_buffer_search_by_full_name (argv[2]);
+            if (!ptr_buffer)
+                ptr_buffer = gui_buffer_search_by_partial_name (NULL, argv[2]);
+        }
+
+        /* second buffer for swap */
+        if (argc > 3)
+        {
+            number = strtol (argv[3], &error, 10);
+            if (error && !error[0])
+                ptr_buffer2 = gui_buffer_search_by_number (number);
+            else
+            {
+                ptr_buffer2 = gui_buffer_search_by_full_name (argv[3]);
+                if (!ptr_buffer2)
+                    ptr_buffer2 = gui_buffer_search_by_partial_name (NULL, argv[3]);
+            }
+        }
+        else
+            ptr_buffer2 = buffer;
+
+        if (!ptr_buffer || !ptr_buffer2)
+        {
+            /* invalid buffer name/number */
+            gui_chat_printf (NULL,
+                             _("%sError: buffer not found"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+            return WEECHAT_RC_OK;
+        }
+
+        gui_buffer_swap (ptr_buffer, ptr_buffer2);
 
         return WEECHAT_RC_OK;
     }
@@ -1590,13 +1632,6 @@ COMMAND_CALLBACK(filter)
                                        argv[2]);
             return WEECHAT_RC_OK;
         }
-        if (argv[2][0] == '#')
-        {
-            gui_chat_printf_date_tags (NULL, 0, GUI_FILTER_TAG_NO_FILTER,
-                                       _("%sError: name can not start with \"#\""),
-                                       gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
-            return WEECHAT_RC_OK;
-        }
         if ((strcmp (argv[4], "*") == 0) && (strcmp (argv_eol[5], "*") == 0))
         {
             gui_chat_printf_date_tags (NULL, 0, GUI_FILTER_TAG_NO_FILTER,
@@ -1940,10 +1975,18 @@ COMMAND_CALLBACK(help)
                 else
                 {
                     gui_chat_printf (NULL,
-                                     "%s[%s%s%s]  %s/%s  %s%s",
+                                     "%s[%s%s%s%s%s%s%s]  %s/%s  %s%s",
                                      GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                      GUI_COLOR(GUI_COLOR_CHAT),
                                      plugin_get_name (ptr_hook->plugin),
+                                     (ptr_hook->subplugin && ptr_hook->subplugin[0]) ?
+                                     GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                     (ptr_hook->subplugin && ptr_hook->subplugin[0]) ?
+                                     "/" : "",
+                                     (ptr_hook->subplugin && ptr_hook->subplugin[0]) ?
+                                     GUI_COLOR(GUI_COLOR_CHAT) : "",
+                                     (ptr_hook->subplugin && ptr_hook->subplugin[0]) ?
+                                     ptr_hook->subplugin : "",
                                      GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                      GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
                                      HOOK_COMMAND(ptr_hook, command),
@@ -3340,7 +3383,7 @@ command_plugin_list (const char *name, int full)
                                  ptr_plugin->version,
                                  GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                  GUI_COLOR(GUI_COLOR_CHAT),
-                                 ptr_plugin->description,
+                                 (ptr_plugin->description && ptr_plugin->description[0]) ? _(ptr_plugin->description) : "",
                                  ptr_plugin->filename);
 
                 /* second line of plugin info */
@@ -3583,7 +3626,7 @@ command_plugin_list (const char *name, int full)
                                  GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
                                  ptr_plugin->name,
                                  GUI_COLOR(GUI_COLOR_CHAT),
-                                 ptr_plugin->description);
+                                 (ptr_plugin->description && ptr_plugin->description[0]) ? _(ptr_plugin->description) : "");
             }
         }
     }
@@ -3776,13 +3819,6 @@ COMMAND_CALLBACK(proxy)
     if (string_strcasecmp (argv[1], "add") == 0)
     {
         COMMAND_MIN_ARGS(6, "proxy add");
-        if (argv[2][0] == '#')
-        {
-            gui_chat_printf (NULL,
-                             _("%sError: name can not start with \"#\""),
-                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
-            return WEECHAT_RC_OK;
-        }
         type = proxy_search_type (argv[3]);
         if (type < 0)
         {
@@ -5452,6 +5488,7 @@ command_init ()
                   N_("list"
                      " || clear [<number>|<name>|-merged|-all]"
                      " || move|merge <number>"
+                     " || swap <number1>|<name1> [<number2>|<name2>]"
                      " || unmerge [<number>|-all]"
                      " || close [<n1>[-<n2>]|<name>]"
                      " || notify <level>"
@@ -5466,6 +5503,8 @@ command_init ()
                      "nothing for current buffer)\n"
                      "    move: move buffer in the list (may be relative, for "
                      "example -1)\n"
+                     "    swap: swap two buffers (swap with current buffer if "
+                     "only one number/name given)\n"
                      "   merge: merge current buffer to another buffer (chat "
                      "area will be mix of both buffers)\n"
                      "          (by default ctrl-x switches between merged "
@@ -5495,6 +5534,10 @@ command_init ()
                      "    /buffer clear\n"
                      "  move buffer to number 5:\n"
                      "    /buffer move 5\n"
+                     "  swap buffer 1 with 3:\n"
+                     "    /buffer swap 1 3\n"
+                     "  swap buffer #weechat with current buffer:\n"
+                     "    /buffer swap #weechat\n"
                      "  merge with core buffer:\n"
                      "    /buffer merge 1\n"
                      "  unmerge buffer:\n"
@@ -5509,6 +5552,7 @@ command_init ()
                      "    /buffer +1"),
                   "clear -merged|-all|%(buffers_numbers)|%(buffers_plugins_names)"
                   " || move %(buffers_numbers)"
+                  " || swap %(buffers_numbers)"
                   " || merge %(buffers_numbers)"
                   " || unmerge %(buffers_numbers)|-all"
                   " || close %(buffers_plugins_names)"
@@ -5813,6 +5857,8 @@ command_init ()
                      "bound to key (for context \"default\")\n"
                      "   bindctxt: bind a command to a key or display command "
                      "bound to key, for given context\n"
+                     "    command: command (many commands can be separated by "
+                     "semicolons)\n"
                      "     unbind: remove a key binding (for context "
                      "\"default\")\n"
                      " unbindctxt: remove a key binding for given context\n"
@@ -6225,23 +6271,18 @@ command_init ()
 }
 
 /*
- * command_startup: execute command at startup
+ * command_exec_list: execute command list
  */
 
 void
-command_startup (int plugins_loaded)
+command_exec_list (const char *command_list)
 {
-    char *command, **commands, **ptr_cmd;
+    char **commands, **ptr_cmd;
     struct t_gui_buffer *weechat_buffer;
 
-    if (plugins_loaded)
-        command = CONFIG_STRING(config_startup_command_after_plugins);
-    else
-        command = CONFIG_STRING(config_startup_command_before_plugins);
-
-    if (command && command[0])
+    if (command_list && command_list[0])
     {
-        commands = string_split_command (command, ';');
+        commands = string_split_command (command_list, ';');
         if (commands)
         {
             weechat_buffer = gui_buffer_search_main ();
@@ -6252,4 +6293,20 @@ command_startup (int plugins_loaded)
             string_free_split_command (commands);
         }
     }
+}
+
+/*
+ * command_startup: execute command at startup
+ */
+
+void
+command_startup (int plugins_loaded)
+{
+    if (plugins_loaded)
+    {
+        command_exec_list(CONFIG_STRING(config_startup_command_after_plugins));
+        command_exec_list(weechat_startup_commands);
+    }
+    else
+        command_exec_list(CONFIG_STRING(config_startup_command_before_plugins));
 }

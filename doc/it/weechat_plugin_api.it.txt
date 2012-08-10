@@ -307,7 +307,7 @@ Esempio in C:
 
 [source,C]
 ----------------------------------------
-weechat_charset_set (plugin, "iso-8859-1");
+weechat_charset_set ("iso-8859-1");
 ----------------------------------------
 
 Script (Python):
@@ -348,7 +348,7 @@ Esempio in C:
 
 [source,C]
 ----------------------------------------
-char *str = weechat_iconv_to_internal (plugin, "iso-8859-1", "iso string: é à");
+char *str = weechat_iconv_to_internal ("iso-8859-1", "iso string: é à");
 /* ... */
 free (str);
 ----------------------------------------
@@ -1064,14 +1064,18 @@ Argomenti:
 ** REG_ICASE
 ** REG_NEWLINE
 ** REG_NOSUB
+// TRANSLATION MISSING
 * 'flags': pointer value is set with flags used in regular expression (default
   flags + flags set in regular expression)
 
+// TRANSLATION MISSING
 Flags must be at beginning of regular expression. Format is:
 "(?eins-eins)string".
 
+// TRANSLATION MISSING
 Allowed flags are:
 
+// TRANSLATION MISSING
 * 'e': POSIX extended regular expression ('REG_EXTENDED')
 * 'i': case insensitive ('REG_ICASE')
 * 'n': match-any-character operators don't match a newline ('REG_NEWLINE')
@@ -1079,6 +1083,7 @@ Allowed flags are:
 
 Valore restituito:
 
+// TRANSLATION MISSING
 * pointer in 'regex', after flags
 
 Esempio in C:
@@ -1112,6 +1117,7 @@ int weechat_string_regcomp (void *preg, const char *regex, int default_flags)
 
 Argomenti:
 
+// TRANSLATION MISSING
 * 'preg': pointer to 'regex_t' structure
 * 'regex': regular expression
 * 'default_flags': combination of following values (see `man regcomp`):
@@ -1122,6 +1128,7 @@ Argomenti:
 
 Valore restituito:
 
+// TRANSLATION MISSING
 * same return code as function `regcomp` (0 if ok, other value for error,
   see `man regcomp`)
 
@@ -2514,6 +2521,39 @@ Esempio in C:
 time_t date = time (NULL);
 weechat_printf (NULL, "date: %s",
                 weechat_util_get_time_string (&date));
+----------------------------------------
+
+[NOTE]
+Questa funzione non è disponibile nelle API per lo scripting.
+
+weechat_util_version_number
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.9._
+
+// TRANSLATION MISSING
+Convert a string with WeeChat version to a number.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+int weechat_util_version_number (const char *version);
+----------------------------------------
+
+Argomenti:
+
+// TRANSLATION MISSING
+* 'version': WeeChat version as string (example: "0.3.9" or "0.3.9-dev")
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+version_number = weechat_util_version_number ("0.3.8");     /* == 0x00030800 */
+version_number = weechat_util_version_number ("0.3.9-dev"); /* == 0x00030900 */
+version_number = weechat_util_version_number ("0.3.9-rc1"); /* == 0x00030900 */
+version_number = weechat_util_version_number ("0.3.9");     /* == 0x00030900 */
 ----------------------------------------
 
 [NOTE]
@@ -4364,7 +4404,8 @@ Prototipo:
 void weechat_config_search_with_string (const char *option_name,
                                         struct t_config_file **config_file,
                                         struct t_config_section **section,
-                                        struct t_config_option **option);
+                                        struct t_config_option **option,
+                                        char **pos_option_name);
 ----------------------------------------
 
 Argomenti:
@@ -4376,6 +4417,9 @@ Argomenti:
   dell'opzione, se viene trovata
 * 'option': puntatore al puntatore dell'opzione, sarà impostato al puntatore di
   un'opzione, se viene trovata
+// TRANSLATION MISSING
+* 'pos_option_name': pointer to a string pointer, will be set to pointer to
+  name of option, if found
 
 Esempio in C:
 
@@ -4384,11 +4428,13 @@ Esempio in C:
 struct t_config_file *ptr_config_file;
 struct t_config_section *ptr_section;
 struct t_config_option *ptr_option;
+char *option_name;
 
 weechat_config_search_with_string ("file.section.option",
                                    &ptr_config_file,
                                    &ptr_section,
-                                   &ptr_option);
+                                   &ptr_option,
+                                   &option_name);
 if (ptr_option)
 {
     /* opzione trovata */
@@ -6156,7 +6202,7 @@ Esempi:
 
 Valore restituito:
 
-* stringa con codice colore, o un codice "reset color" se il colore non è stato trovato
+* stringa con il codice colore, o una stringa vuota se non trovata
 
 Esempio in C:
 
@@ -6313,31 +6359,29 @@ Argomenti:
 * 'tags': lista di tag separati da virgole
 * 'message': messaggio da visualizzare
 
-// TRANSLATION MISSING
-Tags commonly used (non-exhaustive list):
+Tag usati di frequente (elenco non esaustivo):
 
-// TRANSLATION MISSING
 [width="70%",cols="1m,4",options="header"]
 |========================================
-| Tag              | Description
-| no_filter        | Line can not be filtered
-| no_highlight     | No highlight is possible on line
-| no_log           | Line is not written in log file
-| log0 ... log9    | Level of log for line (see `/help logger`)
-| notify_none      | Buffer with line is not added to hotlist
-| notify_message   | Buffer with line is added to hotlist with level "message"
-| notify_private   | Buffer with line is added to hotlist with level "private"
-| notify_highlight | Buffer with line is added to hotlist with level "highlight"
-| nick_xxx         | Message is from nick "xxx"
-| prefix_nick_ccc  | Prefix is a nick with color "ccc"
-| irc_xxx          | IRC message "xxx" (can be a command or a 3-digits number)
-| irc_numeric      | IRC numeric message
-| irc_error        | Error from IRC server
-| irc_action       | Action from a nick (command `/me`)
-| irc_ctcp         | CTCP message
-| irc_ctcp_reply   | Reply to CTCP message
-| irc_smart_filter | IRC message that can be filtered with the "smart filter"
-| away_info        | Message with away info
+| Tag              | Descrizione
+| no_filter        | La riga non può essere filtrata
+| no_highlight     | Evidenziazione non possibile sulla riga
+| no_log           | La riga non viene scritta nel file di log
+| log0 ... log9    | Livello di log per la riga (consultare `/help logger`)
+| notify_none      | Il buffer con la riga non viene aggiunto alla hotlist
+| notify_message   | Il buffer con la riga viene aggiunto alla hotlist con il livello "message"
+| notify_private   | Il buffer con la riga viene aggiunto alla hotlist con il livello "private"
+| notify_highlight | Il buffer con la riga viene aggiunto alla hotlist con il livello "higlight"
+| nick_xxx         | Il messaggio viene dal nick "xxx"
+| prefix_nick_ccc  | Il prefisso è un nick con il colore "ccc"
+| irc_xxx          | Messaggio IRC "xxx" (può essere un comando o un numero di 3 cifre)
+| irc_numeric      | Messaggio IRC numerico
+| irc_error        | Errore dal server IRC
+| irc_action       | Azione da un nic (comando `/me`)
+| irc_ctcp         | Messaggio CTCP
+| irc_ctcp_reply   | Risposta ad un messaggio CTCP
+| irc_smart_filter | Messaggio IRC filtrabile tramite lo "smart filter" (filtro intelligente)
+| away_info        | Messagio con informazioni sull'assenza
 |========================================
 
 Esempio in C:
@@ -6573,16 +6617,20 @@ struct t_hook *my_command_hook =
 ----------------------------------------
 
 Ad esempio, se il comando chiamato è `/comando abc def ghi`, allora
-argv e argv_eol contengono i seguenti valori:
+'argv' e 'argv_eol' contengono i seguenti valori:
 
 * 'argv':
-** 'argv[0]' == "abc"
-** 'argv[1]' == "def"
-** 'argv[2]' == "ghi"
+** 'argv[0]' == "/command"
+** 'argv[1]' == "abc"
+** 'argv[2]' == "def"
+** 'argv[3]' == "ghi"
 * 'argv_eol':
-** 'argv_eol[0]' == "abc def ghi"
-** 'argv_eol[1]' == "def ghi"
-** 'argv_eol[2]' == "ghi"
+** 'argv_eol[0]' == "/command abc def ghi"
+** 'argv_eol[1]' == "abc def ghi"
+** 'argv_eol[2]' == "def ghi"
+** 'argv_eol[3]' == "ghi"
+
+Per gli script, 'args' ha valore "abc def ghi".
 
 Script (Python):
 
@@ -7042,7 +7090,7 @@ struct t_hashtable *options = weechat_hashtable_new (8,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      NULL,
                                                      NULL);
-if (hashtable)
+if (options)
 {
     weechat_hashtable_set (options, "file_out", "/tmp/weechat.org.html");
     struct t_hook *my_process_hook = weechat_hook_process_hashtable ("url:http://www.weechat.org/",
@@ -7273,7 +7321,8 @@ Argomenti:
   buffer
 * 'tags': verranno catturati solo messaggi con queste tag (elenco separato da virgole)
   (opzionale)
-* 'message': verranno catturati solo i messaggi con questa stringa (opzionale)
+* 'message': verranno catturati solo i messaggi con questa stringa (opzionale,
+  non sensibile alle maiuscole)
 * 'strip_colors': se 1, i colori verranno estratti dal messaggio visualizzato, prima
   di chiamare la callback
 * 'callback': funzione chiamata quando viene stampato un messaggio, argomenti e
@@ -7357,6 +7406,30 @@ Argomenti:
 [width="100%",cols="^1,^3,^4,5",options="header"]
 |========================================
 | Plugin | Segnale | Argomenti | Descrizione
+
+// TRANSLATION MISSING
+| guile | guile_script_loaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  scheme script loaded
+
+// TRANSLATION MISSING
+| guile | guile_script_unloaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  scheme script unloaded
+
+// TRANSLATION MISSING
+| guile | guile_script_installed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.scm,/path/to/script2.scm") |
+  scheme script(s) installed
+
+// TRANSLATION MISSING
+| guile | guile_script_removed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.scm,script2.scm") |
+  scheme script(s) removed
 
 | irc | xxx,irc_in_yyy ^(1)^ |
   string: messaggio |
@@ -7479,6 +7552,126 @@ Argomenti:
 | logger | logger_backlog |
   puntatore: buffer |
   visualizza log precedenti per il buffer
+
+// TRANSLATION MISSING
+| lua | lua_script_loaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  lua script loaded
+
+// TRANSLATION MISSING
+| lua | lua_script_unloaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  lua script unloaded
+
+// TRANSLATION MISSING
+| lua | lua_script_installed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.lua,/path/to/script2.lua") |
+  lua script(s) installed
+
+// TRANSLATION MISSING
+| lua | lua_script_removed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.lua,script2.lua") |
+  lua script(s) removed
+
+// TRANSLATION MISSING
+| perl | perl_script_loaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  perl script loaded
+
+// TRANSLATION MISSING
+| perl | perl_script_unloaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  perl script unloaded
+
+// TRANSLATION MISSING
+| perl | perl_script_installed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.pl,/path/to/script2.pl") |
+  perl script(s) installed
+
+// TRANSLATION MISSING
+| perl | perl_script_removed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.pl,script2.pl") |
+  perl script(s) removed
+
+// TRANSLATION MISSING
+| python | python_script_loaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  python script loaded
+
+// TRANSLATION MISSING
+| python | python_script_unloaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  python script unloaded
+
+// TRANSLATION MISSING
+| python | python_script_installed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.py,/path/to/script2.py") |
+  python script(s) installed
+
+// TRANSLATION MISSING
+| python | python_script_removed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.py,script2.py") |
+  python script(s) removed
+
+// TRANSLATION MISSING
+| ruby | ruby_script_loaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  ruby script loaded
+
+// TRANSLATION MISSING
+| ruby | ruby_script_unloaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  ruby script unloaded
+
+// TRANSLATION MISSING
+| ruby | ruby_script_installed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.rb,/path/to/script2.rb") |
+  ruby script(s) installed
+
+// TRANSLATION MISSING
+| ruby | ruby_script_removed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.rb,script2.rb") |
+  ruby script(s) removed
+
+// TRANSLATION MISSING
+| tcl | tcl_script_loaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  tcl script loaded
+
+// TRANSLATION MISSING
+| tcl | tcl_script_unloaded +
+  (_novità nella versione 0.3.9_) |
+  string: path to script |
+  tcl script unloaded
+
+// TRANSLATION MISSING
+| tcl | tcl_script_installed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.tcl,/path/to/script2.tcl") |
+  tcl script(s) installed
+
+// TRANSLATION MISSING
+| tcl | tcl_script_removed +
+  (_novità nella versione 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.tcl,script2.tcl") |
+  tcl script(s) removed
 
 | weechat | buffer_closing |
   puntatore: buffer |
@@ -8682,8 +8875,7 @@ Argomenti:
 
 Valore restituito:
 
-* stringa modificata, NULL se nessun cambiamento nella stringa è
-  stato effettuato dal modificatore(i).
+* stringa modificata, NULL in caso di errore
 
 Esempio in C:
 
@@ -9132,6 +9324,51 @@ def my_focus_nicklist_cb(data, info):
 
 hook = weechat.hook_focus("buffer_nicklist", "my_focus_nicklist_cb", "")
 ----------------------------------------
+
+weechat_hook_set
+^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.9._
+
+// TRANSLATION MISSING
+Set string value of a hook property.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+void weechat_hook_set (struct t_hook *hook, const char *property,
+                       const char *value);
+----------------------------------------
+
+Argomenti:
+
+* 'hook': qualcosa su cui è presente un hook con "weechat_hook_xxx()"
+* 'property' e 'value': nome della proprietà, con il proprio valore:
+
+[width="100%",cols="^2,4,8",options="header"]
+|========================================
+| Nome | Valore | Descrizione
+
+| subplugin | qualsiasi stringa |
+// TRANSLATION MISSING
+  name of sub plugin (commonly script name, which is displayed in
+  `/help command` for a hook of type 'command')
+|========================================
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+struct t_hook *my_command_hook =
+    weechat_hook_command ("abcd", "description",
+                          "args", "description args",
+                          "", &my_command_cb, NULL);
+weechat_hook_set (my_command_hook, "subplugin", "test");
+----------------------------------------
+
+[NOTE]
+Questa funzione non è disponibile nelle API per lo scripting.
 
 weechat_unhook
 ^^^^^^^^^^^^^^
@@ -9664,7 +9901,9 @@ Argomenti:
    per il buffer principale di WeeChat)
 ** 'name': nome del buffer
 ** 'full_name': nome completo del buffer ("plugin.nome") (_novità nella versione 0.3.7_)
-** 'short_name': nome breve del buffer
+** 'short_name': nome breve del buffer (nota: usato solo per il display e può
+   essere cambiato dall'utente, questo nome non va usato per trovare il nome del
+   buffer, utilizzare invece 'name', 'fullname' o la variabile locale 'channel')
 ** 'title': titolo del buffer
 ** 'input': testo in ingresso
 ** 'text_search_input': input salvato prima della ricerca nel testo
@@ -9947,6 +10186,24 @@ Argomenti:
 ** 'close_callback_data': set close callback data
 ** 'input_callback': set input callback function
 ** 'input_callback_data': set input callback data
+// TRANSLATION MISSING
+** 'nickcmp_callback': set nick comparison callback function (this callback is
+   called when searching nick in nicklist) (_novità nella versione 0.3.9_)
+// TRANSLATION MISSING
+** 'nickcmp_callback_data': set nick comparison callback data
+   (_novità nella versione 0.3.9_)
+
+// TRANSLATION MISSING
+Prototypes for callbacks:
+
+[source,C]
+----------------------------------------
+int close_callback (void *data, struct t_gui_buffer *buffer);
+
+int input_callback (void *data, struct t_gui_buffer *buffer, const char *input_data);
+
+int nickcmp_callback (void *data, struct t_gui_buffer *buffer, const char *nick1, const char *nick2);
+----------------------------------------
 
 Esempio in C:
 
@@ -11629,6 +11886,11 @@ weechat_network_pass_proxy
 
 Stabilisce una connessione/autenticazione con un proxy.
 
+[IMPORTANT]
+// TRANSLATION MISSING
+This function is blocking on call to connect(), so it must be called in a forked
+process only, to not block WeeChat.
+
 Prototipo:
 
 [source,C]
@@ -11672,6 +11934,11 @@ weechat_network_connect_to
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Stabilisce una connessione con un host remoto.
+
+[IMPORTANT]
+// TRANSLATION MISSING
+This function is blocking on call to connect(), so it must be called in a forked
+process only, to not block WeeChat.
 
 Prototipo:
 
@@ -12205,7 +12472,7 @@ Script (Python):
 infolist = weechat.infolist_get(infolist_name, pointer, arguments)
 
 # esempio
-infolist = weechat.infolist_get("irc_server, "", "")
+infolist = weechat.infolist_get("irc_server", "", "")
 ----------------------------------------
 
 weechat_infolist_next
@@ -12655,7 +12922,6 @@ alle liste info, ma ci sono alcune differenze:
 * può contenere informazioni differenti rispetto alle liste info: esso contiene
   solo dati raw in strutture (le liste info possono aggiungere alcuni dati extra
   per convenienza)
-
 ========================================
 
 Prototipo:
@@ -12699,7 +12965,7 @@ Prototipo:
 [source,C]
 ----------------------------------------
 void weechat_hdata_new_var (struct t_hdata *hdata, const char *name, int offset, int type,
-                            const char *hdata_name);
+                            const char *array_size, const char *hdata_name);
 ----------------------------------------
 
 Argomenti:
@@ -12714,7 +12980,16 @@ Argomenti:
 ** WEECHAT_HDATA_STRING
 ** WEECHAT_HDATA_POINTER
 ** WEECHAT_HDATA_TIME
+** WEECHAT_HDATA_HASHTABLE
 ** WEECHAT_HDATA_OTHER
+// TRANSLATION MISSING
+* 'array_size': not NULL only if a variable is an array, and it can be:
+  (_novità nella versione 0.3.9_)
+** name of variable in hdata: this variable will be used as size of array
+   (dynamic size for array)
+** integer (as string): fixed size for array
+** '*': automatic size: the size of array is computed by looking at values, when
+   the first NULL is found (only for type string, pointer or hashtable)
 * 'hdata_name': nome di un hdata (se è un puntatore ad una struttura con dati)
 
 Esempio in C:
@@ -12725,7 +13000,9 @@ struct t_myplugin_list
 {
     char *name;
     struct t_gui_buffer *buffer;
-    int count;
+    int tags_count;
+    char **tags_array;
+    char **string_split;
     struct t_myplugin_list *prev;
     struct t_myplugin_list *next;
 };
@@ -12733,22 +13010,26 @@ struct t_myplugin_list
 /* ... */
 
 struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next");
-weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL);
-weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL);
-weechat_hdata_new_var (hdata, "count", offsetof (struct t_myplugin_list, count), WEECHAT_HDATA_INTEGER, NULL);
-weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, "myplugin_list");
-weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, "myplugin_list");
+weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL, NULL);
+weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_count", offsetof (struct t_myplugin_list, tags_count), WEECHAT_HDATA_INTEGER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_array", offsetof (struct t_myplugin_list, tags_array), WEECHAT_HDATA_STRING, "tags_count", NULL);
+weechat_hdata_new_var (hdata, "string_split", offsetof (struct t_myplugin_list, string_split), WEECHAT_HDATA_STRING, "*", NULL);
+weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
 ----------------------------------------
 
 La macro "WEECHAT_HDATA_VAR" può essere usata per accorciare il codice:
 
 [source,C]
 ----------------------------------------
-WEECHAT_HDATA_VAR(struct t_myplugin_list, name, STRING, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, buffer, POINTER, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, count, INTEGER, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, prev, POINTER, "myplugin_list");
-WEECHAT_HDATA_VAR(struct t_myplugin_list, next, POINTER, "myplugin_list");
+WEECHAT_HDATA_VAR(struct t_myplugin_list, name, STRING, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, buffer, POINTER, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_count, INTEGER, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_array, STRING, "tags_count", NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, string_split, STRING, "*", NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, prev, POINTER, NULL, "myplugin_list");
+WEECHAT_HDATA_VAR(struct t_myplugin_list, next, POINTER, NULL, "myplugin_list");
 ----------------------------------------
 
 [NOTE]
@@ -12782,22 +13063,24 @@ struct t_myplugin_list
 {
     char *name;
     struct t_gui_buffer *buffer;
-    int count;
-        struct t_myplugin_list *prev;
+    int tags_count;
+    char **tags_array;
+    char **string_split;
+    struct t_myplugin_list *prev;
     struct t_myplugin_list *next;
 };
-
-struct t_myplugin_list *buffers = NULL;
-struct t_myplugin_list *last_buffer = NULL;
 
 /* ... */
 
 struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next");
-weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL);
-weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL);
-weechat_hdata_new_var (hdata, "count", offsetof (struct t_myplugin_list, count), WEECHAT_HDATA_INTEGER, NULL);
-weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, "myplugin_list");
-weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, "myplugin_list");
+weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL, NULL);
+weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_count", offsetof (struct t_myplugin_list, tags_count), WEECHAT_HDATA_INTEGER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_array", offsetof (struct t_myplugin_list, tags_array), WEECHAT_HDATA_STRING, "tags_count", NULL);
+weechat_hdata_new_var (hdata, "string_split", offsetof (struct t_myplugin_list, string_split), WEECHAT_HDATA_STRING, "*", NULL);
+weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+
 weechat_hdata_new_list (hdata, "buffers", &buffers);
 weechat_hdata_new_list (hdata, "last_buffer", &last_buffer);
 ----------------------------------------
@@ -12864,7 +13147,6 @@ weechat_hdata_get_var_offset
 
 _Novità nella versione 0.3.6._
 
-Return offset of variable in hdata.
 Restituisce l'offset della variabile in hdata.
 
 Prototipo:
@@ -12898,7 +13180,7 @@ Script (Python):
 offset = weechat.hdata_get_var_offset(hdata, name)
 
 # esempio
-offset = weechat.hdata_get(hdata, "name")
+offset = weechat.hdata_get_var_offset(hdata, "name")
 ----------------------------------------
 
 weechat_hdata_get_var_type
@@ -12947,6 +13229,9 @@ switch (type)
         /* ... */
         break;
     case WEECHAT_HDATA_TIME:
+        /* ... */
+        break;
+    case WEECHAT_HDATA_HASHTABLE:
         /* ... */
         break;
     case WEECHAT_HDATA_OTHER:
@@ -13001,6 +13286,96 @@ type = weechat.hdata_get_var_type_string(hdata, name)
 
 # esempio
 weechat.prnt("", "type = %s" % weechat.hdata_get_var_type_string(hdata, "name"))
+----------------------------------------
+
+weechat_hdata_get_var_array_size
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.9._
+
+// TRANSLATION MISSING
+Return array size for variable in hdata.
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+int weechat_hdata_get_var_array_size (struct t_hdata *hdata, void *pointer, const char *name);
+----------------------------------------
+
+Argomenti:
+
+* 'hdata': puntatore hdata
+* 'pointer': puntarore all'oggetto di WeeChat/plugin
+* 'name': nome della variabile
+
+Valore restituito:
+
+// TRANSLATION MISSING
+* array size for variable, -1 if variable is not an array or if an error occurred
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+int array_size = weechat_hdata_get_var_array_size (hdata, pointer, "name");
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+array_size = weechat.hdata_get_var_array_size(hdata, pointer, name)
+
+# esempio
+array_size = weechat.hdata_get_var_array_size(hdata, pointer, "name")
+----------------------------------------
+
+weechat_hdata_get_var_array_size_string
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.3.9._
+
+// TRANSLATION MISSING
+Return array size for variable in hdata (as string).
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+const char *weechat_hdata_get_var_array_size_string (struct t_hdata *hdata, void *pointer,
+                                                     const char *name);
+----------------------------------------
+
+Argomenti:
+
+* 'hdata': puntatore hdata
+* 'pointer': puntarore all'oggetto di WeeChat/plugin
+* 'name': nome della variabile
+
+Valore restituito:
+
+// TRANSLATION MISSING
+* array size for variable as string, NULL if variable is not an array or if an
+  error occurred
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+const char *array_size = weechat_hdata_get_var_array_size_string (hdata, pointer, "name");
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+array_size = weechat.hdata_get_var_array_size_string(hdata, pointer, name)
+
+# esempio
+array_size = weechat.hdata_get_var_array_size_string(hdata, pointer, "name")
 ----------------------------------------
 
 weechat_hdata_get_var_hdata
@@ -13296,7 +13671,10 @@ Argomenti:
 
 * 'hdata': puntatore hdata
 * 'pointer': puntatore all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "char")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "char"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 
@@ -13338,7 +13716,10 @@ Argomenti:
 
 * 'hdata': puntatore hdata
 * 'pointer': puntatore all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "integer")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "integer"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 
@@ -13384,7 +13765,10 @@ Argomenti:
 
 * 'hdata': puntatore hdata
 * 'pointer': puntatore all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "long")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "long"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 
@@ -13426,7 +13810,10 @@ Argomenti:
 
 * 'hdata': puntatore hdata
 * 'pointer': puntatore all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "string")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "string"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 
@@ -13472,7 +13859,10 @@ Argomenti:
 
 * 'hdata': hdata hdata
 * 'pointer': pointer all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "pointer")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "pointer"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 
@@ -13518,7 +13908,10 @@ Argomenti:
 
 * 'hdata': puntatore hdata
 * 'pointer': puntatore all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "time")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "time"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 
@@ -13590,7 +13983,10 @@ Argomenti:
 
 * 'hdata': puntatore hdata
 * 'pointer': puntatore all'oggetto di WeeChat/plugin
-* 'name': nome della variabile (deve essere di tipo "hashtable")
+// TRANSLATION MISSING
+* 'name': nome della variabile (deve essere di tipo "hashtable"); for arrays,
+  the name can be "N|name" where N is the index in array (starting at 0),
+  for example: "2|name"
 
 Valore restituito:
 

@@ -1,10 +1,10 @@
 * [[option_logger.color.backlog_end]] *logger.color.backlog_end*
-** Beschreibung: `color for line ending the backlog`
+** Beschreibung: `Farbe für die letzte Zeile der Rückverfolgung`
 ** Typ: Farbe
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `darkgray`)
 
 * [[option_logger.color.backlog_line]] *logger.color.backlog_line*
-** Beschreibung: `color for backlog lines`
+** Beschreibung: `Farbe in der der Text der Rückverfolgung dargestellt werden soll`
 ** Typ: Farbe
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `darkgray`)
 
@@ -14,12 +14,12 @@
 ** Werte: on, off (Standardwert: `on`)
 
 * [[option_logger.file.flush_delay]] *logger.file.flush_delay*
-** Beschreibung: `Zeit, in Sekunden, die verstreicht bis eine Protokolldatei gesichert werden soll (0 = Protokolldatei wird unmittelbar gesichert, nachdem eine neue Zeile dargestellt wurde)`
+** Beschreibung: `Zeit, in Sekunden, die verstreicht bis eine Protokolldatei gesichert wird (0 = Protokolldatei wird unmittelbar gesichert, nachdem eine neue Zeile dargestellt wurde)`
 ** Typ: integer
 ** Werte: 0 .. 3600 (Standardwert: `120`)
 
 * [[option_logger.file.info_lines]] *logger.file.info_lines*
-** Beschreibung: `Fügt eine Information in die Protokoll-Datei ein, wenn die Protokollierung gestartet oder beendet wird`
+** Beschreibung: `fügt eine Information in die Protokoll-Datei ein, wenn die Protokollierung gestartet oder beendet wird`
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
@@ -44,7 +44,7 @@
 ** Werte: beliebige Zeichenkette (Standardwert: `"_"`)
 
 * [[option_logger.file.time_format]] *logger.file.time_format*
-** Beschreibung: `Zeitstempel in Protokoll-Datei nutzen (bitte dazu die Anleitung zu "strftime" (man strftime) durchlesen)`
+** Beschreibung: `Zeitstempel in Protokoll-Datei nutzen (siehe man strftime für Platzhalter für das Datum und die Uhrzeit)`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"%Y-%m-%d %H:%M:%S"`)
 

@@ -1,12 +1,95 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.3.8-dev, 2012-04-07
+v0.3.9-dev, 2012-08-08
 
 
-Version 0.3.8 (under dev!)
+Version 0.3.9 (under dev!)
 --------------------------
 
+* core: return error string to callback of hook_connect if getaddrinfo fails in
+  child process
+* core: add option weechat.startup.sys_rlimit to set system resource limits for
+  WeeChat process
+* core: add option "swap" for command /buffer (task #11373)
+* core: fix names of cache variables in configure.in (bug #36971)
+* core: scroll to bottom of window after reaching first or last highlight with
+  keys alt+"p" / alt+"n"
+* core: add hdata "hotlist"
+* core: add support of arrays in hdata variables
+* core: add command line option "-r" (or "--run-command") to run command(s)
+  after startup of WeeChat
+* core: fix refresh of bar items when switching window
+* core: fix refresh of bar items "buffer_filter" and "scroll" in root bars
+  (bug #36816)
+* core: add function "hook_set" in plugin API, add "subplugin" in hooks (set by
+  script plugins), display subplugin in /help on commands (task #12049)
+* core: add option weechat.look.jump_smart_back_to_buffer (jump back to initial
+  buffer after reaching end of hotlist, on by default, which is old behaviour)
+* core: add default key alt+"s" (toggle aspell)
+* core: add cmake option "MANDIR" (bug #36776)
+* core: add callback "nickcmp" in buffers
+* core: add horizontal separator between windows, new options
+  weechat.look.window_separator_{horizontal|vertical}
+* core: add options weechat.look.color_nick_offline and
+  weechat.color.chat_nick_offline{_highlight|_highlight_bg} to use different
+  color for offline nicks in prefix (task #11109)
+* core: reallow names beginning with "#" for bars, proxies and filters
+* core: escape special chars (`#[\`) in configuration files for name of options
+  (bug #36584)
+* doc: add japanese user's guide (patch #7827)
+* api: add new function util_version_number
+* aspell: add option aspell.check.enabled, add options enable/disable/toggle for
+  command /aspell (rename options enable/disable/dictlist to
+  setdict/deldict/listdict), display aspell status with /aspell (task #11988)
+* aspell: add missing dictionaries (ast/grc/hus/kn/ky)
+* charset: do not allow "UTF-8" in charset options (useless because UTF-8 is the
+  internal WeeChat charset)
+* fifo: ignore read failing with error EAGAIN (bug #37019)
+* guile: fix crash when unloading a script without pointer to interpreter
+* guile: fix path of guile include dirs in cmake build (patch #7790)
+* irc: fix bug with prefix chars which are in chanmodes with a type different
+  from "B" (bug #36996)
+* irc: fix format of message "USER" (according to RFC 2812) (bug #36825)
+* irc: add bar item "buffer_modes", remove option irc.look.item_channel_modes
+  (task #12022)
+* irc: fix parsing of user modes (ignore everything after first space)
+  (bug #36756)
+* irc: add option irc.look.ctcp_time_format to customize reply to CTCP TIME
+  (task #12150)
+* irc: fix freeze when reading on socket with SSL enabled (use non-blocking
+  sockets) (bug #35097)
+* irc: reallow names beginning with "#" for servers
+* logger: add messages "Day changed to" in backlog (task #12187)
+* lua: support of lua 5.2
+* lua: fix crash when unloading a script without pointer to interpreter
+* python: fix detection of python (first try "python2.x" and then "python")
+  (bug #36835)
+* python: fix crash when unloading a script without pointer to interpreter
+* relay: add support of SSL (for irc and weechat protocols), new option
+  relay.network.ssl_cert_key (task #12044)
+* relay: add option relay.color.client
+* relay: add object type "arr" (array) in WeeChat protocol
+* relay: fix freeze when writing on relay socket (use non-blocking sockets in
+  relay for irc and weechat protocols) (bug #36655)
+* ruby: detect ruby version 1.9.3 in cmake and autotools
+* scripts: add signals for scripts loaded/unloaded/installed/removed
+* scripts: add hdata with list of scripts for each language
+* scripts: fix deletion of configuration files when script is unloaded
+  (bug #36977)
+* scripts: fix function unhook_all: delete only callbacks of hooks and add
+  missing call to unhook
+* scripts: ignore call to "register" (with a warning) if script is already
+  registered
+
+Version 0.3.8 (2012-06-03)
+--------------------------
+
+* core: support lines of 16 Kb long in configuration files (instead of 1 Kb)
+* core: fix crash in focus hook for nicklist (bug #36271)
+* core: fix truncated configuration files (zero-length) after system crash
+  (bug #36383)
+* core: fix display bugs and crashs with small windows (bug #36107)
 * core: convert options weechat.look.prefix_align_more and
   weechat.look.prefix_buffer_align_more from boolean to string (task #11197)
 * core: fix display bug with prefix when length is greater than max and prefix
@@ -22,10 +105,22 @@ Version 0.3.8 (under dev!)
   weechat.look.paste_bracketed and weechat.look.paste_bracketed_timer_delay
   (task #11316)
 * core: fix display of wide chars on last column of chat area (patch #7733)
+* doc: add japanese FAQ (patch #7781)
 * api: display warning in scripts when invalid pointers (malformed strings) are
   given to plugin API functions (warning displayed if debug for plugin is >= 1)
 * api: add list "gui_buffer_last_displayed" in hdata "buffer"
+* scripts: fix type of argument "rc" in callback of hook_process (from string to
+  integer)
+* guile: fix crash on ARM when loading guile plugin (bug #36479)
 * guile: add missing function "hook_process_hashtable" in API
+* irc: update channel modes by using chanmodes from message 005 (do not send
+  extra command "MODE" to server), fix parsing of modes (bug #36215)
+* irc: add option "fakerecv" for command /server to simulate a received IRC
+  message (not documented, for debug only)
+* irc: hide everything after "identify" or "register" in messages to nickserv
+  when option irc.look.hide_nickserv_pwd is on (bug #36362)
+* irc: add option "-pending" for command /disconnect (cancel auto-reconnection
+  on servers currently reconnecting) (task #11985)
 * irc: set user modes only if target nick is self nick in message 221
   (patch #7754)
 * irc: force the clear of nicklist when joining a channel (nicklist was not sync
@@ -48,14 +143,24 @@ Version 0.3.8 (under dev!)
 * irc: add support of "external" SASL mechanism (task #11864)
 * irc: close server buffer when server is deleted
 * irc: add search for lower case nicks in option irc.look.nick_color_force
+* logger: fix charset of lines displayed in backlog when terminal charset is
+  different from UTF-8 (bug #36379)
 * logger: add colors for backlog lines and end of backlog, new options:
   logger.color.backlog_line and logger.color.backlog_end (task #11966)
 * perl: fix compilation on OS X (bug #30701)
 * perl: fix crash on quit on OS X
+* relay: keep spaces in beginning of "input" received from client (WeeChat
+  protocol)
+* relay: add signals "upgrade" and "upgrade_ended" in WeeChat protocol
+* relay: fix crash on /upgrade when client is connected using WeeChat protocol
 * relay: redirect some irc messages from clients to hide output (messages: mode,
   ison, list, names, topic, who, whois, whowas, time, userhost) (bug #33516)
 * relay: add "date_printed" and "highlight" in signal "_buffer_line_added"
   (WeeChat protocol)
+* rmodifier: add default rmodifier "quote_pass" to hide password in command
+  "/quote pass" (bug #36250)
+* rmodifier: add default rmodifier "server" to hide passwords in commands
+  /server and /connect (task #11993)
 * rmodifier: add option "release" in default rmodifier "nickserv" (used to hide
   passwords in command "/msg nickserv") (bug #35705)
 * tcl: add missing function "hdata_char" in API

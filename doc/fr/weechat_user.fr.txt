@@ -95,8 +95,10 @@ compiler WeeChat.
 | libcurl4-gnutls-dev    |             | *oui*  | transfert d'URL
 | gettext                |             |        | internationalisation (traduction des messages; la langue de base est l'anglais)
 | libgcrypt11-dev        |             |        | authentification SASL avec le serveur IRC, en utilisant le mécanisme DH-BLOWFISH
-| libgnutls-dev          | ≥ 2.2.0     |        | connexion SSL au serveur IRC
+| libgnutls-dev          | ≥ 2.2.0     |        | connexion SSL au serveur IRC, support SSL dans l'extension relay
 | ca-certificates        |             |        | certificats pour les connexions SSL
+// TRANSLATION MISSING
+| zlib1g-dev             |             |        | compression des paquets dans l'extension relay (protocole weechat)
 | libaspell-dev          |             |        | extension aspell
 | python-dev             | ≥ 2.5 ^(3)^ |        | extension python
 | libperl-dev            |             |        | extension perl
@@ -113,9 +115,8 @@ compiler WeeChat.
 nom du paquet peut être différente. +
 ^(2)^ WeeChat peut compiler avec libncurses5-dev, mais ce n'est *PAS* recommandé
 (vous aurez des bugs d'affichage avec les caractères larges). +
-^(3)^ WeeChat peut compiler avec Python 3.x, mais la version de Python
-recommandée est 2.7 (tous les scripts tournent bien avec la version 2.x, mais
-pas avec la version 3.x).
+^(3)^ La version recommandée de Python est 2.7 (tous les scripts tournent bien
+avec la version 2.7, mais pas avec les versions ≤ 2.6 ou ≥ 3.0).
 
 [[compile_with_cmake]]
 Compilation avec cmake
@@ -214,7 +215,15 @@ Si vous avez installé un paquet binaire, alors installez le paquet
 Fichiers core
 ^^^^^^^^^^^^^
 
-Pour activer les fichiers 'core', vous devez utiliser la commande `ulimit`.
+Pour activer les fichiers 'core', vous pouvez utiliser l'option
+<<option_weechat.startup.sys_rlimit,weechat.startup.sys_rlimit>>:
+
+----------------------------------------
+/set weechat.startup.sys_rlimit "core:-1"
+----------------------------------------
+
+Pour WeeChat ≤ 0.3.8 ou si vous voulez activer les fichiers core avant que
+WeeChat ne démarre, vous pouvez utiliser la commande `ulimit`.
 
 Par exemple sous Linux avec le shell 'bash', ajoutez cette ligne dans votre
 `~/.bashrc`:
@@ -314,37 +323,41 @@ Lancer WeeChat
 Paramètres de ligne de commande :
 
 -a, --no-connect::
-    Supprimer la connexion automatique aux serveurs lors du démarrage
+    Supprimer la connexion automatique aux serveurs lors du démarrage.
 
 -c, --colors::
-    Afficher les couleurs par défaut du terminal
+    Afficher les couleurs par défaut du terminal.
 
 -d, --dir 'path'::
     Définir le répertoire comme étant la base de WeeChat
     (utilisé pour les fichiers de configuration, logs, extensions
     et scripts de l'utilisateur), la valeur par défaut est '~/.weechat' (note :
-    le répertoire est créé s'il n'est pas trouvé par WeeChat)
+    le répertoire est créé s'il n'est pas trouvé par WeeChat).
 
 -h, --help::
-    Afficher l'aide
+    Afficher l'aide.
 
 -k, --keys::
-    Afficher les touches par défaut de WeeChat
+    Afficher les touches par défaut de WeeChat.
 
 -l, --license::
-    Afficher la licence de WeeChat
+    Afficher la licence de WeeChat.
 
 -p, --no-plugin::
-    Supprimer le chargement automatique des extensions au démarrage
+    Supprimer le chargement automatique des extensions au démarrage.
+
+-r, --run-command::
+    Lancer la/les commande(s) après le démarrage (plusieurs commandes peuvent
+    être séparées par des points-virgules).
 
 -s, --no-script::
-    Supprimer le chargement automatique des scripts au démarrage
+    Supprimer le chargement automatique des scripts au démarrage.
 
 -v, --version::
-    Afficher la version de WeeChat
+    Afficher la version de WeeChat.
 
 plugin:option::
-    Option pour l'extension (voir la documentation de chaque extension)
+    Option pour l'extension (voir la documentation de chaque extension).
 
 Pour lancer WeeChat, tapez cette commande :
 
@@ -368,28 +381,29 @@ Exemple de terminal avec WeeChat :
 
 ........................................
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│Bienvenue sur #test, canal de test                                                       │
-│12:52:27    --> | flashy (n=flashcod@hellix.flashtux.org) a rejoint #test     │@ChanServ │
-│12:52:27     -- | Pseudos #test: [@ChanServ @flashy +_FlashB0t joe mike]      │@flashy   │
-│12:52:27     -- | Canal #test: 5 pseudos (2 ops, 0 halfop, 1 voice, 2 normal) │+_FlashB0t│
-│12:52:27     -- | Canal créé le Tue Jan 27 06:30:17 2009                      │joe       │
-│12:54:15 flashy | bonjour !                                                   │mike      │
-│12:55:01    joe | salut flashy !                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│[12:55] [6] [irc/freenode] 3:#test(+n){5}* [Act: 4:#abc(2,5), 6]                         │
-│[flashy] salut joe !█                                                                    │
+│Bienvenue sur #test, canal de test                                                       │ ◀ barre "title"
+│12:52:27   --> | Flashy (flashcode@weechat.org) a rejoint #test                  │@Flashy│
+│12:52:27    -- | Pseudos #test: [@Flashy @joe +weebot]                           │@joe   │
+│12:52:27    -- | Canal #test: 4 pseudos (2 ops, 0 halfop, 1 voice, 1 normal)     │+weebot│
+│12:52:27    -- | Canal créé le Tue Jan 27 06:30:17 2009                          │peter  │
+│12:54:15 peter | bonjour !                                                       │       │
+│12:55:01  @joe | salut                                                           │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │ ◀ discussion + barre "nicklist"
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}* [Act: 4:#abc(2,5), 6]                         │ ◀ barre "status"
+│[@Flashy] salut peter !█                                                                 │ ◀ barre "input"
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ........................................
 
@@ -415,8 +429,9 @@ La barre 'status' contient les objets (items) suivants par défaut :
 | buffer_count          | [6]                   | nombre de tampons ouverts
 | buffer_plugin         | [irc/freenode]        | extension du tampon courant (l'extension irc peut afficher le nom du serveur IRC auquel est rattaché ce tampon)
 | buffer_number         | 3                     | numéro du tampon courant
-| buffer_name           | #test(+n)             | nom du tampon courant (avec les modes du canal pour les canaux irc)
-| buffer_nicklist_count | {5}                   | nombre de pseudos dans la liste des pseudos
+| buffer_name           | #test                 | nom du tampon courant
+| buffer_modes          | +n                    | modes du canal IRC
+| buffer_nicklist_count | {4}                   | nombre de pseudos dans la liste des pseudos
 | buffer_filter         | *                     | indicateur de filtrage : `*` signifie que des lignes sont filtrées (cachées), une valeur vide signifie que toutes les lignes sont affichées
 | lag                   | [Lag: 2.5]            | indicateur de "lag" (ralentissements réseau), en secondes (caché si le lag est faible)
 | hotlist               | [Act: 4:#abc(2,5), 6] | liste des tampons où il y a de l'activité (messages non lus) (dans cet exemple, 2 highlights et 5 messages non lus sur '#abc', un message non lu sur le buffer numéro 6)
@@ -428,13 +443,176 @@ La barre 'input' contient les objets (items) suivants par défaut :
 
 [width="100%",cols="^3,^6l,8",options="header"]
 |========================================
-| Objet (item)     | Exemple                                       | Description
-| input_paste      | [Coller 7 lignes ? [ctrl-Y] Oui [ctrl-N] Non] | question à l'utilisateur pour coller des lignes
-| input_prompt     | [flashy]                                      | prompt (pseudo pour l'extension irc)
-| away             | (absent)                                      | indicateur d'absence
-| input_search     | [Recherche texte]                             | indicateur de recherche de texte
-| input_text       | salut joe !                                   | texte entré
+| Objet (item) | Exemple                                       | Description
+| input_paste  | [Coller 7 lignes ? [ctrl-Y] Oui [ctrl-N] Non] | question à l'utilisateur pour coller des lignes
+| input_prompt | [@Flashy]                                     | prompt (pseudo pour l'extension irc)
+| away         | (absent)                                      | indicateur d'absence
+| input_search | [Recherche texte]                             | indicateur de recherche de texte
+| input_text   | salut peter !                                 | texte entré
 |========================================
+
+[[buffers_and_windows]]
+Tampons et fenêtres
+~~~~~~~~~~~~~~~~~~~
+
+Un tampon ('buffer') est composé d'un numéro, un nom, des lignes affichées
+(ainsi que d'autres données).
+
+Exemples de tampons :
+
+* tampon core (créé par WeeChat au démarrage, ne peut pas être fermé)
+* serveur irc (affiche les messages du serveur)
+* canal irc
+* privé irc
+
+Une fenêtre ('window') est une zone de l'écran affichant un tampon. Il est
+possible de découper l'écran horizontalement ou verticalement en plusieurs
+fenêtres.
+
+Chaque fenêtre affiche un tampon. Un tampon peut être caché (affiché par
+aucune fenêtre) ou affiché par une ou plusieurs fenêtres.
+
+Exemple de découpage horizontal (`/window splith`) :
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│Bienvenue sur #abc, canal sur rien !                                                     │
+│12:55:12     Max | bonjour                                                       │@Flashy│
+│12:55:20 @Flashy | salut Max !                                                   │Max    │
+│12:55:32     Max | ça va bien ?                                                  │       │
+│                                                                                 │       │
+│                                                                                 │       │ ◀ fenêtre n°2
+│                                                                                 │       │   (tampon n°4)
+│                                                                                 │       │
+│                                                                                 │       │
+│[12:55] [6] [irc/freenode] 4:#abc(+n){2}                                                 │
+│[@Flashy]                                                                                │
+│─────────────────────────────────────────────────────────────────────────────────────────│
+│Bienvenue sur #test, canal de test                                                       │
+│12:54:15 peter | ohé !                                                           │@Flashy│
+│12:55:01  @joe | salut                                                           │@joe   │
+│                                                                                 │+weebot│
+│                                                                                 │peter  │
+│                                                                                 │       │ ◀ fenêtre n°1
+│                                                                                 │       │   (tampon n°3)
+│                                                                                 │       │
+│                                                                                 │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}                                                │
+│[@Flashy] salut peter!█                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+Exemple de découpage vertical (`/window splitv`) :
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│Bienvenue sur #test, canal de test          │Bienvenue sur #abc, canal sur rien !        │
+│12:54:15 peter | ohé !              │@Flashy│12:55:12     Max | bonjour          │@Flashy│
+│12:55:01  @joe | salut              │@joe   │12:55:20 @Flashy | salut Max !      │Max    │
+│                                    │+weebot│12:55:32     Max | ça va bien ?     │       │
+│                                    │peter  │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}   │[12:55] [6] [irc/freenode] 4:#abc(+n){2}    │
+│[@Flashy] salut peter!█                     │[@Flashy]                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                ▲ fenêtre n°1                                ▲ fenêtre n°2
+                  (tampon n°3)                                 (tampon n°4)
+........................................
+
+Exemple de découpage vertical + horizontal :
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│Bienvenue sur #test, canal de test          │Bienvenue sur #def, autre canal             │
+│12:54:15 peter | ohé !              │@Flashy│12:55:42 @Flashy | salut le monde   │@Flashy│
+│12:55:01  @joe | salut              │@joe   │12:55:56    alex | salut Flashy     │alex   │
+│                                    │+weebot│                                    │       │
+│                                    │peter  │                                    │       │ ◀ fenêtre n°3
+│                                    │       │                                    │       │   (tampon n°5)
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │[12:55] [6] [irc/freenode] 5:#def(+n){2}    │
+│                                    │       │[@Flashy]                                   │
+│                                    │       │────────────────────────────────────────────│
+│                                    │       │Bienvenue sur #abc, canal sur rien !        │
+│                                    │       │12:55:12     Max | bonjour          │@Flashy│
+│                                    │       │12:55:20 @Flashy | salut Max !      │Max    │
+│                                    │       │12:55:32     Max | ça va bien ?     │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │ ◀ fenêtre n°2
+│                                    │       │                                    │       │   (tampon n°4)
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}   │ [12:55] [6] [irc/freenode] 4:#abc(+n){2}   │
+│[@Flashy] salut peter !█                    │ [@Flashy]                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                ▲ fenêtre n°1
+                  (tampon n°3)
+........................................
+
+[[notify_levels]]
+Niveaux de notification
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Quatre niveaux sont possibles dans les messages affichés dans les tampons, du
+moins important au plus important :
+
+* 'low' : message avec faible importance (par exemple un join/part/quit irc)
+* 'message' : message d'un utilisateur
+* 'private' : message dans un tampon privé
+* 'highlight' : message avec highlight
+
+Chaque tampon a un niveau de notification, qui est utilisé pour décider quels
+messages ajouteront le tampon dans la hotlist.
+
+Le niveau de notification par défaut peut être défini avec l'option
+<<option_weechat.look.buffer_notify_default,weechat.look.buffer_notify_default>>,
+la valeur par défaut est 'all'.
+
+[width="50%",cols="3m,10",options="header"]
+|========================================
+| Niveau de notification | Niveau des messages ajoutés à la hotlist
+| none                   | (aucun)
+| highlight              | 'highlight' + 'private'
+| message                | 'highlight' + 'private' + 'message'
+| all                    | 'highlight' + 'private' + 'message' + 'low'
+|========================================
+
+Le niveau de notification peut être défini pour un ensemble de tampons, par
+exemple tous les tampons du serveur irc "freenode" :
+
+----------------------------------------
+/set weechat.notify.irc.freenode message
+----------------------------------------
+
+Définir le niveau de notification 'highlight' sur le canal "#weechat" seulement :
+
+----------------------------------------
+/set weechat.notify.irc.freenode.#weechat highlight
+----------------------------------------
+
+Le niveau de notification pour un tampon peut aussi être défini avec la
+commande `/buffer` :
+
+----------------------------------------
+/buffer notify highlight
+----------------------------------------
 
 [[key_bindings]]
 Raccourcis clavier par défaut
@@ -491,6 +669,7 @@ Touches pour la ligne de commande
 | @k(A-)@k(d)         | Effacer le mot suivant (la chaîne supprimée est copiée dans le presse-papiers) | /input delete_next_word
 | @k(A-)@k(k)         | Capturer une touche et insérer son code (et la commande associée si la commande existe) sur la ligne de commande | /input grab_key_command
 | @k(A-)@k(r)         | Effacer entièrement la ligne de commande | /input delete_line
+| @k(A-)@k(s)         | Activer/désactiver aspell | /mute aspell toggle
 |========================================
 
 [[key_bindings_buffers_windows]]
@@ -663,9 +842,9 @@ secondes :
 ----------------------------------------
 
 Lorsque la souris est activée dans WeeChat, vous pouvez utiliser la touche
-"shift" pour sélectionner ou cliquer dans le terminal, comme si la souris était
-désactivée (sous certains terminaux comme iTerm, vous devez utiliser "alt" au
-lieu de "shift").
+@k(-S-) pour sélectionner ou cliquer dans le terminal, comme si la souris était
+désactivée (sous certains terminaux comme iTerm, vous devez utiliser @k(-A-) au
+lieu de @k(-S-)).
 
 [NOTE]
 Pour tout problème avec la souris, merci de consulter la 'FAQ WeeChat'.
@@ -1374,7 +1553,7 @@ Premier exemple : se connecter à oftc en vérifiant le certificat
 * Importer le certificat sous le shell :
 
 ----------------------------------------
-$ mkdir ~/.weechat/ssl
+$ mkdir -p ~/.weechat/ssl
 $ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/ca/spi-cacert.crt
 ----------------------------------------
 
@@ -1394,8 +1573,9 @@ Second exemple : se connecter à oftc en utilisant CertFP
 * Créer le certificat sous le shell :
 
 ----------------------------------------
-$ openssl req -nodes -newkey rsa:2048 -keyout nick.key -x509 -days 365 -out nick.cer
-$ cat nick.cer nick.key > ~/.weechat/ssl/nick.pem
+$ mkdir -p ~/.weechat/ssl
+$ cd ~/.weechat/ssl
+$ openssl req -nodes -newkey rsa:2048 -keyout nick.pem -x509 -days 365 -out nick.pem
 ----------------------------------------
 
 * Sous WeeChat, avec le serveur "oftc" déjà créé :
@@ -1579,7 +1759,7 @@ automatiquement remplacées par WeeChat lors de la réponse au CTCP :
 | $osinfo      | information sur l'OS              | Linux 2.6.31 / i686
 | $site        | site WeeChat                      | http://www.weechat.org
 | $download    | site WeeChat, page téléchargement | http://www.weechat.org/download
-| $time        | date/heure courante               | Sun Sep 13 15:48:31 2009
+| $time        | date/heure courante               | Sun, 13 Sep 2009 15:48:31 +0200
 | $username    | nom d'utilisateur sur le serveur  | pseudo
 | $realname    | nom réel sur le serveur           | Mon nom
 |========================================
@@ -1588,13 +1768,13 @@ Si les options CTCP ne sont pas définies (par défaut), les réponses CTCP sont
 
 [width="100%",cols="^2,4l,8l",options="header"]
 |========================================
-| CTCP         | Format de réponse               | Exemple
-| CLIENTINFO   | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| FINGER       | WeeChat $version                | WeeChat 0.3.0
-| SOURCE       | $download                       | http://www.weechat.org/download
-| TIME         | $time                           | Sun Sep 13 15:48:31 2009
-| USERINFO     | $username ($realname)           | pseudo (Mon nom)
-| VERSION      | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
+| CTCP       | Format de réponse               | Exemple
+| CLIENTINFO | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
+| FINGER     | WeeChat $version                | WeeChat 0.3.0
+| SOURCE     | $download                       | http://www.weechat.org/download
+| TIME       | $time                           | Sun Sep 13 15:48:31 2009
+| USERINFO   | $username ($realname)           | pseudo (Mon nom)
+| VERSION    | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
 |========================================
 
 [[irc_target_buffer]]
@@ -1936,6 +2116,38 @@ Par exemple :
 Maintenant vous pouvez vous connecter sur le port 9000 avec une interface
 distante (comme QWeeChat), en utilisant le mot de passe "mypass".
 
+[[relay_ssl]]
+Relai avec SSL
+^^^^^^^^^^^^^^
+
+Vous pouvez utiliser SSL en créant un certificat et clé privée et en utilisant
+le préfixe "ssl." dans le nom du protocole.
+
+Le fichier par défaut pour le certificat/clé est '~/.weechat/ssl/relay.pem'
+(option <<option_relay.network.ssl_cert_key,relay.network.ssl_cert_key>>).
+
+Vous pouvez créer le certificat et la clé privée avec les commandes suivantes :
+
+----------------------------------------
+$ mkdir -p ~/.weechat/ssl
+$ cd ~/.weechat/ssl
+$ openssl req -nodes -newkey rsa:2048 -keyout relay.pem -x509 -days 365 -out relay.pem
+----------------------------------------
+
+Si WeeChat tourne déjà, vous pouvez recharger le certificat et clé privée avec la
+commande :
+
+----------------------------------------
+/relay sslcertkey
+----------------------------------------
+
+Et ajoutez le relai avec SSL, par exemple :
+
+----------------------------------------
+/relay add ssl.irc.freenode 8001
+/relay add ssl.weechat 9001
+----------------------------------------
+
 [[rmodifier_plugin]]
 Extension Rmodifier
 ~~~~~~~~~~~~~~~~~~~
@@ -2096,12 +2308,14 @@ Empaqueteurs::
 Traductions::
     Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
     Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
-    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi
+    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi,
+    Quico Noizeux
 
 Patchs::
     Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
     JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
-    Quentin Glidic (SardemFF7)
+    Quentin Glidic (SardemFF7), Simon Kuhnle, Mateusz Poszwa, Peter Boström,
+    Arvydas Sidorenko
 
 
 [[support]]

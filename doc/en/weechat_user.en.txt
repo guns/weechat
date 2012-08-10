@@ -93,8 +93,9 @@ compile WeeChat.
 | libcurl4-gnutls-dev    |             | *yes*    | URL transfer
 | gettext                |             |          | internationalization (translation of messages; base language is english)
 | libgcrypt11-dev        |             |          | SASL authentication with IRC server using DH-BLOWFISH mechanism
-| libgnutls-dev          | ≥ 2.2.0     |          | SSL connection to IRC server
+| libgnutls-dev          | ≥ 2.2.0     |          | SSL connection to IRC server, support of SSL in relay plugin
 | ca-certificates        |             |          | certificates for SSL connections
+| zlib1g-dev             |             |          | compression of packets in relay plugin (weechat protocol)
 | libaspell-dev          |             |          | aspell plugin
 | python-dev             | ≥ 2.5 ^(3)^ |          | python plugin
 | libperl-dev            |             |          | perl plugin
@@ -111,8 +112,8 @@ compile WeeChat.
 names may be different in different distributions and versions. +
 ^(2)^ WeeChat can compile with libncurses5-dev, but it is *NOT* recommended (you
 will have display bugs with wide chars). +
-^(3)^ WeeChat can compile with Python 3.x, but recommended Python version is 2.7
-(all scripts run fine with version 2.x, but not with version 3.x).
+^(3)^ Recommended Python version is 2.7 (all scripts run fine with version 2.7,
+but not with versions ≤ 2.6 or ≥ 3.0).
 
 [[compile_with_cmake]]
 Compile with cmake
@@ -209,7 +210,15 @@ If you installed a binary package, then install package 'weechat-dbg'.
 Core files
 ^^^^^^^^^^
 
-To enable 'core' files, you have to use `ulimit` command.
+To enable 'core' files, you can use option
+<<option_weechat.startup.sys_rlimit,weechat.startup.sys_rlimit>>:
+
+----------------------------------------
+/set weechat.startup.sys_rlimit "core:-1"
+----------------------------------------
+
+For WeeChat ≤ 0.3.8 or if you want to enable core files even before WeeChat
+starts, you can use `ulimit` command.
 
 For example under Linux with 'bash' shell, add this line to your `~/.bashrc`:
 
@@ -306,36 +315,39 @@ Running WeeChat
 Command line arguments:
 
 -a, --no-connect::
-    Disable auto-connect to servers when WeeChat is starting
+    Disable auto-connect to servers when WeeChat is starting.
 
 -c, --colors::
-    Display default colors in terminal
+    Display default colors in terminal.
 
 -d, --dir 'path'::
     Set path as home for WeeChat (used for configuration files, logs, user
     plugins and scripts), default value is '~/.weechat' (note: directory is
-    created if not found by WeeChat)
+    created if not found by WeeChat).
 
 -h, --help::
-    Display help
+    Display help.
 
 -k, --keys::
-    Display WeeChat default keys
+    Display WeeChat default keys.
 
 -l, --license::
-    Display WeeChat license
+    Display WeeChat license.
 
 -p, --no-plugin::
-    Disable plugins auto-load
+    Disable plugins auto-load.
+
+-r, --run-command::
+    Run command(s) after startup (many commands can be separated by semicolons).
 
 -s, --no-script::
-    Disable scripts auto-load
+    Disable scripts auto-load.
 
 -v, --version::
-    Display WeeChat version
+    Display WeeChat version.
 
 plugin:option::
-    Option for plugin (see doc for each plugin)
+    Option for plugin (see doc for each plugin).
 
 To start WeeChat, issue this command:
 
@@ -359,28 +371,29 @@ Example of terminal with WeeChat:
 
 ........................................
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│Welcome to #test, this is a test channel                                                 │
-│12:52:27    --> | flashy (n=flashcod@hellix.flashtux.org) has joined #test    │@ChanServ │
-│12:52:27     -- | Nicks #test: [@ChanServ @flashy +_FlashB0t joe mike]        │@flashy   │
-│12:52:27     -- | Channel #test: 5 nicks (2 ops, 0 halfop, 1 voice, 2 normal) │+_FlashB0t│
-│12:52:27     -- | Channel created on Tue Jan 27 06:30:17 2009                 │joe       │
-│12:54:15 flashy | hey!                                                        │mike      │
-│12:55:01    joe | hi flashy!                                                  │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│                                                                              │          │
-│[12:55] [6] [irc/freenode] 3:#test(+n){5}* [Act: 4:#abc(2,5), 6]                         │
-│[flashy] hi joe!█                                                                        │
+│Welcome to #test, this is a test channel                                                 │ ◀ bar "title"
+│12:52:27   --> | Flashy (flashcode@weechat.org) has joined #test                 │@Flashy│
+│12:52:27    -- | Nicks #test: [@Flashy @joe +weebot]                             │@joe   │
+│12:52:27    -- | Channel #test: 4 nicks (2 ops, 0 halfop, 1 voice, 1 normal)     │+weebot│
+│12:52:27    -- | Channel created on Tue Jan 27 06:30:17 2009                     │peter  │
+│12:54:15 peter | hey!                                                            │       │
+│12:55:01  @joe | hello                                                           │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │ ◀ chat + bar "nicklist"
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│                                                                                 │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}* [Act: 4:#abc(2,5), 6]                         │ ◀ bar "status"
+│[@Flashy] hi peter!█                                                                     │ ◀ bar "input"
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ........................................
 
@@ -405,8 +418,9 @@ Bar 'status' has following default items:
 | buffer_count          | [6]                   | number of opened buffers
 | buffer_plugin         | [irc/freenode]        | plugin of current buffer (irc plugin can add IRC server name used by buffer)
 | buffer_number         | 3                     | current buffer number
-| buffer_name           | #test(+n)             | current buffer name (with channel modes for irc channels)
-| buffer_nicklist_count | {5}                   | number of nicks in nicklist
+| buffer_name           | #test                 | current buffer name
+| buffer_modes          | +n                    | IRC channel modes
+| buffer_nicklist_count | {4}                   | number of nicks in nicklist
 | buffer_filter         | *                     | filtering indicator: `*` means some lines are filtered (hidden), empty value means all lines are displayed
 | lag                   | [Lag: 2.5]            | lag indicator, in seconds (hidden if lag is low)
 | hotlist               | [Act: 4:#abc(2,5), 6] | list of buffers with activity (unread messages) (in example, 2 highlights and 5 unread messages on '#abc', one unread message on buffer #6)
@@ -418,13 +432,173 @@ Bar 'input' has following default items:
 
 [width="100%",cols="^3,^6l,8",options="header"]
 |========================================
-| Item             | Example                                    | Description
-| input_paste      | [Paste 7 lines ? [ctrl-Y] Yes [ctrl-N] No] | question to user for pasting lines
-| input_prompt     | [flashy]                                   | input prompt (nick for irc plugin)
-| away             | (away)                                     | away indicator
-| input_search     | [Text search]                              | text search indicator
-| input_text       | hi joe!                                    | input text
+| Item         | Example                                    | Description
+| input_paste  | [Paste 7 lines ? [ctrl-Y] Yes [ctrl-N] No] | question to user for pasting lines
+| input_prompt | [@Flashy]                                  | input prompt (nick for irc plugin)
+| away         | (away)                                     | away indicator
+| input_search | [Text search]                              | text search indicator
+| input_text   | hi peter!                                  | input text
 |========================================
+
+[[buffers_and_windows]]
+Buffers and windows
+~~~~~~~~~~~~~~~~~~~
+
+A 'buffer' is composed by a number, a name, lines displayed (and some other
+data).
+
+Examples of buffers:
+
+* core buffer (created by WeeChat on startup, can not be closed)
+* irc server (displays messages from server)
+* irc channel
+* irc private
+
+A 'window' is a screen area which displays a buffer. It is possible to split
+your screen into many windows.
+
+Each window displays one buffer. A buffer can be hidden (not displayed by a
+window) or displayed by one or more windows.
+
+Example of horizontal split (`/window splith`):
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│Welcome to #abc, channel about nothing!                                                  │
+│12:55:12     Max | hi                                                            │@Flashy│
+│12:55:20 @Flashy | hi Max!                                                       │Max    │
+│12:55:32     Max | how are you?                                                  │       │
+│                                                                                 │       │
+│                                                                                 │       │ ◀ window #2
+│                                                                                 │       │   (buffer #4)
+│                                                                                 │       │
+│                                                                                 │       │
+│[12:55] [6] [irc/freenode] 4:#abc(+n){2}                                                 │
+│[@Flashy]                                                                                │
+│─────────────────────────────────────────────────────────────────────────────────────────│
+│Welcome to #test, this is a test channel                                                 │
+│12:54:15 peter | hey!                                                            │@Flashy│
+│12:55:01  @joe | hello                                                           │@joe   │
+│                                                                                 │+weebot│
+│                                                                                 │peter  │
+│                                                                                 │       │ ◀ window #1
+│                                                                                 │       │   (buffer #3)
+│                                                                                 │       │
+│                                                                                 │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}                                                │
+│[@Flashy] hi peter!█                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+Example of vertical split (`/window splitv`):
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel    │Welcome to #abc, channel about nothing!     │
+│12:54:15 peter | hey!               │@Flashy│12:55:12     Max | hi               │@Flashy│
+│12:55:01  @joe | hello              │@joe   │12:55:20 @Flashy | hi Max!          │Max    │
+│                                    │+weebot│12:55:32     Max | how are you?     │       │
+│                                    │peter  │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}   │[12:55] [6] [irc/freenode] 4:#abc(+n){2}    │
+│[@Flashy] hi peter!█                        │[@Flashy]                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                ▲ window #1                                   ▲ window #2
+                  (buffer #3)                                   (buffer #4)
+........................................
+
+Example of vertical + horizontal splits:
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel    │Welcome to #def, another channel            │
+│12:54:15 peter | hey!               │@Flashy│12:55:42 @Flashy | hello world      │@Flashy│
+│12:55:01  @joe | hello              │@joe   │12:55:56    alex | hi Flashy        │alex   │
+│                                    │+weebot│                                    │       │
+│                                    │peter  │                                    │       │ ◀ window #3
+│                                    │       │                                    │       │   (buffer #5)
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│                                    │       │[12:55] [6] [irc/freenode] 5:#def(+n){2}    │
+│                                    │       │[@Flashy]                                   │
+│                                    │       │────────────────────────────────────────────│
+│                                    │       │Welcome to #abc, channel about nothing!     │
+│                                    │       │12:55:12     Max | hi               │@Flashy│
+│                                    │       │12:55:20 @Flashy | hi Max!          │Max    │
+│                                    │       │12:55:32     Max | how are you?     │       │
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │ ◀ window #2
+│                                    │       │                                    │       │   (buffer #4)
+│                                    │       │                                    │       │
+│                                    │       │                                    │       │
+│[12:55] [6] [irc/freenode] 3:#test(+n){4}   │ [12:55] [6] [irc/freenode] 4:#abc(+n){2}   │
+│[@Flashy] hi peter!█                        │ [@Flashy]                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                ▲ window #1
+                  (buffer #3)
+........................................
+
+[[notify_levels]]
+Notify levels
+~~~~~~~~~~~~~
+
+Four levels are possible in messages displayed in buffers, from lower to higher:
+
+* 'low': message with low importance (for example irc join/part/quit)
+* 'message': message from a user
+* 'private': message in a private buffer
+* 'highlight': message with highlight
+
+Each buffer has a notify level, which is used to decide what messages will add
+buffer in hotlist.
+
+The default notify level can be set using option
+<<option_weechat.look.buffer_notify_default,weechat.look.buffer_notify_default>>,
+default is 'all'.
+
+[width="50%",cols="3m,10",options="header"]
+|========================================
+| Notify level | Level of messages added to hotlist
+| none         | (none)
+| highlight    | 'highlight' + 'private'
+| message      | 'highlight' + 'private' + 'message'
+| all          | 'highlight' + 'private' + 'message' + 'low'
+|========================================
+
+Notify level can be defined for a set of buffers, for example all buffers of
+irc server "freenode":
+
+----------------------------------------
+/set weechat.notify.irc.freenode message
+----------------------------------------
+
+Set notify level 'highlight' on channel "#weechat" only:
+
+----------------------------------------
+/set weechat.notify.irc.freenode.#weechat highlight
+----------------------------------------
+
+The notify level for a buffer can be set with command `/buffer`:
+
+----------------------------------------
+/buffer notify highlight
+----------------------------------------
 
 [[key_bindings]]
 Default key bindings
@@ -481,6 +655,7 @@ Keys for command line
 | @k(A-)@k(d)         | Delete next word in command line (deleted string is copied to clipboard) | /input delete_next_word
 | @k(A-)@k(k)         | Grab a key and insert its code (and command bound if key exists) in command line | /input grab_key_command
 | @k(A-)@k(r)         | Delete entire command line | /input delete_line
+| @k(A-)@k(s)         | Toggle aspell | /mute aspell toggle
 |========================================
 
 [[key_bindings_buffers_windows]]
@@ -648,9 +823,9 @@ key @k(A-)@k(x) to disable mouse for 10 seconds:
 /key bind meta-x /mouse toggle 10
 ----------------------------------------
 
-When mouse is enabled in WeeChat, you can use "shift" modifier to select or
+When mouse is enabled in WeeChat, you can use @k(-S-) modifier to select or
 click in terminal, as if the mouse was disabled (on some terminals like iTerm,
-you have to use "alt" instead of "shift").
+you have to use @k(-A-) instead of @k(-S-)).
 
 [NOTE]
 For any problem with mouse, please look at 'WeeChat FAQ'.
@@ -1331,7 +1506,7 @@ First example: connect to oftc and check certificate
 * Import certificate in shell:
 
 ----------------------------------------
-$ mkdir ~/.weechat/ssl
+$ mkdir -p ~/.weechat/ssl
 $ wget -O ~/.weechat/ssl/CAs.pem http://www.spi-inc.org/ca/spi-cacert.crt
 ----------------------------------------
 
@@ -1350,8 +1525,9 @@ Second example: connect to oftc using CertFP
 * Create certificate in shell:
 
 ----------------------------------------
-$ openssl req -nodes -newkey rsa:2048 -keyout nick.key -x509 -days 365 -out nick.cer
-$ cat nick.cer nick.key > ~/.weechat/ssl/nick.pem
+$ mkdir -p ~/.weechat/ssl
+$ cd ~/.weechat/ssl
+$ openssl req -nodes -newkey rsa:2048 -keyout nick.pem -x509 -days 365 -out nick.pem
 ----------------------------------------
 
 * In WeeChat, with "oftc" server already created:
@@ -1532,7 +1708,7 @@ when replying to CTCP:
 | $osinfo      | info about OS               | Linux 2.6.31 / i686
 | $site        | WeeChat site                | http://www.weechat.org
 | $download    | WeeChat site, download page | http://www.weechat.org/download
-| $time        | current date/time           | Sun Sep 13 15:48:31 2009
+| $time        | current date/time           | Sun, 13 Sep 2009 15:48:31 +0200
 | $username    | user name on IRC server     | nick
 | $realname    | real name on IRC server     | My name
 |========================================
@@ -1541,13 +1717,13 @@ If CTCP options are not defined (by default), CTCP replies are:
 
 [width="100%",cols="^2,4l,8l",options="header"]
 |========================================
-| CTCP         | Reply format                    | Example
-| CLIENTINFO   | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| FINGER       | WeeChat $version                | WeeChat 0.3.0
-| SOURCE       | $download                       | http://www.weechat.org/download
-| TIME         | $time                           | Sun Sep 13 15:48:31 2009
-| USERINFO     | $username ($realname)           | nick (My name)
-| VERSION      | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
+| CTCP       | Reply format                    | Example
+| CLIENTINFO | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
+| FINGER     | WeeChat $version                | WeeChat 0.3.0
+| SOURCE     | $download                       | http://www.weechat.org/download
+| TIME       | $time                           | Sun Sep 13 15:48:31 2009
+| USERINFO   | $username ($realname)           | nick (My name)
+| VERSION    | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
 |========================================
 
 [[irc_target_buffer]]
@@ -1882,6 +2058,38 @@ For example:
 Now you can connect on port 9000 with a remote interface (like QWeeChat),
 using password "mypass".
 
+[[relay_ssl]]
+Relay with SSL
+^^^^^^^^^^^^^^
+
+You can use SSL by creating a certificate and private key, and by using prefix
+"ssl." in the name of protocol.
+
+The default file for certificate/key is '~/.weechat/ssl/relay.pem'
+(option <<option_relay.network.ssl_cert_key,relay.network.ssl_cert_key>>).
+
+You can create a certificate and private key with following commands:
+
+----------------------------------------
+$ mkdir -p ~/.weechat/ssl
+$ cd ~/.weechat/ssl
+$ openssl req -nodes -newkey rsa:2048 -keyout relay.pem -x509 -days 365 -out relay.pem
+----------------------------------------
+
+If WeeChat is already running, you can reload the certificate and private key
+with command:
+
+----------------------------------------
+/relay sslcertkey
+----------------------------------------
+
+And then add relay with SSL, for example:
+
+----------------------------------------
+/relay add ssl.irc.freenode 8001
+/relay add ssl.weechat 9001
+----------------------------------------
+
 [[rmodifier_plugin]]
 Rmodifier plugin
 ~~~~~~~~~~~~~~~~
@@ -2035,12 +2243,14 @@ Packagers::
 Translations::
     Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
     Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
-    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi
+    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi,
+    Quico Noizeux
 
 Patches::
     Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
     JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
-    Quentin Glidic (SardemFF7)
+    Quentin Glidic (SardemFF7), Simon Kuhnle, Mateusz Poszwa, Peter Boström,
+    Arvydas Sidorenko
 
 
 [[support]]

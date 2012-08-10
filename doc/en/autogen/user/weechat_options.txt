@@ -63,6 +63,21 @@
 ** type: string
 ** values: any string (default value: `"cyan,magenta,green,brown,lightblue,default,lightcyan,lightmagenta,lightgreen,blue"`)
 
+* [[option_weechat.color.chat_nick_offline]] *weechat.color.chat_nick_offline*
+** description: `text color for offline nick (not in nicklist any more)`
+** type: color
+** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `darkgray`)
+
+* [[option_weechat.color.chat_nick_offline_highlight]] *weechat.color.chat_nick_offline_highlight*
+** description: `text color for offline nick with highlight`
+** type: color
+** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `default`)
+
+* [[option_weechat.color.chat_nick_offline_highlight_bg]] *weechat.color.chat_nick_offline_highlight_bg*
+** description: `background color for offline nick with highlight`
+** type: color
+** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `darkgray`)
+
 * [[option_weechat.color.chat_nick_other]] *weechat.color.chat_nick_other*
 ** description: `text color for other nick in private buffer`
 ** type: color
@@ -279,7 +294,7 @@
 ** values: on, off (default value: `on`)
 
 * [[option_weechat.completion.nick_completer]] *weechat.completion.nick_completer*
-** description: `string inserted after nick completion`
+** description: `string inserted after nick completion (when nick is first word on command line)`
 ** type: string
 ** values: any string (default value: `":"`)
 
@@ -410,6 +425,11 @@
 
 * [[option_weechat.look.color_inactive_window]] *weechat.look.color_inactive_window*
 ** description: `use a different color for lines in inactive window (when window is not current window)`
+** type: boolean
+** values: on, off (default value: `off`)
+
+* [[option_weechat.look.color_nick_offline]] *weechat.look.color_nick_offline*
+** description: `use a different color for offline nicks (not in nicklist any more)`
 ** type: boolean
 ** values: on, off (default value: `off`)
 
@@ -555,6 +575,11 @@
 
 * [[option_weechat.look.jump_previous_buffer_when_closing]] *weechat.look.jump_previous_buffer_when_closing*
 ** description: `jump to previously visited buffer when closing a buffer (if disabled, then jump to buffer number - 1)`
+** type: boolean
+** values: on, off (default value: `on`)
+
+* [[option_weechat.look.jump_smart_back_to_buffer]] *weechat.look.jump_smart_back_to_buffer*
+** description: `jump back to initial buffer after reaching end of hotlist`
 ** type: boolean
 ** values: on, off (default value: `on`)
 
@@ -709,12 +734,12 @@
 ** values: on, off (default value: `on`)
 
 * [[option_weechat.look.separator_horizontal]] *weechat.look.separator_horizontal*
-** description: `char used to draw horizontal separators around bars (empty value will draw a real line with ncurses, but may cause bugs with URL selection under some terminals), wide chars are NOT allowed here`
+** description: `char used to draw horizontal separators around bars and windows (empty value will draw a real line with ncurses, but may cause bugs with URL selection under some terminals), wide chars are NOT allowed here`
 ** type: string
 ** values: any string (default value: `"-"`)
 
 * [[option_weechat.look.separator_vertical]] *weechat.look.separator_vertical*
-** description: `char used to draw vertical separators around bars (empty value will draw a real line with ncurses), wide chars are NOT allowed here`
+** description: `char used to draw vertical separators around bars and windows (empty value will draw a real line with ncurses), wide chars are NOT allowed here`
 ** type: string
 ** values: any string (default value: `""`)
 
@@ -727,6 +752,16 @@
 ** description: `time format for dates converted to strings and displayed in messages`
 ** type: string
 ** values: any string (default value: `"%a, %d %b %Y %T"`)
+
+* [[option_weechat.look.window_separator_horizontal]] *weechat.look.window_separator_horizontal*
+** description: `display an horizontal separator between windows`
+** type: boolean
+** values: on, off (default value: `on`)
+
+* [[option_weechat.look.window_separator_vertical]] *weechat.look.window_separator_vertical*
+** description: `display a vertical separator between windows`
+** type: boolean
+** values: on, off (default value: `on`)
 
 * [[option_weechat.network.connection_timeout]] *weechat.network.connection_timeout*
 ** description: `timeout (in seconds) for connection to a remote host (made in a child process)`
@@ -787,4 +822,9 @@
 ** description: `display WeeChat version at startup`
 ** type: boolean
 ** values: on, off (default value: `on`)
+
+* [[option_weechat.startup.sys_rlimit]] *weechat.startup.sys_rlimit*
+** description: `set resource limits for WeeChat process, format is: "res1:limit1,res2:limit2"; resource name is the end of constant (RLIMIT_XXX) in lower case (see man setrlimit for values); limit -1 means "unlimited"; example: set unlimited size for core file and max 1GB of virtual memory: "core:-1,as:1000000000"`
+** type: string
+** values: any string (default value: `""`)
 

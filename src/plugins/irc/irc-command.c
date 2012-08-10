@@ -1461,6 +1461,19 @@ irc_command_disconnect (void *data, struct t_gui_buffer *buffer, int argc,
                 }
             }
         }
+        else if (weechat_strcasecmp (argv[1], "-pending") == 0)
+        {
+            for (ptr_server = irc_servers; ptr_server;
+                 ptr_server = ptr_server->next_server)
+            {
+                if (!ptr_server->is_connected
+                    && (ptr_server->reconnect_start != 0))
+                {
+                    if (!irc_command_disconnect_one_server (ptr_server, reason))
+                        disconnect_ok = 0;
+                }
+            }
+        }
         else
         {
             ptr_server = irc_server_search (argv[1]);
@@ -3750,9 +3763,9 @@ int
 irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
                     char **argv, char **argv_eol)
 {
-    int i, detailed_list, one_server_found;
+    int i, detailed_list, one_server_found, length;
     struct t_irc_server *ptr_server2, *server_found, *new_server;
-    char *server_name;
+    char *server_name, *message;
 
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
 
@@ -3837,13 +3850,6 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
                               "can't create it!"),
                             weechat_prefix ("error"), IRC_PLUGIN_NAME,
                             ptr_server2->name);
-            return WEECHAT_RC_OK;
-        }
-        if (argv[2][0] == '#')
-        {
-            weechat_printf (NULL,
-                            _("%s%s: name can not start with \"#\""),
-                            weechat_prefix ("error"), IRC_PLUGIN_NAME);
             return WEECHAT_RC_OK;
         }
 
@@ -4090,6 +4096,30 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
     {
         if (ptr_server && ptr_server->buffer)
             weechat_buffer_set (ptr_server->buffer, "display", "1");
+        return WEECHAT_RC_OK;
+    }
+
+    if (weechat_strcasecmp (argv[1], "fakerecv") == 0)
+    {
+        if (argc < 3)
+        {
+            IRC_COMMAND_TOO_FEW_ARGUMENTS(NULL, "server fakerecv");
+        }
+        IRC_COMMAND_CHECK_SERVER("server fakerecv", 1);
+        length = strlen (argv_eol[2]);
+        if (length > 0)
+        {
+            /* allocate length + 2 (CR-LF) + 1 (final '\0') */
+            message = malloc (length + 2 + 1);
+            if (message)
+            {
+                strcpy (message, argv_eol[2]);
+                strcat (message, "\r\n");
+                irc_server_msgq_add_buffer (ptr_server, message);
+                irc_server_msgq_flush ();
+                free (message);
+            }
+        }
         return WEECHAT_RC_OK;
     }
 
@@ -4994,11 +5024,13 @@ irc_command_init ()
                           NULL, &irc_command_die, NULL);
     weechat_hook_command ("disconnect",
                           N_("disconnect from one or all IRC servers"),
-                          N_("[<server>|-all [<reason>]]"),
-                          N_("server: server name to disconnect\n"
-                             "  -all: disconnect from all servers\n"
-                             "reason: reason for quit"),
-                          "%(irc_servers)|-all",
+                          N_("[<server>|-all|-pending [<reason>]]"),
+                          N_("  server: server name to disconnect\n"
+                             "    -all: disconnect from all servers\n"
+                             "-pending: cancel auto-reconnection on servers "
+                             "currently reconnecting\n"
+                             "  reason: reason for quit"),
+                          "%(irc_servers)|-all|-pending",
                           &irc_command_disconnect, NULL);
     weechat_hook_command ("halfop",
                           N_("give channel half-operator status to "

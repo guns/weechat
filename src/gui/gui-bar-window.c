@@ -361,6 +361,18 @@ gui_bar_window_calculate_pos_size (struct t_gui_bar_window *bar_window,
         case GUI_BAR_NUM_POSITIONS:
             break;
     }
+
+    /* bar window can not be displayed? (not enough space left) */
+    if ((bar_window->x < x1) || (bar_window->x > x2)
+        || (bar_window->y < y1) || (bar_window->y > y2)
+        || (bar_window->width < 1) || (bar_window->height < 1))
+    {
+        /* invalidate the bar window, it will not be displayed */
+        bar_window->x = -1;
+        bar_window->y = -1;
+        bar_window->width = 0;
+        bar_window->height = 0;
+    }
 }
 
 /*
@@ -1121,13 +1133,11 @@ gui_bar_window_get_max_size_in_window (struct t_gui_bar_window *bar_window,
         {
             case GUI_BAR_POSITION_BOTTOM:
             case GUI_BAR_POSITION_TOP:
-                max_size = (window->win_chat_height + bar_window->height) -
-                    GUI_WINDOW_CHAT_MIN_HEIGHT;
+                max_size = (window->win_chat_height + bar_window->height) - 1;
                 break;
             case GUI_BAR_POSITION_LEFT:
             case GUI_BAR_POSITION_RIGHT:
-                max_size = (window->win_chat_width + bar_window->width) -
-                    GUI_WINDOW_CHAT_MIN_HEIGHT;
+                max_size = (window->win_chat_width + bar_window->width) - 1;
                 break;
             case GUI_BAR_NUM_POSITIONS:
                 break;
@@ -1397,27 +1407,27 @@ gui_bar_window_hdata_bar_window_cb (void *data, const char *hdata_name)
     hdata = hdata_new (NULL, hdata_name, "prev_bar_window", "next_bar_window");
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_bar_window, bar, POINTER, "bar");
-        HDATA_VAR(struct t_gui_bar_window, x, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, y, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, width, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, height, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, scroll_x, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, scroll_y, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, cursor_x, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, cursor_y, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, current_size, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, items_count, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, items_subcount, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, items_content, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, items_num_lines, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, items_refresh_needed, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, screen_col_size, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, coords_count, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, coords, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, gui_objects, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_window, prev_bar_window, POINTER, hdata_name);
-        HDATA_VAR(struct t_gui_bar_window, next_bar_window, POINTER, hdata_name);
+        HDATA_VAR(struct t_gui_bar_window, bar, POINTER, NULL, "bar");
+        HDATA_VAR(struct t_gui_bar_window, x, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, y, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, width, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, height, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, scroll_x, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, scroll_y, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, cursor_x, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, cursor_y, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, current_size, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, items_count, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, items_subcount, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, items_content, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, items_num_lines, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, items_refresh_needed, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, screen_col_size, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, coords_count, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, coords, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, gui_objects, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_window, prev_bar_window, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_bar_window, next_bar_window, POINTER, NULL, hdata_name);
     }
     return hdata;
 }

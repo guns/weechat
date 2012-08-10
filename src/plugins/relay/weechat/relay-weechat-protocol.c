@@ -145,7 +145,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(hdata)
     {
         relay_weechat_msg_add_hdata (msg, argv[0],
                                      (argc > 1) ? argv_eol[1] : NULL);
-        relay_weechat_msg_send (client, msg, 1);
+        relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
 
@@ -171,7 +171,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(info)
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_INFO);
         relay_weechat_msg_add_string (msg, argv[0]);
         relay_weechat_msg_add_string (msg, info);
-        relay_weechat_msg_send (client, msg, 1);
+        relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
 
@@ -205,7 +205,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(infolist)
                 args = argv_eol[2];
         }
         relay_weechat_msg_add_infolist (msg, argv[0], (void *)value, args);
-        relay_weechat_msg_send (client, msg, 1);
+        relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
 
@@ -236,7 +236,7 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(nicklist)
     if (msg)
     {
         relay_weechat_msg_add_nicklist (msg, ptr_buffer);
-        relay_weechat_msg_send (client, msg, 1);
+        relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
 
@@ -250,12 +250,17 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(nicklist)
 RELAY_WEECHAT_PROTOCOL_CALLBACK(input)
 {
     struct t_gui_buffer *ptr_buffer;
+    char *pos;
 
     RELAY_WEECHAT_PROTOCOL_MIN_ARGS(2);
 
     ptr_buffer = relay_weechat_protocol_get_buffer (argv[0]);
     if (ptr_buffer)
-        weechat_command (ptr_buffer, argv_eol[1]);
+    {
+        pos = strchr (argv_eol[0], ' ');
+        if (pos)
+            weechat_command (ptr_buffer, pos + 1);
+    }
 
     return WEECHAT_RC_OK;
 }
@@ -278,7 +283,6 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
     char cmd_hdata[64], str_signal[128];
 
     /* make C compiler happy */
-    (void) signal;
     (void) type_data;
 
     ptr_client = (struct t_relay_client *)data;
@@ -302,7 +306,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
                                          "number,full_name,short_name,"
                                          "nicklist,title,local_variables,"
                                          "prev_buffer,next_buffer");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -319,7 +323,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
                       "buffer:0x%lx", (long unsigned int)ptr_buffer);
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name,type");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -337,7 +341,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name,"
                                          "prev_buffer,next_buffer");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -356,7 +360,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name,"
                                          "prev_buffer,next_buffer");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -374,7 +378,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name,short_name,"
                                          "local_variables");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -391,7 +395,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
                       "buffer:0x%lx", (long unsigned int)ptr_buffer);
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name,title");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -408,7 +412,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
                       "buffer:0x%lx", (long unsigned int)ptr_buffer);
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name,local_variables");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -432,7 +436,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
 
         ptr_buffer = weechat_hdata_pointer (ptr_hdata_line_data, ptr_line_data,
                                             "buffer");
-        if (!ptr_buffer)
+        if (!ptr_buffer || (relay_raw_buffer && (ptr_buffer == relay_raw_buffer)))
             return WEECHAT_RC_OK;
 
         /* check if buffer is synchronized (== able to receive events) */
@@ -450,9 +454,9 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
                           (long unsigned int)ptr_line_data);
                 relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                              "buffer,date,date_printed,"
-                                             "displayed,highlight,prefix,"
-                                             "message");
-                relay_weechat_msg_send (ptr_client, msg, 0);
+                                             "displayed,highlight,tags_array,"
+                                             "prefix,message");
+                relay_weechat_msg_send (ptr_client, msg);
                 relay_weechat_msg_free (msg);
             }
         }
@@ -472,7 +476,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
                                       cmd_hdata + 7);
             relay_weechat_msg_add_hdata (msg, cmd_hdata,
                                          "number,full_name");
-            relay_weechat_msg_send (ptr_client, msg, 0);
+            relay_weechat_msg_send (ptr_client, msg);
             relay_weechat_msg_free (msg);
         }
     }
@@ -519,7 +523,7 @@ relay_weechat_protocol_nicklist_map_cb (void *data,
                 if (msg)
                 {
                     relay_weechat_msg_add_nicklist (msg, (struct t_gui_buffer *)buffer);
-                    relay_weechat_msg_send (ptr_client, msg, 1);
+                    relay_weechat_msg_send (ptr_client, msg);
                     relay_weechat_msg_free (msg);
                 }
             }
@@ -591,6 +595,43 @@ relay_weechat_protocol_signal_nicklist_cb (void *data, const char *signal,
         RELAY_WEECHAT_DATA(ptr_client, hook_timer_nicklist) = NULL;
     }
     relay_weechat_hook_timer_nicklist (ptr_client);
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * relay_weechat_protocol_signal_upgrade_cb: callback for "upgrade*" signals
+ */
+
+int
+relay_weechat_protocol_signal_upgrade_cb (void *data, const char *signal,
+                                          const char *type_data,
+                                          void *signal_data)
+{
+    struct t_relay_client *ptr_client;
+    struct t_relay_weechat_msg *msg;
+    char str_signal[128];
+
+    /* make C compiler happy */
+    (void) type_data;
+    (void) signal_data;
+
+    ptr_client = (struct t_relay_client *)data;
+    if (!ptr_client || !relay_client_valid (ptr_client))
+        return WEECHAT_RC_OK;
+
+    snprintf (str_signal, sizeof (str_signal), "_%s", signal);
+
+    if ((strcmp (signal, "upgrade") == 0)
+        || (strcmp (signal, "upgrade_ended") == 0))
+    {
+        msg = relay_weechat_msg_new (str_signal);
+        if (msg)
+        {
+            relay_weechat_msg_send (ptr_client, msg);
+            relay_weechat_msg_free (msg);
+        }
+    }
 
     return WEECHAT_RC_OK;
 }
@@ -767,27 +808,63 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(test)
     msg = relay_weechat_msg_new (id);
     if (msg)
     {
+        /* char */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_CHAR);
         relay_weechat_msg_add_char (msg, 'A');
+
+        /* integer */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_INT);
         relay_weechat_msg_add_int (msg, 123456);
+
+        /* long */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_LONG);
         relay_weechat_msg_add_long (msg, 1234567890L);
+
+        /* string */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_STRING);
         relay_weechat_msg_add_string (msg, "a string");
+
+        /* empty string */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_STRING);
         relay_weechat_msg_add_string (msg, "");
+
+        /* NULL string */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_STRING);
         relay_weechat_msg_add_string (msg, NULL);
+
+        /* buffer */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_BUFFER);
         relay_weechat_msg_add_buffer (msg, "buffer", 6);
+
+        /* NULL buffer */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_BUFFER);
         relay_weechat_msg_add_buffer (msg, NULL, 0);
+
+        /* pointer */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_POINTER);
         relay_weechat_msg_add_pointer (msg, &msg);
+
+        /* time */
         relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_TIME);
         relay_weechat_msg_add_time (msg, 1321993456);
-        relay_weechat_msg_send (client, msg, 1);
+
+        /* array of strings: { "abc", "de" } */
+        relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_ARRAY);
+        relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_STRING);
+        relay_weechat_msg_add_int (msg, 2);
+        relay_weechat_msg_add_string (msg, "abc");
+        relay_weechat_msg_add_string (msg, "de");
+
+        /* array of integers: { 123, 456, 789 } */
+        relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_ARRAY);
+        relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_INT);
+        relay_weechat_msg_add_int (msg, 3);
+        relay_weechat_msg_add_int (msg, 123);
+        relay_weechat_msg_add_int (msg, 456);
+        relay_weechat_msg_add_int (msg, 789);
+
+        /* send message */
+        relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
 
@@ -841,8 +918,12 @@ relay_weechat_protocol_recv (struct t_relay_client *client, char *data)
     /* display debug message */
     if (weechat_relay_plugin->debug >= 2)
     {
-        weechat_printf (NULL, "%s: recv from client %d: \"%s\"",
-                        RELAY_PLUGIN_NAME, client->id, data);
+        weechat_printf (NULL, "%s: recv from client %s%s%s: \"%s\"",
+                        RELAY_PLUGIN_NAME,
+                        RELAY_COLOR_CHAT_CLIENT,
+                        client->desc,
+                        RELAY_COLOR_CHAT,
+                        data);
     }
 
     /* display message in raw buffer */
@@ -919,9 +1000,13 @@ relay_weechat_protocol_recv (struct t_relay_client *client, char *data)
                 {
                     weechat_printf (NULL,
                                     _("%s%s: failed to execute command \"%s\" "
-                                      "for client %d"),
+                                      "for client %s%s%s"),
                                     weechat_prefix ("error"),
-                                    RELAY_PLUGIN_NAME, command, client->id);
+                                    RELAY_PLUGIN_NAME,
+                                    command,
+                                    RELAY_COLOR_CHAT_CLIENT,
+                                    client->desc,
+                                    RELAY_COLOR_CHAT);
                 }
             }
             break;

@@ -31,14 +31,15 @@
 #include "relay-completion.h"
 #include "relay-config.h"
 #include "relay-info.h"
+#include "relay-network.h"
 #include "relay-raw.h"
 #include "relay-server.h"
 #include "relay-upgrade.h"
 
 
 WEECHAT_PLUGIN_NAME(RELAY_PLUGIN_NAME);
-WEECHAT_PLUGIN_DESCRIPTION("Network communication between WeeChat and "
-                           "remote application");
+WEECHAT_PLUGIN_DESCRIPTION(N_("Relay WeeChat data to remote application "
+                              "(irc/weechat protocols)"));
 WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
@@ -49,6 +50,8 @@ int relay_signal_upgrade_received = 0; /* signal "upgrade" received ?       */
 
 char *relay_protocol_string[] =        /* strings for protocols             */
 { "weechat", "irc" };
+
+struct t_hook *relay_hook_timer = NULL;
 
 
 /*
@@ -79,6 +82,8 @@ relay_signal_upgrade_cb (void *data, const char *signal, const char *type_data,
                          void *signal_data)
 {
     struct t_relay_server *ptr_server;
+    struct t_relay_client *ptr_client;
+    int disconnected;
 
     /* make C compiler happy */
     (void) data;
@@ -88,10 +93,45 @@ relay_signal_upgrade_cb (void *data, const char *signal, const char *type_data,
 
     relay_signal_upgrade_received = 1;
 
+    /* close socket for relay servers */
     for (ptr_server = relay_servers; ptr_server;
          ptr_server = ptr_server->next_server)
     {
         relay_server_close_socket (ptr_server);
+    }
+
+    /*
+     * FIXME: it's not possible to upgrade with SSL clients connected (GnuTLS
+     * lib can't reload data after upgrade), so we close connection for
+     * all SSL clients currently connected
+     */
+    disconnected = 0;
+    for (ptr_client = relay_clients; ptr_client;
+         ptr_client = ptr_client->next_client)
+    {
+        if ((ptr_client->sock >= 0) && ptr_client->ssl)
+        {
+            disconnected++;
+            weechat_printf (NULL,
+                            _("%s%s: disconnecting from client %s%s%s because "
+                              "upgrade can't work for clients connected via SSL"),
+                            weechat_prefix ("error"),
+                            RELAY_PLUGIN_NAME,
+                            RELAY_COLOR_CHAT_CLIENT,
+                            ptr_client->desc,
+                            RELAY_COLOR_CHAT);
+            relay_client_set_status (ptr_client, RELAY_STATUS_DISCONNECTED);
+        }
+    }
+    if (disconnected > 0)
+    {
+        weechat_printf (NULL,
+                        /* TRANSLATORS: "%s" after "%d" is "client" or "clients" */
+                        _("%s%s: disconnected from %d %s (SSL connection "
+                          "not supported with upgrade)"),
+                        weechat_prefix ("error"), RELAY_PLUGIN_NAME,
+                        disconnected,
+                        NG_("client", "clients", disconnected));
     }
 
     return WEECHAT_RC_OK;
@@ -149,6 +189,8 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     if (relay_config_read () < 0)
         return WEECHAT_RC_ERROR;
 
+    relay_network_init ();
+
     relay_command_init ();
 
     /* hook completions */
@@ -172,6 +214,9 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     if (upgrading)
         relay_upgrade_load ();
 
+    relay_hook_timer = weechat_hook_timer (1 * 1000, 0, 0,
+                                           &relay_client_timer_cb, NULL);
+
     return WEECHAT_RC_OK;
 }
 
@@ -184,6 +229,9 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 {
     /* make C compiler happy */
     (void) plugin;
+
+    if (relay_hook_timer)
+        weechat_unhook (relay_hook_timer);
 
     relay_config_write ();
 
@@ -202,6 +250,8 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
 
         relay_client_free_all ();
     }
+
+    relay_network_end ();
 
     return WEECHAT_RC_OK;
 }

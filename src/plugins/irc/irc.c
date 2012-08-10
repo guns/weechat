@@ -48,7 +48,7 @@
 
 
 WEECHAT_PLUGIN_NAME(IRC_PLUGIN_NAME);
-WEECHAT_PLUGIN_DESCRIPTION("IRC (Internet Relay Chat) plugin for WeeChat");
+WEECHAT_PLUGIN_DESCRIPTION(N_("IRC (Internet Relay Chat) protocol"));
 WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
@@ -184,10 +184,6 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     /* hook hsignals for redirection */
     weechat_hook_hsignal ("irc_redirect_pattern", &irc_redirect_pattern_hsignal_cb, NULL);
     weechat_hook_hsignal ("irc_redirect_command", &irc_redirect_command_hsignal_cb, NULL);
-
-    /* hook hsignal for redirection of "mode" output */
-    weechat_hook_hsignal ("irc_redirection_mode_mode_channel",
-                          &irc_protocol_redirection_mode_cb, NULL);
 
     /* modifiers */
     weechat_hook_modifier ("irc_color_decode", &irc_color_modifier_cb, NULL);

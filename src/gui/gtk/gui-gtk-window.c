@@ -89,11 +89,11 @@ gui_window_objects_init (struct t_gui_window *window)
  */
 
 void
-gui_window_objects_free (struct t_gui_window *window, int free_separator)
+gui_window_objects_free (struct t_gui_window *window, int free_separators)
 {
     /* TODO: write this function for Gtk */
     (void) window;
-    (void) free_separator;
+    (void) free_separators;
 }
 
 /*
@@ -124,11 +124,11 @@ gui_window_calculate_pos_size (struct t_gui_window *window)
 }
 
 /*
- * gui_window_draw_separator: draw window separation
+ * gui_window_draw_separators: draw window separation
  */
 
 void
-gui_window_draw_separator (struct t_gui_window *window)
+gui_window_draw_separators (struct t_gui_window *window)
 {
     /* TODO: write this function for Gtk */
     /*if (window->win_separator)
@@ -264,7 +264,7 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
 void
 gui_window_page_up (struct t_gui_window *window)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if (!window->scroll->first_line_displayed)
@@ -288,7 +288,7 @@ gui_window_page_down (struct t_gui_window *window)
     struct t_gui_line *ptr_line;
     int line_pos;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if (window->scroll->start_line)
@@ -320,7 +320,7 @@ gui_window_page_down (struct t_gui_window *window)
 void
 gui_window_scroll_up (struct t_gui_window *window)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if (!window->scroll->first_line_displayed)
@@ -345,7 +345,7 @@ gui_window_scroll_down (struct t_gui_window *window)
     struct t_gui_line *ptr_line;
     int line_pos;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if (window->scroll->start_line)
@@ -378,7 +378,7 @@ gui_window_scroll_down (struct t_gui_window *window)
 void
 gui_window_scroll_top (struct t_gui_window *window)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if (!window->scroll->first_line_displayed)
@@ -396,7 +396,7 @@ gui_window_scroll_top (struct t_gui_window *window)
 void
 gui_window_scroll_bottom (struct t_gui_window *window)
 {
-    if (!gui_ok)
+    if (!gui_init_ok)
         return;
 
     if (window->scroll->start_line)
@@ -471,7 +471,7 @@ gui_window_refresh_windows ()
 {
     /*struct t_gui_window *ptr_win, *old_current_window;*/
 
-    if (gui_ok)
+    if (gui_init_ok)
     {
         /* TODO: write this function for Gtk */
     }
@@ -487,7 +487,7 @@ gui_window_split_horizontal (struct t_gui_window *window, int percentage)
     struct t_gui_window *new_window;
     int height1, height2;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return NULL;
 
     new_window = NULL;
@@ -532,7 +532,7 @@ gui_window_split_vertical (struct t_gui_window *window, int percentage)
     struct t_gui_window *new_window;
     int width1, width2;
 
-    if (!gui_ok)
+    if (!gui_init_ok)
         return NULL;
 
     new_window = NULL;
@@ -561,8 +561,8 @@ gui_window_split_vertical (struct t_gui_window *window, int percentage)
             gui_window_switch_to_buffer (gui_current_window, gui_current_window->buffer, 1);
             gui_window_redraw_buffer (gui_current_window->buffer);
 
-            /* create & draw separator */
-            gui_window_draw_separator (gui_current_window);
+            /* create & draw separators */
+            gui_window_draw_separators (gui_current_window);
         }
     }
 

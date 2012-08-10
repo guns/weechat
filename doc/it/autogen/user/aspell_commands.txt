@@ -1,19 +1,26 @@
 [[command_aspell_aspell]]
 [command]*`aspell`* configurazione del plugin aspell::
 ........................................
-/aspell  dictlist
-         enable <lingua>
-         disable
-         addword [<lingua>] <parola>
+/aspell  enable|disable|toggle
+         listdict
+         setdict <lingua>
+         deldict
+         addword [<lingua>] <word>
 
-dictlist: mostra i dizionari installati
-  enable: abilita aspell sul buffer corrente
- disable: disabilita aspell sul buffer corrente
+  enable: abilita aspell
+ disable: disabilita aspell
+  toggle: abilita/disabilita aspell
+listdict: mostra i dizionari installati
+ setdict: imposta dizionario per il buffer corrente
+ deldict: elimina dizionario usato per il buffer corrente
  addword: aggiunge una parola nel dizionario personale aspell
 
 La riga di input che comincia con '/' non viene controllata, tranne che per alcuni comandi (consultare /set aspell.check.commands).
 
-Per abilitare aspell su tutti i buffer, usare l'opzione "default_dict", ad esempio:
+Per abilitare aspell su tutti i buffer, usare l'opzione "default_dict", poi abilita aspell, ad esempio:
   /set aspell.check.default_dict "it"
+  /aspell enable
+
+Il tasto predefinito per (dis)abilitare aspell è alt-s.
 ........................................
 

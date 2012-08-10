@@ -63,6 +63,7 @@ Exemples:
 /buffer  list
          clear [<nombre>|<nom>|-merged|-all]
          move|merge <nombre>
+         swap <nombre1>|<nom1> [<nombre2>|<nom2>]
          unmerge [<nombre>|-all]
          close [<n1>[-<n2>]|<nom>]
          notify <niveau>
@@ -74,6 +75,7 @@ Exemples:
     list: lister les tampons ouverts (sans paramètre, cette liste est affichée)
    clear: effacer le contenu du tampon (un numéro pour un tampon, -merged pour les tampons mélangés, -all pour tous les tampons, ou rien pour le tampon courant)
     move: déplacer le tampon dans la liste (peut être relatif, par exemple -1)
+    swap: échanger deux tampons (échanger avec le tampon courant si un seul numéro/nom donné)
    merge: mélanger le tampon courant avec un autre tampon (la zone de discussion sera un mélange des deux tampons)
           (par défaut ctrl-x bascule entre les tampons mélangés)
  unmerge: détacher le tampon courant des autres tampons portant le même numéro
@@ -98,6 +100,10 @@ Exemples:
     /buffer clear
   déplacer le tampon vers le numéro 5:
     /buffer move 5
+  échanger le tampon 1 avec le 3:
+    /buffer swap 1 3
+  échanger le tampon #weechat avec le tampon courant:
+    /buffer swap #weechat
   mélanger avec le tampon core:
     /buffer merge 1
   détacher le tampon:
@@ -345,6 +351,7 @@ listdefault: afficher les touches par défaut
    contexte: nom du contexte ("default" ou "search")
        bind: associer une commande à une touche ou affiche la commande associée à la touche
    bindctxt: associer une commande à une touche ou affiche la commande associée à la touche pour le contexte donné
+   commande: commande (plusieurs commandes peuvent êtres séparées par des points-virgules)
      unbind: supprimer l'association à une touche
  unbindctxt: supprimer l'association à une touche pour le contexte donné
       reset: réinitialiser une touche à son association par défaut
@@ -519,6 +526,8 @@ Sans paramètre, tous les fichiers (WeeChat et extensions) sont rechargés.
    délai: délai entre l'exécution des commandes (en millisecondes)
   nombre: nombre de fois que la commande sera exécutée
 commande: commande à exécuter (un '/' est automatiquement ajouté s'il n'est pas trouvé au début de la commande)
+
+Toutes les commandes sont exécutées sur le tampon où la commande a été lancée.
 
 Exemple:
   faire défiler de 2 pages vers le haut:

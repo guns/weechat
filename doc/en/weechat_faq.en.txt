@@ -4,7 +4,8 @@ Sébastien Helleu <flashcode@flashtux.org>
 
 
 [NOTE]
-This document is written for WeeChat versions ≥ 0.3.0.
+This document is written for WeeChat versions ≥ 0.3.0 but should preferably be
+used with latest stable version of WeeChat.
 
 
 [[general]]
@@ -478,6 +479,15 @@ You should use a terminal that supports UTF-8 coordinates for mouse, like
 rxvt-unicode.
 
 
+[[mouse_select_paste]]
+How can I select or paste text in terminal when mouse is enabled in WeeChat?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When mouse is enabled in WeeChat, you can use @k(-S-) modifier to select or
+click in terminal, as if the mouse was disabled (on some terminals like iTerm,
+you have to use @k(-A-) instead of @k(-S-)).
+
+
 [[irc]]
 IRC
 ---
@@ -577,7 +587,7 @@ If you really want to filter voice messages, you can use this command, but this
 is not perfect (will work only if first mode changed is voice):
 
 ----------------------------------------
-/filter add hidevoices * irc_mode \(\+\|\-\)v
+/filter add hidevoices * irc_mode (\+|\-)v
 ----------------------------------------
 
 
@@ -732,10 +742,9 @@ You can try following tips to consume less memory:
 * do not load some plugins if you don't use them, for example: aspell, fifo,
   logger, perl, python, ruby, lua, tcl, xfer (used for DCC)
 * load only scripts that you really need
-* reduce value of option 'weechat.history.max_lines' (number of lines saved in
-  memory for each buffer)
-* reduce value of option 'weechat.history.max_commands' (number of user commands
-  saved in memory)
+* reduce value of option 'weechat.history.max_buffer_lines_number' or set value
+  of option 'weechat.history.max_buffer_lines_minutes'
+* reduce value of option 'weechat.history.max_commands'
 
 
 [[development]]

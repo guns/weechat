@@ -1,19 +1,26 @@
 [[command_aspell_aspell]]
 [command]*`aspell`* Konfiguration für Aspell-Erweiterung::
 ........................................
-/aspell  dictlist
-         enable <lang>
-         disable
+/aspell  enable|disable|toggle
+         listdict
+         setdict <lang>
+         deldict
          addword [<lang>] <word>
 
-dictlist: listet installierte Wörterbücher auf
-  enable: aktiviert Aspell in aktuellem Buffer [lang = Wörterbuch)
- disable: deaktiviert Aspell in aktuellem Buffer
+  enable: Aspell wird aktiviert
+ disable: Aspell wird deaktiviert
+  toggle: Aspell Funktionalität umschalten
+listdict: die, auf dem System, installierten Wörterbücher werden aufgelistet
+ setdict: Wörterbuch für den aktuellen Buffer einstellen
+ deldict: Wörterbuch für den aktuellen Buffer entfernen
  addword: fügt ein Wort in das persönliche Wörterbuch von Aspell hinzu
 
 Eingaben die mit '/' beginnen werden nicht überprüft, davon ausgenommen sind einige Befehle (siehe /set aspell.check.commands).
 
-Um in allen Buffern Aspell anzuwenden sollte man die Option "default_dict" nutzen , als Beispiel:
+Um Aspell auf alle Buffer anzuwenden sollte die Option "default_dict" genutzt und Aspell aktiviert werden:
   /set aspell.check.default_dict "de_DE-neu"
+  /aspell enable
+
+Die Standardtastaturbelegung zum Umschalten der Aspell Funktionalität lautet alt-s.
 ........................................
 

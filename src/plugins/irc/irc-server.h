@@ -169,6 +169,8 @@ struct t_irc_server
     int nick_max_length;            /* max lenth of nick (from msg 005)      */
     int casemapping;                /* casemapping from msg 005              */
     char *chantypes;                /* chantypes from msg 005 (eg "&#")      */
+    char *chanmodes;                /* chanmodes from msg 005                */
+                                    /* (eg "beI,k,l,imnpstaqr")              */
     int reconnect_delay;            /* current reconnect delay (growing)     */
     time_t reconnect_start;         /* this time + delay = reconnect time    */
     time_t command_time;            /* this time + command_delay = time to   */
@@ -250,6 +252,7 @@ extern char irc_server_get_prefix_mode_for_char (struct t_irc_server *server,
                                                  char prefix_char);
 extern char irc_server_get_prefix_char_for_mode (struct t_irc_server *server,
                                                  char mode);
+extern const char *irc_server_get_chanmodes (struct t_irc_server *server);
 extern struct t_irc_server *irc_server_alloc (const char *name);
 extern struct t_irc_server *irc_server_alloc_with_url (const char *irc_url);
 extern void irc_server_apply_command_line_options (struct t_irc_server *server,
@@ -267,6 +270,9 @@ extern struct t_hashtable *irc_server_sendf (struct t_irc_server *server,
                                              int flags,
                                              const char *tags,
                                              const char *format, ...);
+extern void irc_server_msgq_add_buffer (struct t_irc_server *server,
+                                        const char *buffer);
+extern void irc_server_msgq_flush ();
 extern void irc_server_set_buffer_title (struct t_irc_server *server);
 extern struct t_gui_buffer *irc_server_create_buffer (struct t_irc_server *server);
 extern int irc_server_connect (struct t_irc_server *server);

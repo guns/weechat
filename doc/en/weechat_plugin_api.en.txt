@@ -297,7 +297,7 @@ C example:
 
 [source,C]
 ----------------------------------------
-weechat_charset_set (plugin, "iso-8859-1");
+weechat_charset_set ("iso-8859-1");
 ----------------------------------------
 
 Script (Python):
@@ -336,7 +336,7 @@ C example:
 
 [source,C]
 ----------------------------------------
-char *str = weechat_iconv_to_internal (plugin, "iso-8859-1", "iso string: é à");
+char *str = weechat_iconv_to_internal ("iso-8859-1", "iso string: é à");
 /* ... */
 free (str);
 ----------------------------------------
@@ -2536,6 +2536,37 @@ weechat_printf (NULL, "date: %s",
 [NOTE]
 This function is not available in scripting API.
 
+weechat_util_version_number
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.9._
+
+Convert a string with WeeChat version to a number.
+
+Prototype:
+
+[source,C]
+----------------------------------------
+int weechat_util_version_number (const char *version);
+----------------------------------------
+
+Arguments:
+
+* 'version': WeeChat version as string (example: "0.3.9" or "0.3.9-dev")
+
+C example:
+
+[source,C]
+----------------------------------------
+version_number = weechat_util_version_number ("0.3.8");     /* == 0x00030800 */
+version_number = weechat_util_version_number ("0.3.9-dev"); /* == 0x00030900 */
+version_number = weechat_util_version_number ("0.3.9-rc1"); /* == 0x00030900 */
+version_number = weechat_util_version_number ("0.3.9");     /* == 0x00030900 */
+----------------------------------------
+
+[NOTE]
+This function is not available in scripting API.
+
 [[sorted_lists]]
 Sorted lists
 ~~~~~~~~~~~~
@@ -4375,7 +4406,8 @@ Prototype:
 void weechat_config_search_with_string (const char *option_name,
                                         struct t_config_file **config_file,
                                         struct t_config_section **section,
-                                        struct t_config_option **option);
+                                        struct t_config_option **option,
+                                        char **pos_option_name);
 ----------------------------------------
 
 Arguments:
@@ -4387,6 +4419,8 @@ Arguments:
   found
 * 'option': pointer to an option pointer, will be set to option pointer, if
   found
+* 'pos_option_name': pointer to a string pointer, will be set to pointer to
+  name of option, if found
 
 C example:
 
@@ -4395,11 +4429,13 @@ C example:
 struct t_config_file *ptr_config_file;
 struct t_config_section *ptr_section;
 struct t_config_option *ptr_option;
+char *option_name;
 
 weechat_config_search_with_string ("file.section.option",
                                    &ptr_config_file,
                                    &ptr_section,
-                                   &ptr_option);
+                                   &ptr_option,
+                                   &option_name);
 if (ptr_option)
 {
     /* option found */
@@ -6153,7 +6189,7 @@ Examples:
 
 Return value:
 
-* string with color code, or a "reset color" code if color is not found
+* string with color code, or an empty string if color is not found
 
 C example:
 
@@ -6560,17 +6596,21 @@ struct t_hook *my_command_hook =
                           NULL);
 ----------------------------------------
 
-For example, if command called is `/command abc def ghi`, then argv and
-argv_eol contain following values:
+For example, if command called is `/command abc def ghi`, then 'argv' and
+'argv_eol' have following values:
 
 * 'argv':
-** 'argv[0]' == "abc"
-** 'argv[1]' == "def"
-** 'argv[2]' == "ghi"
+** 'argv[0]' == "/command"
+** 'argv[1]' == "abc"
+** 'argv[2]' == "def"
+** 'argv[3]' == "ghi"
 * 'argv_eol':
-** 'argv_eol[0]' == "abc def ghi"
-** 'argv_eol[1]' == "def ghi"
-** 'argv_eol[2]' == "ghi"
+** 'argv_eol[0]' == "/command abc def ghi"
+** 'argv_eol[1]' == "abc def ghi"
+** 'argv_eol[2]' == "def ghi"
+** 'argv_eol[3]' == "ghi"
+
+For scripts, 'args' has value "abc def ghi".
 
 Script (Python):
 
@@ -7018,7 +7058,7 @@ struct t_hashtable *options = weechat_hashtable_new (8,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      NULL,
                                                      NULL);
-if (hashtable)
+if (options)
 {
     weechat_hashtable_set (options, "file_out", "/tmp/weechat.org.html");
     struct t_hook *my_process_hook = weechat_hook_process_hashtable ("url:http://www.weechat.org/",
@@ -7246,7 +7286,8 @@ Arguments:
 * 'buffer': buffer pointer, if NULL, messages from any buffer are caught
 * 'tags': only messages with these tags (comma separated list) will be caught
   (optional)
-* 'message': only messages with this string will be caught (optional)
+* 'message': only messages with this string will be caught (optional, case
+  insensitive)
 * 'strip_colors': if 1, colors will be stripped from message displayed, before
   calling callback
 * 'callback': function called when a message is printed, arguments and return
@@ -7329,6 +7370,26 @@ Arguments:
 [width="100%",cols="^1,^3,^4,5",options="header"]
 |========================================
 | Plugin | Signal | Arguments | Description
+
+| guile | guile_script_loaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  scheme script loaded
+
+| guile | guile_script_unloaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  scheme script unloaded
+
+| guile | guile_script_installed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.scm,/path/to/script2.scm") |
+  scheme script(s) installed
+
+| guile | guile_script_removed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.scm,script2.scm") |
+  scheme script(s) removed
 
 | irc | xxx,irc_in_yyy ^(1)^ |
   string: message |
@@ -7447,6 +7508,106 @@ Arguments:
 | logger | logger_backlog |
   pointer: buffer |
   display backlog for buffer
+
+| lua | lua_script_loaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  lua script loaded
+
+| lua | lua_script_unloaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  lua script unloaded
+
+| lua | lua_script_installed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.lua,/path/to/script2.lua") |
+  lua script(s) installed
+
+| lua | lua_script_removed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.lua,script2.lua") |
+  lua script(s) removed
+
+| perl | perl_script_loaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  perl script loaded
+
+| perl | perl_script_unloaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  perl script unloaded
+
+| perl | perl_script_installed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.pl,/path/to/script2.pl") |
+  perl script(s) installed
+
+| perl | perl_script_removed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.pl,script2.pl") |
+  perl script(s) removed
+
+| python | python_script_loaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  python script loaded
+
+| python | python_script_unloaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  python script unloaded
+
+| python | python_script_installed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.py,/path/to/script2.py") |
+  python script(s) installed
+
+| python | python_script_removed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.py,script2.py") |
+  python script(s) removed
+
+| ruby | ruby_script_loaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  ruby script loaded
+
+| ruby | ruby_script_unloaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  ruby script unloaded
+
+| ruby | ruby_script_installed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.rb,/path/to/script2.rb") |
+  ruby script(s) installed
+
+| ruby | ruby_script_removed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.rb,script2.rb") |
+  ruby script(s) removed
+
+| tcl | tcl_script_loaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  tcl script loaded
+
+| tcl | tcl_script_unloaded +
+  (_new in version 0.3.9_) |
+  string: path to script |
+  tcl script unloaded
+
+| tcl | tcl_script_installed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.tcl,/path/to/script2.tcl") |
+  tcl script(s) installed
+
+| tcl | tcl_script_removed +
+  (_new in version 0.3.9_) |
+  string: comma-separated list of scripts removed (example: "script1.tcl,script2.tcl") |
+  tcl script(s) removed
 
 | weechat | buffer_closing |
   pointer: buffer |
@@ -8631,7 +8792,7 @@ Arguments:
 
 Return value:
 
-* string modified, NULL if no changes in string were made by modifier(s)
+* string modified, NULL if error occurred
 
 C example:
 
@@ -9073,6 +9234,49 @@ def my_focus_nicklist_cb(data, info):
 
 hook = weechat.hook_focus("buffer_nicklist", "my_focus_nicklist_cb", "")
 ----------------------------------------
+
+weechat_hook_set
+^^^^^^^^^^^^^^^^
+
+_New in version 0.3.9._
+
+Set string value of a hook property.
+
+Prototype:
+
+[source,C]
+----------------------------------------
+void weechat_hook_set (struct t_hook *hook, const char *property,
+                       const char *value);
+----------------------------------------
+
+Arguments:
+
+* 'hook': something hooked with "weechat_hook_xxx()"
+* 'property' and 'value': property name, with its value:
+
+[width="100%",cols="^2,4,8",options="header"]
+|========================================
+| Name | Value | Description
+
+| subplugin | any string |
+  name of sub plugin (commonly script name, which is displayed in
+  `/help command` for a hook of type 'command')
+|========================================
+
+C example:
+
+[source,C]
+----------------------------------------
+struct t_hook *my_command_hook =
+    weechat_hook_command ("abcd", "description",
+                          "args", "description args",
+                          "", &my_command_cb, NULL);
+weechat_hook_set (my_command_hook, "subplugin", "test");
+----------------------------------------
+
+[NOTE]
+This function is not available in scripting API.
 
 weechat_unhook
 ^^^^^^^^^^^^^^
@@ -9599,7 +9803,9 @@ Arguments:
    buffer)
 ** 'name': name of buffer
 ** 'full_name': full name of buffer ("plugin.name") (_new in version 0.3.7_)
-** 'short_name': short name of buffer
+** 'short_name': short name of buffer (note: used for display only and can be
+   changed by user, this must not be used to find name of buffer, use instead
+   'name', 'full_name' or local variable 'channel')
 ** 'title': title of buffer
 ** 'input': input text
 ** 'text_search_input': input saved before text search
@@ -9872,6 +10078,21 @@ Arguments:
 ** 'close_callback_data': set close callback data
 ** 'input_callback': set input callback function
 ** 'input_callback_data': set input callback data
+** 'nickcmp_callback': set nick comparison callback function (this callback is
+   called when searching nick in nicklist) (_new in version 0.3.9_)
+** 'nickcmp_callback_data': set nick comparison callback data
+   (_new in version 0.3.9_)
+
+Prototypes for callbacks:
+
+[source,C]
+----------------------------------------
+int close_callback (void *data, struct t_gui_buffer *buffer);
+
+int input_callback (void *data, struct t_gui_buffer *buffer, const char *input_data);
+
+int nickcmp_callback (void *data, struct t_gui_buffer *buffer, const char *nick1, const char *nick2);
+----------------------------------------
 
 C example:
 
@@ -11537,6 +11758,10 @@ weechat_network_pass_proxy
 
 Establish a connection/authentification to a proxy.
 
+[IMPORTANT]
+This function is blocking on call to connect(), so it must be called in a forked
+process only, to not block WeeChat.
+
 Prototype:
 
 [source,C]
@@ -11579,6 +11804,10 @@ weechat_network_connect_to
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Establish a connection to a remote host.
+
+[IMPORTANT]
+This function is blocking on call to connect(), so it must be called in a forked
+process only, to not block WeeChat.
 
 Prototype:
 
@@ -12106,7 +12335,7 @@ Script (Python):
 infolist = weechat.infolist_get(infolist_name, pointer, arguments)
 
 # example
-infolist = weechat.infolist_get("irc_server, "", "")
+infolist = weechat.infolist_get("irc_server", "", "")
 ----------------------------------------
 
 weechat_infolist_next
@@ -12587,7 +12816,7 @@ Prototype:
 [source,C]
 ----------------------------------------
 void weechat_hdata_new_var (struct t_hdata *hdata, const char *name, int offset, int type,
-                            const char *hdata_name);
+                            const char *array_size, const char *hdata_name);
 ----------------------------------------
 
 Arguments:
@@ -12602,7 +12831,15 @@ Arguments:
 ** WEECHAT_HDATA_STRING
 ** WEECHAT_HDATA_POINTER
 ** WEECHAT_HDATA_TIME
+** WEECHAT_HDATA_HASHTABLE
 ** WEECHAT_HDATA_OTHER
+* 'array_size': not NULL only if a variable is an array, and it can be:
+  (_new in version 0.3.9_)
+** name of variable in hdata: this variable will be used as size of array
+   (dynamic size for array)
+** integer (as string): fixed size for array
+** '*': automatic size: the size of array is computed by looking at values, when
+   the first NULL is found (only for type string, pointer or hashtable)
 * 'hdata_name': name of a hdata (if it's a pointer to a structure with hdata)
 
 C example:
@@ -12613,7 +12850,9 @@ struct t_myplugin_list
 {
     char *name;
     struct t_gui_buffer *buffer;
-    int count;
+    int tags_count;
+    char **tags_array;
+    char **string_split;
     struct t_myplugin_list *prev;
     struct t_myplugin_list *next;
 };
@@ -12621,22 +12860,26 @@ struct t_myplugin_list
 /* ... */
 
 struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next");
-weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL);
-weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL);
-weechat_hdata_new_var (hdata, "count", offsetof (struct t_myplugin_list, count), WEECHAT_HDATA_INTEGER, NULL);
-weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, "myplugin_list");
-weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, "myplugin_list");
+weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL, NULL);
+weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_count", offsetof (struct t_myplugin_list, tags_count), WEECHAT_HDATA_INTEGER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_array", offsetof (struct t_myplugin_list, tags_array), WEECHAT_HDATA_STRING, "tags_count", NULL);
+weechat_hdata_new_var (hdata, "string_split", offsetof (struct t_myplugin_list, string_split), WEECHAT_HDATA_STRING, "*", NULL);
+weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
 ----------------------------------------
 
 The macro "WEECHAT_HDATA_VAR" can be used to shorten code:
 
 [source,C]
 ----------------------------------------
-WEECHAT_HDATA_VAR(struct t_myplugin_list, name, STRING, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, buffer, POINTER, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, count, INTEGER, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, prev, POINTER, "myplugin_list");
-WEECHAT_HDATA_VAR(struct t_myplugin_list, next, POINTER, "myplugin_list");
+WEECHAT_HDATA_VAR(struct t_myplugin_list, name, STRING, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, buffer, POINTER, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_count, INTEGER, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_array, STRING, "tags_count", NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, string_split, STRING, "*", NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, prev, POINTER, NULL, "myplugin_list");
+WEECHAT_HDATA_VAR(struct t_myplugin_list, next, POINTER, NULL, "myplugin_list");
 ----------------------------------------
 
 [NOTE]
@@ -12670,22 +12913,24 @@ struct t_myplugin_list
 {
     char *name;
     struct t_gui_buffer *buffer;
-    int count;
+    int tags_count;
+    char **tags_array;
+    char **string_split;
     struct t_myplugin_list *prev;
     struct t_myplugin_list *next;
 };
 
-struct t_myplugin_list *buffers = NULL;
-struct t_myplugin_list *last_buffer = NULL;
-
 /* ... */
 
 struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next");
-weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL);
-weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL);
-weechat_hdata_new_var (hdata, "count", offsetof (struct t_myplugin_list, count), WEECHAT_HDATA_INTEGER, NULL);
-weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, "myplugin_list");
-weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, "myplugin_list");
+weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL, NULL);
+weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_count", offsetof (struct t_myplugin_list, tags_count), WEECHAT_HDATA_INTEGER, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_array", offsetof (struct t_myplugin_list, tags_array), WEECHAT_HDATA_STRING, "tags_count", NULL);
+weechat_hdata_new_var (hdata, "string_split", offsetof (struct t_myplugin_list, string_split), WEECHAT_HDATA_STRING, "*", NULL);
+weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+
 weechat_hdata_new_list (hdata, "buffers", &buffers);
 weechat_hdata_new_list (hdata, "last_buffer", &last_buffer);
 ----------------------------------------
@@ -12785,7 +13030,7 @@ Script (Python):
 offset = weechat.hdata_get_var_offset(hdata, name)
 
 # example
-offset = weechat.hdata_get(hdata, "name")
+offset = weechat.hdata_get_var_offset(hdata, "name")
 ----------------------------------------
 
 weechat_hdata_get_var_type
@@ -12834,6 +13079,9 @@ switch (type)
         /* ... */
         break;
     case WEECHAT_HDATA_TIME:
+        /* ... */
+        break;
+    case WEECHAT_HDATA_HASHTABLE:
         /* ... */
         break;
     case WEECHAT_HDATA_OTHER:
@@ -12887,6 +13135,92 @@ type = weechat.hdata_get_var_type_string(hdata, name)
 
 # example
 weechat.prnt("", "type = %s" % weechat.hdata_get_var_type_string("name"))
+----------------------------------------
+
+weechat_hdata_get_var_array_size
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.9._
+
+Return array size for variable in hdata.
+
+Prototype:
+
+[source,C]
+----------------------------------------
+int weechat_hdata_get_var_array_size (struct t_hdata *hdata, void *pointer, const char *name);
+----------------------------------------
+
+Arguments:
+
+* 'hdata': hdata pointer
+* 'pointer': pointer to WeeChat/plugin object
+* 'name': variable name
+
+Return value:
+
+* array size for variable, -1 if variable is not an array or if an error occurred
+
+C example:
+
+[source,C]
+----------------------------------------
+int array_size = weechat_hdata_get_var_array_size (hdata, pointer, "name");
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototype
+array_size = weechat.hdata_get_var_array_size(hdata, pointer, name)
+
+# example
+array_size = weechat.hdata_get_var_array_size(hdata, pointer, "name")
+----------------------------------------
+
+weechat_hdata_get_var_array_size_string
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.3.9._
+
+Return array size for variable in hdata (as string).
+
+Prototype:
+
+[source,C]
+----------------------------------------
+const char *weechat_hdata_get_var_array_size_string (struct t_hdata *hdata, void *pointer,
+                                                     const char *name);
+----------------------------------------
+
+Arguments:
+
+* 'hdata': hdata pointer
+* 'pointer': pointer to WeeChat/plugin object
+* 'name': variable name
+
+Return value:
+
+* array size for variable as string, NULL if variable is not an array or if an
+  error occurred
+
+C example:
+
+[source,C]
+----------------------------------------
+const char *array_size = weechat_hdata_get_var_array_size_string (hdata, pointer, "name");
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototype
+array_size = weechat.hdata_get_var_array_size_string(hdata, pointer, name)
+
+# example
+array_size = weechat.hdata_get_var_array_size_string(hdata, pointer, "name")
 ----------------------------------------
 
 weechat_hdata_get_var_hdata
@@ -13182,7 +13516,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "char")
+* 'name': variable name (must be type "char"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 
@@ -13224,7 +13559,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "integer")
+* 'name': variable name (must be type "integer"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 
@@ -13270,7 +13606,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "long")
+* 'name': variable name (must be type "long"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 
@@ -13312,7 +13649,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "string")
+* 'name': variable name (must be type "string"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 
@@ -13358,7 +13696,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "pointer")
+* 'name': variable name (must be type "pointer"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 
@@ -13404,7 +13743,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "time")
+* 'name': variable name (must be type "time"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 
@@ -13475,7 +13815,8 @@ Arguments:
 
 * 'hdata': hdata pointer
 * 'pointer': pointer to WeeChat/plugin object
-* 'name': variable name (must be type "hashtable")
+* 'name': variable name (must be type "hashtable"); for arrays, the name can be
+  "N|name" where N is the index in array (starting at 0), for example: "2|name"
 
 Return value:
 

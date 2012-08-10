@@ -37,7 +37,7 @@
 
 
 WEECHAT_PLUGIN_NAME(RMODIFIER_PLUGIN_NAME);
-WEECHAT_PLUGIN_DESCRIPTION("Regex modifier plugin for WeeChat");
+WEECHAT_PLUGIN_DESCRIPTION(N_("String modifier with regular expressions"));
 WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
@@ -265,7 +265,9 @@ rmodifier_new (const char *name, const char *modifiers, const char *str_regex,
 
     if (!name || !name[0] || !modifiers || !modifiers[0]
         || !str_regex || !str_regex[0])
+    {
         return NULL;
+    }
 
     regex = malloc (sizeof (*regex));
     if (!regex)

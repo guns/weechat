@@ -103,8 +103,13 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
+* [[option_irc.look.ctcp_time_format]] *irc.look.ctcp_time_format*
+** description: `format de date/heure utilisé pour la réponse au message CTCP TIME (voir man strftime pour le format de date/heure)`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"%a, %d %b %Y %T %z"`)
+
 * [[option_irc.look.display_away]] *irc.look.display_away*
-** description: `affiche un message pour l'absence/le retour`
+** description: `afficher un message pour l'absence/retour (off: ne rien afficher/envoyer, local: afficher en local, channel: envoyer l'action aux canaux)`
 ** type: entier
 ** valeurs: off, local, channel (valeur par défaut: `local`)
 
@@ -183,13 +188,8 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
-* [[option_irc.look.item_channel_modes]] *irc.look.item_channel_modes*
-** description: `affiche les modes du canal dans l'objet de barre "buffer_name"`
-** type: booléen
-** valeurs: on, off (valeur par défaut: `on`)
-
 * [[option_irc.look.item_channel_modes_hide_key]] *irc.look.item_channel_modes_hide_key*
-** description: `cacher la clé du canal si les modes sont affichés dans l'objet de barre "buffer_name" (cela cachera tous les paramètres des modes du canal si le mode +k est défini sur le canal)`
+** description: `cacher la clé du canal (cela cachera tous les paramètres des modes du canal si le mode +k est défini sur le canal)`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
@@ -234,7 +234,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `"_|["`)
 
 * [[option_irc.look.nick_completion_smart]] *irc.look.nick_completion_smart*
-** description: `complétion intelligente pour les pseudos (complète d'abord avec les personnes qui ont parlé récemment)`
+** description: `complétion intelligente pour les pseudos (complète d'abord avec les personnes qui ont parlé récemment): speakers = tous ceux qui ont parlé (incluant les highlights), speakers_highlights = seulement ceux qui ont parlé avec un highlight`
 ** type: entier
 ** valeurs: off, speakers, speakers_highlights (valeur par défaut: `speakers`)
 
@@ -509,7 +509,7 @@
 ** valeurs: on, off (valeur par défaut: `off`)
 
 * [[option_irc.server_default.ssl_cert]] *irc.server_default.ssl_cert*
-** description: `fichier de certificat ssl utilisé pour identifier automatiquement votre pseudo ("%h" sera remplacé par le répertoire de base WeeChat, par défaut: "~/.weechat")`
+** description: `fichier de certificat SSL utilisé pour identifier automatiquement votre pseudo ("%h" sera remplacé par le répertoire de base WeeChat, par défaut: "~/.weechat")`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -524,7 +524,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `"NORMAL"`)
 
 * [[option_irc.server_default.ssl_verify]] *irc.server_default.ssl_verify*
-** description: `vérifier que la connexion ssl est entièrement de confiance`
+** description: `vérifier que la connexion SSL est entièrement de confiance`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 

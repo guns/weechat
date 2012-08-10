@@ -114,6 +114,11 @@ struct t_gui_buffer
     int nicklist_max_length;           /* max length for a nick             */
     int nicklist_display_groups;       /* display groups ?                  */
     int nicklist_visible_count;        /* number of nicks/groups to display */
+    int (*nickcmp_callback)(void *data, /* called to compare nicks (search  */
+                            struct t_gui_buffer *buffer,  /* in nicklist)   */
+                            const char *nick1,
+                            const char *nick2);
+    void *nickcmp_callback_data;       /* data for callback                 */
 
     /* inupt */
     int input;                         /* = 1 if input is enabled           */
@@ -274,6 +279,8 @@ extern void gui_buffer_set_active_buffer (struct t_gui_buffer *buffer);
 extern struct t_gui_buffer *gui_buffer_get_next_active_buffer (struct t_gui_buffer *buffer);
 extern struct t_gui_buffer *gui_buffer_get_previous_active_buffer (struct t_gui_buffer *buffer);
 extern void gui_buffer_move_to_number (struct t_gui_buffer *buffer, int number);
+extern void gui_buffer_swap (struct t_gui_buffer *buffer1,
+                             struct t_gui_buffer *buffer2);
 extern void gui_buffer_merge (struct t_gui_buffer *buffer,
                               struct t_gui_buffer *target_buffer);
 extern void gui_buffer_unmerge (struct t_gui_buffer *buffer, int number);

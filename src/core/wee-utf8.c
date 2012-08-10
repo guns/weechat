@@ -390,27 +390,39 @@ int
 utf8_strlen_screen (const char *string)
 {
     int length, num_char;
-    wchar_t *wstring;
+    wchar_t *alloc_wstring, *ptr_wstring, wstring[4+2];
 
-    if (!string)
+    if (!string || !string[0])
         return 0;
 
     if (!local_utf8)
         return utf8_strlen (string);
 
-    num_char = mbstowcs (NULL, string, 0) + 1;
-    wstring = malloc ((num_char + 1) * sizeof (wstring[0]));
-    if (!wstring)
-        return utf8_strlen (string);
+    alloc_wstring = NULL;
 
-    if (mbstowcs (wstring, string, num_char) == (size_t)(-1))
+    if (!string[1] || !string[2] || !string[3] || !string[4])
     {
-        free (wstring);
-        return utf8_strlen (string);
+        /* optimization for max 4 chars: no malloc */
+        num_char = 4 + 1;
+        ptr_wstring = wstring;
+    }
+    else
+    {
+        num_char = mbstowcs (NULL, string, 0) + 1;
+        alloc_wstring = malloc ((num_char + 1) * sizeof (alloc_wstring[0]));
+        if (!alloc_wstring)
+            return utf8_strlen (string);
+        ptr_wstring = alloc_wstring;
     }
 
-    length = wcswidth (wstring, num_char);
-    free (wstring);
+    if (mbstowcs (ptr_wstring, string, num_char) != (size_t)(-1))
+        length = wcswidth (ptr_wstring, num_char);
+    else
+        length = utf8_strlen (string);
+
+    if (alloc_wstring)
+        free (alloc_wstring);
+
     return length;
 }
 
@@ -489,11 +501,11 @@ utf8_charcasecmp_range (const char *string1, const char *string2, int range)
         return (string1) ? 1 : ((string2) ? -1 : 0);
 
     wchar1 = utf8_wide_char (string1);
-    if ((wchar1 >= 'A') && (wchar1 < 'A' + (unsigned int)range))
+    if ((wchar1 >= (wint_t)'A') && (wchar1 < (wint_t)('A' + range)))
         wchar1 += ('a' - 'A');
 
     wchar2 = utf8_wide_char (string2);
-    if ((wchar2 >= 'A') && (wchar2 < 'A' + (unsigned int)range))
+    if ((wchar2 >= (wint_t)'A') && (wchar2 < (wint_t)('A' + range)))
         wchar2 += ('a' - 'A');
 
     return (wchar1 < wchar2) ? -1 : ((wchar1 == wchar2) ? 0 : 1);

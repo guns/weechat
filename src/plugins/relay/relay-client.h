@@ -20,6 +20,10 @@
 #ifndef __WEECHAT_RELAY_CLIENT_H
 #define __WEECHAT_RELAY_CLIENT_H 1
 
+#ifdef HAVE_GNUTLS
+#include <gnutls/gnutls.h>
+#endif
+
 struct t_relay_server;
 
 /* relay status */
@@ -41,12 +45,28 @@ enum t_relay_status
     ((client->status == RELAY_STATUS_AUTH_FAILED) ||                    \
      (client->status == RELAY_STATUS_DISCONNECTED))
 
+/* output queue of messages to client */
+
+struct t_relay_client_outqueue
+{
+    char *data;                         /* data to send                     */
+    int data_size;                      /* number of bytes                  */
+    struct t_relay_client_outqueue *next_outqueue; /* next msg in queue     */
+    struct t_relay_client_outqueue *prev_outqueue; /* prev msg in queue     */
+};
+
 /* relay client */
 
 struct t_relay_client
 {
     int id;                            /* unique id (diff. for each client) */
+    char *desc;                        /* description, used for display     */
     int sock;                          /* socket for connection             */
+    int ssl;                           /* 1 if SSL is enabled               */
+#ifdef HAVE_GNUTLS
+    gnutls_session_t gnutls_sess;      /* gnutls session (only if SSL used) */
+    struct t_hook *hook_timer_handshake; /* timer for doing gnutls handshake*/
+#endif
     char *address;                     /* string with IP address            */
     enum t_relay_status status;        /* status (connecting, active,..)    */
     enum t_relay_protocol protocol;    /* protocol (irc,..)                 */
@@ -60,6 +80,8 @@ struct t_relay_client
     unsigned long bytes_recv;          /* bytes received from client        */
     unsigned long bytes_sent;          /* bytes sent to client              */
     void *protocol_data;               /* data depending on protocol used   */
+    struct t_relay_client_outqueue *outqueue; /* queue for outgoing msgs    */
+    struct t_relay_client_outqueue *last_outqueue; /* last outgoing msg     */
     struct t_relay_client *prev_client;/* link to previous client           */
     struct t_relay_client *next_client;/* link to next client               */
 };
@@ -73,8 +95,12 @@ extern int relay_client_valid (struct t_relay_client *client);
 extern struct t_relay_client *relay_client_search_by_number (int number);
 extern struct t_relay_client *relay_client_search_by_id (int id);
 extern int relay_client_recv_cb (void *arg_client, int fd);
+extern int relay_client_send (struct t_relay_client *client, const char *data,
+                              int data_size);
+extern int relay_client_timer_cb (void *data, int remaining_calls);
 extern struct t_relay_client *relay_client_new (int sock, const char *address,
                                                 struct t_relay_server *server);
+extern struct t_relay_client *relay_client_new_with_infolist (struct t_infolist *infolist);
 extern void relay_client_set_status (struct t_relay_client *client,
                                      enum t_relay_status status);
 extern void relay_client_free (struct t_relay_client *client);

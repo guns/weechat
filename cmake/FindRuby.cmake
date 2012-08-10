@@ -32,42 +32,35 @@ IF(RUBY_FOUND)
 ENDIF(RUBY_FOUND)
 
 FIND_PROGRAM(RUBY_EXECUTABLE
-  NAMES ruby1.9.2 ruby192 ruby1.9.1 ruby191 ruby1.9 ruby19 ruby1.8 ruby18 ruby1.6 ruby16 ruby
+  NAMES ruby1.9.3 ruby193 ruby1.9.2 ruby192 ruby1.9.1 ruby191 ruby1.9 ruby19 ruby1.8 ruby18 ruby1.6 ruby16 ruby
   PATHS /usr/bin /usr/local/bin /usr/pkg/bin
   )
 
 IF(RUBY_EXECUTABLE)
   EXECUTE_PROCESS(
-    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['rubyhdrdir'] || RbConfig::CONFIG['archdir']"
+    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "print RbConfig::CONFIG['rubyhdrdir'] || RbConfig::CONFIG['archdir']"
     OUTPUT_VARIABLE RUBY_ARCH_DIR
     )
 
   EXECUTE_PROCESS(
-    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['arch']"
+    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "print RbConfig::CONFIG['arch']"
     OUTPUT_VARIABLE RUBY_ARCH
     )
 
   EXECUTE_PROCESS(
-    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['libdir']"
+    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "print RbConfig::CONFIG['libdir']"
     OUTPUT_VARIABLE RUBY_POSSIBLE_LIB_PATH
     )
 
   EXECUTE_PROCESS(
-    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['rubylibdir']"
+    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "print RbConfig::CONFIG['rubylibdir']"
     OUTPUT_VARIABLE RUBY_RUBY_LIB_PATH
     )
 
   EXECUTE_PROCESS(
-    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['ruby_version']"
+    COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "print RbConfig::CONFIG['ruby_version']"
     OUTPUT_VARIABLE RUBY_VERSION
     )
-
-  # remove the new lines from the output by replacing them with empty strings
-  STRING(REPLACE "\n" "" RUBY_ARCH_DIR "${RUBY_ARCH_DIR}")
-  STRING(REPLACE "\n" "" RUBY_POSSIBLE_LIB_PATH "${RUBY_POSSIBLE_LIB_PATH}")
-  STRING(REPLACE "\n" "" RUBY_RUBY_LIB_PATH "${RUBY_RUBY_LIB_PATH}")
-  STRING(REPLACE "\n" "" RUBY_ARCH "${RUBY_ARCH}")
-  STRING(REPLACE "\n" "" RUBY_VERSION "${RUBY_VERSION}")
 
   FIND_PATH(RUBY_INCLUDE_PATH
     NAMES ruby.h
@@ -78,7 +71,7 @@ IF(RUBY_EXECUTABLE)
     "${RUBY_INCLUDE_PATH}/${RUBY_ARCH}")
 
   FIND_LIBRARY(RUBY_LIBRARY
-    NAMES ruby-1.9.2 ruby1.9.2 ruby192 ruby-1.9.1 ruby1.9.1 ruby191 ruby1.9 ruby19 ruby1.8 ruby18 ruby1.6 ruby16 ruby
+    NAMES ruby-1.9.3 ruby1.9.3 ruby193 ruby-1.9.2 ruby1.9.2 ruby192 ruby-1.9.1 ruby1.9.1 ruby191 ruby1.9 ruby19 ruby1.8 ruby18 ruby1.6 ruby16 ruby
     PATHS ${RUBY_POSSIBLE_LIB_PATH} ${RUBY_RUBY_LIB_PATH}
     )
 

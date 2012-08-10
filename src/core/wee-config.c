@@ -76,6 +76,7 @@ struct t_config_option *config_startup_command_after_plugins;
 struct t_config_option *config_startup_command_before_plugins;
 struct t_config_option *config_startup_display_logo;
 struct t_config_option *config_startup_display_version;
+struct t_config_option *config_startup_sys_rlimit;
 
 /* config, look & feel section */
 
@@ -93,6 +94,7 @@ struct t_config_option *config_look_color_inactive_time;
 struct t_config_option *config_look_color_inactive_prefix_buffer;
 struct t_config_option *config_look_color_inactive_prefix;
 struct t_config_option *config_look_color_inactive_message;
+struct t_config_option *config_look_color_nick_offline;
 struct t_config_option *config_look_color_pairs_auto_reset;
 struct t_config_option *config_look_color_real_white;
 struct t_config_option *config_look_command_chars;
@@ -122,6 +124,7 @@ struct t_config_option *config_look_item_time_format;
 struct t_config_option *config_look_item_buffer_filter;
 struct t_config_option *config_look_jump_current_to_previous_buffer;
 struct t_config_option *config_look_jump_previous_buffer_when_closing;
+struct t_config_option *config_look_jump_smart_back_to_buffer;
 struct t_config_option *config_look_mouse;
 struct t_config_option *config_look_mouse_timer_delay;
 struct t_config_option *config_look_nickmode;
@@ -152,6 +155,8 @@ struct t_config_option *config_look_separator_horizontal;
 struct t_config_option *config_look_separator_vertical;
 struct t_config_option *config_look_set_title;
 struct t_config_option *config_look_time_format;
+struct t_config_option *config_look_window_separator_horizontal;
+struct t_config_option *config_look_window_separator_vertical;
 
 /* config, colors section */
 
@@ -174,6 +179,9 @@ struct t_config_option *config_color_chat_channel;
 struct t_config_option *config_color_chat_nick;
 struct t_config_option *config_color_chat_nick_colors;
 struct t_config_option *config_color_chat_nick_self;
+struct t_config_option *config_color_chat_nick_offline;
+struct t_config_option *config_color_chat_nick_offline_highlight;
+struct t_config_option *config_color_chat_nick_offline_highlight_bg;
 struct t_config_option *config_color_chat_nick_other;
 struct t_config_option *config_color_chat_host;
 struct t_config_option *config_color_chat_delimiters;
@@ -254,6 +262,21 @@ int config_num_plugin_extensions = 0;
 
 
 /*
+ * config_change_sys_rlimit: called when the system resource limits is changed
+ */
+
+void
+config_change_sys_rlimit (void *data, struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (gui_init_ok)
+        util_setrlimit ();
+}
+
+/*
  * config_change_save_config_on_exit: called when "save_config_on_exit" flag is changed
  */
 
@@ -264,7 +287,7 @@ config_change_save_config_on_exit (void *data, struct t_config_option *option)
     (void) data;
     (void) option;
 
-    if (gui_ok && !CONFIG_BOOLEAN(config_look_save_config_on_exit))
+    if (gui_init_ok && !CONFIG_BOOLEAN(config_look_save_config_on_exit))
     {
         gui_chat_printf (NULL,
                          _("Warning: you should now issue /save to write "
@@ -313,7 +336,7 @@ config_change_buffer_content (void *data, struct t_config_option *option)
     (void) data;
     (void) option;
 
-    if (gui_ok)
+    if (gui_init_ok)
         gui_current_window->refresh_needed = 1;
 }
 
@@ -328,7 +351,7 @@ config_change_mouse (void *data, struct t_config_option *option)
     (void) data;
     (void) option;
 
-    if (gui_ok)
+    if (gui_init_ok)
     {
         if (CONFIG_BOOLEAN(config_look_mouse))
             gui_mouse_enable ();
@@ -364,7 +387,7 @@ config_change_buffer_time_format (void *data, struct t_config_option *option)
 
     gui_chat_time_length = gui_chat_get_time_length ();
     gui_chat_change_time_format ();
-    if (gui_ok)
+    if (gui_init_ok)
         gui_window_ask_refresh (1);
 }
 
@@ -417,7 +440,7 @@ config_change_eat_newline_glitch (void *data, struct t_config_option *option)
     (void) data;
     (void) option;
 
-    if (gui_ok)
+    if (gui_init_ok)
     {
         if (CONFIG_BOOLEAN(config_look_eat_newline_glitch))
         {
@@ -518,7 +541,7 @@ config_change_paste_bracketed (void *data, struct t_config_option *option)
     (void) data;
     (void) option;
 
-    if (gui_ok)
+    if (gui_init_ok)
         gui_window_set_bracketed_paste_mode (CONFIG_BOOLEAN(config_look_paste_bracketed));
 }
 
@@ -609,7 +632,7 @@ config_change_color (void *data, struct t_config_option *option)
     (void) data;
     (void) option;
 
-    if (gui_ok)
+    if (gui_init_ok)
     {
         gui_color_init_weechat ();
         gui_window_ask_refresh (1);
@@ -739,6 +762,8 @@ void
 config_weechat_init_after_read ()
 {
     int i;
+
+    util_setrlimit ();
 
     gui_buffer_notify_set_all ();
 
@@ -1722,6 +1747,16 @@ config_weechat_init_options ()
         "display_version", "boolean",
         N_("display WeeChat version at startup"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    config_startup_sys_rlimit = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "sys_rlimit", "string",
+        N_("set resource limits for WeeChat process, format is: "
+           "\"res1:limit1,res2:limit2\"; resource name is the end of constant "
+           "(RLIMIT_XXX) in lower case (see man setrlimit for values); limit "
+           "-1 means \"unlimited\"; example: set unlimited size for core file "
+           "and max 1GB of virtual memory: \"core:-1,as:1000000000\""),
+        NULL, 0, 0, "", NULL, 0, NULL, NULL,
+        &config_change_sys_rlimit, NULL, NULL, NULL);
 
     /* look */
     ptr_section = config_file_new_section (weechat_config_file, "look",
@@ -1827,6 +1862,11 @@ config_weechat_init_options ()
         N_("use a different color for inactive message (when window is not "
            "current window, or if line is from a merged buffer not selected)"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
+    config_look_color_nick_offline = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "color_nick_offline", "boolean",
+        N_("use a different color for offline nicks (not in nicklist any more)"),
+        NULL, 0, 0, "off", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
     config_look_color_pairs_auto_reset = config_file_new_option (
         weechat_config_file, ptr_section,
         "color_pairs_auto_reset", "integer",
@@ -2018,6 +2058,11 @@ config_weechat_init_options ()
         N_("jump to previously visited buffer when closing a buffer (if "
            "disabled, then jump to buffer number - 1)"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    config_look_jump_smart_back_to_buffer = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "jump_smart_back_to_buffer", "boolean",
+        N_("jump back to initial buffer after reaching end of hotlist"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_mouse = config_file_new_option (
         weechat_config_file, ptr_section,
         "mouse", "boolean",
@@ -2194,16 +2239,17 @@ config_weechat_init_options ()
     config_look_separator_horizontal = config_file_new_option (
         weechat_config_file, ptr_section,
         "separator_horizontal", "string",
-        N_("char used to draw horizontal separators around bars (empty value "
-           "will draw a real line with ncurses, but may cause bugs with URL "
-           "selection under some terminals), wide chars are NOT allowed here"),
+        N_("char used to draw horizontal separators around bars and windows "
+           "(empty value will draw a real line with ncurses, but may cause bugs "
+           "with URL selection under some terminals), wide chars are NOT "
+           "allowed here"),
         NULL, 0, 0, "-", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
     config_look_separator_vertical = config_file_new_option (
         weechat_config_file, ptr_section,
         "separator_vertical", "string",
-        N_("char used to draw vertical separators around bars (empty value "
-           "will draw a real line with ncurses), wide chars are NOT allowed "
-           "here"),
+        N_("char used to draw vertical separators around bars and windows "
+           "(empty value will draw a real line with ncurses), wide chars are "
+           "NOT allowed here"),
         NULL, 0, 0, "", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
     config_look_set_title = config_file_new_option (
         weechat_config_file, ptr_section,
@@ -2217,6 +2263,16 @@ config_weechat_init_options ()
         N_("time format for dates converted to strings and displayed in "
            "messages"),
         NULL, 0, 0, "%a, %d %b %Y %T", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    config_look_window_separator_horizontal = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "window_separator_horizontal", "boolean",
+        N_("display an horizontal separator between windows"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
+    config_look_window_separator_vertical = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "window_separator_vertical", "boolean",
+        N_("display a vertical separator between windows"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
 
     /* palette */
     ptr_section = config_file_new_section (weechat_config_file, "palette",
@@ -2393,6 +2449,24 @@ config_weechat_init_options ()
         "chat_nick_self", "color",
         N_("text color for local nick in chat window"),
         NULL, GUI_COLOR_CHAT_NICK_SELF, 0, "white", NULL, 0,
+        NULL, NULL, &config_change_color, NULL, NULL, NULL);
+    config_color_chat_nick_offline = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "chat_nick_offline", "color",
+        N_("text color for offline nick (not in nicklist any more)"),
+        NULL, GUI_COLOR_CHAT_NICK_OFFLINE, 0, "darkgray", NULL, 0,
+        NULL, NULL, &config_change_color, NULL, NULL, NULL);
+    config_color_chat_nick_offline_highlight = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "chat_nick_offline_highlight", "color",
+        N_("text color for offline nick with highlight"),
+        NULL, -1, 0, "default", NULL, 0,
+        NULL, NULL, &config_change_color, NULL, NULL, NULL);
+    config_color_chat_nick_offline_highlight_bg = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "chat_nick_offline_highlight_bg", "color",
+        N_("background color for offline nick with highlight"),
+        NULL, -1, 0, "darkgray", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
     config_color_chat_nick_other = config_file_new_option (
         weechat_config_file, ptr_section,
@@ -2614,7 +2688,8 @@ config_weechat_init_options ()
     config_completion_nick_completer = config_file_new_option (
         weechat_config_file, ptr_section,
         "nick_completer", "string",
-        N_("string inserted after nick completion"),
+        N_("string inserted after nick completion (when nick is first word on "
+           "command line)"),
         NULL, 0, 0, ":", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_completion_nick_first_only = config_file_new_option (
         weechat_config_file, ptr_section,

@@ -61,8 +61,8 @@ struct t_gui_bar_item *last_gui_bar_item = NULL; /* last bar item           */
 char *gui_bar_item_names[GUI_BAR_NUM_ITEMS] =
 { "input_paste", "input_prompt", "input_search", "input_text", "time",
   "buffer_count", "buffer_plugin", "buffer_number", "buffer_name",
-  "buffer_filter", "buffer_nicklist_count", "scroll", "hotlist", "completion",
-  "buffer_title", "buffer_nicklist", "window_number"
+  "buffer_modes", "buffer_filter", "buffer_nicklist_count", "scroll",
+  "hotlist", "completion", "buffer_title", "buffer_nicklist", "window_number"
 };
 char *gui_bar_items_default_for_bars[][2] =
 { { GUI_BAR_DEFAULT_NAME_INPUT,
@@ -71,8 +71,8 @@ char *gui_bar_items_default_for_bars[][2] =
     "buffer_title" },
   { GUI_BAR_DEFAULT_NAME_STATUS,
     "[time],[buffer_count],[buffer_plugin],buffer_number+:+"
-    "buffer_name+{buffer_nicklist_count}+buffer_filter,[lag],[hotlist],"
-    "completion,scroll" },
+    "buffer_name+(buffer_modes)+{buffer_nicklist_count}+buffer_filter,[lag],"
+    "[hotlist],completion,scroll" },
   { GUI_BAR_DEFAULT_NAME_NICKLIST,
     "buffer_nicklist" },
   { NULL,
@@ -920,6 +920,25 @@ gui_bar_item_default_buffer_name (void *data, struct t_gui_bar_item *item,
 }
 
 /*
+ * gui_bar_item_default_buffer_modes: default item for modes of buffer
+ *                                    Note: this bar item is empty for WeeChat
+ *                                    cote, this is used only by plugins like
+ *                                    irc to display channel modes
+ */
+
+char *
+gui_bar_item_default_buffer_modes (void *data, struct t_gui_bar_item *item,
+                                   struct t_gui_window *window)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+
+    return NULL;
+}
+
+/*
  * gui_bar_item_default_buffer_filter: default item for buffer filter
  */
 
@@ -1509,7 +1528,7 @@ gui_bar_item_focus_buffer_nicklist (void *data,
         hashtable_set (info, "nick", ptr_nick->name);
         hashtable_set (info, "prefix", ptr_nick->prefix);
     }
-    else
+    else if (ptr_group)
     {
         hashtable_set (info,
                        "group",
@@ -1614,15 +1633,19 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_INPUT_PROMPT],
                       &gui_bar_item_default_input_prompt, NULL);
-    gui_bar_item_hook_signal ("buffer_localvar_*",
+    gui_bar_item_hook_signal ("window_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_INPUT_PROMPT]);
     gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_INPUT_PROMPT]);
+    gui_bar_item_hook_signal ("buffer_localvar_*",
                               gui_bar_item_names[GUI_BAR_ITEM_INPUT_PROMPT]);
 
     /* input search */
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_INPUT_SEARCH],
                       &gui_bar_item_default_input_search, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_INPUT_SEARCH]);
     gui_bar_item_hook_signal ("input_search",
                               gui_bar_item_names[GUI_BAR_ITEM_INPUT_SEARCH]);
     gui_bar_item_hook_signal ("input_text_changed",
@@ -1632,9 +1655,11 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT],
                       &gui_bar_item_default_input_text, NULL);
-    gui_bar_item_hook_signal ("input_text_*",
+    gui_bar_item_hook_signal ("window_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT]);
     gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT]);
+    gui_bar_item_hook_signal ("input_text_*",
                               gui_bar_item_names[GUI_BAR_ITEM_INPUT_TEXT]);
 
     /* time */
@@ -1657,6 +1682,8 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_PLUGIN],
                       &gui_bar_item_default_buffer_plugin, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_PLUGIN]);
     gui_bar_item_hook_signal ("buffer_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_PLUGIN]);
     gui_bar_item_hook_signal ("buffer_renamed",
@@ -1666,6 +1693,8 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NUMBER],
                       &gui_bar_item_default_buffer_number, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NUMBER]);
     gui_bar_item_hook_signal ("buffer_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NUMBER]);
     gui_bar_item_hook_signal ("buffer_moved",
@@ -1681,6 +1710,8 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NAME],
                       &gui_bar_item_default_buffer_name, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NAME]);
     gui_bar_item_hook_signal ("buffer_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NAME]);
     gui_bar_item_hook_signal ("buffer_renamed",
@@ -1688,10 +1719,23 @@ gui_bar_item_init ()
     gui_bar_item_hook_signal ("buffer_moved",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NAME]);
 
+    /* buffer modes */
+    gui_bar_item_new (NULL,
+                      gui_bar_item_names[GUI_BAR_ITEM_BUFFER_MODES],
+                      &gui_bar_item_default_buffer_modes, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_MODES]);
+    gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_MODES]);
+
     /* buffer filter */
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_FILTER],
                       &gui_bar_item_default_buffer_filter, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_FILTER]);
+    gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_FILTER]);
     gui_bar_item_hook_signal ("buffer_lines_hidden",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_FILTER]);
     gui_bar_item_hook_signal ("filters_*",
@@ -1701,6 +1745,8 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST_COUNT],
                       &gui_bar_item_default_buffer_nicklist_count, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST_COUNT]);
     gui_bar_item_hook_signal ("buffer_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST_COUNT]);
     gui_bar_item_hook_signal ("nicklist_*",
@@ -1710,6 +1756,10 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_SCROLL],
                       &gui_bar_item_default_scroll, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_SCROLL]);
+    gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_SCROLL]);
     gui_bar_item_hook_signal ("window_scrolled",
                               gui_bar_item_names[GUI_BAR_ITEM_SCROLL]);
 
@@ -1735,9 +1785,11 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_TITLE],
                       &gui_bar_item_default_buffer_title, NULL);
-    gui_bar_item_hook_signal ("buffer_title_changed",
+    gui_bar_item_hook_signal ("window_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_TITLE]);
     gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_TITLE]);
+    gui_bar_item_hook_signal ("buffer_title_changed",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_TITLE]);
 
     /* buffer nicklist */
@@ -1745,6 +1797,8 @@ gui_bar_item_init ()
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST],
                       &gui_bar_item_default_buffer_nicklist, NULL);
     gui_bar_item_hook_signal ("nicklist_*",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST]);
+    gui_bar_item_hook_signal ("window_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST]);
     gui_bar_item_hook_signal ("buffer_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NICKLIST]);
@@ -1756,6 +1810,8 @@ gui_bar_item_init ()
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_WINDOW_NUMBER],
                       &gui_bar_item_default_window_number, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_WINDOW_NUMBER]);
     gui_bar_item_hook_signal ("window_closed",
                               gui_bar_item_names[GUI_BAR_ITEM_WINDOW_NUMBER]);
 }
@@ -1799,12 +1855,12 @@ gui_bar_item_hdata_bar_item_cb (void *data, const char *hdata_name)
     hdata = hdata_new (NULL, hdata_name, "prev_item", "next_item");
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_bar_item, plugin, POINTER, "plugin");
-        HDATA_VAR(struct t_gui_bar_item, name, STRING, NULL);
-        HDATA_VAR(struct t_gui_bar_item, build_callback, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_item, build_callback_data, POINTER, NULL);
-        HDATA_VAR(struct t_gui_bar_item, prev_item, POINTER, hdata_name);
-        HDATA_VAR(struct t_gui_bar_item, next_item, POINTER, hdata_name);
+        HDATA_VAR(struct t_gui_bar_item, plugin, POINTER, NULL, "plugin");
+        HDATA_VAR(struct t_gui_bar_item, name, STRING, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_item, build_callback, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_item, build_callback_data, POINTER, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_item, prev_item, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_bar_item, next_item, POINTER, NULL, hdata_name);
         HDATA_LIST(gui_bar_items);
         HDATA_LIST(last_gui_bar_item);
     }

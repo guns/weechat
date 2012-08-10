@@ -63,6 +63,21 @@
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"cyan,magenta,green,brown,lightblue,default,lightcyan,lightmagenta,lightgreen,blue"`)
 
+* [[option_weechat.color.chat_nick_offline]] *weechat.color.chat_nick_offline*
+** description: `couleur du texte pour un pseudo déconnecté (qui n'est plus dans la liste de pseudos)`
+** type: couleur
+** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `darkgray`)
+
+* [[option_weechat.color.chat_nick_offline_highlight]] *weechat.color.chat_nick_offline_highlight*
+** description: `couleur du texte pour un pseudo déconnecté avec highlight`
+** type: couleur
+** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `default`)
+
+* [[option_weechat.color.chat_nick_offline_highlight_bg]] *weechat.color.chat_nick_offline_highlight_bg*
+** description: `couleur du fond pour un pseudo déconnecté avec highlight`
+** type: couleur
+** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `darkgray`)
+
 * [[option_weechat.color.chat_nick_other]] *weechat.color.chat_nick_other*
 ** description: `couleur du texte pour l'autre pseudo dans le tampon privée`
 ** type: couleur
@@ -279,7 +294,7 @@
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.completion.nick_completer]] *weechat.completion.nick_completer*
-** description: `chaîne affichée après la complétion des pseudos`
+** description: `chaîne insérée après la complétion du pseudo (quand le pseudo est le premier mot sur la ligne de commande)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `":"`)
 
@@ -410,6 +425,11 @@
 
 * [[option_weechat.look.color_inactive_window]] *weechat.look.color_inactive_window*
 ** description: `utiliser une couleur différente pour les lignes dans une fenêtre inactive (quand la fenêtre n'est pas la fenêtre courante)`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `off`)
+
+* [[option_weechat.look.color_nick_offline]] *weechat.look.color_nick_offline*
+** description: `utiliser une couleur différente pour les pseudos déconnectés (qui ne sont plus dans la liste de pseudos)`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
@@ -555,6 +575,11 @@
 
 * [[option_weechat.look.jump_previous_buffer_when_closing]] *weechat.look.jump_previous_buffer_when_closing*
 ** description: `sauter au tampon précédemment visité lors de la fermeture d'un tampon (si désactivé, alors le saut se fait vers le numéro de tampon - 1)`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
+
+* [[option_weechat.look.jump_smart_back_to_buffer]] *weechat.look.jump_smart_back_to_buffer*
+** description: `retourner au tampon initial après avoir atteint la fin de la hotlist`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
@@ -709,12 +734,12 @@
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.look.separator_horizontal]] *weechat.look.separator_horizontal*
-** description: `caractère utilisé pour tracer les séparateurs horizontaux autour des barres (une valeur vide tracera une vraie ligne avec ncurses, mais peut causer des problèmes d'affichage avec la sélection d'URL sous certains terminaux), les caractères larges ne sont PAS autorisés ici`
+** description: `caractère utilisé pour tracer les séparateurs horizontaux autour des barres et fenêtres (une valeur vide tracera une vraie ligne avec ncurses, mais peut causer des problèmes d'affichage avec la sélection d'URL sous certains terminaux), les caractères larges ne sont PAS autorisés ici`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"-"`)
 
 * [[option_weechat.look.separator_vertical]] *weechat.look.separator_vertical*
-** description: `caractère utilisé pour tracer les séparateurs verticaux autour des barres (une valeur vide tracera une vraie ligne avec ncurses), les caractères larges ne sont PAS autorisés ici`
+** description: `caractère utilisé pour tracer les séparateurs verticaux autour des barres et fenêtres (une valeur vide tracera une vraie ligne avec ncurses), les caractères larges ne sont PAS autorisés ici`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -727,6 +752,16 @@
 ** description: `format de date/heure pour les dates converties en chaînes et affichées dans les messages`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"%a, %d %b %Y %T"`)
+
+* [[option_weechat.look.window_separator_horizontal]] *weechat.look.window_separator_horizontal*
+** description: `afficher un séparateur horizontal entre les fenêtres`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
+
+* [[option_weechat.look.window_separator_vertical]] *weechat.look.window_separator_vertical*
+** description: `afficher un séparateur vertical entre les fenêtres`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.network.connection_timeout]] *weechat.network.connection_timeout*
 ** description: `délai d'attente maximum (en secondes) pour la connexion à une machine distante (effectuée dans un processus fils)`
@@ -787,4 +822,9 @@
 ** description: `afficher la version de WeeChat au démarrage`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
+
+* [[option_weechat.startup.sys_rlimit]] *weechat.startup.sys_rlimit*
+** description: `définir les limites de ressource pour le processus WeeChat, le format est: "res1:limite1,res2:limite2"; le nom de ressource est la fin de la constante (RLIMIT_XXX) en minuscules (voir man setrlimit pour les valeurs); une limite de -1 siginifie "illimitée"; exemple: définir une taille illimitée pour le fichier core et max 1 Go de mémoire virtuelle: "core:-1,as:1000000000"`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
 

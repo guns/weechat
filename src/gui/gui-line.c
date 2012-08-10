@@ -45,6 +45,7 @@
 #include "gui-color.h"
 #include "gui-filter.h"
 #include "gui-hotlist.h"
+#include "gui-nicklist.h"
 #include "gui-window.h"
 
 
@@ -199,7 +200,7 @@ gui_line_get_prefix_for_display (struct t_gui_line *line,
 
 int
 gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
-                    int with_suffix, int first_line)
+                    int with_suffix, int first_line, int force_prefix_for_line)
 {
     int length_time, length_buffer, length_suffix, prefix_length;
 
@@ -251,7 +252,10 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
         return length_time + length_buffer;
     }
 
-    gui_line_get_prefix_for_display (line, NULL, &prefix_length, NULL);
+    if (force_prefix_for_line)
+        prefix_length = line->data->prefix_length;
+    else
+        gui_line_get_prefix_for_display (line, NULL, &prefix_length, NULL);
 
     if (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE)
     {
@@ -630,6 +634,32 @@ gui_line_has_highlight (struct t_gui_line *line)
     free (msg_no_color);
 
     return rc;
+}
+
+/*
+ * gui_line_has_offline_nick: return 1 if nick of line is offline
+ *                            (not in nicklist any more)
+ */
+
+int
+gui_line_has_offline_nick (struct t_gui_line *line)
+{
+    const char *nick;
+
+    if (line && gui_line_search_tag_starting_with (line, "prefix_nick"))
+    {
+        nick = gui_line_get_nick_tag (line);
+        if (nick
+            && (line->data->buffer->nicklist_root
+                && (line->data->buffer->nicklist_root->nicks
+                    || line->data->buffer->nicklist_root->children))
+            && !gui_nicklist_search_nick (line->data->buffer, NULL, nick))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 /*
@@ -1326,14 +1356,14 @@ gui_line_hdata_lines_cb (void *data, const char *hdata_name)
     hdata = hdata_new (NULL, hdata_name, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_lines, first_line, POINTER, "line");
-        HDATA_VAR(struct t_gui_lines, last_line, POINTER, "line");
-        HDATA_VAR(struct t_gui_lines, last_read_line, POINTER, "line");
-        HDATA_VAR(struct t_gui_lines, lines_count, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_lines, first_line_not_read, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_lines, lines_hidden, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_lines, buffer_max_length, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_lines, prefix_max_length, INTEGER, NULL);
+        HDATA_VAR(struct t_gui_lines, first_line, POINTER, NULL, "line");
+        HDATA_VAR(struct t_gui_lines, last_line, POINTER, NULL, "line");
+        HDATA_VAR(struct t_gui_lines, last_read_line, POINTER, NULL, "line");
+        HDATA_VAR(struct t_gui_lines, lines_count, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, first_line_not_read, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, lines_hidden, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, buffer_max_length, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, prefix_max_length, INTEGER, NULL, NULL);
     }
     return hdata;
 }
@@ -1353,9 +1383,9 @@ gui_line_hdata_line_cb (void *data, const char *hdata_name)
     hdata = hdata_new (NULL, hdata_name, "prev_line", "next_line");
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_line, data, POINTER, "line_data");
-        HDATA_VAR(struct t_gui_line, prev_line, POINTER, hdata_name);
-        HDATA_VAR(struct t_gui_line, next_line, POINTER, hdata_name);
+        HDATA_VAR(struct t_gui_line, data, POINTER, NULL, "line_data");
+        HDATA_VAR(struct t_gui_line, prev_line, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_line, next_line, POINTER, NULL, hdata_name);
     }
     return hdata;
 }
@@ -1375,26 +1405,26 @@ gui_line_hdata_line_data_cb (void *data, const char *hdata_name)
     hdata = hdata_new (NULL, hdata_name, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_line_data, buffer, POINTER, "buffer");
-        HDATA_VAR(struct t_gui_line_data, y, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_line_data, date, TIME, NULL);
-        HDATA_VAR(struct t_gui_line_data, date_printed, TIME, NULL);
-        HDATA_VAR(struct t_gui_line_data, str_time, STRING, NULL);
-        HDATA_VAR(struct t_gui_line_data, tags_count, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_line_data, tags_array, POINTER, NULL);
-        HDATA_VAR(struct t_gui_line_data, displayed, CHAR, NULL);
-        HDATA_VAR(struct t_gui_line_data, highlight, CHAR, NULL);
-        HDATA_VAR(struct t_gui_line_data, refresh_needed, CHAR, NULL);
-        HDATA_VAR(struct t_gui_line_data, prefix, STRING, NULL);
-        HDATA_VAR(struct t_gui_line_data, prefix_length, INTEGER, NULL);
-        HDATA_VAR(struct t_gui_line_data, message, STRING, NULL);
+        HDATA_VAR(struct t_gui_line_data, buffer, POINTER, NULL, "buffer");
+        HDATA_VAR(struct t_gui_line_data, y, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, date, TIME, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, date_printed, TIME, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, str_time, STRING, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, tags_count, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, tags_array, STRING, "tags_count", NULL);
+        HDATA_VAR(struct t_gui_line_data, displayed, CHAR, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, highlight, CHAR, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, refresh_needed, CHAR, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, prefix, STRING, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, prefix_length, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, message, STRING, NULL, NULL);
     }
     return hdata;
 }
 
 /*
- * gui_buffer_line_add_to_infolist: add a buffer line in an infolist
- *                                  return 1 if ok, 0 if error
+ * gui_line_add_to_infolist: add a line in an infolist
+ *                           return 1 if ok, 0 if error
  */
 
 int

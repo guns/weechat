@@ -4,7 +4,8 @@ Sébastien Helleu <flashcode@flashtux.org>
 
 
 [NOTE]
-Ce document est écrit pour les versions de WeeChat ≥ 0.3.0.
+Ce document est écrit pour les versions de WeeChat ≥ 0.3.0 mais devrait être
+utilisé de préférence avec la dernière version stable de WeeChat.
 
 
 Général
@@ -497,6 +498,16 @@ Vous devriez utiliser un terminal qui supporte les coordonnées UTF-8 pour la
 souris, comme rxvt-unicode.
 
 
+[[mouse_select_paste]]
+Comment puis-je sélectionner ou coller du texte quand la souris est activée dans WeeChat ?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lorsque la souris est activée dans WeeChat, vous pouvez utiliser la touche
+@k(-S-) pour sélectionner ou cliquer dans le terminal, comme si la souris était
+désactivée (sous certains terminaux comme iTerm, vous devez utiliser @k(-A-) au
+lieu de @k(-S-)).
+
+
 [[irc]]
 IRC
 ---
@@ -601,7 +612,7 @@ commande, mais elle n'est pas parfaite (elle fonctionne seulement si le
 premier mode changé est voice) :
 
 ----------------------------------------
-/filter add hidevoices * irc_mode \(\+\|\-\)v
+/filter add hidevoices * irc_mode (\+|\-)v
 ----------------------------------------
 
 
@@ -760,10 +771,9 @@ Vous pouvez essayer les astuces suivantes pour consommer moins de mémoire :
   aspell, fifo, logger, perl, python, ruby, lua, tcl, xfer (utilisé pour les
   DCC)
 * charger uniquement les scripts dont vous avez vraiment besoin
-* réduire la valeur de l'option 'weechat.history.max_lines' (nombre de lignes
-  sauvées en mémoire pour chaque tampon)
-* réduire la valeur de l'option 'weechat.history.max_commands' (nombre de
-  commandes utilisateur sauvées en mémoire)
+* réduire la valeur de l'option 'weechat.history.max_buffer_lines_number' ou
+  affecter une valeur à l'option 'weechat.history.max_buffer_lines_minutes'
+* réduire la valeur de l'option 'weechat.history.max_commands'
 
 
 [[development]]
