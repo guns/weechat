@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-sasl.c - SASL authentication with IRC server
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,19 +19,11 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * irc-sasl.c: SASL authentication with IRC server,
- *             using mechanisms PLAIN or DH-BLOWFISH
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
-
-#ifdef HAVE_GCRYPT
 #include <gcrypt.h>
-#endif
 
 #include "../weechat-plugin.h"
 #include "irc.h"
@@ -41,9 +35,9 @@ char *irc_sasl_mechanism_string[IRC_NUM_SASL_MECHANISMS] =
 
 
 /*
- * irc_sasl_mechanism_plain: build answer for SASL authentication, using
- *                           mechanism "PLAIN"
- *                           Note: result must be freed after use
+ * Builds answer for SASL authentication, using mechanism "PLAIN".
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -74,16 +68,15 @@ irc_sasl_mechanism_plain (const char *sasl_username, const char *sasl_password)
 }
 
 /*
- * irc_sasl_mechanism_dh_blowfish: build answer for SASL authentication, using
- *                                 mechanism "DH-BLOWFISH"
- *                                 Note: result must be freed after use
+ * Builds answer for SASL authentication, using mechanism "DH-BLOWFISH".
  *
- *                                 data_base64 is a concatenation of 3 strings,
- *                                 each string is composed of 2 bytes (length
- *                                 of string), followed by content of string:
- *                                   1. a prime number
- *                                   2. a generator number
- *                                   3. server-generated public key
+ * Argument data_base64 is a concatenation of 3 strings, each string is composed
+ * of 2 bytes (length of string), followed by content of string:
+ *   1. a prime number
+ *   2. a generator number
+ *   3. server-generated public key
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -91,7 +84,6 @@ irc_sasl_mechanism_dh_blowfish (const char *data_base64,
                                 const char *sasl_username,
                                 const char *sasl_password)
 {
-#ifdef HAVE_GCRYPT
     char *data, *answer, *ptr_answer, *answer_base64;
     unsigned char *ptr_data, *secret_bin, *public_bin;
     unsigned char *password_clear, *password_crypted;
@@ -245,12 +237,4 @@ end:
         gcry_mpi_release (secret_mpi);
 
     return answer_base64;
-#else
-    /* make C compiler happy */
-    (void) data_base64;
-    (void) sasl_username;
-    (void) sasl_password;
-
-    return NULL;
-#endif
 }

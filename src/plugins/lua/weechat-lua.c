@@ -1,6 +1,8 @@
 /*
+ * weechat-lua.c - lua plugin for WeeChat
+ *
  * Copyright (C) 2006-2007 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat-lua.c: lua plugin for WeeChat
  */
 
 #undef _
@@ -70,8 +68,7 @@ char *lua_action_remove_list = NULL;
 
 
 /*
- * weechat_lua_hashtable_map_cb: callback called for each key/value in a
- *                               hashtable
+ * Callback called for each key/value in a hashtable.
  */
 
 void
@@ -93,7 +90,7 @@ weechat_lua_hashtable_map_cb (void *data,
 }
 
 /*
- * weechat_lua_pushhashtable: put a WeeChat hashtable on lua stack, as lua table
+ * Puts a WeeChat hashtable on lua stack, as lua table.
  */
 
 void
@@ -107,21 +104,20 @@ weechat_lua_pushhashtable (lua_State *interpreter, struct t_hashtable *hashtable
 }
 
 /*
- * weechat_lua_hash_to_hashtable: get WeeChat hashtable with lua hash (on stack)
- *                                Hashtable returned has type string for
- *                                both keys and values
- *                                Note: hashtable has to be released after use
- *                                with call to weechat_hashtable_free()
+ * Gets WeeChat hashtable with lua hash (on stack).
+ *
+ * Note: hashtable must be freed after use.
  */
 
 struct t_hashtable *
-weechat_lua_tohashtable (lua_State *interpreter, int index, int hashtable_size)
+weechat_lua_tohashtable (lua_State *interpreter, int index, int size,
+                         const char *type_keys, const char *type_values)
 {
     struct t_hashtable *hashtable;
 
-    hashtable = weechat_hashtable_new (hashtable_size,
-                                       WEECHAT_HASHTABLE_STRING,
-                                       WEECHAT_HASHTABLE_STRING,
+    hashtable = weechat_hashtable_new (size,
+                                       type_keys,
+                                       type_values,
                                        NULL,
                                        NULL);
     if (!hashtable)
@@ -130,9 +126,20 @@ weechat_lua_tohashtable (lua_State *interpreter, int index, int hashtable_size)
     lua_pushnil (interpreter);
     while (lua_next (interpreter, index - 1) != 0)
     {
-        weechat_hashtable_set (hashtable,
-                               lua_tostring (interpreter, -2),
-                               lua_tostring (interpreter, -1));
+        if (strcmp (type_values, WEECHAT_HASHTABLE_STRING) == 0)
+        {
+            weechat_hashtable_set (hashtable,
+                                   lua_tostring (interpreter, -2),
+                                   lua_tostring (interpreter, -1));
+        }
+        else if (strcmp (type_values, WEECHAT_HASHTABLE_POINTER) == 0)
+        {
+            weechat_hashtable_set (hashtable,
+                                   lua_tostring (interpreter, -2),
+                                   plugin_script_str2ptr (weechat_lua_plugin,
+                                                          NULL, NULL,
+                                                          lua_tostring (interpreter, -1)));
+        }
         /* remove value from stack (keep key for next iteration) */
         lua_pop (interpreter, 1);
     }
@@ -141,7 +148,7 @@ weechat_lua_tohashtable (lua_State *interpreter, int index, int hashtable_size)
 }
 
 /*
- * weechat_lua_exec: execute a lua function
+ * Executes a lua function.
  */
 
 void *
@@ -209,7 +216,9 @@ weechat_lua_exec (struct t_plugin_script *script, int ret_type,
     else if (ret_type == WEECHAT_SCRIPT_EXEC_HASHTABLE)
     {
         ret_value = weechat_lua_tohashtable (lua_current_interpreter, -1,
-                                             WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                             WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                             WEECHAT_HASHTABLE_STRING,
+                                             WEECHAT_HASHTABLE_STRING);
     }
     else
     {
@@ -226,7 +235,7 @@ weechat_lua_exec (struct t_plugin_script *script, int ret_type,
 }
 
 /*
- * weechat_lua_register_lib: register a library to use inside Lua script
+ * Registers a library to use inside lua script.
  */
 
 void weechat_lua_register_lib (lua_State *L, const char *libname,
@@ -248,7 +257,11 @@ void weechat_lua_register_lib (lua_State *L, const char *libname,
 }
 
 /*
- * weechat_lua_load: load a Lua script
+ * Loads a lua script.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -390,7 +403,7 @@ weechat_lua_load (const char *filename)
 }
 
 /*
- * weechat_lua_load_cb: callback for weechat_script_auto_load() function
+ * Callback for weechat_script_auto_load() function.
  */
 
 void
@@ -403,7 +416,7 @@ weechat_lua_load_cb (void *data, const char *filename)
 }
 
 /*
- * weechat_lua_unload: unload a Lua script
+ * Unloads a lua script.
  */
 
 void
@@ -449,7 +462,7 @@ weechat_lua_unload (struct t_plugin_script *script)
 }
 
 /*
- * weechat_lua_unload_name: unload a Lua script by name
+ * Unloads a lua script by name.
  */
 
 void
@@ -461,9 +474,12 @@ weechat_lua_unload_name (const char *name)
     if (ptr_script)
     {
         weechat_lua_unload (ptr_script);
-        weechat_printf (NULL,
-                        weechat_gettext ("%s: script \"%s\" unloaded"),
-                        LUA_PLUGIN_NAME, name);
+        if (!lua_quiet)
+        {
+            weechat_printf (NULL,
+                            weechat_gettext ("%s: script \"%s\" unloaded"),
+                            LUA_PLUGIN_NAME, name);
+        }
     }
     else
     {
@@ -474,7 +490,7 @@ weechat_lua_unload_name (const char *name)
 }
 
 /*
- * weechat_lua_reload_name: reload a Lua script by name
+ * Reloads a lua script by name.
  */
 
 void
@@ -490,9 +506,12 @@ weechat_lua_reload_name (const char *name)
         if (filename)
         {
             weechat_lua_unload (ptr_script);
-            weechat_printf (NULL,
-                            weechat_gettext ("%s: script \"%s\" unloaded"),
-                            LUA_PLUGIN_NAME, name);
+            if (!lua_quiet)
+            {
+                weechat_printf (NULL,
+                                weechat_gettext ("%s: script \"%s\" unloaded"),
+                                LUA_PLUGIN_NAME, name);
+            }
             weechat_lua_load (filename);
             free (filename);
         }
@@ -506,7 +525,7 @@ weechat_lua_reload_name (const char *name)
 }
 
 /*
- * weechat_lua_unload_all: unload all Lua scripts
+ * Unloads all lua scripts.
  */
 
 void
@@ -519,14 +538,14 @@ weechat_lua_unload_all ()
 }
 
 /*
- * weechat_lua_command_cb: callback for "/lua" command
+ * Callback for command "/lua".
  */
 
 int
 weechat_lua_command_cb (void *data, struct t_gui_buffer *buffer,
                         int argc, char **argv, char **argv_eol)
 {
-    char *path_script;
+    char *ptr_name, *path_script;
 
     /* make C compiler happy */
     (void) data;
@@ -575,24 +594,40 @@ weechat_lua_command_cb (void *data, struct t_gui_buffer *buffer,
             plugin_script_display_list (weechat_lua_plugin, lua_scripts,
                                         argv_eol[2], 1);
         }
-        else if (weechat_strcasecmp (argv[1], "load") == 0)
+        else if ((weechat_strcasecmp (argv[1], "load") == 0)
+                 || (weechat_strcasecmp (argv[1], "reload") == 0)
+                 || (weechat_strcasecmp (argv[1], "unload") == 0))
         {
-            /* load Lua script */
-            path_script = plugin_script_search_path (weechat_lua_plugin,
-                                                     argv_eol[2]);
-            weechat_lua_load ((path_script) ? path_script : argv_eol[2]);
-            if (path_script)
-                free (path_script);
-        }
-        else if (weechat_strcasecmp (argv[1], "reload") == 0)
-        {
-            /* reload one Lua script */
-            weechat_lua_reload_name (argv_eol[2]);
-        }
-        else if (weechat_strcasecmp (argv[1], "unload") == 0)
-        {
-            /* unload Lua script */
-            weechat_lua_unload_name (argv_eol[2]);
+            ptr_name = argv_eol[2];
+            if (strncmp (ptr_name, "-q ", 3) == 0)
+            {
+                lua_quiet = 1;
+                ptr_name += 3;
+                while (ptr_name[0] == ' ')
+                {
+                    ptr_name++;
+                }
+            }
+            if (weechat_strcasecmp (argv[1], "load") == 0)
+            {
+                /* load lua script */
+                path_script = plugin_script_search_path (weechat_lua_plugin,
+                                                         ptr_name);
+                weechat_lua_load ((path_script) ? path_script : ptr_name);
+                if (path_script)
+                    free (path_script);
+            }
+            else if (weechat_strcasecmp (argv[1], "reload") == 0)
+            {
+                /* reload one lua script */
+                weechat_lua_reload_name (ptr_name);
+            }
+            else if (weechat_strcasecmp (argv[1], "unload") == 0)
+            {
+                /* unload lua script */
+                weechat_lua_unload_name (ptr_name);
+            }
+            lua_quiet = 0;
         }
         else
         {
@@ -607,7 +642,7 @@ weechat_lua_command_cb (void *data, struct t_gui_buffer *buffer,
 }
 
 /*
- * weechat_lua_completion_cb: callback for script completion
+ * Adds lua scripts to completion list.
  */
 
 int
@@ -626,7 +661,7 @@ weechat_lua_completion_cb (void *data, const char *completion_item,
 }
 
 /*
- * weechat_lua_hdata_cb: callback for hdata
+ * Returns hdata for lua scripts.
  */
 
 struct t_hdata *
@@ -641,7 +676,7 @@ weechat_lua_hdata_cb (void *data, const char *hdata_name)
 }
 
 /*
- * weechat_lua_infolist_cb: callback for infolist
+ * Returns infolist with lua scripts.
  */
 
 struct t_infolist *
@@ -665,7 +700,7 @@ weechat_lua_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * weechat_lua_signal_debug_dump_cb: dump Lua plugin data in WeeChat log file
+ * Dumps lua plugin data in WeeChat log file.
  */
 
 int
@@ -687,7 +722,7 @@ weechat_lua_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_lua_signal_buffer_closed_cb: callback called when a buffer is closed
+ * Callback called when a buffer is closed.
  */
 
 int
@@ -706,7 +741,7 @@ weechat_lua_signal_buffer_closed_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_lua_timer_action_cb: timer for executing actions
+ * Timer for executing actions.
  */
 
 int
@@ -723,6 +758,7 @@ weechat_lua_timer_action_cb (void *data, int remaining_calls)
                                           lua_scripts,
                                           &weechat_lua_unload,
                                           &weechat_lua_load,
+                                          &lua_quiet,
                                           &lua_action_install_list);
         }
         else if (data == &lua_action_remove_list)
@@ -730,6 +766,7 @@ weechat_lua_timer_action_cb (void *data, int remaining_calls)
             plugin_script_action_remove (weechat_lua_plugin,
                                          lua_scripts,
                                          &weechat_lua_unload,
+                                         &lua_quiet,
                                          &lua_action_remove_list);
         }
     }
@@ -738,8 +775,7 @@ weechat_lua_timer_action_cb (void *data, int remaining_calls)
 }
 
 /*
- * weechat_lua_signal_script_action_cb: callback called when a script action
- *                                      is asked (install/remove a script)
+ * Callback called when a script action is asked (install/remove a script).
  */
 
 int
@@ -774,7 +810,7 @@ weechat_lua_signal_script_action_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_plugin_init: initialize Lua plugin
+ * Initializes lua plugin.
  */
 
 int
@@ -805,7 +841,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: shutdown Lua interface
+ * Ends lua plugin.
  */
 
 int

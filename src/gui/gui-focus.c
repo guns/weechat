@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-focus.c - functions about focus (cursor mode and mouse) (used by all GUI)
+ *
+ * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-focus.c: functions about focus (for cursor mode and mouse) (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -65,7 +63,11 @@
 
 
 /*
- * gui_focus_get_info: get info about what is pointed by cursor at (x,y)
+ * Gets info about what is pointed by cursor at (x,y).
+ *
+ * Returns pointer to focus info, NULL if error.
+ *
+ * Note: focus info must be freed after use.
  */
 
 struct t_gui_focus_info *
@@ -105,7 +107,7 @@ gui_focus_get_info (int x, int y)
 }
 
 /*
- * gui_focus_free_info: free a focus info structure
+ * Frees a focus info structure.
  */
 
 void
@@ -122,7 +124,7 @@ gui_focus_free_info (struct t_gui_focus_info *focus_info)
 }
 
 /*
- * gui_focus_buffer_localvar_map_cb: add local variables of buffer in hashtable
+ * Adds local variables of buffer in hashtable.
  */
 
 void
@@ -146,7 +148,11 @@ gui_focus_buffer_localvar_map_cb (void *data, struct t_hashtable *hashtable,
 }
 
 /*
- * gui_focus_to_hashtable: add two focus info into hashtable
+ * Adds two focus info into hashtable.
+ *
+ * Returns pointer to new hashtable.
+ *
+ * Note: result must be freed after use.
  */
 
 struct t_hashtable *

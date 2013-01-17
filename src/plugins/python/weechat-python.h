@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -45,7 +45,9 @@ extern const char *python_current_script_filename;
 
 extern PyObject *weechat_python_hashtable_to_dict (struct t_hashtable *hashtable);
 extern struct t_hashtable *weechat_python_dict_to_hashtable (PyObject *dict,
-                                                             int hashtable_size);
+                                                             int size,
+                                                             const char *type_keys,
+                                                             const char *type_values);
 extern void *weechat_python_exec (struct t_plugin_script *script,
                                   int ret_type, const char *function,
                                   char *format, void **argv);

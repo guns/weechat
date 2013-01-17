@@ -56,7 +56,7 @@ Without argument, this command display ban list for current channel.
 [command]*`connect`* connect to IRC server(s)::
 ........................................
 /connect  <server> [<server>...] [-<option>[=<value>]] [-no<option>] [-nojoin] [-switch]
-          -all|-open [-nojoin] [-switch]
+          -all|-auto|-open [-nojoin] [-switch]
 
     server: server name, which can be:
             - internal server name (created by /server add, recommended usage)
@@ -65,6 +65,7 @@ Without argument, this command display ban list for current channel.
     option: set option for server (for boolean option, value can be omitted)
   nooption: set boolean option to 'off' (for example: -nossl)
       -all: connect to all servers defined in configuration
+     -auto: connect to servers with autoconnect enabled
      -open: connect to all opened servers that are not currently connected
    -nojoin: do not join any channel (even if autojoin is enabled on server)
    -switch: switch to next server address
@@ -212,16 +213,18 @@ nick: nick
 [[command_irc_join]]
 [command]*`join`* join a channel::
 ........................................
-/join  [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
+/join  [-noswitch] [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
 
- server: send to this server (internal name)
-channel: channel name to join
-    key: key to join the channel (channels with a key must be the first in list)
+-noswitch: do not switch to new buffer
+   server: send to this server (internal name)
+  channel: channel name to join
+      key: key to join the channel (channels with a key must be the first in list)
 
 Examples:
   /join #weechat
   /join #protectedchan,#weechat key
   /join -server freenode #weechat
+  /join -noswitch #weechat
 ........................................
 
 [[command_irc_kick]]
@@ -463,6 +466,17 @@ daemon2: forward message to this daemon
 server: send to this server (internal name)
   nick: nick for private conversation
   text: text to send
+........................................
+
+[[command_irc_quiet]]
+[command]*`quiet`* quiet nicks or hosts::
+........................................
+/quiet  [<channel>] [<nick> [<nick>...]]
+
+channel: channel for quiet
+   nick: user or host to quiet
+
+Without argument, this command display quiet list for current channel.
 ........................................
 
 [[command_irc_quote]]
@@ -734,10 +748,14 @@ mask: only information which match this mask
 [[command_irc_whois]]
 [command]*`whois`* query information about user(s)::
 ........................................
-/whois  [<server>] <nick>[,<nick>...]
+/whois  [<server>] [<nick>[,<nick>...]]
 
 server: server name
   nick: nick (may be a mask)
+
+Without argument, this command will do a whois on:
+- your own nick if buffer is a server/channel
+- remote nick if buffer is a private.
 ........................................
 
 [[command_irc_whowas]]

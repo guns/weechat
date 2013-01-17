@@ -1,5 +1,5 @@
 * [[option_relay.color.client]] *relay.color.client*
-** 説明: `text color for client description`
+** 説明: `クライアント説明用のテキスト色`
 ** タイプ: 色
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `cyan`)
 
@@ -29,19 +29,44 @@
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `brown`)
 
 * [[option_relay.color.text]] *relay.color.text*
-** 説明: `text color in relay buffer`
+** 説明: `リレーバッファ内のテキスト色`
 ** タイプ: 色
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `default`)
 
 * [[option_relay.color.text_bg]] *relay.color.text_bg*
-** 説明: `background color in relay buffer`
+** 説明: `リレーバッファ内の背景色`
 ** タイプ: 色
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `default`)
 
 * [[option_relay.color.text_selected]] *relay.color.text_selected*
-** 説明: `text color of selected line in relay buffer`
+** 説明: `リレーバッファ内の選択行のテキスト色`
 ** タイプ: 色
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `white`)
+
+* [[option_relay.irc.backlog_max_minutes]] *relay.irc.backlog_max_minutes*
+** 説明: `IRC チャンネルごとのバックログの最大時間 (分) (0 = 制限無し、例: 1440 = 1 日、10080 = 1 週間、43200 = 1 ヶ月、525600 = 1 年間)`
+** タイプ: 整数
+** 値: 0 .. 2147483647 (デフォルト値: `1440`)
+
+* [[option_relay.irc.backlog_max_number]] *relay.irc.backlog_max_number*
+** 説明: `IRC チャンネルごとのバックログの最大行数 (0 = 制限無し)`
+** タイプ: 整数
+** 値: 0 .. 2147483647 (デフォルト値: `256`)
+
+* [[option_relay.irc.backlog_since_last_disconnect]] *relay.irc.backlog_since_last_disconnect*
+** 説明: `最後にクライアントを切断した以降のバックログを表示`
+** タイプ: ブール
+** 値: on, off (デフォルト値: `on`)
+
+* [[option_relay.irc.backlog_tags]] *relay.irc.backlog_tags*
+** 説明: `IRC チャンネルごとのバックログに表示するメッセージのタグ (利用可能なタグ: "irc_join"、"irc_part"、"irc_quit"、"irc_nick"、"irc_privmsg")、"*" = 利用可能な全てのタグ`
+** タイプ: 文字列
+** 値: 未制約文字列 (デフォルト値: `"irc_privmsg"`)
+
+* [[option_relay.irc.backlog_time_format]] *relay.irc.backlog_time_format*
+** 説明: `バックログメッセージの時間フォーマット (フォーマットは man strftime を参照) (メッセージの irc タグ内に時間の情報が含まれるため、クライアントがサーバの "server-time" 機能を利用可能にした場合、これは利用されません。); 空文字列 = バックログメッセージで時間を表示しない`
+** タイプ: 文字列
+** 値: 未制約文字列 (デフォルト値: `"[%H:%M] "`)
 
 * [[option_relay.look.auto_open_buffer]] *relay.look.auto_open_buffer*
 ** 説明: `新しいクライアントが接続したらリレーバッファを自動的に開く`
@@ -54,7 +79,7 @@
 ** 値: 0 .. 65535 (デフォルト値: `256`)
 
 * [[option_relay.network.allowed_ips]] *relay.network.allowed_ips*
-** 説明: `リレーに使用する IP アドレスの正規表現 (大文字小文字の区別無し、最初に "(?-i)" をつければ区別有り)、例: "^(123.45.67.89|192.160.*)$"`
+** 説明: `リレーの利用をを許可する IP アドレスの正規表現 (大文字小文字の区別無し、最初に "(?-i)" をつければ区別有り); IPv6 が有効で IPv4 を使って接続している場合、IPv6 アドレスを IPv4 にマッピングしたもの (例: "::ffff:127.0.0.1") が使われます。例: "^((::ffff:)?123.45.67.89|192.160.*)$"`
 ** タイプ: 文字列
 ** 値: 未制約文字列 (デフォルト値: `""`)
 
@@ -68,6 +93,11 @@
 ** タイプ: 整数
 ** 値: 0 .. 9 (デフォルト値: `6`)
 
+* [[option_relay.network.ipv6]] *relay.network.ipv6*
+** 説明: `デフォルトで IPv6 ソケットをリッスン (デフォルトの IPv4 に加えて); 特定のプロトコル (/help relay を参照) でプロトコルに IPv4 と IPv6 (個別または両方) を強制`
+** タイプ: ブール
+** 値: on, off (デフォルト値: `on`)
+
 * [[option_relay.network.max_clients]] *relay.network.max_clients*
 ** 説明: `ポートに接続するクライアントの最大数`
 ** タイプ: 整数
@@ -79,7 +109,7 @@
 ** 値: 未制約文字列 (デフォルト値: `""`)
 
 * [[option_relay.network.ssl_cert_key]] *relay.network.ssl_cert_key*
-** 説明: `file with SSL certificate and private key (for serving clients with SSL)`
+** 説明: `SSL 証明書と秘密鍵のファイル (SSL 接続を利用するクライアント用)`
 ** タイプ: 文字列
 ** 値: 未制約文字列 (デフォルト値: `"%h/ssl/relay.pem"`)
 

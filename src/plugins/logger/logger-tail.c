@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * logger-tail.c - return last lines of a file
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * logger-tail.c: return last lines of a file
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,7 +38,7 @@
 
 
 /*
- * logger_tail_last_eol: find last eol in a string
+ * Searches for last EOL in a string.
  */
 
 char *
@@ -58,7 +56,9 @@ logger_tail_last_eol (const char *string_start, const char *string_ptr)
 }
 
 /*
- * logger_tail_file: return last lines of a file
+ * Returns last lines of a file.
+ *
+ * Note: result must be freed with function "logger_tail_free".
  */
 
 struct t_logger_line *
@@ -210,7 +210,7 @@ logger_tail_file (const char *filename, int n_lines)
 }
 
 /*
- * logger_tail_free: free structure returned by "logger_tail_file" function
+ * Frees structure returned by function "logger_tail_file".
  */
 
 void

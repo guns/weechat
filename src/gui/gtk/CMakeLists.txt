@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2007 Julien Louis <ptitlouis@sysif.net>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -17,10 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-if(COMMAND cmake_policy)
-  cmake_policy(SET CMP0003 NEW)
-endif(COMMAND cmake_policy)
 
 SET(WEECHAT_GTK_SRC
 gui-gtk.h

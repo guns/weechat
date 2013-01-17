@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-curses-key.c - keyboard functions for Curses GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-curses-key.c: keyboard functions for Curses GUI
  */
 
 #ifdef HAVE_CONFIG_H
@@ -51,7 +49,7 @@
 
 
 /*
- * gui_key_default_bind: create key bind, only if it does not exist yet
+ * Creates key bind, only if it does not exist yet.
  */
 
 void
@@ -72,7 +70,7 @@ gui_key_default_bind (int context, const char *key, const char *command)
 }
 
 /*
- * gui_key_default_bindings: create default key bindings for context given
+ * Creates default key bindings for a given context.
  */
 
 void
@@ -96,6 +94,7 @@ gui_key_default_bindings (int context)
         BIND(/* ^D          */ "ctrl-D",             "/input delete_next_char");
         BIND(/* ^W          */ "ctrl-W",             "/input delete_previous_word");
         BIND(/* ^X          */ "ctrl-X",             "/input switch_active_buffer");
+        BIND(/* m-x         */ "meta-x",             "/input zoom_merged_buffer");
         BIND(/* m-d         */ "meta-d",             "/input delete_next_word");
         BIND(/* ^K          */ "ctrl-K",             "/input delete_end_of_line");
         BIND(/* m-r         */ "meta-r",             "/input delete_line");
@@ -260,12 +259,18 @@ gui_key_default_bindings (int context)
     {
         /* mouse events on chat area */
         BIND("@chat:button1",                    "/window ${_window_number}");
+        BIND("@chat(script.scripts):button1",    "/window ${_window_number};/script go ${_chat_line_y}");
+        BIND("@chat(script.scripts):button2",    "/window ${_window_number};/script go ${_chat_line_y};/script installremove -q ${script_name_with_extension}");
         BIND("@chat:button1-gesture-left",       "/window ${_window_number};/buffer -1");
         BIND("@chat:button1-gesture-right",      "/window ${_window_number};/buffer +1");
         BIND("@chat:button1-gesture-left-long",  "/window ${_window_number};/buffer 1");
         BIND("@chat:button1-gesture-right-long", "/window ${_window_number};/input jump_last_buffer");
         BIND("@chat:wheelup",                    "/window scroll_up -window ${_window_number}");
         BIND("@chat:wheeldown",                  "/window scroll_down -window ${_window_number}");
+        BIND("@chat(script.scripts):wheelup",    "/script up 5");
+        BIND("@chat(script.scripts):wheeldown",  "/script down 5");
+        BIND("@chat:ctrl-wheelup",               "/window scroll_horiz -window ${_window_number} -10%");
+        BIND("@chat:ctrl-wheeldown",             "/window scroll_horiz -window ${_window_number} +10%");
         /* mouse events on nicklist */
         BIND("@bar(nicklist):button1-gesture-up",                "/bar scroll nicklist ${_window_number} -100%");
         BIND("@bar(nicklist):button1-gesture-down",              "/bar scroll nicklist ${_window_number} +100%");
@@ -287,7 +292,7 @@ gui_key_default_bindings (int context)
 }
 
 /*
- * gui_key_flush: flush keyboard buffer
+ * Flushes keyboard buffer.
  */
 
 void
@@ -482,7 +487,7 @@ gui_key_flush (int paste)
 }
 
 /*
- * gui_key_read_cb: read keyboard chars
+ * Reads keyboard chars.
  */
 
 int

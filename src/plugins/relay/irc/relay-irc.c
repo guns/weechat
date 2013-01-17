@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-irc.c - IRC protocol for relay to client: IRC proxy/bouncer
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,11 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * relay-irc.c: IRC protocol for relay to client
- *              (relay acting as an IRC proxy/bouncer)
  */
 
 #include <stdlib.h>
@@ -38,15 +35,23 @@
 #include "../relay-client.h"
 #include "../relay-config.h"
 #include "../relay-raw.h"
+#include "../relay-server.h"
 
 
 char *relay_irc_relay_commands[] = { "privmsg", "notice", NULL };
-char *relay_irc_ignore_commands[] = { "pong", "quit", NULL };
+char *relay_irc_ignore_commands[] = { "cap", "pong", "quit", NULL };
+char *relay_irc_backlog_commands_tags[RELAY_IRC_NUM_CMD] =
+{ "irc_join", "irc_part", "irc_quit", "irc_nick", "irc_privmsg" };
+char *relay_irc_server_capabilities[RELAY_IRC_NUM_CAPAB] =
+{ "server-time" };
 
 
 /*
- * relay_irc_command_relayed: return 1 if IRC command has to be relayed to
- *                            client, or 0 if command must NOT be relayed
+ * Checks if IRC command has to be relayed to client.
+ *
+ * Returns:
+ *   1: command must be relayed
+ *   0: command must not be relayed
  */
 
 int
@@ -68,8 +73,11 @@ relay_irc_command_relayed (const char *irc_command)
 }
 
 /*
- * relay_irc_command_ignored: return 1 if IRC command from client has to be
- *                            ignored
+ * Checks if an IRC command from client must be ignored.
+ *
+ * Returns:
+ *   1: command must be ignored
+ *   0: command must not be ignored
  */
 
 int
@@ -91,7 +99,52 @@ relay_irc_command_ignored (const char *irc_command)
 }
 
 /*
- * relay_irc_message_parse: parse IRC message
+ * Searches for a tag of a command (in backlog).
+ *
+ * Returns index of tag in enum t_relay_irc_command, -1 if tag is not found.
+ */
+
+int
+relay_irc_search_backlog_commands_tags (const char *tag)
+{
+    int i;
+
+    for (i = 0; i < RELAY_IRC_NUM_CMD; i++)
+    {
+        if (strcmp (relay_irc_backlog_commands_tags[i], tag) == 0)
+            return i;
+    }
+
+    /* tag not found */
+    return -1;
+}
+
+/*
+ * Searches for a server capability.
+ *
+ * Returns index of server capability in enum t_relay_irc_server_capab, -1 if
+ * server capability is not found.
+ */
+
+int
+relay_irc_search_server_capability (const char *capability)
+{
+    int i;
+
+    for (i = 0; i < RELAY_IRC_NUM_CAPAB; i++)
+    {
+        if (strcmp (relay_irc_server_capabilities[i], capability) == 0)
+            return i;
+    }
+
+    /* server capability not found */
+    return -1;
+}
+
+/*
+ * Parses an IRC message.
+ *
+ * Returns hashtable with parsed message, NULL if error.
  */
 
 struct t_hashtable *
@@ -133,7 +186,7 @@ end:
 }
 
 /*
- * relay_irc_sendf: send formatted data to client
+ * Sends formatted data to client.
  */
 
 void
@@ -198,10 +251,10 @@ relay_irc_sendf (struct t_relay_client *client, const char *format, ...)
 }
 
 /*
- * relay_irc_signal_irc_in2_cb: callback for "irc_in2" signal
- *                              It is called when something is received on IRC
- *                              server, and message can be relayed (or not) to
- *                              client.
+ * Callback for signal "irc_in2".
+ *
+ * This is called when something is received on IRC server, and message can be
+ * relayed (or not) to client.
  */
 
 int
@@ -267,11 +320,10 @@ relay_irc_signal_irc_in2_cb (void *data, const char *signal,
 }
 
 /*
- * relay_irc_tag_relay_client_id: get id of client by looking for tag
- *                                "relay_client_NNN" in list of tags
- *                                (comma separated list)
- *                                Return number found, or -1 if tag is not
- *                                found.
+ * Gets id of client by looking for tag "relay_client_NNN" in list of tags
+ * (comma separated list).
+ *
+ * Returns number found (NNN), -1 if not found.
  */
 
 int
@@ -309,10 +361,10 @@ relay_irc_tag_relay_client_id (const char *tags)
 }
 
 /*
- * relay_irc_signal_irc_outtags_cb: callback for "irc_out" signal
- *                                  It is called when a message is sent to IRC
- *                                  server (by irc plugin or any other
- *                                  plugin/script).
+ * Callback for signal "irc_outtags".
+ *
+ * This is called when a message is sent to IRC server (by irc plugin or any
+ * other plugin/script).
  */
 
 int
@@ -346,7 +398,7 @@ relay_irc_signal_irc_outtags_cb (void *data, const char *signal,
 
     if (weechat_relay_plugin->debug >= 2)
     {
-        weechat_printf (NULL, "%s: irc_out: client: %s%s%s, message: %s",
+        weechat_printf (NULL, "%s: irc_outtags: client: %s%s%s, message: %s",
                         RELAY_PLUGIN_NAME,
                         RELAY_COLOR_CHAT_CLIENT,
                         client->desc,
@@ -394,7 +446,8 @@ relay_irc_signal_irc_outtags_cb (void *data, const char *signal,
                       RELAY_IRC_DATA(client, nick));
 
             host = NULL;
-            infolist_nick = weechat_infolist_get ("irc_nick", NULL, str_infolist_args);
+            infolist_nick = weechat_infolist_get ("irc_nick", NULL,
+                                                  str_infolist_args);
             if (infolist_nick && weechat_infolist_next (infolist_nick))
                 host = weechat_infolist_string (infolist_nick, "host");
 
@@ -424,9 +477,9 @@ end:
 }
 
 /*
- * relay_irc_signal_irc_disc_cb: callback for "irc_disconnected" signal
- *                               It is called when connection to a server is
- *                               lost.
+ * Callback for signal "irc_disconnected".
+ *
+ * This is called when connection to an IRC server is lost.
  */
 
 int
@@ -442,6 +495,12 @@ relay_irc_signal_irc_disc_cb (void *data, const char *signal,
 
     client = (struct t_relay_client *)data;
 
+    if (weechat_relay_plugin->debug >= 2)
+    {
+        weechat_printf (NULL, "%s: irc_disconnected: data: %s",
+                        RELAY_PLUGIN_NAME, (char *)signal_data);
+    }
+
     if (strcmp ((char *)signal_data, client->protocol_args) == 0)
     {
         relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
@@ -451,29 +510,43 @@ relay_irc_signal_irc_disc_cb (void *data, const char *signal,
 }
 
 /*
- * relay_irc_hsignal_irc_redir_cb: callback for "irc_redirection_*" hsignals
- *                                 It is called when a command is redirected.
+ * Callback for hsignals "irc_redirection_*".
+ *
+ * This is called when an IRC command is redirected.
  */
 
 int
 relay_irc_hsignal_irc_redir_cb (void *data, const char *signal,
                                 struct t_hashtable *hashtable)
 {
+    struct t_relay_client *client;
     int rc, client_id, num_messages, i;
     char pattern[128], **messages;
     const char *output;
-    struct t_relay_client *ptr_client;
 
-    /* make C compiler happy */
-    (void) data;
+    client = (struct t_relay_client *)data;
+
+    if (weechat_relay_plugin->debug >= 2)
+    {
+        weechat_printf (NULL, "%s: %s: client: %s%s%s",
+                        RELAY_PLUGIN_NAME,
+                        signal,
+                        RELAY_COLOR_CHAT_CLIENT,
+                        client->desc,
+                        RELAY_COLOR_CHAT);
+    }
 
     rc = sscanf (signal, "irc_redirection_relay_%d_%s",
                  &client_id, pattern);
     if (rc != 2)
         return WEECHAT_RC_OK;
 
-    ptr_client = relay_client_search_by_id (client_id);
-    if (!ptr_client)
+    /* check that client id found in signal exists */
+    if (!relay_client_search_by_id (client_id))
+        return WEECHAT_RC_OK;
+
+    /* ignore redirection if it is for another relay client */
+    if (client->id != client_id)
         return WEECHAT_RC_OK;
 
     output = weechat_hashtable_get (hashtable, "output");
@@ -485,7 +558,7 @@ relay_irc_hsignal_irc_redir_cb (void *data, const char *signal,
     {
         for (i = 0; i < num_messages; i++)
         {
-            relay_irc_sendf (ptr_client, messages[i]);
+            relay_irc_sendf (client, messages[i]);
         }
         weechat_string_free_split (messages);
     }
@@ -494,7 +567,383 @@ relay_irc_hsignal_irc_redir_cb (void *data, const char *signal,
 }
 
 /*
- * relay_irc_send_join: send join for a channel to client
+ * Gets info about a line in a buffer:
+ *   - irc command
+ *   - date
+ *   - nick
+ *   - nick1 and nick2 (old and new nick for irc "nick" command)
+ *   - host (without colors)
+ *   - message (without colors).
+ *
+ * Arguments hdata_line_data and line_data must be non NULL, the other arguments
+ * can be NULL.
+ *
+ * Note: tags, host and message (if given and filled) must be freed after use.
+ */
+
+void
+relay_irc_get_line_info (struct t_relay_client *client,
+                         struct t_gui_buffer *buffer,
+                         struct t_hdata *hdata_line_data, void *line_data,
+                         int *irc_command, int *irc_action, time_t *date,
+                         const char **nick, const char **nick1,
+                         const char **nick2, char **tags, char **host,
+                         char **message)
+{
+    int i, num_tags, command, action, all_tags, length;
+    char str_tag[256], *pos, *pos2, *message_no_color, str_time[256];
+    const char *ptr_tag, *ptr_message, *ptr_nick, *ptr_nick1, *ptr_nick2;
+    const char *localvar_nick, *time_format;
+    time_t msg_date;
+    struct tm *tm;
+
+    if (irc_command)
+        *irc_command = -1;
+    if (irc_action)
+        *irc_action = 0;
+    if (date)
+        *date = 0;
+    if (nick)
+        *nick = NULL;
+    if (nick1)
+        *nick1 = NULL;
+    if (nick2)
+        *nick2 = NULL;
+    if (tags)
+        *tags = NULL;
+    if (host)
+        *host = NULL;
+    if (message)
+        *message = NULL;
+
+    msg_date = weechat_hdata_time (hdata_line_data, line_data, "date");
+    num_tags = weechat_hdata_get_var_array_size (hdata_line_data, line_data,
+                                                 "tags_array");
+    ptr_message = weechat_hdata_pointer (hdata_line_data, line_data, "message");
+
+    /* no tag found, or no message? just exit */
+    if ((num_tags <= 0) || !ptr_message)
+        return;
+
+    command = -1;
+    action = 0;
+    ptr_nick = NULL;
+    ptr_nick1 = NULL;
+    ptr_nick2 = NULL;
+    all_tags = weechat_hashtable_has_key (relay_config_hashtable_irc_backlog_tags,
+                                          "*");
+    for (i = 0; i < num_tags; i++)
+    {
+        snprintf (str_tag, sizeof (str_tag), "%d|tags_array", i);
+        ptr_tag = weechat_hdata_string (hdata_line_data, line_data, str_tag);
+        if (ptr_tag)
+        {
+            if (strcmp (ptr_tag, "irc_action") == 0)
+                action = 1;
+            else if (strncmp (ptr_tag, "nick_", 5) == 0)
+                ptr_nick = ptr_tag + 5;
+            else if (strncmp (ptr_tag, "irc_nick1_", 10) == 0)
+                ptr_nick1 = ptr_tag + 10;
+            else if (strncmp (ptr_tag, "irc_nick2_", 10) == 0)
+                ptr_nick2 = ptr_tag + 10;
+            else if ((command < 0)
+                     && (all_tags
+                         || (weechat_hashtable_has_key (relay_config_hashtable_irc_backlog_tags,
+                                                        ptr_tag))))
+            {
+                command = relay_irc_search_backlog_commands_tags (ptr_tag);
+            }
+        }
+    }
+
+    /* not a supported IRC command? */
+    if (command < 0)
+        return;
+
+    /* ignore join/part/quit from self nick */
+    if ((command == RELAY_IRC_CMD_JOIN) || (command == RELAY_IRC_CMD_PART)
+        || (command == RELAY_IRC_CMD_QUIT))
+    {
+        localvar_nick = weechat_buffer_get_string (buffer, "localvar_nick");
+        if (localvar_nick && localvar_nick[0]
+            && (strcmp (ptr_nick, localvar_nick) == 0))
+        {
+            command = -1;
+            return;
+        }
+    }
+
+    /* fills variables with the line data */
+    if (irc_command)
+        *irc_command = command;
+    if (irc_action)
+        *irc_action = action;
+    if (date)
+        *date = msg_date;
+    if (nick)
+        *nick = ptr_nick;
+    if (nick1)
+        *nick1 = ptr_nick1;
+    if (nick2)
+        *nick2 = ptr_nick2;
+    message_no_color = (ptr_message) ?
+        weechat_string_remove_color (ptr_message, NULL) : NULL;
+    if ((command == RELAY_IRC_CMD_PRIVMSG) && message && message_no_color)
+    {
+        pos = message_no_color;
+        if (action)
+        {
+            pos = strchr (message_no_color, ' ');
+            if (pos)
+            {
+                while (pos[0] == ' ')
+                {
+                    pos++;
+                }
+            }
+            else
+                pos = message_no_color;
+        }
+        /*
+         * if server capability "server-time" is NOT enabled, and if the time
+         * format is not empty, add time inside message (before message)
+         */
+        time_format = weechat_config_string (relay_config_irc_backlog_time_format);
+        if (!(RELAY_IRC_DATA(client, server_capabilities) & (1 << RELAY_IRC_CAPAB_SERVER_TIME))
+            && time_format && time_format[0])
+        {
+            tm = localtime (&msg_date);
+            strftime (str_time, sizeof (str_time), time_format, tm);
+            length = strlen (str_time) + strlen (pos) + 1;
+            *message = malloc (length);
+            if (*message)
+                snprintf (*message, length, "%s%s", str_time, pos);
+        }
+        else
+            *message = strdup (pos);
+    }
+    switch (command)
+    {
+        case RELAY_IRC_CMD_JOIN:
+        case RELAY_IRC_CMD_PART:
+        case RELAY_IRC_CMD_QUIT:
+            if (host && message && message_no_color)
+            {
+                pos = strstr (message_no_color, " (");
+                if (pos)
+                {
+                    pos2 = strchr (pos, ')');
+                    if (pos2)
+                        *host = weechat_strndup (pos + 2, pos2 - pos - 2);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    /* if server capability "server-time" is enabled, add an irc tag with time */
+    if (tags
+        && (RELAY_IRC_DATA(client, server_capabilities) & (1 << RELAY_IRC_CAPAB_SERVER_TIME)))
+    {
+        tm = gmtime (&msg_date);
+        strftime (str_time, sizeof (str_time), "%Y-%m-%dT%H:%M:%S", tm);
+        snprintf (str_tag, sizeof (str_tag), "@time=%s.000Z ", str_time);
+        *tags = strdup (str_tag);
+    }
+
+    if (message_no_color)
+        free (message_no_color);
+}
+
+/*
+ * Sends channel backlog to client.
+ */
+
+void
+relay_irc_send_channel_backlog (struct t_relay_client *client,
+                                const char *channel,
+                                struct t_gui_buffer *buffer)
+{
+    struct t_relay_server *ptr_server;
+    void *ptr_own_lines, *ptr_line, *ptr_line_data;
+    void *ptr_hdata_line, *ptr_hdata_line_data;
+    char *tags, *host, *message;
+    const char *ptr_nick, *ptr_nick1, *ptr_nick2;
+    int irc_command, irc_action, count, max_number, max_minutes;
+    time_t date_min, date_min2, date;
+
+    /* get pointer on "own_lines" in buffer */
+    ptr_own_lines = weechat_hdata_pointer (weechat_hdata_get ("buffer"),
+                                           buffer, "own_lines");
+    if (!ptr_own_lines)
+        return;
+
+    /* get pointer on "last_line" in lines */
+    ptr_line = weechat_hdata_pointer (weechat_hdata_get ("lines"),
+                                      ptr_own_lines, "last_line");
+    if (!ptr_line)
+        return;
+
+    /* get hdata "line" */
+    ptr_hdata_line = weechat_hdata_get ("line");
+    if (!ptr_hdata_line)
+        return;
+
+    /* get hdata "line_data" */
+    ptr_hdata_line_data = weechat_hdata_get ("line_data");
+    if (!ptr_hdata_line_data)
+        return;
+
+    max_number = weechat_config_integer (relay_config_irc_backlog_max_number);
+    max_minutes = weechat_config_integer (relay_config_irc_backlog_max_minutes);
+    date_min = (max_minutes > 0) ? time (NULL) - (max_minutes * 60) : 0;
+    if (weechat_config_boolean (relay_config_irc_backlog_since_last_disconnect))
+    {
+        ptr_server = relay_server_search (client->protocol_string);
+        if (ptr_server && (ptr_server->last_client_disconnect > 0))
+        {
+            date_min2 = ptr_server->last_client_disconnect;
+            if (date_min2 > date_min)
+                date_min = date_min2;
+        }
+    }
+
+    /*
+     * loop on lines in buffer, from last to first, and stop when we have
+     * reached max number of lines (or max minutes)
+     */
+    count = 0;
+    while (ptr_line)
+    {
+        ptr_line_data = weechat_hdata_pointer (ptr_hdata_line,
+                                               ptr_line, "data");
+        if (ptr_line_data)
+        {
+            relay_irc_get_line_info (client, buffer,
+                                     ptr_hdata_line_data, ptr_line_data,
+                                     &irc_command,
+                                     NULL, /* irc_action */
+                                     &date,
+                                     NULL, /* nick */
+                                     NULL, /* nick1 */
+                                     NULL, /* nick2 */
+                                     NULL, /* tags */
+                                     NULL, /* host */
+                                     NULL); /* message */
+            if (irc_command >= 0)
+            {
+                /* if we have reached max minutes, exit loop */
+                if ((date_min > 0) && (date < date_min))
+                    break;
+                count++;
+            }
+            /* if we have reached max number of messages, exit loop */
+            if ((max_number > 0) && (count > max_number))
+                break;
+        }
+        ptr_line = weechat_hdata_move (ptr_hdata_line, ptr_line, -1);
+    }
+
+    if (!ptr_line)
+    {
+        /* if we have reached beginning of buffer, start from first line */
+        ptr_line = weechat_hdata_pointer (weechat_hdata_get ("lines"),
+                                          ptr_own_lines, "first_line");
+    }
+    else
+    {
+        /* start from line + 1 (the current line must not be sent) */
+        ptr_line = weechat_hdata_move (ptr_hdata_line, ptr_line, 1);
+    }
+
+    /*
+     * loop on lines from line pointer until last line of buffer, and for each
+     * irc message, sends it to client
+     */
+    while (ptr_line)
+    {
+        ptr_line_data = weechat_hdata_pointer (ptr_hdata_line,
+                                               ptr_line, "data");
+        if (ptr_line_data)
+        {
+            relay_irc_get_line_info (client, buffer,
+                                     ptr_hdata_line_data, ptr_line_data,
+                                     &irc_command,
+                                     &irc_action,
+                                     &date,
+                                     &ptr_nick,
+                                     &ptr_nick1,
+                                     &ptr_nick2,
+                                     &tags,
+                                     &host,
+                                     &message);
+            switch (irc_command)
+            {
+                case RELAY_IRC_CMD_JOIN:
+                    relay_irc_sendf (client,
+                                     "%s:%s%s%s JOIN :%s",
+                                     (tags) ? tags : "",
+                                     ptr_nick,
+                                     (host) ? "!" : "",
+                                     (host) ? host : "",
+                                     channel);
+                    break;
+                case RELAY_IRC_CMD_PART:
+                    relay_irc_sendf (client,
+                                     "%s:%s%s%s PART %s",
+                                     (tags) ? tags : "",
+                                     ptr_nick,
+                                     (host) ? "!" : "",
+                                     (host) ? host : "",
+                                     channel);
+                case RELAY_IRC_CMD_QUIT:
+                    relay_irc_sendf (client,
+                                     "%s:%s%s%s QUIT",
+                                     (tags) ? tags : "",
+                                     ptr_nick,
+                                     (host) ? "!" : "",
+                                     (host) ? host : "");
+                    break;
+                case RELAY_IRC_CMD_NICK:
+                    if (ptr_nick1 && ptr_nick2)
+                    {
+                        relay_irc_sendf (client,
+                                         "%s:%s NICK :%s",
+                                         (tags) ? tags : "",
+                                         ptr_nick1,
+                                         ptr_nick2);
+                    }
+                    break;
+                case RELAY_IRC_CMD_PRIVMSG:
+                    if (ptr_nick && message)
+                    {
+                        relay_irc_sendf (client,
+                                         "%s:%s PRIVMSG %s :%s%s%s",
+                                         (tags) ? tags : "",
+                                         ptr_nick,
+                                         channel,
+                                         (irc_action) ? "\01ACTION " : "",
+                                         message,
+                                         (irc_action) ? "\01": "");
+                    }
+                    break;
+                case RELAY_IRC_NUM_CMD:
+                    /* make C compiler happy */
+                    break;
+            }
+            if (tags)
+                free (tags);
+            if (host)
+                free (host);
+            if (message)
+                free (message);
+        }
+        ptr_line = weechat_hdata_move (ptr_hdata_line, ptr_line, 1);
+    }
+}
+
+/*
+ * Sends IRC "JOIN" for a channel to client.
  */
 
 void
@@ -506,6 +955,7 @@ relay_irc_send_join (struct t_relay_client *client,
     char *host;
     int length, length_nicks;
     struct t_infolist *infolist_nick, *infolist_channel, *infolist_nicks;
+    struct t_gui_buffer *buffer;
 
     length = strlen (client->protocol_args) + 1 + strlen (channel) + 1
         + strlen (RELAY_IRC_DATA(client, nick)) + 1;
@@ -529,6 +979,7 @@ relay_irc_send_join (struct t_relay_client *client,
             }
             weechat_infolist_free (infolist_nick);
         }
+
         relay_irc_sendf (client,
                          ":%s!%s JOIN %s",
                          RELAY_IRC_DATA(client, nick),
@@ -539,12 +990,15 @@ relay_irc_send_join (struct t_relay_client *client,
         snprintf (infolist_name, length, "%s,%s",
                   client->protocol_args,
                   channel);
+
+        buffer = NULL;
         infolist_channel = weechat_infolist_get ("irc_channel", NULL,
                                                  infolist_name);
         if (infolist_channel)
         {
             if (weechat_infolist_next (infolist_channel))
             {
+                buffer = weechat_infolist_pointer (infolist_channel, "buffer");
                 topic = weechat_infolist_string (infolist_channel, "topic");
                 if (topic && topic[0])
                 {
@@ -609,11 +1063,15 @@ relay_irc_send_join (struct t_relay_client *client,
                          RELAY_IRC_DATA(client, nick),
                          channel);
         free (infolist_name);
+
+        /* send backlog to client */
+        if (buffer)
+            relay_irc_send_channel_backlog (client, channel, buffer);
     }
 }
 
 /*
- * relay_irc_send_join_channels: send join for all channels of server to client
+ * Sends IRC "JOIN" for all channels of an IRC server to client.
  */
 
 void
@@ -639,7 +1097,7 @@ relay_irc_send_join_channels (struct t_relay_client *client)
 }
 
 /*
- * relay_irc_input_send: send text or command on an IRC buffer
+ * Sends text or command on an IRC buffer.
  */
 
 void
@@ -684,7 +1142,7 @@ relay_irc_input_send (struct t_relay_client *client, const char *irc_channel,
 }
 
 /*
- * relay_irc_hook_signals: hook signals for a client
+ * Hooks signals for a client.
  */
 
 void
@@ -731,11 +1189,104 @@ relay_irc_hook_signals (struct t_relay_client *client)
     RELAY_IRC_DATA(client, hook_hsignal_irc_redir) =
         weechat_hook_hsignal ("irc_redirection_relay_*",
                               &relay_irc_hsignal_irc_redir_cb,
-                              NULL);
+                              client);
 }
 
 /*
- * relay_irc_recv_one_msg: read one message from client
+ * Timer called to hooks signals and send joins for all channels to client.
+ */
+
+int
+relay_irc_timer_hooks_and_joins_cb (void *data, int remaining_calls)
+{
+    /* make C compiler happy */
+    (void) remaining_calls;
+
+    if (relay_client_valid (data))
+    {
+        /* hook signals */
+        relay_irc_hook_signals (data);
+
+        /* send JOIN for all channels on server to client */
+        relay_irc_send_join_channels (data);
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * Processes the "CAP" irc command (received from client)
+ */
+
+void
+relay_irc_recv_command_capab (struct t_relay_client *client,
+                              const char *arguments)
+{
+    char str_capab[1024], **capabs;
+    const char *ptr_args;
+    int i, num_capabs, capability;
+
+    if (weechat_strcasecmp (arguments, "ls") == 0)
+    {
+        /* return the list of supported server capabilities */
+        str_capab[0] = '\0';
+        for (i = 0; i < RELAY_IRC_NUM_CAPAB; i++)
+        {
+            if (str_capab[0])
+                strcat (str_capab, " ");
+            strcat (str_capab, relay_irc_server_capabilities[i]);
+            relay_irc_sendf (client,
+                             ":%s CAP %s LS :%s",
+                             RELAY_IRC_DATA(client, address),
+                             (RELAY_IRC_DATA(client, nick)) ? RELAY_IRC_DATA(client, nick) : "nick",
+                             str_capab);
+        }
+    }
+    else if (weechat_strncasecmp (arguments, "req ", 4) == 0)
+    {
+        /* client is asking for one or more server capabilities */
+        ptr_args = arguments + 4;
+        while (ptr_args[0] == ' ')
+        {
+            ptr_args++;
+        }
+        if (ptr_args[0] == ':')
+            ptr_args++;
+        capabs = weechat_string_split (ptr_args, " ", 0, 0, &num_capabs);
+        if (capabs)
+        {
+            str_capab[0] = '\0';
+            for (i = 0; i < num_capabs; i++)
+            {
+                capability = relay_irc_search_server_capability (capabs[i]);
+                if (capability >= 0)
+                {
+                    if (str_capab[0])
+                        strcat (str_capab, " ");
+                    strcat (str_capab,
+                            relay_irc_server_capabilities[capability]);
+                    RELAY_IRC_DATA(client, server_capabilities) |= 1 << capability;
+                }
+            }
+            /*
+             * if at least one supported capability was enabled, send ACK to
+             * client
+             */
+            if (str_capab[0])
+            {
+                relay_irc_sendf (client,
+                                 ":%s CAP %s ACK :%s",
+                                 RELAY_IRC_DATA(client, address),
+                                 (RELAY_IRC_DATA(client, nick)) ? RELAY_IRC_DATA(client, nick) : "nick",
+                                 str_capab);
+            }
+            weechat_string_free_split (capabs);
+        }
+    }
+}
+
+/*
+ * Reads one message from client.
  */
 
 void
@@ -782,7 +1333,10 @@ relay_irc_recv_one_msg (struct t_relay_client *client, char *data)
     if (irc_args)
         irc_argv = weechat_string_split (irc_args, " ", 0, 0, &irc_argc);
 
-    /* process the message */
+    /*
+     * first process the "nick" command (it will be processed again in this
+     * function below)
+     */
     if (irc_command && (weechat_strcasecmp (irc_command, "nick") == 0))
     {
         if (irc_args && irc_args[0])
@@ -792,6 +1346,13 @@ relay_irc_recv_one_msg (struct t_relay_client *client, char *data)
             RELAY_IRC_DATA(client, nick) = strdup (irc_args);
         }
     }
+    /* server capabilities */
+    if (irc_command && (weechat_strcasecmp (irc_command, "cap") == 0))
+    {
+        if (irc_args)
+            relay_irc_recv_command_capab (client, irc_args);
+    }
+    /* if client is not yet "connected" */
     if (!RELAY_IRC_DATA(client, connected))
     {
         if (irc_command && (weechat_strcasecmp (irc_command, "pass") == 0))
@@ -938,11 +1499,17 @@ relay_irc_recv_one_msg (struct t_relay_client *client, char *data)
                              RELAY_IRC_DATA(client, address),
                              RELAY_IRC_DATA(client, nick));
 
-            /* hook signals */
-            relay_irc_hook_signals (client);
-
-            /* send JOIN for all channels on server to client */
-            relay_irc_send_join_channels (client);
+            /*
+             * hook a timer which will hook signals and send JOIN for all
+             * channels to client (a timer is needed because we may not have
+             * received the server capabilities yet, like server-time)
+             */
+            if (RELAY_IRC_DATA(client, hook_timer_signals_joins))
+                weechat_unhook (RELAY_IRC_DATA(client, hook_timer_signals_joins));
+            RELAY_IRC_DATA(client, hook_timer_signals_joins) =
+                weechat_hook_timer (500, 0, 1,
+                                    &relay_irc_timer_hooks_and_joins_cb,
+                                    client);
         }
     }
     else
@@ -1116,7 +1683,7 @@ relay_irc_recv_one_msg (struct t_relay_client *client, char *data)
                     weechat_hashtable_set (hash_redirect, "pattern", "userhost");
                 }
                 /*
-                 * if redirection has been enabled, send the hsignel for
+                 * if redirection has been enabled, send the hsignal for
                  * redirection of IRC message
                  */
                 if (redirect_msg)
@@ -1141,7 +1708,7 @@ end:
 }
 
 /*
- * relay_irc_recv: read data from client
+ * Reads data from a client.
  */
 
 void
@@ -1162,13 +1729,19 @@ relay_irc_recv (struct t_relay_client *client, const char *data)
 }
 
 /*
- * relay_irc_close_connection: called when connection with client is closed
+ * Closes connection with client.
  */
 
 void
 relay_irc_close_connection (struct t_relay_client *client)
 {
     RELAY_IRC_DATA(client, connected) = 0;
+
+    if (RELAY_IRC_DATA(client, hook_timer_signals_joins))
+    {
+        weechat_unhook (RELAY_IRC_DATA(client, hook_timer_signals_joins));
+        RELAY_IRC_DATA(client, hook_timer_signals_joins) = NULL;
+    }
     if (RELAY_IRC_DATA(client, hook_signal_irc_in2))
     {
         weechat_unhook (RELAY_IRC_DATA(client, hook_signal_irc_in2));
@@ -1192,7 +1765,7 @@ relay_irc_close_connection (struct t_relay_client *client)
 }
 
 /*
- * relay_irc_alloc: init relay data specific to IRC protocol
+ * Initializes relay data specific to IRC protocol.
  */
 
 void
@@ -1211,6 +1784,8 @@ relay_irc_alloc (struct t_relay_client *client)
         RELAY_IRC_DATA(client, nick) = NULL;
         RELAY_IRC_DATA(client, user_received) = 0;
         RELAY_IRC_DATA(client, connected) = 0;
+        RELAY_IRC_DATA(client, server_capabilities) = 0;
+        RELAY_IRC_DATA(client, hook_timer_signals_joins) = NULL;
         RELAY_IRC_DATA(client, hook_signal_irc_in2) = NULL;
         RELAY_IRC_DATA(client, hook_signal_irc_outtags) = NULL;
         RELAY_IRC_DATA(client, hook_signal_irc_disc) = NULL;
@@ -1219,8 +1794,9 @@ relay_irc_alloc (struct t_relay_client *client)
 }
 
 /*
- * relay_irc_alloc_with_infolist: init relay data specific to IRC protocol
- *                                using an infolist
+ * Initializes relay data specific to IRC protocol using an infolist.
+ *
+ * This is called after /upgrade.
  */
 
 void
@@ -1240,6 +1816,8 @@ relay_irc_alloc_with_infolist (struct t_relay_client *client,
             RELAY_IRC_DATA(client, nick) = NULL;
         RELAY_IRC_DATA(client, user_received) = weechat_infolist_integer (infolist, "user_received");
         RELAY_IRC_DATA(client, connected) = weechat_infolist_integer (infolist, "connected");
+        RELAY_IRC_DATA(client, server_capabilities) = weechat_infolist_integer (infolist, "server_capabilities");
+        RELAY_IRC_DATA(client, hook_timer_signals_joins) = NULL;
         if (RELAY_IRC_DATA(client, connected))
         {
             relay_irc_hook_signals (client);
@@ -1255,7 +1833,7 @@ relay_irc_alloc_with_infolist (struct t_relay_client *client,
 }
 
 /*
- * relay_irc_free: free relay data specific to IRC protocol
+ * Frees relay data specific to IRC protocol.
  */
 
 void
@@ -1267,6 +1845,8 @@ relay_irc_free (struct t_relay_client *client)
             free (RELAY_IRC_DATA(client, address));
         if (RELAY_IRC_DATA(client, nick))
             free (RELAY_IRC_DATA(client, nick));
+        if (RELAY_IRC_DATA(client, hook_timer_signals_joins))
+            weechat_unhook (RELAY_IRC_DATA(client, hook_timer_signals_joins));
         if (RELAY_IRC_DATA(client, hook_signal_irc_in2))
             weechat_unhook (RELAY_IRC_DATA(client, hook_signal_irc_in2));
         if (RELAY_IRC_DATA(client, hook_signal_irc_outtags))
@@ -1283,8 +1863,11 @@ relay_irc_free (struct t_relay_client *client)
 }
 
 /*
- * relay_irc_add_to_infolist: add client irc data in an infolist item
- *                            return 1 if ok, 0 if error
+ * Adds client IRC data in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1304,6 +1887,10 @@ relay_irc_add_to_infolist (struct t_infolist_item *item,
         return 0;
     if (!weechat_infolist_new_var_integer (item, "connected", RELAY_IRC_DATA(client, connected)))
         return 0;
+    if (!weechat_infolist_new_var_integer (item, "server_capabilities", RELAY_IRC_DATA(client, server_capabilities)))
+        return 0;
+    if (!weechat_infolist_new_var_pointer (item, "hook_timer_signals_joins", RELAY_IRC_DATA(client, hook_timer_signals_joins)))
+        return 0;
     if (!weechat_infolist_new_var_pointer (item, "hook_signal_irc_in2", RELAY_IRC_DATA(client, hook_signal_irc_in2)))
         return 0;
     if (!weechat_infolist_new_var_pointer (item, "hook_signal_irc_outtags", RELAY_IRC_DATA(client, hook_signal_irc_outtags)))
@@ -1317,7 +1904,7 @@ relay_irc_add_to_infolist (struct t_infolist_item *item,
 }
 
 /*
- * relay_irc_print_log: print IRC client infos in log (usually for crash dump)
+ * Prints client IRC data in WeeChat log file (usually for crash dump).
  */
 
 void
@@ -1325,14 +1912,16 @@ relay_irc_print_log (struct t_relay_client *client)
 {
     if (client->protocol_data)
     {
-        weechat_log_printf ("    address. . . . . . . . : '%s'",  RELAY_IRC_DATA(client, address));
-        weechat_log_printf ("    password_ok. . . . . . : %d",    RELAY_IRC_DATA(client, password_ok));
-        weechat_log_printf ("    nick . . . . . . . . . : '%s'",  RELAY_IRC_DATA(client, nick));
-        weechat_log_printf ("    user_received. . . . . : %d",    RELAY_IRC_DATA(client, user_received));
-        weechat_log_printf ("    connected. . . . . . . : %d",    RELAY_IRC_DATA(client, connected));
-        weechat_log_printf ("    hook_signal_irc_in2. . : 0x%lx", RELAY_IRC_DATA(client, hook_signal_irc_in2));
-        weechat_log_printf ("    hook_signal_irc_outtags: 0x%lx", RELAY_IRC_DATA(client, hook_signal_irc_outtags));
-        weechat_log_printf ("    hook_signal_irc_disc . : 0x%lx", RELAY_IRC_DATA(client, hook_signal_irc_disc));
-        weechat_log_printf ("    hook_hsignal_irc_redir : 0x%lx", RELAY_IRC_DATA(client, hook_hsignal_irc_redir));
+        weechat_log_printf ("    address . . . . . . . . : '%s'",  RELAY_IRC_DATA(client, address));
+        weechat_log_printf ("    password_ok . . . . . . : %d",    RELAY_IRC_DATA(client, password_ok));
+        weechat_log_printf ("    nick. . . . . . . . . . : '%s'",  RELAY_IRC_DATA(client, nick));
+        weechat_log_printf ("    user_received . . . . . : %d",    RELAY_IRC_DATA(client, user_received));
+        weechat_log_printf ("    connected . . . . . . . : %d",    RELAY_IRC_DATA(client, connected));
+        weechat_log_printf ("    server_capabilities . . : %d",    RELAY_IRC_DATA(client, server_capabilities));
+        weechat_log_printf ("    hook_timer_signals_joins: 0x%lx", RELAY_IRC_DATA(client, hook_timer_signals_joins));
+        weechat_log_printf ("    hook_signal_irc_in2 . . : 0x%lx", RELAY_IRC_DATA(client, hook_signal_irc_in2));
+        weechat_log_printf ("    hook_signal_irc_outtags : 0x%lx", RELAY_IRC_DATA(client, hook_signal_irc_outtags));
+        weechat_log_printf ("    hook_signal_irc_disc. . : 0x%lx", RELAY_IRC_DATA(client, hook_signal_irc_disc));
+        weechat_log_printf ("    hook_hsignal_irc_redir. : 0x%lx", RELAY_IRC_DATA(client, hook_hsignal_irc_redir));
     }
 }

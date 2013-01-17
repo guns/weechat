@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * logger-buffer.c - logger buffer list management
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * logger-buffer.c: logger buffer list management
  */
 
 #ifdef HAVE_CONFIG_H
@@ -39,9 +37,11 @@ struct t_logger_buffer *last_logger_buffer = NULL;
 
 
 /*
- * logger_buffer_valid: check if a logger buffer pointer exists
- *                      return 1 if logger buffer exists
- *                             0 if logger buffer is not found
+ * Checks if a logger buffer pointer is valid.
+ *
+ * Returns:
+ *   1: logger buffer exists
+ *   0: logger buffer does not exist
  */
 
 int
@@ -64,7 +64,9 @@ logger_buffer_valid (struct t_logger_buffer *logger_buffer)
 }
 
 /*
- * logger_buffer_add: add a new buffer for logging
+ * Adds a new buffer for logging.
+ *
+ * Returns pointer to new logger buffer, NULL if error.
  */
 
 struct t_logger_buffer *
@@ -108,7 +110,9 @@ logger_buffer_add (struct t_gui_buffer *buffer, int log_level)
 }
 
 /*
- * logger_buffer_search_buffer: search a logger buffer by buffer pointer
+ * Searches for logger buffer by buffer pointer.
+ *
+ * Returns pointer to logger buffer found, NULL if not found.
  */
 
 struct t_logger_buffer *
@@ -128,7 +132,9 @@ logger_buffer_search_buffer (struct t_gui_buffer *buffer)
 }
 
 /*
- * logger_buffer_search_log_filename: search a logger buffer by log filename
+ * Searches for a logger buffer by log filename.
+ *
+ * Returns pointer to logger buffer found, NULL if not found.
  */
 
 struct t_logger_buffer *
@@ -154,7 +160,7 @@ logger_buffer_search_log_filename (const char *log_filename)
 }
 
 /*
- * logger_buffer_free: remove a logger buffer from list
+ * Removes a logger buffer from list.
  */
 
 void
@@ -200,8 +206,11 @@ logger_buffer_free (struct t_logger_buffer *logger_buffer)
 }
 
 /*
- * logger_buffer_add_to_infolist: add a logger buffer in an infolist
- *                                return 1 if ok, 0 if error
+ * Adds a logger buffer in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int

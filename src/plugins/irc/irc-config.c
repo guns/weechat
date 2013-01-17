@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-config.c - IRC configuration options (file irc.conf)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-config.c: IRC configuration options (file irc.conf)
  */
 
 #include <stdlib.h>
@@ -62,6 +60,8 @@ struct t_config_option *irc_config_look_new_channel_position;
 struct t_config_option *irc_config_look_new_pv_position;
 struct t_config_option *irc_config_look_nick_prefix;
 struct t_config_option *irc_config_look_nick_suffix;
+struct t_config_option *irc_config_look_nick_mode;
+struct t_config_option *irc_config_look_nick_mode_empty;
 struct t_config_option *irc_config_look_nick_color_force;
 struct t_config_option *irc_config_look_nick_color_stop_chars;
 struct t_config_option *irc_config_look_nick_completion_smart;
@@ -118,6 +118,7 @@ struct t_config_option *irc_config_color_topic_new;
 
 /* IRC config, network section */
 
+struct t_config_option *irc_config_network_alternate_nick;
 struct t_config_option *irc_config_network_autoreconnect_delay_growing;
 struct t_config_option *irc_config_network_autoreconnect_delay_max;
 struct t_config_option *irc_config_network_colors_receive;
@@ -129,6 +130,7 @@ struct t_config_option *irc_config_network_lag_refresh_interval;
 struct t_config_option *irc_config_network_notify_check_ison;
 struct t_config_option *irc_config_network_notify_check_whois;
 struct t_config_option *irc_config_network_send_unknown_commands;
+struct t_config_option *irc_config_network_whois_double_nick;
 
 /* IRC config, server section */
 
@@ -143,6 +145,10 @@ struct t_hashtable *irc_config_hashtable_color_mirc_remap = NULL;
 
 int irc_config_write_temp_servers = 0;
 
+
+/*
+ * Gets server pointer with name of option.
+ */
 
 struct t_irc_server *
 irc_config_get_server_from_option_name (const char *name)
@@ -170,8 +176,7 @@ irc_config_get_server_from_option_name (const char *name)
 }
 
 /*
- * irc_config_compute_nick_colors: compute nick colors for all servers and
- *                                 channels
+ * Computes nick colors for all servers and channels.
  */
 
 void
@@ -212,8 +217,7 @@ irc_config_compute_nick_colors ()
 }
 
 /*
- * irc_config_set_nick_colors: set nick colors using option
- *                             "weechat.color.chat_nick_colors"
+ * Sets nick colors using option "weechat.color.chat_nick_colors".
  */
 
 void
@@ -233,8 +237,7 @@ irc_config_set_nick_colors ()
 }
 
 /*
- * irc_config_change_nick_colors_cb: callback called when option
- *                                   "weechat.color.chat_nick_colors" is changed
+ * Callback for changes on option "weechat.color.chat_nick_colors".
  */
 
 int
@@ -253,9 +256,7 @@ irc_config_change_nick_colors_cb (void *data, const char *option,
 }
 
 /*
- * irc_config_change_look_color_nicks_in_nicklist: called when the
- *                                                 "color nicks in nicklist"
- *                                                 option is changed
+ * Callback for changes on option "irc.look.color_nicks_in_nicklist".
  */
 
 void
@@ -270,8 +271,7 @@ irc_config_change_look_color_nicks_in_nicklist (void *data,
 }
 
 /*
- * irc_config_change_look_server_buffer: called when the "one server buffer"
- *                                       option is changed
+ * Callback for changes on option "irc.look.server_buffer".
  */
 
 void
@@ -317,8 +317,7 @@ irc_config_change_look_server_buffer (void *data,
 }
 
 /*
- * irc_config_change_look_item_away_message: called when the "item
- *                                           away message" option is changed
+ * Callback for changes on option "irc.look.item_away_message".
  */
 
 void
@@ -333,10 +332,7 @@ irc_config_change_look_item_away_message (void *data,
 }
 
 /*
- * irc_config_change_look_item_channel_modes_hide_key: called when the
- *                                                     "display channel modes
- *                                                     hide key" option is
- *                                                     changed
+ * Callback for changes on option "irc.look.item_channel_modes_hide_key".
  */
 
 void
@@ -351,8 +347,7 @@ irc_config_change_look_item_channel_modes_hide_key (void *data,
 }
 
 /*
- * irc_config_change_look_item_nick_modes: called when the "display nick modes"
- *                                         option is changed
+ * Callback for changes on option "irc.look.item_nick_modes".
  */
 
 void
@@ -367,8 +362,7 @@ irc_config_change_look_item_nick_modes (void *data,
 }
 
 /*
- * irc_config_change_look_item_nick_prefix: called when the "display nick
- *                                          prefix" option is changed
+ * Callback for changes on option "irc.look.item_nick_prefix".
  */
 
 void
@@ -383,8 +377,7 @@ irc_config_change_look_item_nick_prefix (void *data,
 }
 
 /*
- * irc_config_change_look_highlight_tags: called when the "highlight tags"
- *                                        option is changed
+ * Callback for changes on option "irc.look.highlight_tags".
  */
 
 void
@@ -419,8 +412,7 @@ irc_config_change_look_highlight_tags (void *data,
 }
 
 /*
- * irc_config_change_look_nick_color_force: called when the "nick color force"
- *                                          option is changed
+ * Callback for changes on option "irc.look.nick_color_force".
  */
 
 void
@@ -467,8 +459,7 @@ irc_config_change_look_nick_color_force (void *data,
 }
 
 /*
- * irc_config_change_look_nick_color_stop_chars: called when the "nick color
- *                                               stop chars" option is changed
+ * Callback for changes on option "irc.look.nick_color_stop_chars".
  */
 
 void
@@ -483,9 +474,7 @@ irc_config_change_look_nick_color_stop_chars (void *data,
 }
 
 /*
- * irc_config_change_look_item_display_server: called when the
- *                                             "item_display_server" option is
- *                                             changed
+ * Callback for changes on option "irc.look.item_display_server".
  */
 
 void
@@ -501,8 +490,7 @@ irc_config_change_look_item_display_server (void *data,
 }
 
 /*
- * irc_config_change_look_topic_strip_colors: called when the "topic strip colors"
- *                                            option is changed
+ * Callback for changes on option "irc.look.topic_strip_colors".
  */
 
 void
@@ -517,8 +505,7 @@ irc_config_change_look_topic_strip_colors (void *data,
 }
 
 /*
- * irc_config_change_color_input_nick: called when the color of input nick is
- *                                     changed
+ * Callback for changes on option "irc.color.input_nick".
  */
 
 void
@@ -533,8 +520,7 @@ irc_config_change_color_input_nick (void *data,
 }
 
 /*
- * irc_config_change_color_item_away: called when the color of away item is
- *                                    changed
+ * Callback for changes on option "irc.color.item_away".
  */
 
 void
@@ -549,13 +535,12 @@ irc_config_change_color_item_away (void *data,
 }
 
 /*
- * irc_config_change_color_item_buffer_modes: called when the color of buffer
- *                                            modes is changed
+ * Callback for changes on option "irc.color.item_channel_modes".
  */
 
 void
-irc_config_change_color_item_buffer_modes (void *data,
-                                           struct t_config_option *option)
+irc_config_change_color_item_channel_modes (void *data,
+                                            struct t_config_option *option)
 {
     /* make C compiler happy */
     (void) data;
@@ -565,8 +550,8 @@ irc_config_change_color_item_buffer_modes (void *data,
 }
 
 /*
- * irc_config_change_color_item_lag: called when the color of lag item is
- *                                   changed
+ * Callback for changes on options "irc.color.item_lag_counting" and
+ * "irc.color.item_lag_finished".
  */
 
 void
@@ -581,8 +566,7 @@ irc_config_change_color_item_lag (void *data,
 }
 
 /*
- * irc_config_change_color_mirc_remap: called when the "mirc remap" option is
- *                                     changed
+ * Callback for changes on option "irc.color.mirc_remap".
  */
 
 void
@@ -626,8 +610,7 @@ irc_config_change_color_mirc_remap (void *data, struct t_config_option *option)
 }
 
 /*
- * irc_config_change_color_nick_prefixes: called when the string with color of
- *                                        nick prefixes is changed
+ * Callback for changes on option "irc.color.nick_prefixes".
  */
 
 void
@@ -677,7 +660,7 @@ irc_config_change_color_nick_prefixes (void *data,
 }
 
 /*
- * irc_config_change_network_lag_check: called when lag check is changed
+ * Callback for changes on option "irc.network.lag_check".
  */
 
 void
@@ -703,7 +686,7 @@ irc_config_change_network_lag_check (void *data,
 }
 
 /*
- * irc_config_change_network_lag_min_show: called when lag min show is changed
+ * Callback for changes on option "irc.network.lag_min_show".
  */
 
 void
@@ -718,8 +701,7 @@ irc_config_change_network_lag_min_show (void *data,
 }
 
 /*
- * irc_config_change_network_notify_check_ison: called when notify check ison
- *                                              is changed
+ * Callback for changes on option "irc.network.notify_check_ison".
  */
 
 void
@@ -734,8 +716,7 @@ irc_config_change_network_notify_check_ison (void *data,
 }
 
 /*
- * irc_config_change_network_notify_check_whois: called when notify check whois
- *                                               is changed
+ * Callback for changes on option "irc.network.notify_check_whois".
  */
 
 void
@@ -750,8 +731,7 @@ irc_config_change_network_notify_check_whois (void *data,
 }
 
 /*
- * irc_config_change_network_send_unknown_commands: called when "send_unknown_commands"
- *                                                  is changed
+ * Callback for changes on option "irc.network.send_unknown_commands".
  */
 
 void
@@ -796,8 +776,7 @@ irc_config_change_network_send_unknown_commands (void *data,
 }
 
 /*
- * irc_config_server_default_change_cb: callback called when a default server
- *                                      option is modified
+ * Callback called when a default server option is modified.
  */
 
 void
@@ -843,9 +822,9 @@ irc_config_server_default_change_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * irc_config_check_gnutls_priorities: check string with GnuTLS priorities
- *                                     return NULL if ok, or pointer to char
- *                                     with error in string
+ * Checks string with GnuTLS priorities.
+ *
+ * Returns NULL if OK, or pointer to char with error in string.
  */
 
 const char *
@@ -874,8 +853,7 @@ irc_config_check_gnutls_priorities (const char *priorities)
 }
 
 /*
- * irc_config_server_check_value_cb: callback called to check a server option
- *                                   when it is modified
+ * Callback called to check a server option when it is modified.
  */
 
 int
@@ -913,7 +891,7 @@ irc_config_server_check_value_cb (void *data,
 }
 
 /*
- * irc_config_server_change_cb: callback called when a server option is modified
+ * Callback called when a server option is modified.
  */
 
 void
@@ -958,11 +936,15 @@ irc_config_server_change_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * irc_config_server_default_check_notify: calback called when "notify" option
- *                                         from "server_default" section is
- *                                         changed: return 0 if a value is set
- *                                         This option is not used, only values
- *                                         in servers are used for notify.
+ * Callback called when "notify" option from "server_default" section is
+ * changed.
+ *
+ * This function is used to reject any value in the option (this option is not
+ * used, only values in servers are used for notify).
+ *
+ * Returns:
+ *   1: value is not set
+ *   0: value is set
  */
 
 int
@@ -981,7 +963,7 @@ irc_config_server_default_check_notify (void *data,
 }
 
 /*
- * irc_config_reload: reload IRC configuration file
+ * Reloads IRC configuration file.
  */
 
 int
@@ -1037,7 +1019,7 @@ irc_config_reload (void *data, struct t_config_file *config_file)
 }
 
 /*
- * irc_config_msgbuffer_create_option: set a message target buffer
+ * Sets a message target buffer.
  */
 
 int
@@ -1099,7 +1081,7 @@ irc_config_msgbuffer_create_option (void *data,
 }
 
 /*
- * irc_config_ctcp_create_option: set a ctcp reply format
+ * Sets a ctcp reply format.
  */
 
 int
@@ -1178,8 +1160,11 @@ irc_config_ctcp_create_option (void *data, struct t_config_file *config_file,
 }
 
 /*
- * irc_config_ignore_read_cb: read ignore option from configuration file
- *                            return 1 if ok, 0 if error
+ * Reads ignore option from configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1217,7 +1202,7 @@ irc_config_ignore_read_cb (void *data,
 }
 
 /*
- * irc_config_ignore_write_cb: write ignore section in configuration file
+ * Writes ignore section in IRC configuration file.
  */
 
 int
@@ -1248,8 +1233,7 @@ irc_config_ignore_write_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * irc_config_server_write_default_cb: write default server section in
- *                                     configuration file
+ * Writes default server section in IRC configuration file.
  */
 
 int
@@ -1292,7 +1276,9 @@ irc_config_server_write_default_cb (void *data,
 }
 
 /*
- * irc_config_server_new_option: create a new option for a server
+ * Creates a new option for a server.
+ *
+ * Returns pointer to new option, NULL if error.
  */
 
 struct t_config_option *
@@ -1345,7 +1331,8 @@ irc_config_server_new_option (struct t_config_file *config_file,
             new_option = weechat_config_new_option (
                 config_file, section,
                 option_name, "boolean",
-                N_("use IPv6 protocol for server communication"),
+                N_("use IPv6 protocol for server communication (try IPv6 then "
+                   "fallback to IPv4); if disabled, only IPv4 is used"),
                 NULL, 0, 0,
                 default_value, value,
                 null_value_allowed,
@@ -1626,7 +1613,10 @@ irc_config_server_new_option (struct t_config_file *config_file,
             new_option = weechat_config_new_option (
                 config_file, section,
                 option_name, "boolean",
-                N_("automatically rejoin channels after kick"),
+                N_("automatically rejoin channels after kick; you can define "
+                   "a buffer local variable on a channel to override this "
+                   "value (name of variable: \"autorejoin\", value: \"on\" or "
+                   "\"off\")"),
                 NULL, 0, 0,
                 default_value, value,
                 null_value_allowed,
@@ -1764,7 +1754,7 @@ irc_config_server_new_option (struct t_config_file *config_file,
 }
 
 /*
- * irc_config_server_read_cb: read server option in configuration file
+ * Reads server option in IRC configuration file.
  */
 
 int
@@ -1840,7 +1830,7 @@ irc_config_server_read_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * irc_config_server_write_cb: write server section in configuration file
+ * Writes server section in IRC configuration file.
  */
 
 int
@@ -1874,7 +1864,7 @@ irc_config_server_write_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * irc_config_server_create_default_options: create default options for servers
+ * Creates default options for servers.
  */
 
 void
@@ -1952,8 +1942,11 @@ irc_config_server_create_default_options (struct t_config_section *section)
 }
 
 /*
- * irc_config_init: init IRC configuration file
- *                  return: 1 if ok, 0 if error
+ * Initializes IRC configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -2074,6 +2067,21 @@ irc_config_init ()
         "nick_suffix", "string",
         N_("text to display after nick in chat window"),
         NULL, 0, 0, "", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    irc_config_look_nick_mode = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "nick_mode", "integer",
+        N_("display nick mode (op, voice, ...) before nick (none = never, "
+           "prefix = in prefix only (default), action = in action messages "
+           "only, both = prefix + action messages)"),
+        "none|prefix|action|both", 0, 0, "prefix",
+        NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    irc_config_look_nick_mode_empty = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "nick_mode_empty", "boolean",
+        N_("display a space if nick mode is enabled but nick has no mode (not "
+           "op, voice, ...)"),
+        NULL, 0, 0, "off", NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, NULL);
     irc_config_look_nick_color_force = weechat_config_new_option (
         irc_config_file, ptr_section,
         "nick_color_force", "string",
@@ -2407,7 +2415,7 @@ irc_config_init ()
         "item_channel_modes", "color",
         N_("color for channel modes, near channel name"),
         NULL, -1, 0, "default", NULL, 0, NULL, NULL,
-        &irc_config_change_color_item_buffer_modes, NULL, NULL, NULL);
+        &irc_config_change_color_item_channel_modes, NULL, NULL, NULL);
     irc_config_color_item_lag_counting = weechat_config_new_option (
         irc_config_file, ptr_section,
         "item_lag_counting", "color",
@@ -2452,6 +2460,14 @@ irc_config_init ()
         return 0;
     }
 
+    irc_config_network_alternate_nick = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "alternate_nick", "boolean",
+        N_("get an alternate nick when the nick is already used on server: add "
+           "some \"_\" until the nick has a length of 9, and then replace last "
+           "char (or the two last chars) by a number from 1 to 99, until we "
+           "find a nick not used on server"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_network_autoreconnect_delay_growing = weechat_config_new_option (
         irc_config_file, ptr_section,
         "autoreconnect_delay_growing", "integer",
@@ -2502,12 +2518,6 @@ irc_config_init ()
         N_("interval between two refreshs of lag item, when lag is increasing "
            "(in seconds)"),
         NULL, 1, 3600, "1", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    irc_config_network_send_unknown_commands = weechat_config_new_option (
-        irc_config_file, ptr_section,
-        "send_unknown_commands", "boolean",
-        N_("send unknown commands to server"),
-        NULL, 0, 0, "off", NULL, 0, NULL, NULL,
-        &irc_config_change_network_send_unknown_commands, NULL, NULL, NULL);
     irc_config_network_notify_check_ison = weechat_config_new_option (
         irc_config_file, ptr_section,
         "notify_check_ison", "integer",
@@ -2522,6 +2532,19 @@ irc_config_init ()
            "(in minutes)"),
         NULL, 1, 60 * 24 * 7, "5", NULL, 0, NULL, NULL,
         &irc_config_change_network_notify_check_whois, NULL, NULL, NULL);
+    irc_config_network_send_unknown_commands = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "send_unknown_commands", "boolean",
+        N_("send unknown commands to server"),
+        NULL, 0, 0, "off", NULL, 0, NULL, NULL,
+        &irc_config_change_network_send_unknown_commands, NULL, NULL, NULL);
+    irc_config_network_whois_double_nick = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "whois_double_nick", "boolean",
+        N_("double the nick in /whois command (if only one nick is given), to "
+           "get idle time in answer; for example: \"/whois nick\" will send "
+           "\"whois nick nick\""),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
 
     /* msgbuffer */
     ptr_section = weechat_config_new_section (irc_config_file, "msgbuffer",
@@ -2601,7 +2624,7 @@ irc_config_init ()
 }
 
 /*
- * irc_config_read: read IRC configuration file
+ * Reads IRC configuration file.
  */
 
 int
@@ -2623,7 +2646,7 @@ irc_config_read ()
 }
 
 /*
- * irc_config_write: write IRC configuration file
+ * Writes IRC configuration file.
  */
 
 int
@@ -2635,7 +2658,7 @@ irc_config_write (int write_temp_servers)
 }
 
 /*
- * irc_config_free: free IRC configuration
+ * Frees IRC configuration.
  */
 
 void

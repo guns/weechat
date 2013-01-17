@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-command.c - WeeChat core commands
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-command.c: WeeChat core commands
  */
 
 #ifdef HAVE_CONFIG_H
@@ -39,6 +37,7 @@
 #include "wee-config.h"
 #include "wee-config-file.h"
 #include "wee-debug.h"
+#include "wee-eval.h"
 #include "wee-hashtable.h"
 #include "wee-hdata.h"
 #include "wee-hook.h"
@@ -50,6 +49,7 @@
 #include "wee-upgrade.h"
 #include "wee-utf8.h"
 #include "wee-util.h"
+#include "wee-version.h"
 #include "../gui/gui-bar.h"
 #include "../gui/gui-bar-item.h"
 #include "../gui/gui-buffer.h"
@@ -70,13 +70,17 @@
 
 
 /*
- * command_away: toggle away status
+ * Callback for command "/away".
+ *
+ * The command /away in core does nothing, so this function is empty.
+ * Plugins that need /away command can use hook_command_run() to do something
+ * when user issues the /away command.
  */
 
 COMMAND_EMPTY(away)
 
 /*
- * command_bar_list: list bars
+ * Displays a list of bars.
  */
 
 void
@@ -150,7 +154,7 @@ command_bar_list (int full)
 }
 
 /*
- * command_bar: manage bars
+ * Callback for command "/bar": manages bars.
  */
 
 COMMAND_CALLBACK(bar)
@@ -465,7 +469,7 @@ COMMAND_CALLBACK(bar)
 }
 
 /*
- * command_buffer_display_localvar: display local variable for a buffer
+ * Displays a local variable for a buffer.
  */
 
 void
@@ -496,7 +500,7 @@ command_buffer_display_localvar (void *data,
 }
 
 /*
- * command_buffer: manage buffers
+ * Callback for command "/buffer": manages buffers.
  */
 
 COMMAND_CALLBACK(buffer)
@@ -1025,7 +1029,8 @@ COMMAND_CALLBACK(buffer)
 }
 
 /*
- * command_color: define custom colors and display palette of colors
+ * Callback for command "/color": defines custom colors and displays palette of
+ * colors.
  */
 
 COMMAND_CALLBACK(color)
@@ -1169,7 +1174,7 @@ COMMAND_CALLBACK(color)
 }
 
 /*
- * command_command: launch explicit WeeChat or plugin command
+ * Callback for command "/command": launches explicit WeeChat or plugin command.
  */
 
 COMMAND_CALLBACK(command)
@@ -1216,7 +1221,7 @@ COMMAND_CALLBACK(command)
 }
 
 /*
- * command_cursor: free movement of cursor on screen
+ * Callback for command "/cursor": free movement of cursor on screen.
  */
 
 COMMAND_CALLBACK(cursor)
@@ -1300,7 +1305,7 @@ COMMAND_CALLBACK(cursor)
 }
 
 /*
- * command_debug: control debug for core/plugins
+ * Callback for command "/debug": controls debug for core/plugins.
  */
 
 COMMAND_CALLBACK(debug)
@@ -1444,7 +1449,85 @@ COMMAND_CALLBACK(debug)
 }
 
 /*
- * command_filter_display: display one filter
+ * Callback for command "/eval": evaluates an expression and sends result to
+ * buffer.
+ */
+
+COMMAND_CALLBACK(eval)
+{
+    int print_only, i;
+    char *result, *ptr_args, **commands;
+
+    /* make C compiler happy */
+    (void) buffer;
+    (void) data;
+    (void) argv;
+
+    print_only = 0;
+
+    if (argc < 2)
+        return WEECHAT_RC_OK;
+
+    ptr_args = argv_eol[1];
+    if (string_strcasecmp (argv[1], "-n") == 0)
+    {
+        print_only = 1;
+        ptr_args = argv_eol[2];
+    }
+
+    if (ptr_args)
+    {
+        result = eval_expression (ptr_args, NULL, NULL);
+        if (print_only)
+        {
+            gui_chat_printf_date_tags (NULL, 0, "no_log", ">> %s", ptr_args);
+            if (result)
+            {
+                gui_chat_printf_date_tags (NULL, 0, "no_log", "== %s[%s%s%s]",
+                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
+                                           GUI_COLOR(GUI_COLOR_CHAT),
+                                           result,
+                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
+            }
+            else
+            {
+                gui_chat_printf_date_tags (NULL, 0, "no_log", "== %s<%s%s%s>",
+                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
+                                           GUI_COLOR(GUI_COLOR_CHAT),
+                                           _("error"),
+                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
+            }
+        }
+        else
+        {
+            if (result)
+            {
+                commands = string_split_command (result, ';');
+                if (commands)
+                {
+                    for (i = 0; commands[i]; i++)
+                    {
+                        input_data (buffer, commands[i]);
+                    }
+                    string_free_split_command (commands);
+                }
+            }
+            else
+            {
+                gui_chat_printf (NULL,
+                                 _("%sError in expression to evaluate"),
+                                 gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+            }
+        }
+        if (result)
+            free (result);
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * Displays one filter.
  */
 
 void
@@ -1468,7 +1551,7 @@ command_filter_display (struct t_gui_filter *filter)
 }
 
 /*
- * command_filter: manage message filters
+ * Callback for command "/filter": manages message filters.
  */
 
 COMMAND_CALLBACK(filter)
@@ -1749,8 +1832,7 @@ COMMAND_CALLBACK(filter)
 }
 
 /*
- * command_help_list_plugin_commands: display help for commands of a plugin
- *                                    (or core commands if plugin is NULL)
+ * Displays help for commands of a plugin (or core commands if plugin is NULL).
  */
 
 void
@@ -1871,7 +1953,7 @@ command_help_list_plugin_commands (struct t_weechat_plugin *plugin,
 }
 
 /*
- * command_help_list_commands: display help for commands
+ * Displays help for commands.
  */
 
 void
@@ -1891,7 +1973,7 @@ command_help_list_commands (int verbose)
 }
 
 /*
- * command_help: display help about commands
+ * Callback for command "/help": displays help about commands and options.
  */
 
 COMMAND_CALLBACK(help)
@@ -1946,6 +2028,7 @@ COMMAND_CALLBACK(help)
             command_found = 1;
             gui_chat_printf (NULL, "");
             length = utf8_strlen_screen (plugin_get_name (ptr_hook->plugin)) +
+                ((ptr_hook->subplugin && ptr_hook->subplugin[0]) ? utf8_strlen_screen (ptr_hook->subplugin) + 1 : 0) +
                 utf8_strlen_screen (HOOK_COMMAND(ptr_hook, command)) + 7;
             snprintf (str_format, sizeof (str_format),
                       "%%-%ds%%s", length);
@@ -2092,9 +2175,9 @@ COMMAND_CALLBACK(help)
                         i = 0;
                         while (ptr_option->string_values[i])
                         {
-                            strcat (string, "'");
+                            strcat (string, "\"");
                             strcat (string, ptr_option->string_values[i]);
-                            strcat (string, "'");
+                            strcat (string, "\"");
                             if (ptr_option->string_values[i + 1])
                                 strcat (string, ", ");
                             i++;
@@ -2280,7 +2363,7 @@ COMMAND_CALLBACK(help)
 }
 
 /*
- * command_history: display current buffer history
+ * Callback for command "/history": displays command history for current buffer.
  */
 
 COMMAND_CALLBACK(history)
@@ -2335,7 +2418,7 @@ COMMAND_CALLBACK(history)
 }
 
 /*
- * command_input: input actions (used by key bindings)
+ * Callback for command "/input": input actions (used by key bindings).
  */
 
 COMMAND_CALLBACK(input)
@@ -2425,6 +2508,8 @@ COMMAND_CALLBACK(input)
             gui_input_set_unread_current (buffer);
         else if (string_strcasecmp (argv[1], "switch_active_buffer") == 0)
             gui_input_switch_active_buffer (buffer);
+        else if (string_strcasecmp (argv[1], "zoom_merged_buffer") == 0)
+            gui_input_zoom_merged_buffer (buffer);
         else if (string_strcasecmp (argv[1], "switch_active_buffer_previous") == 0)
             gui_input_switch_active_buffer_previous (buffer);
         else if (string_strcasecmp (argv[1], "insert") == 0)
@@ -2450,7 +2535,7 @@ COMMAND_CALLBACK(input)
 }
 
 /*
- * command_key_display: display a key binding
+ * Displays a key binding.
  */
 
 void
@@ -2487,7 +2572,7 @@ command_key_display (struct t_gui_key *key, struct t_gui_key *default_key)
 }
 
 /*
- * command_key_display_list: display a list of keys
+ * Displays a list of keys.
  */
 
 void
@@ -2515,8 +2600,8 @@ command_key_display_list (const char *message_no_key,
 }
 
 /*
- * command_key_display_listdiff: list differences between default and current
- *                               keys (keys added, redefined or removed)
+ * Displays differences between default and current keys (keys added, redefined
+ * or removed).
  */
 
 void
@@ -2598,7 +2683,7 @@ command_key_display_listdiff (int context)
 }
 
 /*
- * command_key_reset: reset a key for a given context
+ * Resets a key for a given context.
  */
 
 int
@@ -2687,7 +2772,7 @@ command_key_reset (int context, const char *key)
 }
 
 /*
- * command_key: bind/unbind keys
+ * Callback for command "/key": binds/unbinds keys.
  */
 
 COMMAND_CALLBACK(key)
@@ -2996,7 +3081,7 @@ COMMAND_CALLBACK(key)
 }
 
 /*
- * command_layout_display_tree: display tree of windows
+ * Displays a tree of windows.
  */
 
 void
@@ -3054,7 +3139,7 @@ command_layout_display_tree (struct t_gui_layout_window *layout_window,
 }
 
 /*
- * command_layout: save/apply buffers/windows layout
+ * Callback for command "/layout": saves/applies buffers/windows layout.
  */
 
 COMMAND_CALLBACK(layout)
@@ -3164,7 +3249,7 @@ COMMAND_CALLBACK(layout)
 }
 
 /*
- * command_mouse_timer_cb: callback for mouse timer
+ * Callback for mouse timer.
  */
 
 int
@@ -3189,7 +3274,7 @@ command_mouse_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * command_mouse_timer: timer for toggling mouse
+ * Timer for toggling mouse.
  */
 
 void
@@ -3207,7 +3292,7 @@ command_mouse_timer (const char *delay)
 }
 
 /*
- * command_mouse: mouse control
+ * Callback for command "/mouse": controls mouse.
  */
 
 COMMAND_CALLBACK(mouse)
@@ -3275,7 +3360,7 @@ COMMAND_CALLBACK(mouse)
 }
 
 /*
- * command_mute: execute a command mute
+ * Callback for command "/mute": silently executes a command.
  */
 
 COMMAND_CALLBACK(mute)
@@ -3344,7 +3429,7 @@ COMMAND_CALLBACK(mute)
 }
 
 /*
- * command_plugin_list: list loaded plugins
+ * Displays a list of loaded plugins.
  */
 
 void
@@ -3565,7 +3650,7 @@ command_plugin_list (const char *name, int full)
                     }
                 }
 
-                /* config options hooked */
+                /* configuration options hooked */
                 hook_found = 0;
                 for (ptr_hook = weechat_hooks[HOOK_TYPE_CONFIG]; ptr_hook;
                      ptr_hook = ptr_hook->next_hook)
@@ -3640,7 +3725,7 @@ command_plugin_list (const char *name, int full)
 }
 
 /*
- * command_plugin: list/load/unload WeeChat plugins
+ * Callback for command "/plugin": lists/loads/unloads WeeChat plugins.
  */
 
 COMMAND_CALLBACK(plugin)
@@ -3755,7 +3840,7 @@ COMMAND_CALLBACK(plugin)
 }
 
 /*
- * command_proxy_list: list proxies
+ * Displays a list of proxies.
  */
 
 void
@@ -3793,7 +3878,7 @@ command_proxy_list ()
 }
 
 /*
- * command_proxy: manage proxies
+ * Callback for command "/proxy": manages proxies.
  */
 
 COMMAND_CALLBACK(proxy)
@@ -3925,7 +4010,7 @@ COMMAND_CALLBACK(proxy)
 }
 
 /*
- * command_quit: quit WeeChat
+ * Callback for command "/quit": quits WeeChat.
  */
 
 COMMAND_CALLBACK(quit)
@@ -3974,7 +4059,7 @@ COMMAND_CALLBACK(quit)
 }
 
 /*
- * command_reload_file: reload a configuration file
+ * Reloads a configuration file.
  */
 
 void
@@ -4004,7 +4089,7 @@ command_reload_file (struct t_config_file *config_file)
 }
 
 /*
- * command_reload: reload WeeChat and plugins options from disk
+ * Callback for command "/reload": reloads a configuration file.
  */
 
 COMMAND_CALLBACK(reload)
@@ -4047,7 +4132,7 @@ COMMAND_CALLBACK(reload)
 }
 
 /*
- * command_repeat_timer_cb: callback for repeat timer
+ * Callback for repeat timer.
  */
 
 int
@@ -4088,7 +4173,7 @@ command_repeat_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * command_repeat: execute a command several times
+ * Callback for command "/repeat": executes a command several times.
  */
 
 COMMAND_CALLBACK(repeat)
@@ -4174,7 +4259,7 @@ COMMAND_CALLBACK(repeat)
 }
 
 /*
- * command_save_file: save a configuration file to disk
+ * Saves a configuration file to disk.
  */
 
 void
@@ -4196,7 +4281,7 @@ command_save_file (struct t_config_file *config_file)
 }
 
 /*
- * command_save: save configuration files to disk
+ * Callback for command "/save": saves configuration files to disk.
  */
 
 COMMAND_CALLBACK(save)
@@ -4241,7 +4326,7 @@ COMMAND_CALLBACK(save)
 }
 
 /*
- * command_set_display_section: display configuration section
+ * Displays a configuration section.
  */
 
 void
@@ -4259,7 +4344,7 @@ command_set_display_section (struct t_config_file *config_file,
 }
 
 /*
- * command_set_display_option: display configuration option
+ * Displays a configuration option.
  */
 
 void
@@ -4267,52 +4352,113 @@ command_set_display_option (struct t_config_option *option,
                             const char *message)
 {
     const char *color_name;
+    const char *display_undefined = _("(undefined)");
+    const char *display_default;
+    char str_default[128];
+    int is_file_plugins_conf;
+
+    display_default = NULL;
+    is_file_plugins_conf = (option->config_file && option->config_file->name
+                            && (strcmp (option->config_file->name, "plugins") == 0));
 
     if (option->value)
     {
+        if (!is_file_plugins_conf && !option->default_value)
+        {
+            display_default = display_undefined;
+        }
         switch (option->type)
         {
             case CONFIG_OPTION_TYPE_BOOLEAN:
+                if (!is_file_plugins_conf && option->default_value
+                    && (CONFIG_BOOLEAN(option) != CONFIG_BOOLEAN_DEFAULT(option)))
+                {
+                    snprintf (str_default, sizeof (str_default), "%s",
+                              (CONFIG_BOOLEAN_DEFAULT(option)) ? "on" : "off");
+                    display_default = str_default;
+                }
                 gui_chat_printf_date_tags (NULL, 0, GUI_CHAT_TAG_NO_HIGHLIGHT,
-                                           "%s%s.%s.%s%s = %s%s",
+                                           "%s%s.%s.%s%s = %s%s%s%s%s%s%s%s%s%s",
                                            (message) ? message : "  ",
                                            option->config_file->name,
                                            option->section->name,
                                            option->name,
                                            GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                            GUI_COLOR(GUI_COLOR_CHAT_VALUE),
-                                           (CONFIG_BOOLEAN(option) == CONFIG_BOOLEAN_TRUE) ?
-                                           "on" : "off");
+                                           (CONFIG_BOOLEAN(option) == CONFIG_BOOLEAN_TRUE) ? "on" : "off",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) ? "  (" : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT) : "",
+                                           (display_default) ? _("default: ") : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_VALUE) : "",
+                                           (display_default) ? display_default : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) ? ")" : "");
                 break;
             case CONFIG_OPTION_TYPE_INTEGER:
+                if (!is_file_plugins_conf && option->default_value
+                    && (CONFIG_INTEGER(option) != CONFIG_INTEGER_DEFAULT(option)))
+                {
+                    if (option->string_values)
+                    {
+                        display_default = option->string_values[CONFIG_INTEGER_DEFAULT(option)];
+                    }
+                    else
+                    {
+                        snprintf (str_default, sizeof (str_default),
+                                  "%d", CONFIG_INTEGER_DEFAULT(option));
+                        display_default = str_default;
+                    }
+                }
                 if (option->string_values)
                 {
                     gui_chat_printf_date_tags (NULL, 0, GUI_CHAT_TAG_NO_HIGHLIGHT,
-                                               "%s%s.%s.%s%s = %s%s",
+                                               "%s%s.%s.%s%s = %s%s%s%s%s%s%s%s%s%s",
                                                (message) ? message : "  ",
                                                option->config_file->name,
                                                option->section->name,
                                                option->name,
                                                GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                                GUI_COLOR(GUI_COLOR_CHAT_VALUE),
-                                               option->string_values[CONFIG_INTEGER(option)]);
+                                               option->string_values[CONFIG_INTEGER(option)],
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                               (display_default) ? "  (" : "",
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT) : "",
+                                               (display_default) ? _("default: ") : "",
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_VALUE) : "",
+                                               (display_default) ? display_default : "",
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                               (display_default) ? ")" : "");
                 }
                 else
                 {
                     gui_chat_printf_date_tags (NULL, 0, GUI_CHAT_TAG_NO_HIGHLIGHT,
-                                               "%s%s.%s.%s%s = %s%d",
+                                               "%s%s.%s.%s%s = %s%d%s%s%s%s%s%s%s%s",
                                                (message) ? message : "  ",
                                                option->config_file->name,
                                                option->section->name,
                                                option->name,
                                                GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                                GUI_COLOR(GUI_COLOR_CHAT_VALUE),
-                                               CONFIG_INTEGER(option));
+                                               CONFIG_INTEGER(option),
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                               (display_default) ? "  (" : "",
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT) : "",
+                                               (display_default) ? _("default: ") : "",
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_VALUE) : "",
+                                               (display_default) ? display_default : "",
+                                               (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                               (display_default) ? ")" : "");
                 }
                 break;
             case CONFIG_OPTION_TYPE_STRING:
+                if (!is_file_plugins_conf && option->default_value
+                    && (strcmp (CONFIG_STRING(option), CONFIG_STRING_DEFAULT(option)) != 0))
+                {
+                    display_default = CONFIG_STRING_DEFAULT(option);
+                }
                 gui_chat_printf_date_tags (NULL, 0, GUI_CHAT_TAG_NO_HIGHLIGHT,
-                                           "%s%s.%s.%s%s = \"%s%s%s\"",
+                                           "%s%s.%s.%s%s = \"%s%s%s\"%s%s%s%s%s%s%s%s%s%s%s",
                                            (message) ? message : "  ",
                                            option->config_file->name,
                                            option->section->name,
@@ -4320,19 +4466,47 @@ command_set_display_option (struct t_config_option *option,
                                            GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                            GUI_COLOR(GUI_COLOR_CHAT_VALUE),
                                            CONFIG_STRING(option),
-                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
+                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) ? "  (" : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT) : "",
+                                           (display_default) ? _("default: ") : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) && display_default != display_undefined ? "\"" : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_VALUE) : "",
+                                           (display_default) ? display_default : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) && display_default != display_undefined ? "\"" : "",
+                                           (display_default) ? ")" : "");
                 break;
             case CONFIG_OPTION_TYPE_COLOR:
+                if (!is_file_plugins_conf && option->default_value
+                    && (CONFIG_COLOR(option) != CONFIG_COLOR_DEFAULT(option)))
+                {
+                    display_default = gui_color_get_name (CONFIG_COLOR_DEFAULT(option));
+                    if (display_default == NULL)
+                    {
+                        display_default = _("(unknown)");
+                    }
+                }
                 color_name = gui_color_get_name (CONFIG_COLOR(option));
                 gui_chat_printf_date_tags (NULL, 0, GUI_CHAT_TAG_NO_HIGHLIGHT,
-                                           "%s%s.%s.%s%s = %s%s",
+                                           "%s%s.%s.%s%s = %s%s%s%s%s%s%s%s%s%s",
                                            (message) ? message : "  ",
                                            option->config_file->name,
                                            option->section->name,
                                            option->name,
                                            GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                                            GUI_COLOR(GUI_COLOR_CHAT_VALUE),
-                                           (color_name) ? color_name : _("(unknown)"));
+                                           (color_name) ? color_name : _("(unknown)"),
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) ? "  (" : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT) : "",
+                                           (display_default) ? _("default: ") : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_VALUE) : "",
+                                           (display_default) ? display_default : "",
+                                           (display_default) ? GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS) : "",
+                                           (display_default) ? ")" : "");
                 break;
             case CONFIG_NUM_OPTION_TYPES:
                 /* make C compiler happy */
@@ -4351,12 +4525,14 @@ command_set_display_option (struct t_config_option *option,
 }
 
 /*
- * command_set_display_option_list: display list of options
- *                                  return: number of options displayed
+ * Displays a list of options.
+ *
+ * Returns the number of options displayed.
  */
 
 int
-command_set_display_option_list (const char *message, const char *search)
+command_set_display_option_list (const char *message, const char *search,
+                                 int display_only_changed)
 {
     int number_found, section_displayed, length;
     struct t_config_file *ptr_config;
@@ -4369,6 +4545,12 @@ command_set_display_option_list (const char *message, const char *search)
     for (ptr_config = config_files; ptr_config;
          ptr_config = ptr_config->next_config)
     {
+        /*
+         * if we are displaying only changed options, skip options plugins.*
+         * because they are all "changed" (default value is always empty string)
+         */
+        if (display_only_changed && strcmp(ptr_config->name, "plugins") == 0)
+            continue;
         for (ptr_section = ptr_config->sections; ptr_section;
              ptr_section = ptr_section->next_section)
         {
@@ -4377,6 +4559,14 @@ command_set_display_option_list (const char *message, const char *search)
             for (ptr_option = ptr_section->options; ptr_option;
                  ptr_option = ptr_option->next_option)
             {
+                /*
+                 * if we are displaying only changed options, skip the option if
+                 * value has not changed (if it is the same as default value)
+                 */
+                if (display_only_changed &&
+                    !config_file_option_has_changed (ptr_option))
+                    continue;
+
                 length = strlen (ptr_config->name) + 1
                     + strlen (ptr_section->name) + 1
                     + strlen (ptr_option->name) + 1;
@@ -4409,72 +4599,159 @@ command_set_display_option_list (const char *message, const char *search)
 }
 
 /*
- * command_set: set config options
+ * Displays multiple lists of options.
+ *
+ * If display_only_changed == 1, then it will display only options with value
+ * changed (different from default value).
+ *
+ * Returns the total number of options displayed.
  */
 
-COMMAND_CALLBACK(set)
+int
+command_set_display_option_lists (char **argv, int arg_start, int arg_end,
+                                  int display_only_changed)
 {
-    char *value;
-    int number_found, rc;
-    struct t_config_option *ptr_option, *ptr_option_before;
+    int i, total_number_found, number_found;
 
-    /* make C compiler happy */
-    (void) data;
-    (void) buffer;
+    total_number_found = 0;
 
-    /* display list of options */
-    if (argc < 3)
+    for (i = arg_start; i <= arg_end; i++)
     {
-        number_found = 0;
+        number_found = command_set_display_option_list (NULL, argv[i],
+                                                        display_only_changed);
 
-        number_found += command_set_display_option_list (NULL,
-                                                         (argc == 2) ?
-                                                         argv[1] : NULL);
+        total_number_found += number_found;
+
+        if (display_only_changed && (arg_start == arg_end))
+            break;
 
         if (number_found == 0)
         {
-            if (argc == 2)
+            if (argv[i])
             {
                 gui_chat_printf (NULL,
                                  _("%sOption \"%s\" not found (tip: you can use "
                                    "\"*\" at beginning and/or end of option to "
                                    "see a sublist)"),
                                  gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                                 argv[1]);
+                                 argv[i]);
             }
             else
             {
                 gui_chat_printf (NULL,
-                                 _("No configuration option found"));
+                                 _("No option found"));
             }
         }
         else
         {
             gui_chat_printf (NULL, "");
-            if (argc == 2)
+            if (argv[i])
             {
-                gui_chat_printf (NULL,
-                                 NG_("%s%d%s configuration option found "
-                                     "matching with \"%s\"",
-                                     "%s%d%s configuration options found "
-                                     "matching with \"%s\"",
-                                     number_found),
-                                 GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
-                                 number_found,
-                                 GUI_COLOR(GUI_COLOR_CHAT),
-                                 argv[1]);
+                if (display_only_changed)
+                {
+                    gui_chat_printf (NULL,
+                                     NG_("%s%d%s option with value changed "
+                                         "(matching with \"%s\")",
+                                         "%s%d%s options with value changed "
+                                         "(matching with \"%s\")",
+                                         number_found),
+                                     GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
+                                     number_found,
+                                     GUI_COLOR(GUI_COLOR_CHAT),
+                                     argv[i]);
+                }
+                else
+                {
+                    gui_chat_printf (NULL,
+                                     NG_("%s%d%s option (matching with \"%s\")",
+                                         "%s%d%s options (matching with \"%s\")",
+                                         number_found),
+                                     GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
+                                     number_found,
+                                     GUI_COLOR(GUI_COLOR_CHAT),
+                                     argv[i]);
+                }
             }
             else
             {
                 gui_chat_printf (NULL,
-                                 NG_("%s%d%s configuration option found",
-                                     "%s%d%s configuration options found",
+                                 NG_("%s%d%s option",
+                                     "%s%d%s options",
                                      number_found),
                                  GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
                                  number_found,
                                  GUI_COLOR(GUI_COLOR_CHAT));
             }
         }
+    }
+
+    return total_number_found;
+}
+
+/*
+ * Callback for command "/set": displays or sets configuration options.
+ */
+
+COMMAND_CALLBACK(set)
+{
+    char *value;
+    int number_found, rc, display_only_changed, arg_option_start, arg_option_end;
+    struct t_config_option *ptr_option, *ptr_option_before;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) buffer;
+
+    display_only_changed = 0;
+    arg_option_start = 1;
+    arg_option_end = argc - 1;
+
+    /* if "diff" is specified as first argument, display only changed values */
+    if ((argc >= 2) && (string_strcasecmp (argv[1], "diff") == 0))
+    {
+        display_only_changed = 1;
+        arg_option_start = 2;
+    }
+
+    if (arg_option_end < arg_option_start)
+        arg_option_end = arg_option_start;
+
+    /* display list of options */
+    if ((argc < 3) || display_only_changed)
+    {
+        number_found = command_set_display_option_lists (argv,
+                                                         arg_option_start,
+                                                         arg_option_end,
+                                                         display_only_changed);
+
+        if (display_only_changed)
+        {
+            gui_chat_printf (NULL, "");
+            if (arg_option_start == argc - 1)
+            {
+                gui_chat_printf (NULL,
+                                 NG_("%s%d%s option with value changed "
+                                     "(matching with \"%s\")",
+                                     "%s%d%s options with value changed "
+                                     "(matching with \"%s\")",
+                                     number_found),
+                                 GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
+                                 number_found,
+                                 GUI_COLOR(GUI_COLOR_CHAT),
+                                 argv[arg_option_start]);
+            }
+            else
+            {
+                gui_chat_printf (NULL,
+                                 NG_("%s%d%s option with value changed",
+                                     "%s%d%s options with value changed",
+                                     number_found),
+                                 GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
+                                 number_found,
+                                 GUI_COLOR(GUI_COLOR_CHAT));
+            }
+        }
+
         return WEECHAT_RC_OK;
     }
 
@@ -4496,8 +4773,7 @@ COMMAND_CALLBACK(set)
             return WEECHAT_RC_OK;
         case WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND:
             gui_chat_printf (NULL,
-                             _("%sError: configuration option \"%s\" not "
-                               "found"),
+                             _("%sError: option \"%s\" not found"),
                              gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
                              argv[1]);
             return WEECHAT_RC_OK;
@@ -4518,9 +4794,8 @@ COMMAND_CALLBACK(set)
 
     return WEECHAT_RC_OK;
 }
-
 /*
- * command_unset: unset/reset config options
+ * Callback for command "/unset": unsets/resets configuration options.
  */
 
 COMMAND_CALLBACK(unset)
@@ -4611,7 +4886,7 @@ COMMAND_CALLBACK(unset)
 }
 
 /*
- * command_upgrade: upgrade WeeChat
+ * Callback for command "/upgrade": upgrades WeeChat.
  */
 
 COMMAND_CALLBACK(upgrade)
@@ -4619,12 +4894,11 @@ COMMAND_CALLBACK(upgrade)
     char *ptr_binary;
     char *exec_args[7] = { NULL, "-a", "--dir", NULL, "--upgrade", NULL };
     struct stat stat_buf;
-    int rc;
+    int rc, quit;
 
     /* make C compiler happy */
     (void) data;
     (void) buffer;
-    (void) argv;
 
     /*
      * it is forbidden to upgrade while there are some background process
@@ -4639,40 +4913,48 @@ COMMAND_CALLBACK(upgrade)
         return WEECHAT_RC_OK;
     }
 
+    ptr_binary = NULL;
+    quit = 0;
+
     if (argc > 1)
     {
-        ptr_binary = string_expand_home (argv_eol[1]);
-        if (ptr_binary)
+        if (string_strcasecmp (argv[1], "-quit") == 0)
+            quit = 1;
+        else
         {
-            /* check if weechat binary is here and executable by user */
-            rc = stat (ptr_binary, &stat_buf);
-            if ((rc != 0) || (!S_ISREG(stat_buf.st_mode)))
+            ptr_binary = string_expand_home (argv_eol[1]);
+            if (ptr_binary)
             {
-                gui_chat_printf (NULL,
-                                 _("%sCan't upgrade: WeeChat binary \"%s\" "
-                                   "does not exist"),
-                                 gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                                 ptr_binary);
-                free (ptr_binary);
-                return WEECHAT_RC_OK;
-            }
-            if ((!(stat_buf.st_mode & S_IXUSR)) && (!(stat_buf.st_mode & S_IXGRP))
-                && (!(stat_buf.st_mode & S_IXOTH)))
-            {
-                gui_chat_printf (NULL,
-                                 _("%sCan't upgrade: WeeChat binary \"%s\" "
-                                   "does not have execute permissions"),
-                                 gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                                 ptr_binary);
-                free (ptr_binary);
-                return WEECHAT_RC_OK;
+                /* check if weechat binary is here and executable by user */
+                rc = stat (ptr_binary, &stat_buf);
+                if ((rc != 0) || (!S_ISREG(stat_buf.st_mode)))
+                {
+                    gui_chat_printf (NULL,
+                                     _("%sCan't upgrade: WeeChat binary \"%s\" "
+                                       "does not exist"),
+                                     gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                     ptr_binary);
+                    free (ptr_binary);
+                    return WEECHAT_RC_OK;
+                }
+                if ((!(stat_buf.st_mode & S_IXUSR)) && (!(stat_buf.st_mode & S_IXGRP))
+                    && (!(stat_buf.st_mode & S_IXOTH)))
+                {
+                    gui_chat_printf (NULL,
+                                     _("%sCan't upgrade: WeeChat binary \"%s\" "
+                                       "does not have execute permissions"),
+                                     gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                     ptr_binary);
+                    free (ptr_binary);
+                    return WEECHAT_RC_OK;
+                }
             }
         }
     }
-    else
+    if (!ptr_binary && !quit)
         ptr_binary = strdup (weechat_argv0);
 
-    if (!ptr_binary)
+    if (!ptr_binary && !quit)
     {
         gui_chat_printf (NULL,
                          _("%sNot enough memory"),
@@ -4680,24 +4962,26 @@ COMMAND_CALLBACK(upgrade)
         return WEECHAT_RC_OK;
     }
 
-    gui_chat_printf (NULL,
-                     _("Upgrading WeeChat with binary file: \"%s\"..."),
-                     ptr_binary);
+    if (ptr_binary)
+    {
+        gui_chat_printf (NULL,
+                         _("Upgrading WeeChat with binary file: \"%s\"..."),
+                         ptr_binary);
+    }
 
     /* send "upgrade" signal to plugins */
-    hook_signal_send ("upgrade", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    hook_signal_send ("upgrade", WEECHAT_HOOK_SIGNAL_STRING,
+                      (quit) ? "quit" : NULL);
 
     if (!upgrade_weechat_save ())
     {
         gui_chat_printf (NULL,
                          _("%sError: unable to save session in file"),
                          gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
-        free (ptr_binary);
+        if (ptr_binary)
+            free (ptr_binary);
         return WEECHAT_RC_OK;
     }
-
-    exec_args[0] = ptr_binary;
-    exec_args[3] = strdup (weechat_home);
 
     weechat_quit = 1;
     weechat_upgrading = 1;
@@ -4710,6 +4994,14 @@ COMMAND_CALLBACK(upgrade)
     gui_main_end (1);
     log_close ();
 
+    if (quit)
+    {
+        exit (0);
+        return WEECHAT_RC_OK;
+    }
+
+    exec_args[0] = ptr_binary;
+    exec_args[3] = strdup (weechat_home);
     execvp (exec_args[0], exec_args);
 
     /* this code should not be reached if execvp is ok */
@@ -4729,7 +5021,7 @@ COMMAND_CALLBACK(upgrade)
 }
 
 /*
- * command_uptime: display WeeChat uptime
+ * Callback for command "/uptime": displays WeeChat uptime.
  */
 
 COMMAND_CALLBACK(uptime)
@@ -4802,26 +5094,34 @@ COMMAND_CALLBACK(uptime)
 }
 
 /*
- * command_version_display: display WeeChat version
+ * Displays WeeChat version.
  */
 
 void
 command_version_display (struct t_gui_buffer *buffer,
                          int send_to_buffer_as_input,
-                         int translated_string)
+                         int translated_string,
+                         int display_git_version)
 {
     char string[512];
+    const char *git_version;
+
+    /* get git version */
+    git_version = (display_git_version) ? version_get_git () : NULL;
 
     if (send_to_buffer_as_input)
     {
         if (translated_string)
         {
             snprintf (string, sizeof (string),
-                      "WeeChat %s [%s %s %s]",
-                      PACKAGE_VERSION,
+                      "WeeChat %s%s%s%s [%s %s %s]",
+                      version_get_version (),
+                      (git_version && git_version[0]) ? " (git: " : "",
+                      (git_version && git_version[0]) ? git_version : "",
+                      (git_version && git_version[0]) ? ")" : "",
                       _("compiled on"),
-                      __DATE__,
-                      __TIME__);
+                      version_get_compilation_date (),
+                      version_get_compilation_time ());
             input_data (buffer, string);
             if (weechat_upgrade_count > 0)
             {
@@ -4837,11 +5137,14 @@ command_version_display (struct t_gui_buffer *buffer,
         else
         {
             snprintf (string, sizeof (string),
-                      "WeeChat %s [%s %s %s]",
-                      PACKAGE_VERSION,
+                      "WeeChat %s%s%s%s [%s %s %s]",
+                      version_get_version (),
+                      (git_version && git_version[0]) ? " (git: " : "",
+                      (git_version && git_version[0]) ? git_version : "",
+                      (git_version && git_version[0]) ? ")" : "",
                       "compiled on",
-                      __DATE__,
-                      __TIME__);
+                      version_get_compilation_date (),
+                      version_get_compilation_time ());
             input_data (buffer, string);
             if (weechat_upgrade_count > 0)
             {
@@ -4857,14 +5160,17 @@ command_version_display (struct t_gui_buffer *buffer,
     }
     else
     {
-        gui_chat_printf (NULL, "%sWeeChat %s %s[%s%s %s %s%s]",
+        gui_chat_printf (NULL, "%sWeeChat %s%s%s%s %s[%s%s %s %s%s]",
                          GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
-                         PACKAGE_VERSION,
+                         version_get_version (),
+                         (git_version && git_version[0]) ? " (git: " : "",
+                         (git_version && git_version[0]) ? git_version : "",
+                         (git_version && git_version[0]) ? ")" : "",
                          GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                          GUI_COLOR(GUI_COLOR_CHAT_VALUE),
                          _("compiled on"),
-                         __DATE__,
-                         __TIME__,
+                         version_get_compilation_date (),
+                         version_get_compilation_time (),
                          GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
         if (weechat_upgrade_count > 0)
         {
@@ -4879,7 +5185,7 @@ command_version_display (struct t_gui_buffer *buffer,
 }
 
 /*
- * command_version: display WeeChat version
+ * Callback for command "/version": displays WeeChat version.
  */
 
 COMMAND_CALLBACK(version)
@@ -4905,13 +5211,13 @@ COMMAND_CALLBACK(version)
     }
 
     command_version_display (buffer, send_to_buffer_as_input,
-                             translated_string);
+                             translated_string, 1);
 
     return WEECHAT_RC_OK;
 }
 
 /*
- * command_wait_timer_cb: callback for timer set by command_wait
+ * Callback for timer set by command_wait.
  */
 
 int
@@ -4952,7 +5258,7 @@ command_wait_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * command_wait: schedule a command execution in future
+ * Callback for command "/wait": schedules a command execution in future.
  */
 
 COMMAND_CALLBACK(wait)
@@ -5028,7 +5334,7 @@ COMMAND_CALLBACK(wait)
 }
 
 /*
- * command_window: manage windows
+ * Callback for command "/window": manages windows.
  */
 
 COMMAND_CALLBACK(window)
@@ -5069,6 +5375,10 @@ COMMAND_CALLBACK(window)
 
         return WEECHAT_RC_OK;
     }
+
+    /* silently ignore argument "*" (can happen when clicking in a root bar) */
+    if (strcmp (argv_eol[1], "*") == 0)
+        return WEECHAT_RC_OK;
 
     /* refresh screen */
     if (string_strcasecmp (argv[1], "refresh") == 0)
@@ -5401,7 +5711,7 @@ COMMAND_CALLBACK(window)
 }
 
 /*
- * command_init: hook WeeChat commands
+ * Hooks WeeChat core commands.
  */
 
 void
@@ -5418,8 +5728,8 @@ command_init ()
     hook_command (NULL, "bar",
                   N_("manage bars"),
                   N_("list|listfull|listitems"
-                     " || add <name> <type>[,<cond1>[,<cond2>...]] <position> "
-                     "<size> <separator> <item1>[,<item2>...]"
+                     " || add <name> <type>[,<condition>] <position> <size> "
+                     "<separator> <item1>[,<item2>...]"
                      " || default [input|title|status|nicklist]"
                      " || del <name>|-all"
                      " || set <name> <option> <value>"
@@ -5433,12 +5743,15 @@ command_init ()
                      "         type:   root: outside windows,\n"
                      "               window: inside windows, with optional "
                      "conditions (see below)\n"
-                     "    cond1,...: condition(s) for displaying bar (only for "
+                     "    condition: condition(s) for displaying bar (only for "
                      "type \"window\"):\n"
                      "                 active: on active window\n"
                      "               inactive: on inactive windows\n"
                      "               nicklist: on windows with nicklist\n"
-                     "               without condition, bar is always displayed\n"
+                     "               other condition: see /help "
+                     "weechat.bar.xxx.conditions and /help eval\n"
+                     "               without condition, the bar is always "
+                     "displayed\n"
                      "     position: bottom, top, left or right\n"
                      "         size: size of bar (in chars)\n"
                      "    separator: 1 for using separator (line), 0 or nothing "
@@ -5588,7 +5901,11 @@ command_init ()
                   " || unalias %(palette_colors)"
                   " || reset",
                   &command_color, NULL);
-    hook_command (NULL, "command",
+    /*
+     * give high priority (50000) so that an alias will not take precedence
+     * over this command
+     */
+    hook_command (NULL, "50000|command",
                   N_("launch explicit WeeChat or plugin command"),
                   N_("<plugin> <command>"),
                   N_(" plugin: plugin name ('weechat' for WeeChat internal "
@@ -5663,6 +5980,70 @@ command_init ()
                   " || term"
                   " || windows",
                   &command_debug, NULL);
+    hook_command (NULL, "eval",
+                  N_("evaluate expression and send result to buffer"),
+                  N_("[-n] <expression>"
+                     " || [-n] <expression1> <operator> <expression2>"),
+                  N_("        -n: display result without sending it to buffer "
+                     "(debug mode)\n"
+                     "expression: expression to evaluate, variables with format "
+                     "${variable} are replaced (see below)\n"
+                     "  operator: a logical or comparison operator:\n"
+                     "            - logical operators:\n"
+                     "                &&  boolean \"and\"\n"
+                     "                ||  boolean \"or\"\n"
+                     "            - comparison operators:\n"
+                     "                ==  equal\n"
+                     "                !=  not equal\n"
+                     "                <=  less or equal\n"
+                     "                <   less\n"
+                     "                >=  greater or equal\n"
+                     "                >   greater\n"
+                     "                =~  is matching regex\n"
+                     "                !~  is NOT matching regex\n\n"
+                     "An expression is considered as \"true\" if it is not NULL, "
+                     "not empty, and different from \"0\".\n"
+                     "The comparison is made using integers if the two "
+                     "expressions are valid integers.\n"
+                     "To force a string comparison, add double quotes around "
+                     "each expression, for example:\n"
+                     "  50 > 100      ==> 0\n"
+                     "  \"50\" > \"100\"  ==> 1\n\n"
+                     "Some variables are replaced in expression, using the "
+                     "format ${variable}, variable can be, by order of prioity :\n"
+                     "  1. the name of an option (file.section.option)\n"
+                     "  2. the name of a local variable in buffer\n"
+                     "  3. a hdata name/variable (the value is automatically "
+                     "converted to string), by default \"window\" and \"buffer\" "
+                     "point to current window/buffer.\n"
+                     "Format for hdata can be one of following:\n"
+                     "  hdata.var1.var2...: start with a hdata (pointer must be "
+                     "known), and ask variables one after one (other hdata can "
+                     "be followed)\n"
+                     "  hdata(list).var1.var2...: start with a hdata using a "
+                     "list, for example:\n"
+                     "    ${buffer[gui_buffers].full_name}: full name of first "
+                     "buffer in linked list of buffers\n"
+                     "    ${plugin[weechat_plugins].name}: name of first plugin "
+                     "in linked list of plugins\n"
+                     "For name of hdata and variables, please look at \"Plugin "
+                     "API reference\", function \"weechat_hdata_get\".\n\n"
+                     "Examples:\n"
+                     "  /eval -n ${weechat.look.scroll_amount}  ==> 3\n"
+                     "  /eval -n ${window}                      ==> 0x2549aa0\n"
+                     "  /eval -n ${window.buffer}               ==> 0x2549320\n"
+                     "  /eval -n ${window.buffer.full_name}     ==> core.weechat\n"
+                     "  /eval -n ${window.buffer.number}        ==> 1\n"
+                     "  /eval -n ${window.buffer.number} > 2    ==> 0\n"
+                     "  /eval -n ${window.win_width} > 100      ==> 1\n"
+                     "  /eval -n (8 > 12) || (5 > 2)            ==> 1\n"
+                     "  /eval -n (8 > 12) && (5 > 2)            ==> 0\n"
+                     "  /eval -n abcd =~ ^ABC                   ==> 1\n"
+                     "  /eval -n abcd =~ (?-i)^ABC              ==> 0\n"
+                     "  /eval -n abcd =~ (?-i)^abc              ==> 1\n"
+                     "  /eval -n abcd !~ abc                    ==> 0"),
+                  "-n",
+                  &command_eval, NULL);
     hook_command (NULL, "filter",
                   N_("filter messages in buffers, to hide/show them according "
                      "to tags or regex"),
@@ -5742,8 +6123,9 @@ command_init ()
                      "   plugin: list commands for this plugin\n"
                      "  command: a command name\n"
                      "   option: an option name (use /set to see list)"),
-                  "-list|-listfull|%(commands)|%(config_options) "
-                  "%(plugins_names)|" PLUGIN_CORE "|%*",
+                  "-list %(plugins_names)|" PLUGIN_CORE "|%*"
+                  " || -listfull %(plugins_names)|" PLUGIN_CORE "|%*"
+                  " || %(commands)|%(config_options)",
                   &command_help, NULL);
     hook_command (NULL, "history",
                   N_("show buffer command history"),
@@ -5753,7 +6135,11 @@ command_init ()
                      "value: number of history entries to show"),
                   "clear",
                   &command_history, NULL);
-    hook_command (NULL, "input",
+    /*
+     * give high priority (50000) so that an alias will not take precedence
+     * over this command
+     */
+    hook_command (NULL, "50000|input",
                   N_("functions for command line"),
                   N_("<action> [<arguments>]"),
                   N_("list of actions:\n"
@@ -5815,6 +6201,7 @@ command_init ()
                      "  switch_active_buffer: switch to next merged buffer\n"
                      "  switch_active_buffer_previous: switch to previous "
                      "merged buffer\n"
+                     "  zoom_merged_buffer: zoom on merged buffer\n"
                      "  insert: insert text in command line\n"
                      "  paste_start: start paste (bracketed paste mode)\n"
                      "  paste_stop: stop paste (bracketed paste mode)\n\n"
@@ -5833,7 +6220,8 @@ command_init ()
                   "jump_next_visited_buffer|hotlist_clear|grab_key|"
                   "grab_key_command|grab_mouse|grab_mouse_area|set_unread|"
                   "set_unread_current_buffer|switch_active_buffer|"
-                  "switch_active_buffer_previous|insert|paste_start|paste_stop",
+                  "switch_active_buffer_previous|zoom_merged_buffer|insert|"
+                  "paste_start|paste_stop",
                   &command_input, NULL);
     hook_command (NULL, "key",
                   N_("bind/unbind keys"),
@@ -5944,9 +6332,7 @@ command_init ()
                      "    /mouse enable\n"
                      "  toggle mouse for 5 seconds:\n"
                      "    /mouse toggle 5"),
-                  "enable"
-                  " || disable"
-                  " || toggle",
+                  "enable|disable|toggle",
                   &command_mouse, NULL);
     hook_command (NULL, "mute",
                   N_("execute a command silently"),
@@ -5968,7 +6354,10 @@ command_init ()
                      "    /mute -current msg * hi!\n"
                      "  message to #weechat channel:\n"
                      "    /mute -buffer irc.freenode.#weechat msg #weechat hi!"),
-                  "-current|-buffer|-all|%(commands) %(commands)|%*",
+                  "-current %(commands)|%*"
+                  " || -buffer %(buffers_plugins_names) %(commands)|%*"
+                  " || -all %(commands)|%*"
+                  " || %(commands)|%*",
                   &command_mute, NULL);
     hook_command (NULL, "plugin",
                   N_("list/load/unload plugins"),
@@ -6020,7 +6409,7 @@ command_init ()
                      "  create a http proxy, running on local host, port 8888:\n"
                      "    /proxy add local http 127.0.0.1 8888\n"
                      "  create a http proxy using IPv6 protocol:\n"
-                     "    /proxy add local http 127.0.0.1 8888\n"
+                     "    /proxy add local http ::1 8888\n"
                      "    /proxy set local ipv6 on\n"
                      "  create a socks5 proxy with username/password:\n"
                      "    /proxy add myproxy socks5 sample.host.org 3128 myuser mypass\n"
@@ -6076,15 +6465,16 @@ command_init ()
                   &command_save, NULL);
     hook_command (NULL, "set",
                   N_("set config options"),
-                  N_("[<option> [<value>]]"),
+                  N_("[<option> [<value>]] || diff [<option> [<option>...]]"),
                   N_("option: name of an option (can start or end with '*' "
                      "to list many options)\n"
-                     " value: new value for option\n\n"
+                     " value: new value for option\n"
+                     "  diff: display only changed options\n\n"
                      "New value can be, according to variable type:\n"
                      "  boolean: on, off or toggle\n"
                      "  integer: number, ++number or --number\n"
-                     "  string : any string (\"\" for empty string)\n"
-                     "  color  : color name, ++number or --number\n\n"
+                     "   string: any string (\"\" for empty string)\n"
+                     "    color: color name, ++number or --number\n\n"
                      "For all types, you can use null to remove "
                      "option value (undefined value). This works only "
                      "for some special plugin variables.\n\n"
@@ -6092,8 +6482,13 @@ command_init ()
                      "  display options about highlight:\n"
                      "    /set *highlight*\n"
                      "  add a word to highlight:\n"
-                     "    /set weechat.look.highlight \"word\""),
-                  "%(config_options) %(config_option_values)",
+                     "    /set weechat.look.highlight \"word\"\n"
+                     "  display changed options:\n"
+                     "    /set diff\n"
+                     "  display changed options in irc plugin:\n"
+                     "    /set diff irc.*"),
+                  "%(config_options) %(config_option_values)"
+                  " || diff %(config_options)|%*",
                   &command_set, NULL);
     hook_command (NULL, "unset",
                   N_("unset/reset config options"),
@@ -6111,9 +6506,12 @@ command_init ()
                   &command_unset, NULL);
     hook_command (NULL, "upgrade",
                   N_("upgrade WeeChat without disconnecting from servers"),
-                  N_("[<path_to_binary>]"),
+                  N_("[<path_to_binary>|-quit]"),
                   N_("path_to_binary: path to WeeChat binary (default is "
-                     "current binary)\n\n"
+                     "current binary)\n"
+                     "         -quit: close *ALL* connections, save session "
+                     "and quit WeeChat, which makes possible a delayed "
+                     "restoration (see below)\n\n"
                      "This command upgrades and reloads a running WeeChat "
                      "session. The new WeeChat binary must have been compiled "
                      "or installed with a package manager before running this "
@@ -6128,7 +6526,20 @@ command_init ()
                      "  2. unload all plugins (configuration files (*.conf) "
                      "are written on disk)\n"
                      "  3. save WeeChat configuration (weechat.conf)\n"
-                     "  4. execute new WeeChat binary and reload session."),
+                     "  4. execute new WeeChat binary and reload session.\n\n"
+                     "With option \"-quit\", the process is slightly "
+                     "different:\n"
+                     "  1. close *ALL* connections (irc, xfer, relay, ...)\n"
+                     "  2. save session into files (*.upgrade)\n"
+                     "  3. unload all plugins\n"
+                     "  4. save WeeChat configuration\n"
+                     "  5. quit WeeChat\n"
+                     "Then later you can restore session with command: "
+                     "weechat-curses --upgrade\n"
+                     "IMPORTANT: you must restore the session with exactly "
+                     "same configuration (files *.conf).\n"
+                     "It is possible to restore WeeChat session on another "
+                     "machine if you copy the content of directory \"~/.weechat\""),
                   "%(filename)",
                   &command_upgrade, NULL);
     hook_command (NULL, "uptime",
@@ -6266,12 +6677,13 @@ command_init ()
                   " || scroll_unread  -window %(windows_numbers)"
                   " || swap up|down|left|right|-window %(windows_numbers)"
                   " || zoom -window %(windows_numbers)"
-                  " || merge all|-window %(windows_numbers)",
+                  " || merge all|-window %(windows_numbers)"
+                  " || %(windows_numbers)",
                   &command_window, NULL);
 }
 
 /*
- * command_exec_list: execute command list
+ * Executes a list of commands (separated by ";").
  */
 
 void
@@ -6296,7 +6708,7 @@ command_exec_list (const char *command_list)
 }
 
 /*
- * command_startup: execute command at startup
+ * Executes commands at startup.
  */
 
 void

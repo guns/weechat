@@ -52,7 +52,7 @@ The main WeeChat directories are:
 |    gui/          | Functions for buffers, windows, ... (used by all interfaces)
 |       curses/    | Curses interface
 |       gtk/       | Gtk interface (not working)
-|    plugins/      | Plugin API
+|    plugins/      | Plugin and scripting API
 |       alias/     | Alias plugin
 |       aspell/    | Aspell plugin
 |       charset/   | Charset plugin
@@ -62,6 +62,7 @@ The main WeeChat directories are:
 |       logger/    | Logger plugin (write messages displayed to files)
 |       relay/     | Relay plugin (irc proxy + relay for remote interfaces)
 |       rmodifier/ | Rmodifier plugin (alter modifier strings with regular expressions)
+|       script/    | Scripts manager
 |       python/    | Python scripting API
 |       perl/      | Perl scripting API
 |       ruby/      | Ruby scripting API
@@ -98,6 +99,7 @@ WeeChat "core" reside in following directories:
 |    wee-config-file.c          | Configuration file management
 |    wee-config.c               | Configuration options for WeeChat core (options weechat.*)
 |    wee-debug.c                | Some debug functions
+|    wee-eval.c                 | Evaluate expressions with references to internal vars
 |    wee-hashtable.c            | Hashtables
 |    wee-hdata.c                | Hdata (direct access to data using hashtables)
 |    wee-hook.c                 | Hooks
@@ -113,6 +115,7 @@ WeeChat "core" reside in following directories:
 |    wee-url.c                  | URL transfer (using libcurl)
 |    wee-utf8.c                 | UTF-8 functions
 |    wee-util.c                 | Some other functions
+|    wee-version.c              | Functions for WeeChat version
 | gui/                          | Functions for buffers, windows, ... (used by all interfaces)
 |    gui-bar-item.c             | Bar items
 |    gui-bar-window.c           | Bar windows
@@ -174,6 +177,7 @@ Plugins
 |       alias-info.c                | Info and infolists from alias plugin
 |    aspell/                        | Aspell plugin
 |       weechat-aspell.c            | Main aspell functions
+|       weechat-aspell-bar-item.c   | Aspell bar items
 |       weechat-aspell-config.c     | Aspell config options
 |       weechat-aspell-speller.c    | Spellers management
 |    charset/                       | Charset plugin
@@ -255,6 +259,15 @@ Plugins
 |    ruby/                          | Ruby plugin
 |       weechat-ruby.c              | Main ruby functions (load/unload scripts, execute ruby code)
 |       weechat-ruby-api.c          | Ruby scripting API functions
+|    script/                        | Scripts manager
+|       script.c                    | Main functions for scripts manager
+|       script-action.c             | Actions on scripts (load/unload, install/remove, hold, ...)
+|       script-buffer.c             | Buffer for scripts manager
+|       script-command.c            | Commands for scripts manager
+|       script-completion.c         | Completions for scripts manager
+|       script-config.c             | Config options for scripts manager
+|       script-info.c               | Info and infolists from scripts manager plugin
+|       script-repo.c               | Download and read repository file
 |    tcl/                           | Tcl plugin
 |       weechat-tcl.c               | Main tcl functions (load/unload scripts, execute tcl code)
 |       weechat-tcl-api.c           | Tcl scripting API functions
@@ -306,7 +319,7 @@ Translations for WeeChat and plugins are done with gettext, files are in 'po/' d
 |========================================
 | Path/file      | Description
 | po/            | Translation files (gettext)
-|    XX.po       | Translations for language XX (fr, de, it, ...), base language is english
+|    XX.po       | Translations for language XX (fr, de, it, ...), base language is English
 |    weechat.pot | Template for translations (auto-built)
 |========================================
 
@@ -326,7 +339,7 @@ General rules
 [source,C]
 ----------------------------------------
 /*
- * Copyright (C) 2012 Your Name <your@email.com>
+ * Copyright (C) 2013 Your Name <your@email.com>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -358,16 +371,23 @@ Some basic rules you *must* follow when you write C code:
 * Use 4 spaces for indentation. Don't use tabs, they are evil.
 * Try to not exceed 80 chars by line, except if this is needed to increase
   readability.
-* Use comments `/* comment */` (not C99-style comments like `// comment`), and
-  format them like this:
+* Use comments `/* comment */` (not C99-style comments like `// comment`).
+* Add a comment before any function, to explain what does the function (always
+  use a multi-line comment, even if description is very short).
+
+Example:
 
 [source,C]
 ----------------------------------------
 /*
- * foo: this is the description of the function
+ * Checks if a string with boolean value is valid.
+ *
+ * Returns:
+ *   1: boolean value is valid
+ *   0: boolean value is NOT valid
  */
 
-void
+int
 foo ()
 {
     int i;
@@ -376,8 +396,8 @@ foo ()
     i = 1;
 
     /*
-     * multi-line comment: this is a very long
-     * description about next block of code
+     * multi-line comment: this is a very long description about next block
+     * of code
      */
     i = 2;
     printf ("%d\n", i);
@@ -385,7 +405,7 @@ foo ()
 ----------------------------------------
 
 * Use explicit variable names, for example "nicks_count" instead of "n" or "nc".
-  Exception: in `for` loops, where variables like "i" or "n" are ok.
+  Exception: in `for` loops, where variables like "i" or "n" are OK.
 * Initialize local variables after declaration, in body of function, example:
 
 [source,C]
@@ -401,7 +421,7 @@ foo ()
 }
 ----------------------------------------
 
-* Use parentheses to explicitely show how expression is evaluated, even if
+* Use parentheses to explicitly show how expression is evaluated, even if
   they are not required, for example: write `x + (y * z)` instead of `x + y * z`
 * Place curly brackets `{ }` alone on lines, and indent them with number of
   spaces used for line above opening curly bracket (the `if` in example):
@@ -414,34 +434,13 @@ if (nicks_count == 1)
 }
 ----------------------------------------
 
-* Add a comment before any function, to explain what does the function, and
-  indent it like this (note that return type of function is on a line alone):
-
-[source,C]
-----------------------------------------
-/*
- * foo: this is the description of the function
- */
-
-void
-foo ()
-{
-    int i;
-
-    for (i = 0; i < 10; i++)
-    {
-        bar (i);
-    }
-}
-----------------------------------------
-
 * Use empty lines to separate many different blocks inside functions, and if
   possible add a comment for each one, like this:
 
 [source,C]
 ----------------------------------------
 /*
- * irc_server_outqueue_send: send a message from outqueue
+ * Sends a message from out queue.
  */
 
 void
@@ -664,7 +663,9 @@ Example: creation of a new window (from 'src/gui/gui-window.c'):
 [source,C]
 ----------------------------------------
 /*
- * gui_window_new: create a new window
+ * Creates a new window.
+ *
+ * Returns pointer to new window, NULL if error.
  */
 
 struct t_gui_window *
@@ -944,7 +945,7 @@ Where 'component' is one of following:
 
 Some rules to follow:
 
-* use only english
+* use only English
 * use infinitive form of verb
 * if commit is related to something in tracker (bug, task, patch), write it
   in parenthesis after the message (format: bug #12345, task #12345, patch #12345)
@@ -956,7 +957,7 @@ core: add callback "nickcmp" for nick comparison in buffers
 irc: fix freeze when reading on socket with SSL enabled (bug #35097)
 ruby: add detection of ruby version 1.9.3 in cmake
 python: fix crash when unloading a script without pointer to interpreter
-core: update japanese translations (patch #7783)
+core: update Japanese translations (patch #7783)
 ----------------------------------------
 
 [[translations]]
@@ -976,22 +977,15 @@ $ cd po
 $ msginit -i weechat.pot -l nl_NL -o nl.po
 ----------------------------------------
 
-Base language for WeeChat is english, so you must of course understand english
+Base language for WeeChat is English, so you must of course understand English
 in order to translate to your language.
 
-When done, you *have* to check your file with two commands:
+When done, you *have* to check your file with script 'msgcheck.py'
+(https://github.com/flashcode/msgcheck):
 
 ----------------------------------------
-$ msgfmt -o /dev/null -c xx.po
-$ msg_check_lines.py xx.po
+$ msgcheck.py xx.po
 ----------------------------------------
-
-The `msgfmt` will perform checks on message catalog and display errors, like bad
-use of format specifiers in strings.
-
-The script msg_check_lines.py (http://www.weechat.org/files/temp/po/msg_check_lines.py)
-will check number of lines in translated strings (which must be the same as
-string in english).
 
 [[build_autogen_files]]
 Build auto-generated files
@@ -1025,7 +1019,7 @@ Asciidoc
 
 Asciidoc files are in directory 'doc/XX/' where 'XX' is language (en, fr, de, it, ...)
 
-First make a copy of an english asciidoc file (in directory 'doc/en/'), then work on it.
+First make a copy of an English asciidoc file (in directory 'doc/en/'), then work on it.
 
 The translations missing in files are indicated by this string:
 

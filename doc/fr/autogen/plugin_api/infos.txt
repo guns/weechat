@@ -38,7 +38,11 @@
 
 | weechat | inactivity | inactivité du clavier (secondes) | -
 
+| weechat | locale | locale utilisée pour la traduction des messages | -
+
 | weechat | version | version de WeeChat | -
+
+| weechat | version_git | version git de WeeChat (sortie de la commande "git describe" pour une version de développement seulement, vide pour une version stable) | -
 
 | weechat | version_number | version de WeeChat (sous forme de nombre) | -
 

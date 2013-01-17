@@ -49,7 +49,6 @@ Per poter installare WeeChat, è necessario:
   sistema)
 * librerie ncurses
 
-
 [[install]]
 Installazione
 -------------
@@ -95,17 +94,18 @@ compilare WeeChat.
 | cmake                  |             | *sì*      | compilazione (ancora possibile con autotools, ma si raccomanda cmake)
 | libncursesw5-dev ^(2)^ |             | *sì*      | interfaccia ncurses
 | libcurl4-gnutls-dev    |             | *sì*      | trasferimento URL
-| gettext                |             |           | internazionalizzazione (traduzione dei messaggi; la lingua base è l'inglese)
-| libgcrypt11-dev        |             |           | autenticazione SASL per i server IRC che utilizzano il meccanismo DH-BLOWFISH
+// TRANSLATION MISSING
+| zlib1g-dev             |             | *sì*      | compression of packets in relay plugin (weechat protocol), script plugin
+// TRANSLATION MISSING
+| libgcrypt11-dev        |             | *sì*      | autenticazione SASL per i server IRC che utilizzano il meccanismo DH-BLOWFISH, script plugin
 // TRANSLATION MISSING
 | libgnutls-dev          | ≥ 2.2.0     |           | connessione SSL al server IRC, support of SSL in relay plugin
+| gettext                |             |           | internazionalizzazione (traduzione dei messaggi; la lingua base è l'inglese)
 | ca-certificates        |             |           | certificati per le connessioni SSL
-// TRANSLATION MISSING
-| zlib1g-dev             |             |           | compression of packets in relay plugin (weechat protocol)
 | libaspell-dev          |             |           | plugin aspell
 | python-dev             | ≥ 2.5 ^(3)^ |           | plugin python
 | libperl-dev            |             |           | plugin perl
-| ruby1.8-dev            |             |           | plugin ruby
+| ruby1.9.1-dev          | ≥ 1.8       |           | plugin ruby
 | liblua5.1-0-dev        |             |           | plugin lua
 | tcl-dev                | ≥ 8.5       |           | plugin tcl
 | guile-1.8-dev          |             |           | plugin guile (scheme)
@@ -149,9 +149,16 @@ $ make install
 Compilazione con autotools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+// TRANSLATION MISSING
+[WARNING]
+Only cmake is officially supported to build WeeChat. You should use autotools
+only if you are not able to use cmake. +
+Build with autotools requires more dependencies and is slower than with cmake.
+
 * Installazione nelle directory di sistema (richiede privilegi di 'root'):
 
 ----------------------------------------
+$ ./autogen.sh
 $ ./configure
 $ make
 % make install    (come root)
@@ -160,6 +167,7 @@ $ make
 * Installazione in una directory personalizzata:
 
 ----------------------------------------
+$ ./autogen.sh
 $ ./configure --prefix=/path/to/directory
 $ make
 $ make install
@@ -169,19 +177,13 @@ $ make install
 Sorgenti git
 ~~~~~~~~~~~~
 
-Attenzione: i sorgenti GIT sono per gli utenti avanzati: potrebbero non
+Attenzione: i sorgenti git sono per gli utenti avanzati: potrebbero non
 compilare o essere instabili. Siete avvisati!
 
-Per ottenere i sorgenti GIT, dare il comando:
+Per ottenere i sorgenti git, dare il comando:
 
 ----------------------------------------
 $ git clone git://git.sv.gnu.org/weechat.git
-----------------------------------------
-
-Se si usano gli autotools (e non cmake), eseguire questo script:
-
-----------------------------------------
-$ ./autogen.sh
 ----------------------------------------
 
 Poi seguire le istruzioni per i sorgenti (consultare
@@ -314,7 +316,6 @@ Poi, come per un crash, usare il comando `bt full`:
 ----------------------------------------
 (gdb) bt full
 ----------------------------------------
-
 
 [[usage]]
 Utilizzo
@@ -567,6 +568,219 @@ Esempio di split orizzontale + verticale:
                   (buffer #3)
 ........................................
 
+// TRANSLATION MISSING
+[[bars]]
+Bars
+~~~~
+
+A 'bar' is an area beside the chat that can contain any type of text.
+
+The bar options can be set with options `weechat.bar.name.option` where `name`
+is the name of the bar and `option` the option for this bar.
+
+List of bar options:
+
+[width="100%",cols="2m,2,10",options="header"]
+|========================================
+| Option | Values | Description
+
+| type | `root`, `window` |
+  A bar with type `root` is displayed exactly one time on screen, outside all
+  windows. There is no root bar by default, but an example is the bar 'buffers'
+  created by script 'buffers.pl' (sidebar with list of buffers). +
+  A bar with type `window` is displayed in each window, for example if you
+  split one time the screen (with `/window splith` or `/window splitv`), you
+  will have one bar in each window. The four default bars ('title', 'status',
+  'input', 'nicklist') have type `window`.
+
+| position | `top`, `bottom`, `left`, `right` |
+  Position of the bar: above/below chat, on the left/right.
+
+| priority | integer ≥ 0 |
+  Priority for display of bar: this is used for ordering the bars on screen when
+  many bars have same type and position. +
+  The bars are displayed from the edge of the screen to the center. A higher
+  priority will display bar at the beginning, so closer to the edge. +
+  Example: 'input' bar has priority 1000, so it is displayed before the 'status'
+  bar, which has priority 500.
+
+| size | integer ≥ 0 |
+  The size of the bar: number of columns for position left/right, number
+  of lines for position top/bottom. A size of `0` means automatic, so the size
+  will be computed according to content displayed in bar.
+
+| size_max | integer ≥ 0 |
+  The maximum size for a bar, `0` = no limit (this option is used only if
+  `size` = `0`).
+
+| color_bg | color |
+  The default background color for the bar.
+
+| color_fg | color |
+  The default text color for the bar.
+
+| color_delim | color |
+  The color for delimiters in bar.
+
+| hidden | `on`, `off` |
+  When option is `on`, the bar is hidden. +
+  Note: instead of changing this option, the command `/bar` is preferred, for
+  example: `/bar toggle nicklist` (see command <<command_weechat_bar,/bar>>).
+
+| separator | `on`, `off` |
+  When option is `on`, a separator (line) is displayed between this bar and
+  other bars (or chat).
+
+| items | string |
+  A list of 'items' (see <<bar_items,items>> for more info).
+
+| filling_left_right | `horizontal`, `vertical`, `columns_horizontal`, `columns_vertical` |
+  Type of filling for a bar which has position `left` or `right` (see
+  <<bar_filling,filling>> for more info).
+
+| filling_top_bottom | `horizontal`, `vertical`, `columns_horizontal`, `columns_vertical` |
+  Type of filling for a bar which has position `top` or `bottom` (see
+  <<bar_filling,filling>> for more info).
+
+| conditions | string |
+  The conditions to display the bar (see <<bar_conditions,conditions>> for more
+  info).
+|========================================
+
+[[bar_items]]
+Items
+^^^^^
+
+The option 'items' is a string with a list of bar items, separated by a comma
+(space between items on screen) or "+" (glued items).
+
+The list of bar items is displayed with command `/bar listitems`.
+
+Example of bar with items "[time],buffer_number+:+buffer_plugin+.+buffer_name":
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│[12:55] 3:irc/freenode.#weechat                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+[[bar_filling]]
+Filling
+^^^^^^^
+
+There are four types of filling:
+
+* `horizontal`: the items are displayed horizontally, from left to right. If
+  there are new lines in items, a space is used to separate lines.
+* `vertical`: the items are displayed from top to bottom. If there are new
+  lines in items, a new line is used to separate lines.
+* `columns_horizontal`: items are displayed using columns, where text is
+  aligned on the left. The first item is on top left, the second is on same
+  line, on the right.
+* `columns_vertical`: items are displayed using columns, where text is aligned
+  on the left. The first item is on top left, the second is one line below.
+
+Default bars 'title', 'status' and 'input' have 'horizontal' filling, and
+default bar 'nicklist' has 'vertical' filling.
+
+Some examples of filling for bar 'nicklist':
+
+........................................
+┌──────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel          │
+│12:54:15 peter | hey!                    │@carl   │
+│12:55:01  +Max | hello                   │@jessika│
+│                                         │@maddy  │
+│                                         │%Diego  │
+│                                         │%Melody │
+│                                         │+Max    │
+│                                         │ celia  │
+│                                         │ Eva    │
+│                                         │ freddy │
+│                                         │ Harold^│
+│                                         │ henry4 │
+│                                         │ jimmy17│
+│                                         │ jodie ▼│
+│[12:55] [6] [irc/freenode] 3:#test(+n){24}        │
+└──────────────────────────────────────────────────┘
+                filling_left_right = vertical ▲
+
+┌──────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel          │
+│12:54:15 peter | hey!           │@carl     lee    │
+│12:55:01  +Max | hello          │@jessika  louise │
+│                                │@maddy    mario  │
+│                                │%Diego    mark   │
+│                                │%Melody   peter  │
+│                                │+Max      Rachel │
+│                                │ celia    richard│
+│                                │ Eva      sheryl │
+│                                │ freddy   Vince  │
+│                                │ Harold^  warren │
+│                                │ henry4   zack   │
+│                                │ jimmy17         │
+│                                │ jodie           │
+│[12:55] [6] [irc/freenode] 3:#test(+n){24}        │
+└──────────────────────────────────────────────────┘
+        filling_left_right = columns_vertical ▲
+
+┌───────────────────────────────────────────────────────────────────────┐
+│@carl    %Diego    celia    Harold^  jodie    mario    Rachel   Vince  │
+│@jessika %Melody   Eva      henry4   lee      mark     richard  warren │
+│@maddy   +Max      freddy   jimmy17  louise   peter    sheryl   zack   │
+│───────────────────────────────────────────────────────────────────────│
+│                                                                       │
+        filling_top_bottom = columns_vertical ▲
+
+┌───────────────────────────────────────────────────────────────────────┐
+│@carl    @jessika @maddy   %Diego   %Melody  +Max      celia    Eva    │
+│ freddy   Harold^  henry4   jimmy17  jodie    lee      louise   mario  │
+│ mark     peter    Rachel   richard  sheryl   Vince    warren   zack   │
+│───────────────────────────────────────────────────────────────────────│
+│                                                                       │
+      filling_top_bottom = columns_horizontal ▲
+........................................
+
+[[bar_conditions]]
+Conditions
+^^^^^^^^^^
+
+The option 'conditions' is a string evaluated to know if the bar is displayed
+or not in the window (it is used only for bars with type 'window').
+
+The string can be:
+
+* 'active': the window must be active
+* 'inactive': the window must be inactive
+* 'nicklist': the buffer displayed in window must have a nicklist
+* an expression: it is evaluated as boolean (see command
+  <<command_weechat_eval,/eval>>)
+
+For the expression, following variables are available:
+
+* `${active}`: true if window is active
+* `${inactive}`: true if window is inactive
+* `$[nicklist}`: true if buffer displayed in window has a nicklist
+
+Following pointers are available:
+
+* `${window}`: the window where condition is evaluated
+* `${buffer}`: the buffer of window where condition is evaluated
+
+Example to display nicklist bar in all buffers with a nicklist, and only if
+width of window is > 100 :
+
+----------------------------------------
+/set weechat.bar.nicklist.conditions "${nicklist} && ${window.win_width} > 100"
+----------------------------------------
+
+Same condition, but always display nicklist on buffer '&bitlbee' (even if window
+is small):
+
+----------------------------------------
+/set weechat.bar.nicklist.conditions "${nicklist} && (${window.win_width} > 100 || ${buffer.full_name} == irc.bitlbee.&bitlbee)"
+----------------------------------------
+
 [[notify_levels]]
 Livelli di notifica
 ~~~~~~~~~~~~~~~~~~~
@@ -683,6 +897,8 @@ Tasti per buffer / finestre
 | @k(C-)@k(l)               | Ridisegna l'intera finestra | /window refresh
 | @k(C-)@k(s) , @k(C-)@k(u) | Imposta l'evidenziatore dei messaggi non letti su tutti i buffer | /input set_unread
 | @k(C-)@k(x)               | Passa al buffer attivo se i buffer sono collegati con lo stesso numero | /input switch_active_buffer
+// TRANSLATION MISSING
+| @k(A-)@k(x)               | Zoom on merged buffer (@k(A-)@k(x) again: display all merged buffers) | /input zoom_merged_buffer
 | @k(PgUp)                  | Scorre in alto di una pagina nella cronologia del buffer | /window page_up
 | @k(PgDn)                  | Scorre di una pagina in basso nella cronologia del buffer | /window page_down
 | @k(A-)@k(PgUp)            | Scorre di qualche riga in alto nella cronologia del buffer | /window scroll_up
@@ -785,30 +1001,41 @@ Tasti per il contesto "mouse"
 Questi tasti sono usati nel contesto "mouse", ovvero quando si verifica un
 evento del mouse.
 
+// TRANSLATION MISSING (6)
 [width="100%",cols="^.^3,^.^3,^.^3,.^10,.^8l",options="header"]
 |========================================
-| Tasto     | Azione           | Zona       | Descrizione | Comando
-| ◾◽◽       | -                | chat       | Passa alla finestra | /window ${_window_number}
-| ◾◽◽       | sinistra         | chat       | Passa al buffer precedente | /window ${_window_number};/buffer +1
-| ◾◽◽       | destra           | chat       | Passa al buffer successivo | /window ${_window_number};/buffer +1
-| ◾◽◽       | sinistra (lungo) | chat       | Switch to first buffer | /window ${_window_number};/buffer 1
-| ◾◽◽       | destra (lungo)   | chat       | Passa all'ultimo buffer | /window ${_window_number};/input jump_last_buffer
-| rotella ⇑ | -                | chat       | Scorre di qualche riga in alto nella cronologia del buffer | /window scroll_up -window ${_window_number}
-| rotella ⇓ | -                | chat       | Scorre di qualche riga in basso nella cronologia del buffer | /window scroll_down -window ${_window_number}
-| ◾◽◽       | su               | lista nick | Scorre di una pagina in alto nella lista nick | /bar scroll nicklist ${_window_number} -100%
-| ◾◽◽       | giù              | lista nick | Scorre di una pagina in basso nella lista nick | /bar scroll nicklist ${_window_number} +100%
-| ◾◽◽       | up (lungo)       | lista nick | Sposta all'inizio della lista nick | /bar scroll nicklist ${_window_number} b
-| ◾◽◽       | giù (lungo)      | lista nick | Sposta alla fine della lista nick | /bar scroll nicklist ${_window_number} e
-| ◾◽◽       | -                | lista nick | Apre una query con un nick | /window ${_window_number};/query ${nick}
-| ◽◽◾       | -                | lista nick | Effettua un whois su un nick | /window ${_window_number};/whois ${nick}
-| ◾◽◽       | sinistra         | lista nick | Kick di un nick | /window ${_window_number};/kick ${nick}
-| ◾◽◽       | sinistra (lungo) | lista nick | Kick e ban di un nick | /window ${_window_number};/kickban ${nick}
-| ◽◽◾       | sinistra         | lista nick | Ban di un nick | /window ${_window_number};/ban ${nick}
-| ◽◽◾       | -                | input      | Cattura un evento del mouse e inserisce il codice nella riga di comando | /input grab_mouse_area
-| rotella ⇑ | -                | ogni barra | Scorre la barra del -10% | /bar scroll ${_bar_name} ${_window_number} -20%
-| rotella ⇓ | -                | ogni barra | Scorre la barra del +10% | /bar scroll ${_bar_name} ${_window_number} +20%
-| ◽◾◽       | -                | ovunque    | Avvia la modalità cursore in questo punto | /cursor go ${_x},${_y}
+| Tasto ^(1)^ | Azione | Zona | Descrizione | Comando
+| ◾◽◽     | -                | chat                 | Passa alla finestra | /window ${_window_number}
+| ◾◽◽     | sinistra         | chat                 | Passa al buffer precedente | /window ${_window_number};/buffer +1
+| ◾◽◽     | destra           | chat                 | Passa al buffer successivo | /window ${_window_number};/buffer +1
+| ◾◽◽     | sinistra (lungo) | chat                 | Switch to first buffer | /window ${_window_number};/buffer 1
+| ◾◽◽     | destra (lungo)   | chat                 | Passa all'ultimo buffer | /window ${_window_number};/input jump_last_buffer
+| ◾◽◽     | -                | chat (script buffer) | Select line in script buffer | /script go ${_chat_line_y}
+| ◽◽◾     | -                | chat (script buffer) | Install/remove script | /script go ${_chat_line_y};/script installremove -q ${script_name_with_extension}
+| ⇑       | -                | chat                 | Scorre di qualche riga in alto nella cronologia del buffer | /window scroll_up -window ${_window_number}
+| ⇓       | -                | chat                 | Scorre di qualche riga in basso nella cronologia del buffer | /window scroll_down -window ${_window_number}
+| ⇑       | -                | chat (script buffer) | Move 5 lines up in script buffer | /script up 5
+| ⇓       | -                | chat (script buffer) | Move 5 lines down in script buffer | /script down 5
+| @k(C-)⇑ | -                | chat                 | Scroll horizontally to the left | /window scroll_horiz -window ${_window_number} -10%
+| @k(C-)⇓ | -                | chat                 | Scroll horizontally to the right | /window scroll_horiz -window ${_window_number} +10%
+| ◾◽◽     | su               | lista nick           | Scorre di una pagina in alto nella lista nick | /bar scroll nicklist ${_window_number} -100%
+| ◾◽◽     | giù              | lista nick           | Scorre di una pagina in basso nella lista nick | /bar scroll nicklist ${_window_number} +100%
+| ◾◽◽     | up (lungo)       | lista nick           | Sposta all'inizio della lista nick | /bar scroll nicklist ${_window_number} b
+| ◾◽◽     | giù (lungo)      | lista nick           | Sposta alla fine della lista nick | /bar scroll nicklist ${_window_number} e
+| ◾◽◽     | -                | lista nick           | Apre una query con un nick | /window ${_window_number};/query ${nick}
+| ◽◽◾     | -                | lista nick           | Effettua un whois su un nick | /window ${_window_number};/whois ${nick}
+| ◾◽◽     | sinistra         | lista nick           | Kick di un nick | /window ${_window_number};/kick ${nick}
+| ◾◽◽     | sinistra (lungo) | lista nick           | Kick e ban di un nick | /window ${_window_number};/kickban ${nick}
+| ◽◽◾     | sinistra         | lista nick           | Ban di un nick | /window ${_window_number};/ban ${nick}
+| ◽◽◾     | -                | input                | Cattura un evento del mouse e inserisce il codice nella riga di comando | /input grab_mouse_area
+| ⇑       | -                | ogni barra           | Scorre la barra del -20% | /bar scroll ${_bar_name} ${_window_number} -20%
+| ⇓       | -                | ogni barra           | Scorre la barra del +20% | /bar scroll ${_bar_name} ${_window_number} +20%
+| ◽◾◽     | -                | ovunque              | Avvia la modalità cursore in questo punto | /cursor go ${_x},${_y}
 |========================================
+
+// TRANSLATION MISSING
+[NOTE]
+^(1)^ "⇑" and "⇓" are wheel up and down.
 
 [[mouse]]
 Supporto del mouse
@@ -899,11 +1126,23 @@ Elenco di azioni (solo per i pulsanti, non la rotellina):
 | gesture-right-long | ≥ 40
 |========================================
 
+// TRANSLATION MISSING
+List of incomplete events (only for buttons, useful for plugins/scripts):
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Event      | Description
+| event-down | button was pressed but not released yet
+| event-drag | mouse was moved with button pressed down
+|========================================
+
 Esempio di eventi:
 
 * `button1`
 * `ctrl-button1`
 * `button1-gesture-right`
+* `button1-event-down`
+* `button1-event-drag`
 * `alt-button2-gesture-down-long`
 * `wheelup`
 * `ctrl-alt-wheeldown`
@@ -1182,7 +1421,6 @@ Comandi di WeeChat
 
 include::autogen/user/weechat_commands.txt[]
 
-
 [[plugins]]
 Plugin
 ------
@@ -1294,6 +1532,33 @@ Ad esempio, per abilitare l'opzione "ignore-case":
 ----------------------------------------
 /set aspell.option.ignore-case "true"
 ----------------------------------------
+
+// TRANSLATION MISSING
+[[aspell_suggestions]]
+Suggestions
+^^^^^^^^^^^
+
+Suggestions are displayed in a bar item called "aspell_suggest". The number of
+suggestions is set in option 'aspell.check.suggestions'.
+
+To enable suggestions you must set option 'aspell.check.suggestions' to an
+integer ≥ 0 and add the bar item "aspell_suggest" to a bar, like 'status'.
+
+Example of suggestions with English dictionary (`en`):
+
+........................................
+│[12:55] [6] [irc/freenode] 3:#test(+n){4} [print,prone,prune]                    │
+│[@Flashy] prinr █                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+Example of suggestions with English and French dictionaries (`en,fr`):
+
+........................................
+│[12:55] [6] [irc/freenode] 3:#test(+n){4} [print,prone,prune/prime,primer,primé] │
+│[@Flashy] prinr █                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+........................................
 
 [[charset_plugin]]
 Plugin Charset
@@ -1739,32 +2004,41 @@ l'opzione:
 I codici seguenti possono essere utilizzati nelle stringhe e vengono estese
 automaticamente da WeeChat quando si risponde alle CTCP
 
+// TRANSLATION MISSING ($versiongit + $git + $username (name))
 [width="100%",cols="^2l,4,8l",options="header"]
 |=======================================
 | Codice       | Descrizione                         | Valore/esempio
 | $clientinfo  | elenco di CTCP supportate           | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| $version     | versione di WeeChat                 | 0.3.0
-| $compilation | data di compilazione di WeeChat     | Sep 13 2009
-| $osinfo      | informazioni sull'OS                | Linux 2.6.31 / i686
-| $site        | sito di WeeChat                     | http://www.weechat.org
+| $version     | versione di WeeChat                 | 0.4.0-dev
+| $versiongit  | versione di WeeChat + git version   | 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| $git         | git version                         | v0.3.9-104-g7eb5cc4
+| $compilation | data di compilazione di WeeChat     | Dec 16 2012
+| $osinfo      | informazioni sull'OS                | Linux 2.6.32-5-amd64 / x86_64
+| $site        | sito di WeeChat                     | http://www.weechat.org/
 | $download    | sito di WeeChat, pagina di download | http://www.weechat.org/download
-| $time        | data/ora correnti                   | Sun, 13 Sep 2009 15:48:31 +0200
-| $username    | nome utente sul server IRC          | nick
-| $realname    | nome reale sul server IRC           | Mio nome
+| $time        | data/ora correnti                   | Sun, 16 Dec 2012 10:40:48 +0100
+| $username    | nome utente sul server IRC          | name
+| $realname    | nome reale sul server IRC           | John Doe
 |=======================================
+
+// TRANSLATION MISSING
+[NOTE]
+The git version is the output of command `git describe`. It is known only if
+WeeChat has been compiled inside the git repository and if git was installed.
 
 Se le opzioni CTCP non sono definite (comportamento predefinito),
 le risposte CTCP sono:
 
+// TRANSLATION MISSING ($username (name))
 [width="100%",cols="^2,4l,8l",options="header"]
 |=======================================
-| CTCP       | Formato risposta                | Esempio
-| CLIENTINFO | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| FINGER     | WeeChat $version                | WeeChat 0.3.0
-| SOURCE     | $download                       | http://www.weechat.org/download
-| TIME       | $time                           | Sun Sep 13 15:48:31 2009
-| USERINFO   | $username ($realname)           | nick (Mio nome)
-| VERSION    | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
+| CTCP       | Formato risposta                   | Esempio
+| CLIENTINFO | $clientinfo                        | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
+| FINGER     | WeeChat $versiongit                | WeeChat 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| SOURCE     | $download                          | http://www.weechat.org/download
+| TIME       | $time                              | Sun, 16 Dec 2012 10:40:48 +0100
+| USERINFO   | $username ($realname)              | name (John Doe)
+| VERSION    | WeeChat $versiongit ($compilation) | WeeChat 0.4.0-dev (git: v0.3.9-104-g7eb5cc4) (Dec 16 2012)
 |=======================================
 
 [[irc_target_buffer]]
@@ -1863,6 +2137,10 @@ personalizzare:
 | 433       |               | nick già utilizzato
 | 438       |               | non autorizzato a cambiare nick
 | 671       | whois         | whois (connessione sicura)
+// TRANSLATION MISSING
+| 728       | quietlist     | quiet list
+// TRANSLATION MISSING
+| 729       | quietlist     | end of quiet list
 | 901       |               | ora si è loggati
 |========================================
 
@@ -2210,10 +2488,26 @@ WeeChat fornisce 6 plugin per lo scripting: Python, Perl, Ruby, Lua, Tcl, Guile
 Questi plugin possono caricare, eseguire e scaricare gli script per questi
 linguaggi.
 
+// TRANSLATION MISSING
+Another plugin called "script" is a scripts manager and is used to load/unload
+scripts of any language, and install/remove scripts of WeeChat scripts
+repository, which are visible at this URL: http://www.weechat.org/scripts
+
 Per maggiori informazioni su come scrivere gli script, o le API WeeChat
 per gli script, consultare la 'Guida allo Scripting di WeeChat'.
 
-È possibile trovare alcuni script qui: http://www.weechat.org/scripts
+// TRANSLATION MISSING
+[[script_options]]
+Script options (script.conf)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+include::autogen/user/script_options.txt[]
+
+[[script_commands]]
+Comandi Script
+^^^^^^^^^^^^^^
+
+include::autogen/user/script_commands.txt[]
 
 [[python_commands]]
 Comandi Python
@@ -2273,38 +2567,6 @@ Comandi
 
 include::autogen/user/xfer_commands.txt[]
 
-
-[[authors]]
-Autori
-------
-
-[[developers]]
-Sviluppatori
-~~~~~~~~~~~~
-
-Sviluppatore principale::
-    Sébastien Helleu (FlashCode)
-
-[[contributors]]
-Contributori
-~~~~~~~~~~~~
-
-Packager::
-    Emmanuel Bouthenot (kolter), Julien Louis (ptitlouis), Odin
-
-Traduzioni::
-    Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
-    Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
-    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi,
-    Quico Noizeux
-
-Patch::
-    Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
-    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
-    Quentin Glidic (SardemFF7), Simon Kuhnle, Mateusz Poszwa, Peter Boström,
-    Arvydas Sidorenko
-
-
 [[support]]
 Supporto
 --------
@@ -2317,7 +2579,6 @@ Per ricevere supporto:
 
 * IRC: server 'irc.freenode.net', canali '#weechat' (inglese) e
   '#weechat-fr' (francese)
-* Forum di WeeChat: http://forums.flashtux.org/
 * Mailing list:
 ** sottoscrizione: http://mail.nongnu.org/mailman/listinfo/weechat-support
 ** inviare una mail a weechat-support@nongnu.org

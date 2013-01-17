@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-curses-term.c - terminal functions for Curses GUI
+ *
+ * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * gui-curses-term.c: terminal functions for Curses GUI
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,11 +31,11 @@
 
 
 /*
- * gui_term_set_eat_newline_glitch: set "eat_newline_glitch" variable
- *                                  With value 0, this is used to not auto
- *                                  insert newline char at end of lines
- *                                  displayed, so that long words like URLs are
- *                                  not cut when they are selected with mouse
+ * Sets "eat_newline_glitch" variable.
+ *
+ * With value 0, this is used to not auto insert newline char at end of lines
+ * displayed, so that long words like URLs are not cut when they are selected
+ * with mouse.
  */
 
 void

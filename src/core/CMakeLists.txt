@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -27,6 +27,7 @@ wee-completion.c wee-completion.h
 wee-config.c wee-config.h
 wee-config-file.c wee-config-file.h
 wee-debug.c wee-debug.h
+wee-eval.c wee-eval.h
 wee-hashtable.c wee-hashtable.h
 wee-hdata.c wee-hdata.h
 wee-hook.c wee-hook.h
@@ -41,7 +42,8 @@ wee-upgrade.c wee-upgrade.h
 wee-upgrade-file.c wee-upgrade-file.h
 wee-url.c wee-url.h
 wee-utf8.c wee-utf8.h
-wee-util.c wee-util.h)
+wee-util.c wee-util.h
+wee-version.c wee-version.h)
 
 # Check for flock support
 INCLUDE(CheckSymbolExists)
@@ -64,3 +66,4 @@ INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIRS})
 
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 ADD_LIBRARY(weechat_core STATIC ${LIB_CORE_SRC})
+ADD_DEPENDENCIES(weechat_core version_git)

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-redirect.c - redirection of IRC command output
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-redirect.c: redirection of IRC command output
  */
 
 #include <stdlib.h>
@@ -242,7 +240,9 @@ struct t_irc_redirect_pattern irc_redirect_patterns_default[] =
 
 
 /*
- * irc_redirect_pattern_search: search a redirect pattern in list of patterns
+ * Searches for a redirect pattern in list of patterns.
+ *
+ * Returns pointer to redirect pattern found, NULL if not found.
  */
 
 struct t_irc_redirect_pattern *
@@ -265,7 +265,9 @@ irc_redirect_pattern_search (const char *name)
 }
 
 /*
- * irc_redirect_pattern_new: create a new redirect pattern
+ * Creates a new redirect pattern.
+ *
+ * Returns pointer to new redirect pattern, NULL if error.
  */
 
 struct t_irc_redirect_pattern *
@@ -323,7 +325,7 @@ irc_redirect_pattern_new (const char *name, int temp_pattern, int timeout,
 }
 
 /*
- * irc_redirect_pattern_free: free a redirect pattern and remove it from list
+ * Frees a redirect pattern and removes it from list.
  */
 
 void
@@ -364,7 +366,7 @@ irc_redirect_pattern_free (struct t_irc_redirect_pattern *redirect_pattern)
 }
 
 /*
- * irc_redirect_pattern_free_all: free all redirect patterns
+ * Frees all redirect patterns.
  */
 
 void
@@ -377,9 +379,10 @@ irc_redirect_pattern_free_all ()
 }
 
 /*
- * irc_redirect_new_with_commands: create a new redirect for a command on a
- *                                 server (with start/stop/extra commands in
- *                                 arguments)
+ * Creates a new redirect for a command on a server (with start/stop/extra
+ * commands in arguments).
+ *
+ * Returns pointer to new redirect, NULL if error.
  */
 
 struct t_irc_redirect *
@@ -482,7 +485,9 @@ irc_redirect_new_with_commands (struct t_irc_server *server,
 }
 
 /*
- * irc_redirect_new: create a new redirect for a command on a server
+ * Creates a new redirect for a command on a server.
+ *
+ * Returns pointer to new redirect, NULL if error.
  */
 
 struct t_irc_redirect *
@@ -544,7 +549,9 @@ irc_redirect_new (struct t_irc_server *server,
 }
 
 /*
- * irc_redirect_search_available: search first redirect available for server
+ * Searches for first redirect available for server.
+ *
+ * Returns pointer to redirect found, NULL if not found.
  */
 
 struct t_irc_redirect *
@@ -567,8 +574,7 @@ irc_redirect_search_available (struct t_irc_server *server)
 }
 
 /*
- * irc_redirect_init_command: initalize a redirect with IRC command sent to
- *                            server
+ * Initializes a redirect with IRC command sent to server.
  */
 
 void
@@ -609,8 +615,11 @@ irc_redirect_init_command (struct t_irc_redirect *redirect,
 }
 
 /*
- * irc_redirect_message_match_hash: return 1 if a message matches hashtable
- *                                  with commands, 0 if it doesn't match
+ * Checks if a message matches hashtable with commands.
+ *
+ * Returns:
+ *   1: message matches hashtable
+ *   0: message does not match hashtable
  */
 
 int
@@ -642,7 +651,7 @@ irc_redirect_message_match_hash (struct t_irc_redirect *redirect,
 }
 
 /*
- * irc_redirect_message_add: add a message to redirect output
+ * Adds a message to redirect output.
  */
 
 void
@@ -686,8 +695,8 @@ irc_redirect_message_add (struct t_irc_redirect *redirect, const char *message,
 }
 
 /*
- * irc_redirect_stop: end of a redirection: send data to callback and free
- *                    redirect (if count has been reached)
+ * Ends a redirection: sends data to callback and frees redirect (if count has
+ * been reached).
  */
 
 void
@@ -747,12 +756,12 @@ irc_redirect_stop (struct t_irc_redirect *redirect, const char *error)
 }
 
 /*
- * irc_redirect_message: try to redirect a received message (from IRC server)
- *                       to a redirect in server
- *                       return: 1 if message has been redirected
- *                               0 if no matching redirect was found
- *                       if message has been redirected, irc plugin will
- *                       discard it (do not display anything)
+ * Tries to redirect a received message (from IRC server) to a redirect in
+ * server.
+ *
+ * Returns:
+ *   1: message has been redirected (irc plugin will discard message)
+ *   0: no matching redirect was found
  */
 
 int
@@ -884,7 +893,7 @@ end:
 }
 
 /*
- * irc_redirect_free: free a redirect and remove it from list
+ * Frees a redirect and removes it from list.
  */
 
 void
@@ -951,7 +960,7 @@ irc_redirect_free (struct t_irc_redirect *redirect)
 }
 
 /*
- * irc_redirect_free_all: free all redirects in list
+ * Frees all redirects in list.
  */
 
 void
@@ -964,7 +973,7 @@ irc_redirect_free_all (struct t_irc_server *server)
 }
 
 /*
- * irc_redirect_hdata_redirect_pattern_cb: return hdata for redirect pattern
+ * Returns hdata for redirect pattern.
  */
 
 struct t_hdata *
@@ -975,17 +984,18 @@ irc_redirect_hdata_redirect_pattern_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = weechat_hdata_new (hdata_name, "prev_redirect", "next_redirect");
+    hdata = weechat_hdata_new (hdata_name, "prev_redirect", "next_redirect",
+                               0, 0, NULL, NULL);
     if (hdata)
     {
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, name, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, temp_pattern, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, timeout, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, cmd_start, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, cmd_stop, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, cmd_extra, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, prev_redirect, POINTER, NULL, hdata_name);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, next_redirect, POINTER, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, name, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, temp_pattern, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, timeout, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, cmd_start, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, cmd_stop, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, cmd_extra, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, prev_redirect, POINTER, 0, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect_pattern, next_redirect, POINTER, 0, NULL, hdata_name);
         WEECHAT_HDATA_LIST(irc_redirect_patterns);
         WEECHAT_HDATA_LIST(last_irc_redirect_pattern);
     }
@@ -993,7 +1003,7 @@ irc_redirect_hdata_redirect_pattern_cb (void *data, const char *hdata_name)
 }
 
 /*
- * irc_redirect_hdata_redirect_cb: return hdata for redirect
+ * Returns hdata for redirect.
  */
 
 struct t_hdata *
@@ -1004,36 +1014,40 @@ irc_redirect_hdata_redirect_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = weechat_hdata_new (hdata_name, "prev_redirect", "next_redirect");
+    hdata = weechat_hdata_new (hdata_name, "prev_redirect", "next_redirect",
+                               0, 0, NULL, NULL);
     if (hdata)
     {
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, server, POINTER, NULL, "irc_server");
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, pattern, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, signal, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, count, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, current_count, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, string, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, timeout, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, command, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, assigned_to_command, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, start_time, TIME, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_start, HASHTABLE, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_stop, HASHTABLE, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_extra, HASHTABLE, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_start_received, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_stop_received, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_filter, HASHTABLE, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, output, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, output_size, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, prev_redirect, POINTER, NULL, hdata_name);
-        WEECHAT_HDATA_VAR(struct t_irc_redirect, next_redirect, POINTER, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, server, POINTER, 0, NULL, "irc_server");
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, pattern, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, signal, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, count, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, current_count, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, string, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, timeout, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, command, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, assigned_to_command, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, start_time, TIME, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_start, HASHTABLE, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_stop, HASHTABLE, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_extra, HASHTABLE, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_start_received, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_stop_received, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, cmd_filter, HASHTABLE, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, output, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, output_size, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, prev_redirect, POINTER, 0, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_redirect, next_redirect, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * irc_redirect_pattern_add_to_infolist: add a redirect pattern in an infolist
- *                                       return 1 if ok, 0 if error
+ * Adds a redirect pattern in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1066,8 +1080,11 @@ irc_redirect_pattern_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * irc_redirect_add_to_infolist: add a redirect in an infolist
- *                               return 1 if ok, 0 if error
+ * Adds a redirect in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1126,8 +1143,7 @@ irc_redirect_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * irc_redirect_pattern_print_log: print redirect infos in log (usually for
- *                                 crash dump)
+ * Prints redirect infos in WeeChat log file (usually for crash dump).
  */
 
 void
@@ -1152,7 +1168,7 @@ irc_redirect_pattern_print_log ()
 }
 
 /*
- * irc_redirect_print_log: print redirect infos in log (usually for crash dump)
+ * Prints redirect infos in WeeChat log file (usually for crash dump).
  */
 
 void
@@ -1198,10 +1214,10 @@ irc_redirect_print_log (struct t_irc_server *server)
 }
 
 /*
- * irc_redirect_pattern_hsignal_cb: callback for hsignal "irc_redirect_pattern"
- *                                  It is called when other plugins/scripts are
- *                                  creating a redirect pattern (irc plugin
- *                                  itself does not use this function)
+ * Callback for hsignal "irc_redirect_pattern".
+ *
+ * It is called when other plugins/scripts are creating a redirect pattern (irc
+ * plugin itself does not use this function).
  */
 
 int
@@ -1262,10 +1278,10 @@ irc_redirect_pattern_hsignal_cb (void *data, const char *signal,
 }
 
 /*
- * irc_redirect_command_hsignal_cb: callback for hsignal "irc_redirect_command"
- *                                  It is called when other plugins/scripts are
- *                                  redirecting an IRC command (irc plugin
- *                                  itself does not use this function)
+ * Callback for hsignal "irc_redirect_command".
+ *
+ * It is called when other plugins/scripts are redirecting an IRC command (irc
+ * plugin itself does not use this function).
  */
 
 int
@@ -1332,7 +1348,7 @@ irc_redirect_command_hsignal_cb (void *data, const char *signal,
 }
 
 /*
- * irc_redirect_init: create default redirect patterns
+ * Creates default redirect patterns.
  */
 
 void
@@ -1352,7 +1368,7 @@ irc_redirect_init ()
 }
 
 /*
- * irc_redirect_end: free all redirect patterns
+ * Frees all redirect patterns.
  */
 
 void

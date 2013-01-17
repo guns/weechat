@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -20,7 +20,7 @@
 # user's guide
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html
-  COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a toc -a toclevels=4 -a date=`date "+%F"` -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.txt
+  COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a toc -a toclevels=4 -a toc-title='目次' -a date=`date "+%F"` -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.txt
   DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/autogen/user/*.txt
@@ -28,6 +28,17 @@ ADD_CUSTOM_COMMAND(
 )
 ADD_CUSTOM_TARGET(doc-user-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+
+# scripting guide
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html
+  COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a toc -a toclevels=3 -a toc-title='目次' -a date=`date "+%F"` -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_scripting.ja.txt
+  DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/weechat_scripting.ja.txt
+  COMMENT "Building weechat_scripting.ja.html"
+)
+ADD_CUSTOM_TARGET(doc-scripting-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
 # FAQ
 ADD_CUSTOM_COMMAND(
@@ -50,3 +61,14 @@ ADD_CUSTOM_COMMAND(
 )
 ADD_CUSTOM_TARGET(doc-quickstart-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+
+# tester's guide
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html
+  COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a toc -a toc-title='目次' -a date=`date "+%F"` -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_tester.ja.txt
+  DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/weechat_tester.ja.txt
+  COMMENT "Building weechat_tester.ja.html"
+)
+ADD_CUSTOM_TARGET(doc-tester-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})

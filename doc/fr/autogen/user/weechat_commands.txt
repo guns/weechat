@@ -11,7 +11,7 @@ message: message pour l'absence (si pas de message donné, le statut d'absence e
 [command]*`bar`* gestion des barres::
 ........................................
 /bar  list|listfull|listitems
-      add <nom> <type>[,<cond1>[,<cond2>...]] <position> <taille> <séparateur> <objet1>[,<objet2>...]
+      add <nom> <type>[,<conditions>] <position> <taille> <séparateur> <objet1>[,<objet2>...]
       default [input|title|status|nicklist]
       del <nom>|-all
       set <nom> <option> <valeur>
@@ -25,10 +25,11 @@ message: message pour l'absence (si pas de message donné, le statut d'absence e
           nom: nom de la barre (doit être unique)
          type:   root: en dehors des fenêtres
                window: dans les fenêtres, avec condition(s) optionnelle(s) (voir ci-dessous)
-    cond1,...: condition(s) pour afficher cette barre (seulement pour le type "window"):
+    condition: condition(s) pour afficher cette barre (seulement pour le type "window"):
                  active: sur la fenêtre active
                inactive: sur les fenêtres inactives
                nicklist: sur les fenêtres avec liste de pseudos
+               autre condition: voir /help weechat.bar.xxx.conditions et /help eval
                sans condition, la barre est toujours affichée
      position: bottom (bas), top (haut), left (gauche) ou right (droite)
        taille: taille de la barre (en caractères)
@@ -199,6 +200,61 @@ infolists: afficher des infos sur les infolists
   windows: afficher l'arbre des fenêtres
 ........................................
 
+[[command_weechat_eval]]
+[command]*`eval`* évaluer une expression et envoyer le résultat au tampon::
+........................................
+/eval  [-n] <expression>
+       [-n] <expression1> <opérateur> <expression2>
+
+        -n: afficher le résultat sans envoyer au tampon (mode debug)
+expression: expression à évaluer, les variables avec le format ${variable} sont remplacées (voir ci-dessous)
+ opérateur: un opérateur logique ou de comparaison :
+            - opérateurs logiques :
+                &&  "et" booléen
+                ||  "ou" booléen
+            - opérateurs de comparaison :
+                ==  égal
+                !=  non égal
+                <=  inférieur ou égal
+                <   inférieur
+                >=  supérieur ou égal
+                >   supérieur
+                =~  correspond à l'expression régulière
+                !~  ne correspond PAS à l'expression régulière
+
+Une expression est considérée comme "vraie" si elle est non NULL, non vide, et différente de "0".
+La comparaison est faite en utilisant des entiers si les deux expressions sont des entiers valides.
+Pour forcer une comparaison de chaînes, ajoutez des guillemets autour de chaque expression, par exemple :
+  50 > 100      ==> 0
+  "50" > "100"  ==> 1
+
+Des variables sont remplacées dans l'expression, en utilisant le format ${variable}, la variable pouvant être, par ordre de priorité :
+  1. le nom d'une option (fichier.section.option)
+  2. le nom d'une variable locale du tampon
+  3. le nom d'un hdata/variable (la valeur est automatiquement convertie en chaîne), par défaut "window" et "buffer" pointent vers la fenêtre et le tampon courants.
+Le format du hdata peut être le suivant :
+  hdata.var1.var2...: démarrer avec un hdata (le pointeur doit être connu), et demander les variables l'une après l'autre (d'autres hdata peuvent être suivis)
+  hdata(list).var1.var2...: démarrer avec un hdata en utlisant une liste, par exemple :
+    ${buffer[gui_buffers].full_name}: nom complet du premier tampon dans la liste chaînée des tampons
+    ${plugin[weechat_plugins].name}: nom de la première extension dans la liste chaînée des extensions
+Pour le nom du hdata et des variables, voir la "Référence API extension", fonction "weechat_hdata_get".
+
+Exemples:
+  /eval -n ${weechat.look.scroll_amount}  ==> 3
+  /eval -n ${window}                      ==> 0x2549aa0
+  /eval -n ${window.buffer}               ==> 0x2549320
+  /eval -n ${window.buffer.full_name}     ==> core.weechat
+  /eval -n ${window.buffer.number}        ==> 1
+  /eval -n ${window.buffer.number} > 2    ==> 0
+  /eval -n ${window.win_width} > 100      ==> 1
+  /eval -n (8 > 12) || (5 > 2)            ==> 1
+  /eval -n (8 > 12) && (5 > 2)            ==> 0
+  /eval -n abcd =~ ^ABC                   ==> 1
+  /eval -n abcd =~ (?-i)^ABC              ==> 0
+  /eval -n abcd =~ (?-i)^abc              ==> 1
+  /eval -n abcd !~ abc                    ==> 0
+........................................
+
 [[command_weechat_filter]]
 [command]*`filter`* filtrer les messages dans les tampons, pour les cacher/afficher selon des tags ou expressions régulières::
 ........................................
@@ -325,6 +381,7 @@ list des actions:
   set_unread_current_buffer: définir le marqueur de données non lues pour le tampon courant
   switch_active_buffer: basculer vers le tampon mélangé suivant
   switch_active_buffer_previous: basculer vers le tampon mélangé précédent
+  zoom_merged_buffer: zoom sur le tampon mélangé
   insert: insérer du texte dans la ligne de commande
   paste_start: début de collage (mode "bracketed paste")
   paste_stop: fin de collage (mode "bracketed paste")
@@ -490,7 +547,7 @@ Exemples:
   créer un proxy http, tournant en local, port 8888:
     /proxy add local http 127.0.0.1 8888
   créer un proxy http en utilisant le protocole IPv6:
-    /proxy add local http 127.0.0.1 8888
+    /proxy add local http ::1 8888
     /proxy set local ipv6 on
   créer un proxy socks5 avec un utilisateur/mot de passe:
     /proxy add myproxy socks5 sample.host.org 3128 myuser mypass
@@ -548,14 +605,16 @@ Sans paramètre, tous les fichiers (WeeChat et extensions) sont sauvegardés.
 [command]*`set`* modifier des options de configuration::
 ........................................
 /set  [<option> [<valeur>]]
+      diff [<option> [<option>...]]
 
 option: nom d'une option (peut démarrer ou se terminer par '*' pour lister plusieurs options)
 valeur: nouvelle valeur pour l'option
+  diff: afficher seulement les options modifiées
 
 La nouvelle valeur peut être, selon le type de l'option:
   booléen: on, off ou toggle
-  entier : nombre, ++nombre ou --nombre
-  chaîne : toute chaîne ("" pour une chaîne vide)
+   entier: nombre, ++nombre ou --nombre
+   chaîne: toute chaîne ("" pour une chaîne vide)
   couleur: nom de couleur, ++nombre ou --nombre
 
 Pour tous les types, vous pouvez utiliser null pour supprimer la valeur de l'option (valeur non définie). Cela ne fonctionne qu'avec certaines options spéciales des extensions.
@@ -565,6 +624,10 @@ Exemples:
     /set *highlight*
   ajouter un mot pour le highlight:
     /set weechat.look.highlight "mot"
+  afficher les options modifiées:
+    /set diff
+  afficher les options modifiées dans l'extension irc:
+    /set diff irc.*
 ........................................
 
 [[command_weechat_unset]]
@@ -586,9 +649,10 @@ Exemples:
 [[command_weechat_upgrade]]
 [command]*`upgrade`* mettre à jour WeeChat sans se déconnecter des serveurs::
 ........................................
-/upgrade  [<chemin_vers_binaire>]
+/upgrade  [<chemin_vers_binaire>|-quit]
 
 chemin_vers_binaire: chemin vers le binaire WeeChat (par défaut le binaire courant)
+              -quit: fermer *TOUTES* les connexions, sauver la session et quitter, ce qui rend possible une restauration différée (voir ci-dessous)
 
 Cette commande met à jour et recharge une session de WeeChat qui tourne. Le nouveau binaire WeeChat doit avoir été compilé ou installé via un gestionnaire de paquet avant de lancer cette commande.
 
@@ -598,7 +662,17 @@ Le processus de mise à jour comporte 4 étapes :
   1. sauvegarder la session pour le coeur et les extensions (tampons, historique, ...)
   2. décharger toutes les extensions (les fichiers de configuration (*.conf) sont écrits sur disque)
   3. sauvegarder la configuration WeeChat (weechat.conf)
-  4. exécuter le nouveau binaire WeeChat et recharger la session.
+  4. exécuter le nouveau binaire WeeChat et recharger la session.<
+
+Avec l'option "-quit", le processus est légèrement différent :
+  1. fermer *TOUTES* les connexions
+  2. sauvegarder la session (fichiers *.upgrade)
+  3. décharger les extensions
+  4. sauvegarder la configuration WeeChat
+  5. quitter WeeChat
+Et plus tard vous pouvez restaurer la session avec la commande: weechat-curses --upgrade
+IMPORTANT: vous devez restaurer la session avec exactement la même configuration (fichiers *.conf).
+Il est également possible de restaurer la session WeeChat sur une autre machine si vous y copiez le contenu du répertoire "~/.weechat".
 ........................................
 
 [[command_weechat_uptime]]

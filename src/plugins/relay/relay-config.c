@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-config.c - relay configuration options (file relay.conf)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * relay-config.c: relay configuration options (file relay.conf)
  */
 
 #include <stdlib.h>
@@ -55,18 +53,27 @@ struct t_config_option *relay_config_color_status[RELAY_NUM_STATUS];
 struct t_config_option *relay_config_network_allowed_ips;
 struct t_config_option *relay_config_network_bind_address;
 struct t_config_option *relay_config_network_compression_level;
+struct t_config_option *relay_config_network_ipv6;
 struct t_config_option *relay_config_network_max_clients;
 struct t_config_option *relay_config_network_password;
 struct t_config_option *relay_config_network_ssl_cert_key;
 
+/* relay config, irc section */
+
+struct t_config_option *relay_config_irc_backlog_max_number;
+struct t_config_option *relay_config_irc_backlog_max_minutes;
+struct t_config_option *relay_config_irc_backlog_since_last_disconnect;
+struct t_config_option *relay_config_irc_backlog_tags;
+struct t_config_option *relay_config_irc_backlog_time_format;
+
 /* other */
 
 regex_t *relay_config_regex_allowed_ips = NULL;
+struct t_hashtable *relay_config_hashtable_irc_backlog_tags = NULL;
 
 
 /*
- * relay_config_refresh_cb: callback called when user changes relay option that
- *                          needs a refresh of relay list
+ * Callback for changes on options that require a refresh of relay list.
  */
 
 void
@@ -81,7 +88,7 @@ relay_config_refresh_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * relay_config_change_network_allowed_ips: called when allowed ips changes
+ * Callback for changes on option "relay.network.allowed_ips".
  */
 
 void
@@ -119,8 +126,7 @@ relay_config_change_network_allowed_ips (void *data,
 }
 
 /*
- * relay_config_change_network_bind_address_cb: callback called when user changes
- *                                              network bind address option
+ * Callback for changes on option "relay.network.bind_address".
  */
 
 void
@@ -142,7 +148,31 @@ relay_config_change_network_bind_address_cb (void *data,
 }
 
 /*
- * relay_config_change_network_ssl_cert_key: called when ssl_cert_key is changed
+ * Callback for changes on option "relay.network.ipv6".
+ */
+
+void
+relay_config_change_network_ipv6_cb (void *data, struct t_config_option *option)
+{
+    struct t_relay_server *ptr_server;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    for (ptr_server = relay_servers; ptr_server;
+         ptr_server = ptr_server->next_server)
+    {
+        relay_server_get_protocol_args (ptr_server->protocol_string,
+                                        &ptr_server->ipv4, &ptr_server->ipv6,
+                                        NULL, NULL, NULL);
+        relay_server_close_socket (ptr_server);
+        relay_server_create_socket (ptr_server);
+    }
+}
+
+/*
+ * Callback for changes on option "relay.network.ssl_cert_key".
  */
 
 void
@@ -158,8 +188,51 @@ relay_config_change_network_ssl_cert_key (void *data,
 }
 
 /*
- * relay_config_change_port_cb: callback called when relay port option is
- *                              modified
+ * Callback for changes on option "relay.irc.backlog_tags".
+ */
+
+void
+relay_config_change_irc_backlog_tags (void *data,
+                                      struct t_config_option *option)
+{
+    char **items;
+    int num_items, i;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (!relay_config_hashtable_irc_backlog_tags)
+    {
+        relay_config_hashtable_irc_backlog_tags = weechat_hashtable_new (8,
+                                                                         WEECHAT_HASHTABLE_STRING,
+                                                                         WEECHAT_HASHTABLE_STRING,
+                                                                         NULL,
+                                                                         NULL);
+    }
+    else
+        weechat_hashtable_remove_all (relay_config_hashtable_irc_backlog_tags);
+
+    items = weechat_string_split (weechat_config_string (relay_config_irc_backlog_tags),
+                                  ";", 0, 0, &num_items);
+    if (items)
+    {
+        for (i = 0; i < num_items; i++)
+        {
+            weechat_hashtable_set (relay_config_hashtable_irc_backlog_tags,
+                                   items[i],
+                                   NULL);
+        }
+        weechat_string_free_split (items);
+    }
+}
+
+/*
+ * Checks if a port is valid.
+ *
+ * Returns:
+ *   1: port is valid
+ *   0: port is not valid
  */
 
 int
@@ -189,8 +262,7 @@ relay_config_check_port_cb (void *data, struct t_config_option *option,
 }
 
 /*
- * relay_config_change_port_cb: callback called when relay port option is
- *                              modified
+ * Callback for changes on options in section "port".
  */
 
 void
@@ -210,8 +282,7 @@ relay_config_change_port_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * relay_config_delete_port_cb: callback called when relay port option is
- *                              deleted
+ * Callback called when an option is deleted in section "port".
  */
 
 void
@@ -228,7 +299,7 @@ relay_config_delete_port_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * relay_config_create_option_port: create a relay for a port
+ * Callback called when an option is created in section "port".
  */
 
 int
@@ -238,7 +309,7 @@ relay_config_create_option_port (void *data,
                                  const char *option_name,
                                  const char *value)
 {
-    int rc, protocol_number, ssl;
+    int rc, protocol_number, ipv4, ipv6, ssl;
     char *error, *protocol, *protocol_args;
     long port;
     struct t_relay_server *ptr_server;
@@ -251,8 +322,8 @@ relay_config_create_option_port (void *data,
     protocol_number = -1;
     port = -1;
 
-    relay_server_get_protocol_args (option_name,
-                                    &ssl, &protocol, &protocol_args);
+    relay_server_get_protocol_args (option_name, &ipv4, &ipv6, &ssl,
+                                    &protocol, &protocol_args);
 
 #ifndef HAVE_GNUTLS
     if (ssl)
@@ -323,9 +394,10 @@ relay_config_create_option_port (void *data,
 
     if (rc != WEECHAT_CONFIG_OPTION_SET_ERROR)
     {
-        if (relay_server_new (protocol_number, protocol_args, port, ssl))
+        if (relay_server_new (option_name, protocol_number, protocol_args,
+                              port, ipv4, ipv6, ssl))
         {
-            /* create config option */
+            /* create configuration option */
             weechat_config_new_option (
                 config_file, section,
                 option_name, "integer", NULL,
@@ -348,7 +420,7 @@ relay_config_create_option_port (void *data,
 }
 
 /*
- * relay_config_reload: reload relay configuration file
+ * Reloads relay configuration file.
  */
 
 int
@@ -361,8 +433,11 @@ relay_config_reload (void *data, struct t_config_file *config_file)
 }
 
 /*
- * relay_config_init: init relay configuration file
- *                    return: 1 if ok, 0 if error
+ * Initializes relay configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -375,6 +450,7 @@ relay_config_init ()
     if (!relay_config_file)
         return 0;
 
+    /* section look */
     ptr_section = weechat_config_new_section (relay_config_file, "look",
                                               0, 0,
                                               NULL, NULL, NULL, NULL,
@@ -398,6 +474,7 @@ relay_config_init ()
            "closed (messages will be displayed when opening raw data buffer)"),
         NULL, 0, 65535, "256", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
 
+    /* section color */
     ptr_section = weechat_config_new_section (relay_config_file, "color",
                                               0, 0,
                                               NULL, NULL, NULL, NULL,
@@ -464,6 +541,7 @@ relay_config_init ()
         NULL, 0, 0, "lightred", NULL, 0,
         NULL, NULL, &relay_config_refresh_cb, NULL, NULL, NULL);
 
+    /* section network */
     ptr_section = weechat_config_new_section (relay_config_file, "network",
                                               0, 0,
                                               NULL, NULL, NULL, NULL,
@@ -479,8 +557,10 @@ relay_config_init ()
         relay_config_file, ptr_section,
         "allowed_ips", "string",
         N_("regular expression with IPs allowed to use relay (case insensitive, "
-           "use \"(?-i)\" at beginning to make it case sensitive), example: "
-           "\"^(123.45.67.89|192.160.*)$\""),
+           "use \"(?-i)\" at beginning to make it case sensitive); if IPv6 is "
+           "enabled and that connection is made using IPv4, it will be "
+           "IPv4-mapped IPv6 address (like: \"::ffff:127.0.0.1\"), example: "
+           "\"^((::ffff:)?123.45.67.89|192.160.*)$\""),
         NULL, 0, 0, "", NULL, 0, NULL, NULL,
         &relay_config_change_network_allowed_ips, NULL, NULL, NULL);
     relay_config_network_bind_address = weechat_config_new_option (
@@ -499,6 +579,14 @@ relay_config_init ()
            "compression)"),
         NULL, 0, 9, "6", NULL, 0,
         NULL, NULL, NULL, NULL, NULL, NULL);
+    relay_config_network_ipv6 = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "ipv6", "boolean",
+        N_("listen on IPv6 socket by default (in addition to IPv4 which is "
+            "default); protocols IPv4 and IPv6 can be forced (individually or "
+           "together) in the protocol name (see /help relay)"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL,
+        &relay_config_change_network_ipv6_cb, NULL, NULL, NULL);
     relay_config_network_max_clients = weechat_config_new_option (
         relay_config_file, ptr_section,
         "max_clients", "integer",
@@ -519,6 +607,56 @@ relay_config_init ()
         NULL, 0, 0, "%h/ssl/relay.pem", NULL, 0, NULL, NULL,
         &relay_config_change_network_ssl_cert_key, NULL, NULL, NULL);
 
+    /* section irc */
+    ptr_section = weechat_config_new_section (relay_config_file, "irc",
+                                              0, 0,
+                                              NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL,
+                                              NULL, NULL);
+    if (!ptr_section)
+    {
+        weechat_config_free (relay_config_file);
+        return 0;
+    }
+
+    relay_config_irc_backlog_max_number = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "backlog_max_number", "integer",
+        N_("maximum number of lines in backlog per IRC channel "
+           "(0 = unlimited)"),
+        NULL, 0, INT_MAX, "256", NULL, 0,
+        NULL, NULL, NULL, NULL, NULL, NULL);
+    relay_config_irc_backlog_max_minutes = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "backlog_max_minutes", "integer",
+        N_("maximum number of minutes in backlog per IRC channel "
+           "(0 = unlimited, examples: 1440 = one day, 10080 = one week, "
+           "43200 = one month, 525600 = one year)"),
+        NULL, 0, INT_MAX, "1440", NULL, 0,
+        NULL, NULL, NULL, NULL, NULL, NULL);
+    relay_config_irc_backlog_since_last_disconnect = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "backlog_since_last_disconnect", "boolean",
+        N_("display backlog starting from last client disconnect"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    relay_config_irc_backlog_tags = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "backlog_tags", "string",
+        N_("tags of messages which are displayed in backlog per IRC channel "
+           "(supported tags: \"irc_join\", \"irc_part\", \"irc_quit\", "
+           "\"irc_nick\", \"irc_privmsg\"), \"*\" = all supported tags"),
+        NULL, 0, 0, "irc_privmsg", NULL, 0, NULL, NULL,
+        &relay_config_change_irc_backlog_tags, NULL, NULL, NULL);
+    relay_config_irc_backlog_time_format = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "backlog_time_format", "string",
+        N_("format for time in backlog messages (see man strftime for format) "
+           "(not used if server capability \"server-time\" was enabled by "
+           "client, because time is sent as irc tag); empty string = disable "
+           "time in backlog messages"),
+        NULL, 0, 0, "[%H:%M] ", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+
+    /* section port */
     ptr_section = weechat_config_new_section (relay_config_file, "port",
                                               1, 1,
                                               NULL, NULL,
@@ -538,21 +676,52 @@ relay_config_init ()
 }
 
 /*
- * relay_config_read: read relay configuration file
+ * Reads relay configuration file.
  */
 
 int
 relay_config_read ()
 {
-    return weechat_config_read (relay_config_file);
+    int rc;
+
+    rc = weechat_config_read (relay_config_file);
+    if (rc == WEECHAT_CONFIG_READ_OK)
+    {
+        relay_config_change_network_allowed_ips (NULL, NULL);
+        relay_config_change_irc_backlog_tags (NULL, NULL);
+    }
+    return rc;
 }
 
 /*
- * relay_config_write: write relay configuration file
+ * Writes relay configuration file.
  */
 
 int
 relay_config_write ()
 {
     return weechat_config_write (relay_config_file);
+}
+
+/*
+ * Frees relay configuration.
+ */
+
+void
+relay_config_free ()
+{
+    weechat_config_free (relay_config_file);
+
+    if (relay_config_regex_allowed_ips)
+    {
+        regfree (relay_config_regex_allowed_ips);
+        free (relay_config_regex_allowed_ips);
+        relay_config_regex_allowed_ips = NULL;
+    }
+
+    if (relay_config_hashtable_irc_backlog_tags)
+    {
+        weechat_hashtable_free (relay_config_hashtable_irc_backlog_tags);
+        relay_config_hashtable_irc_backlog_tags = NULL;
+    }
 }

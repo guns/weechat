@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -55,7 +55,8 @@ extern void irc_command_away_server (struct t_irc_server *server,
                                      int reset_unread_marker);
 extern void irc_command_join_server (struct t_irc_server *server,
                                      const char *arguments,
-                                     int manual_join);
+                                     int manual_join,
+                                     int noswitch);
 extern void irc_command_mode_server (struct t_irc_server *server,
                                      struct t_irc_channel *channel,
                                      const char *arguments,

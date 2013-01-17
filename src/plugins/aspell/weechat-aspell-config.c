@@ -1,6 +1,8 @@
 /*
+ * weechat-aspell-config.c - aspell configuration options (file aspell.conf)
+ *
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat-aspell-config.c: aspell configuration options (file aspell.conf)
  */
 
 #include <stdlib.h>
@@ -46,6 +44,7 @@ struct t_config_option *weechat_aspell_config_check_default_dict;
 struct t_config_option *weechat_aspell_config_check_during_search;
 struct t_config_option *weechat_aspell_config_check_enabled;
 struct t_config_option *weechat_aspell_config_check_real_time;
+struct t_config_option *weechat_aspell_config_check_suggestions;
 struct t_config_option *weechat_aspell_config_check_word_min_length;
 
 
@@ -55,8 +54,7 @@ int *weechat_aspell_length_commands_to_check = NULL;
 
 
 /*
- * weechat_aspell_config_change_commands: called when list of commands is
- *                                        changed
+ * Callback for changes on option "aspell.check.commands".
  */
 
 void
@@ -101,8 +99,7 @@ weechat_aspell_config_change_commands (void *data,
 }
 
 /*
- * weechat_aspell_config_change_default_dict: called when default dictionary
- *                                            is changed
+ * Callback for changes on option "aspell.check.default_dict".
  */
 
 void
@@ -117,7 +114,7 @@ weechat_aspell_config_change_default_dict (void *data,
 }
 
 /*
- * weechat_aspell_config_change_enabled: called when aspell state is changed
+ * Callback for changes on option "aspell.check.enabled".
  */
 
 void
@@ -128,12 +125,28 @@ weechat_aspell_config_change_enabled (void *data, struct t_config_option *option
 
     aspell_enabled = weechat_config_boolean (option);
 
-    /* refresh input */
+    /* refresh input and aspell suggestions */
     weechat_bar_item_update ("input_text");
+    weechat_bar_item_update ("aspell_suggest");
 }
 
 /*
- * weechat_aspell_config_dict_change: called when a dictionary is changed
+ * Callback for changes on option "aspell.check.suggestions".
+ */
+
+void
+weechat_aspell_config_change_suggestions (void *data,
+                                          struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    weechat_bar_item_update ("aspell_suggest");
+}
+
+/*
+ * Callback for changes on a dictionary.
  */
 
 void
@@ -148,7 +161,7 @@ weechat_aspell_config_dict_change (void *data,
 }
 
 /*
- * weechat_aspell_config_dict_delete_option: delete option in "dict" section
+ * Callback called when an option is deleted in section "dict".
  */
 
 int
@@ -170,7 +183,7 @@ weechat_aspell_config_dict_delete_option (void *data,
 }
 
 /*
- * weechat_aspell_config_dict_create_option: create option in "dict" section
+ * Creates an option in section "dict".
  */
 
 int
@@ -239,7 +252,7 @@ weechat_aspell_config_dict_create_option (void *data,
 }
 
 /*
- * weechat_aspell_config_option_change: called when an aspell option is changed
+ * Callback for changes on an aspell option.
  */
 
 void
@@ -255,7 +268,7 @@ weechat_aspell_config_option_change (void *data,
 }
 
 /*
- * weechat_aspell_config_option_delete_option: delete option in "option" section
+ * Callback called when an option is deleted in section "option".
  */
 
 int
@@ -278,7 +291,7 @@ weechat_aspell_config_option_delete_option (void *data,
 }
 
 /*
- * weechat_aspell_config_option_create_option: create option in "option" section
+ * Callback called when an option is created in section "option".
  */
 
 int
@@ -348,7 +361,7 @@ weechat_aspell_config_option_create_option (void *data,
 }
 
 /*
- * weechat_aspell_config_get_dict: get a dictionary list for a buffer
+ * Gets a list of dictionaries for a buffer.
  */
 
 struct t_config_option *
@@ -360,7 +373,7 @@ weechat_aspell_config_get_dict (const char *name)
 }
 
 /*
- * weechat_aspell_config_set_dict: set a dictionary list for a buffer
+ * Sets a list of dictionaries for a buffer.
  */
 
 int
@@ -374,8 +387,11 @@ weechat_aspell_config_set_dict (const char *name, const char *value)
 }
 
 /*
- * weechat_aspell_config_init: init aspell configuration file
- *                             return: 1 if ok, 0 if error
+ * Initializes aspell configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -452,6 +468,14 @@ weechat_aspell_config_init ()
         N_("real-time spell checking of words (slower, disabled by default: "
            "words are checked only if there's delimiter after)"),
         NULL, 0, 0, "off", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    weechat_aspell_config_check_suggestions = weechat_config_new_option (
+        weechat_aspell_config_file, ptr_section,
+        "suggestions", "integer",
+        N_("number of suggestions to display in bar item \"aspell_suggest\" "
+           "for each dictionary set in buffer (-1 = disable suggestions, "
+           "0 = display all possible suggestions in all languages)"),
+        NULL, -1, INT_MAX, "-1", NULL, 0,
+        NULL, NULL, &weechat_aspell_config_change_suggestions, NULL, NULL, NULL);
     weechat_aspell_config_check_word_min_length = weechat_config_new_option (
         weechat_aspell_config_file, ptr_section,
         "word_min_length", "integer",
@@ -493,7 +517,7 @@ weechat_aspell_config_init ()
 }
 
 /*
- * weechat_aspell_config_read: read aspell configuration file
+ * Reads aspell configuration file.
  */
 
 int
@@ -512,7 +536,7 @@ weechat_aspell_config_read ()
 }
 
 /*
- * weechat_aspell_config_write: write aspell configuration file
+ * Writes aspell configuration file.
  */
 
 int
@@ -522,7 +546,7 @@ weechat_aspell_config_write ()
 }
 
 /*
- * aspell_config_free: free aspell configuration
+ * Frees aspell configuration.
  */
 
 void

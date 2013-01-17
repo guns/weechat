@@ -238,6 +238,16 @@
 ** type: entier
 ** valeurs: off, speakers, speakers_highlights (valeur par défaut: `speakers`)
 
+* [[option_irc.look.nick_mode]] *irc.look.nick_mode*
+** description: `afficher le mode du pseudo (op, voice, ...) avant le pseudo (none = jamais, prefix = dans le préfixe seulement, action = dans les messages d'action seulement, both = préfixe + messages d'actions)`
+** type: entier
+** valeurs: none, prefix, action, both (valeur par défaut: `prefix`)
+
+* [[option_irc.look.nick_mode_empty]] *irc.look.nick_mode_empty*
+** description: `afficher un espace si le mode du pseudo est activé mais que le pseudo n'a pas de mode (pas op, voice, ...)`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `off`)
+
 * [[option_irc.look.nick_prefix]] *irc.look.nick_prefix*
 ** description: `texte à afficher avant le pseudo dans la fenêtre de discussion`
 ** type: chaîne
@@ -308,6 +318,11 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
+* [[option_irc.network.alternate_nick]] *irc.network.alternate_nick*
+** description: `obtenir un pseudo alternatif lorsque le pseudo est déjà utilisé sur le serveur: ajouter des "_" jusqu'à ce que le pseudo ait une longeur de 9, puis remplacer le dernier caractère (ou les deux derniers) par un nombre de 1 à 99, jusqu'à trouver un pseudo non utilisé sur le serveur`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
+
 * [[option_irc.network.autoreconnect_delay_growing]] *irc.network.autoreconnect_delay_growing*
 ** description: `facteur de croissance du délai d'autoreconnection au serveur (1 = toujours le même délai, 2 = délai*2 pour chaque tentative, etc...)`
 ** type: entier
@@ -363,6 +378,11 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
+* [[option_irc.network.whois_double_nick]] *irc.network.whois_double_nick*
+** description: `doubler le pseudo dans la commande /whois (si un seul pseudo est donné), pour avoir le temps d'inactivité; par exemple: "/whois pseudo" enverra "whois pseudo pseudo"`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
+
 * [[option_irc.server_default.addresses]] *irc.server_default.addresses*
 ** description: `liste de nom/port ou IP/port pour le serveur (séparés par des virgules)`
 ** type: chaîne
@@ -399,7 +419,7 @@
 ** valeurs: 1 .. 65535 (valeur par défaut: `10`)
 
 * [[option_irc.server_default.autorejoin]] *irc.server_default.autorejoin*
-** description: `rejoindre automatiquement les canaux après un "kick"`
+** description: `rejoindre automatiquement les canaux après un "kick"; vous pouvez définir une variable locale de tampon sur un canal pour remplacer cette valeur (nom de la variable: "autorejoin", valeur: "on" ou "off")`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
@@ -449,9 +469,9 @@
 ** valeurs: toute chaîne (valeur par défaut: `"WeeChat %v"`)
 
 * [[option_irc.server_default.ipv6]] *irc.server_default.ipv6*
-** description: `utiliser le protocole IPv6 pour la communication avec le serveur`
+** description: `utiliser le protocole IPv6 pour la communication avec le serveur (essayer IPv6 puis repli sur l'IPv4); si désactivé, seulemenent l'IPv4 est utilisé`
 ** type: booléen
-** valeurs: on, off (valeur par défaut: `off`)
+** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_irc.server_default.local_hostname]] *irc.server_default.local_hostname*
 ** description: `nom local de machine/IP personnalisé pour le serveur (optionnel, si non renseigné, le nom de machine local est utilisé)`

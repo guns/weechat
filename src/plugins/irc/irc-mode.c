@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-mode.c - IRC channel/user modes management
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * irc-mode.c: IRC channel/user modes management
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,22 +32,24 @@
 
 
 /*
- * irc_mode_get_chanmode_type: get type of channel mode, which is a letter from
- *                             'A' to 'D':
- *                               A = Mode that adds or removes a nick or address to a list. Always has a parameter.
- *                               B = Mode that changes a setting and always has a parameter.
- *                               C = Mode that changes a setting and only has a parameter when set.
- *                               D = Mode that changes a setting and never has a parameter.
- *                             Example:
- *                               CHANMODES=beI,k,l,imnpstaqr
- *                               A = { b, e, I }
- *                               B = { k }
- *                               C = { l }
- *                               D = { i, m, n, p, s, t, a, q, r }
- *                             Note: Modes of type A return the list when there is no parameter present.
- *                             Note: Some clients assumes that any mode not listed is of type D.
- *                             Note: Modes in PREFIX are not listed but could be considered type B.
- *                             More info: http://www.irc.org/tech_docs/005.html
+ * Gets type of channel mode, which is a letter from 'A' to 'D':
+ *   A = Mode that adds or removes a nick or address to a list. Always has a
+ *       parameter.
+ *   B = Mode that changes a setting and always has a parameter.
+ *   C = Mode that changes a setting and only has a parameter when set.
+ *   D = Mode that changes a setting and never has a parameter.
+ *
+ * Example:
+ *   CHANMODES=beI,k,l,imnpstaqr  ==>  A = { b, e, I }
+ *                                     B = { k }
+ *                                     C = { l }
+ *                                     D = { i, m, n, p, s, t, a, q, r }
+ *
+ * Note1: modes of type A return the list when there is no parameter present.
+ * Note2: some clients assumes that any mode not listed is of type D.
+ * Note3: modes in PREFIX are not listed but could be considered type B.
+ *
+ * More info: http://www.irc.org/tech_docs/005.html
  */
 
 char
@@ -88,15 +88,16 @@ irc_mode_get_chanmode_type (struct t_irc_server *server, char chanmode)
 }
 
 /*
- * irc_mode_channel_update: update channel modes using the mode and argument
- *                          Example:
- *                            if channel modes are "+tn" and that we have:
- *                              - set_flag      = '+'
- *                              - chanmode      = 'k'
- *                              - chanmode_type = 'B'
- *                              - argument      = 'password'
- *                            then channel modes become:
- *                              "+tnk password"
+ * Updates channel modes using the mode and argument.
+ *
+ * Example:
+ *   if channel modes are "+tn" and that we have:
+ *     - set_flag      = '+'
+ *     - chanmode      = 'k'
+ *     - chanmode_type = 'B'
+ *     - argument      = 'password'
+ *   then channel modes become:
+ *     "+tnk password"
  */
 
 void
@@ -240,7 +241,7 @@ irc_mode_channel_update (struct t_irc_server *server,
                 snprintf (str_temp, length, "%s %s", new_modes, new_args);
                 if (channel->modes)
                     free (channel->modes);
-                channel->modes = strdup (str_temp);
+                channel->modes = str_temp;
             }
         }
         else
@@ -249,11 +250,12 @@ irc_mode_channel_update (struct t_irc_server *server,
                 free (channel->modes);
             channel->modes = strdup (new_modes);
         }
-
-        free (new_modes);
-        free (new_args);
     }
 
+    if (new_modes)
+        free (new_modes);
+    if (new_args)
+        free (new_args);
     if (str_modes)
         free (str_modes);
     if (argv)
@@ -261,8 +263,8 @@ irc_mode_channel_update (struct t_irc_server *server,
 }
 
 /*
- * irc_mode_channel_set: set channel modes using CHANMODES (from message 005)
- *                       and update channel modes if needed
+ * Sets channel modes using CHANMODES (from message 005) and update channel
+ * modes if needed.
  */
 
 void
@@ -345,13 +347,20 @@ irc_mode_channel_set (struct t_irc_server *server,
                     if (pos[0] == 'k')
                     {
                         /* channel key */
-                        if (channel->key)
+                        if (set_flag == '-')
                         {
-                            free (channel->key);
-                            channel->key = NULL;
+                            if (channel->key)
+                            {
+                                free (channel->key);
+                                channel->key = NULL;
+                            }
                         }
-                        if ((set_flag == '+') && ptr_arg)
+                        else if ((set_flag == '+')
+                                 && ptr_arg && (strcmp (ptr_arg, "*") != 0))
                         {
+                            /* replace key for +k, but ignore "*" as new key */
+                            if (channel->key)
+                                free (channel->key);
                             channel->key = strdup (ptr_arg);
                         }
                     }
@@ -404,7 +413,7 @@ irc_mode_channel_set (struct t_irc_server *server,
 }
 
 /*
- * irc_mode_user_add: add a user mode
+ * Adds a user mode.
  */
 
 void
@@ -444,7 +453,7 @@ irc_mode_user_add (struct t_irc_server *server, char mode)
 }
 
 /*
- * irc_mode_user_remove: remove a user mode
+ * Removes a user mode.
  */
 
 void
@@ -469,7 +478,7 @@ irc_mode_user_remove (struct t_irc_server *server, char mode)
 }
 
 /*
- * irc_mode_user_set: set user modes
+ * Sets user modes.
  */
 
 void

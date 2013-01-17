@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -55,6 +55,14 @@ enum t_irc_config_look_notice_as_pv
     IRC_CONFIG_LOOK_NOTICE_AS_PV_ALWAYS,
 };
 
+enum t_irc_config_look_nick_mode
+{
+    IRC_CONFIG_LOOK_NICK_MODE_NONE = 0,
+    IRC_CONFIG_LOOK_NICK_MODE_PREFIX,
+    IRC_CONFIG_LOOK_NICK_MODE_ACTION,
+    IRC_CONFIG_LOOK_NICK_MODE_BOTH,
+};
+
 enum t_irc_config_nick_completion
 {
     IRC_CONFIG_NICK_COMPLETION_SMART_OFF = 0,
@@ -87,6 +95,8 @@ extern struct t_config_option *irc_config_look_new_channel_position;
 extern struct t_config_option *irc_config_look_new_pv_position;
 extern struct t_config_option *irc_config_look_nick_prefix;
 extern struct t_config_option *irc_config_look_nick_suffix;
+extern struct t_config_option *irc_config_look_nick_mode;
+extern struct t_config_option *irc_config_look_nick_mode_empty;
 extern struct t_config_option *irc_config_look_nick_color_force;
 extern struct t_config_option *irc_config_look_nick_color_stop_chars;
 extern struct t_config_option *irc_config_look_nick_completion_smart;
@@ -139,6 +149,7 @@ extern struct t_config_option *irc_config_color_reason_quit;
 extern struct t_config_option *irc_config_color_topic_old;
 extern struct t_config_option *irc_config_color_topic_new;
 
+extern struct t_config_option *irc_config_network_alternate_nick;
 extern struct t_config_option *irc_config_network_autoreconnect_delay_growing;
 extern struct t_config_option *irc_config_network_autoreconnect_delay_max;
 extern struct t_config_option *irc_config_network_colors_receive;
@@ -150,6 +161,7 @@ extern struct t_config_option *irc_config_network_lag_refresh_interval;
 extern struct t_config_option *irc_config_network_notify_check_ison;
 extern struct t_config_option *irc_config_network_notify_check_whois;
 extern struct t_config_option *irc_config_network_send_unknown_commands;
+extern struct t_config_option *irc_config_network_whois_double_nick;
 
 extern struct t_config_option *irc_config_server_default[];
 

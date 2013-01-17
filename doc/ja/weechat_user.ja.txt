@@ -43,7 +43,6 @@ WeeChat をインストールするには、以下のものが必要です:
 * 'root' 特権 (WeeChat をシステムディレクトリにインストールする場合)
 * ncurses ライブラリ
 
-
 [[install]]
 == インストール方法 ==
 
@@ -83,15 +82,15 @@ WeeChat は cmake または autotools を使ってコンパイルできます (c
 | cmake                  |             | *yes*    | ビルド (autotools でも可能ですが、cmake を推奨します)
 | libncursesw5-dev ^(2)^ |             | *yes*    | ncurses インターフェイス
 | libcurl4-gnutls-dev    |             | *yes*    | URL 転送
-| gettext                |             |          | 国際化 (メッセージの翻訳; ベース言語は英語です)
-| libgcrypt11-dev        |             |          | DH-BLOWFISH メカニズムを用いた IRC サーバ用の SASL 認証
+| zlib1g-dev             |             | *yes*    | relay プラグインでパケットを圧縮 (weechat プロトコル)、スクリプトプラグイン
+| libgcrypt11-dev        |             | *yes*    | DH-BLOWFISH メカニズムを用いた IRC サーバ用の SASL 認証、スクリプトプラグイン
 | libgnutls-dev          | ≥ 2.2.0     |          | IRC サーバへの SSL 接続
+| gettext                |             |          | 国際化 (メッセージの翻訳; ベース言語は英語です)
 | ca-certificates        |             |          | SSL 接続に必要な証明書、relay プラグインで SSL サポート
-| zlib1g-dev             |             |          | relay プラグインでパケットを圧縮 (weechat プロトコル)
 | libaspell-dev          |             |          | aspell プラグイン
 | python-dev             | ≥ 2.5 ^(3)^ |          | python プラグイン
 | libperl-dev            |             |          | perl プラグイン
-| ruby1.8-dev            |             |          | ruby プラグイン
+| ruby1.9.1-dev          | ≥ 1.8       |          | ruby プラグイン
 | liblua5.1-0-dev        |             |          | lua プラグイン
 | tcl-dev                | ≥ 8.5       |          | tcl プラグイン
 | guile-1.8-dev          |             |          | guile (scheme) プラグイン
@@ -101,9 +100,9 @@ WeeChat は cmake または autotools を使ってコンパイルできます (c
 
 [NOTE]
 ^(1)^ Debian GNU/Linux ディストリビューションにおけるパッケージ名です。
-他のディストリビューションではバージョンとパッケージ名が異なるかもしれません。+
+他のディストリビューションではバージョンとパッケージ名が異なるかもしれません。 +
 ^(2)^ WeeChat は libncurses5-dev でもコンパイル可能ですが、これは推奨*されません*
-(ワイドキャラクタの表示にバグを生じるでしょう)。+
+(ワイドキャラクタの表示にバグを生じるでしょう)。 +
 ^(3)^ Python はバージョン 2.7 をお勧めします (全てのスクリプトはバージョン 2.7
 で正しく動きますが、バージョン 2.6 以下または 3.0 以上では正しく動きません)。
 
@@ -133,9 +132,15 @@ $ make install
 [[compile_with_autotools]]
 ==== autotools によるコンパイル ====
 
+[WARNING]
+cmake 以外を用いた WeeChat のビルドは公式にサポートされません。cmake
+を利用できない場合のみ autotools を使ってください。 +
+autotools を用いてビルドする場合、cmake よりも多くの依存パッケージとより長い時間が必要です。
+
 * システムディレクトリにインストールする場合 ('root' 特権が必要です):
 
 ----------------------------------------
+$ ./autogen.sh
 $ ./configure
 $ make
 % make install    (as root)
@@ -144,6 +149,7 @@ $ make
 * 任意のディレクトリにインストールする場合:
 
 ----------------------------------------
+$ ./autogen.sh
 $ ./configure --prefix=/path/to/directory
 $ make
 $ make install
@@ -152,19 +158,13 @@ $ make install
 [[git_sources]]
 ==== Git ソース ====
 
-警告: GIT ソースを用いる方法は上級者向けです。コンパイルに失敗したり、
+警告: git ソースを用いる方法は上級者向けです。コンパイルに失敗したり、
 不安定な可能性があります。警告しましたよ!
 
-GIT ソースを入手するには、以下のコマンドを使ってください:
+git ソースを入手するには、以下のコマンドを使ってください:
 
 ----------------------------------------
 $ git clone git://git.sv.gnu.org/weechat.git
-----------------------------------------
-
-autotools (cmake ではなく) を使う場合は、以下のスクリプトを実行してください:
-
-----------------------------------------
-$ ./autogen.sh
 ----------------------------------------
 
 その後は、ソースパッケージの説明に従ってください
@@ -287,7 +287,6 @@ gdb /usr/bin/weechat-curses 12345
 (gdb) bt full
 ----------------------------------------
 
-
 [[usage]]
 == 使い方 ==
 
@@ -304,7 +303,7 @@ gdb /usr/bin/weechat-curses 12345
 
 -d, --dir 'path'::
     WeeChat のホームディレクトリを path に設定 (設定ファイル、ログ、
-    ユーザプラグイン、スクリプトに利用される)、初期値は '~/.weechat'。
+    ユーザプラグイン、スクリプトに利用される)、初期値は '~/.weechat' 。
     (注意: パスが存在しない場合は WeeChat がディレクトリを作成します)
 
 -h, --help::
@@ -534,6 +533,214 @@ WeeChat を起動したターミナルの例:
                   (バッファ #3)
 ........................................
 
+[[bars]]
+=== バー ===
+
+'バー' とは任意のテキストを含めることができるチャットエリア以外の場所です。
+
+バーオプションは `weechat.bar.name.option` オプションで設定します。ここで
+`name` はバーの名前、`option` はこのバーのオプション名です。
+
+バーオプションのリスト:
+
+[width="100%",cols="2m,2,10",options="header"]
+|========================================
+| オプション名 | 値 | 説明
+
+| type | `root`、`window` |
+  `root` 型のバーは画面に (全てのウィンドウの外に) 1 回だけ表示されます。デフォルトでは
+  root バーはありませんが、'buffers.pl' スクリプトが作成する 'buffers' バー
+  (バッファのリストを含むサイドバー) が例の 1 つです。 +
+  `window` 型のバーは各ウィンドウに対して表示されます。例えば (`/window splith`
+  や `/window splitv` で) 画面を 1 回分割する場合、それぞれのウィンドウにバーが
+  1 つ表示されます。4 つのデフォルトバー ('title'、'status'、'input'、'nicklist')
+  は `window` 型のバーです。
+
+| position | `top`、`bottom`、`left`、`right` |
+  バーの位置: チャットエリアの上、下、左、右。
+
+| priority | 0 以上の整数 |
+  バーの表示優先度:
+  型と位置が同じ複数のバーを画面に表示する順番に利用される。 +
+  バーは画面の端から中心に向かって表示される。高い優先度を持つバーが先に
+  (画面の端に近い側に) 表示される。 +
+  例: 優先度 1000 の 'input' バーは優先度 500 の 'status'
+  バーよりも先に表示される。
+
+| size | 0 以上の整数 |
+  バーのサイズ:
+  位置が右/左の場合は列数、位置が上/下の場合は行数。値が `0`
+  の場合は自動 (バーのサイズはバーの内容を基に計算される)。
+
+| size_max | 0 以上の整数 |
+  バーの最大サイズ、`0` = 制限無し (このオプションは
+  `size` = `0` の場合のみ使われる)。
+
+| color_bg | 色 |
+  バーのデフォルトの背景色
+
+| color_fg | 色 |
+  バーのデフォルトのテキスト色
+
+| color_delim | 色 |
+  バーの区切り文字の色
+
+| hidden | `on`、`off` |
+  このオプションが `on` の場合、バーは表示されません。 +
+  注意: このオプションを変更する代わりに、`/bar` コマンドを使うと便利です。例:
+  `/bar toggle nicklist` (<<command_weechat_bar,/bar>> コマンドを参照)。
+
+| separator | `on`、`off` |
+  このオプションが `on` の場合、セパレータ (区切り線)
+  がバー同士またはバーとチャットエリアの間に表示されます。
+
+| items | 文字列 |
+  'items' のリスト (詳細は<<bar_items,アイテム>>を参照)。
+
+| filling_left_right | `horizontal`、`vertical`、`columns_horizontal`、`columns_vertical` |
+  位置が `left` または `right` のバーに対するフィリングタイプ
+  (詳細は<<bar_filling,フィリング>>を参照)。
+
+| filling_top_bottom | `horizontal`、`vertical`、`columns_horizontal`、`columns_vertical` |
+  位置が `top` または `bottom` のバーに対するフィリングタイプ
+  (詳細は<<bar_filling,フィリング>>を参照)。
+
+| conditions | 文字列 |
+  バーを表示する状態
+ (詳細は<<bar_conditions,状態>>を参照)。
+|========================================
+
+[[bar_items]]
+==== アイテム ====
+
+'items' オプションはバーアイテムをコンマ (画面上のアイテム同士に間隔を空ける)
+または "+" (間隔を空けない) で区切った文字列。
+
+バーアイテムのリストは `/bar listitems` コマンドで表示されます。
+
+アイテムを含むバーの例 "[time],buffer_number+:+buffer_plugin+.+buffer_name":
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│[12:55] 3:irc/freenode.#weechat                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+[[bar_filling]]
+==== フィリング ====
+
+フィリングタイプには 4 つの種類があります:
+
+* `horizontal`:
+  左から右に向かってアイテムを水平に表示。アイテム内に改行がある場合、空白を行区切りに利用します。
+* `vertical`:
+  上から下に向かってアイテムを表示。アイテム内に改行がある場合、改行を行区切りに利用します。
+* `columns_horizontal`:
+  テキストを左寄せして、列形式でアイテムを表示。最初のアイテムは左上、2
+  番目は同じ行の 1 列右側。
+* `columns_vertical`: テキストを左寄せして、列形式でアイテムを表示。最初のアイテムは左上、2
+  番目は同じ列の 1 行下側。
+
+デフォルトバーである 'title'、'status'、'input' は
+'horizontal' フィリング、'nicklist' は 'vertical' フィリング。
+
+'nicklist' バーに対するフィリングの例:
+
+........................................
+┌──────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel          │
+│12:54:15 peter | hey!                    │@carl   │
+│12:55:01  +Max | hello                   │@jessika│
+│                                         │@maddy  │
+│                                         │%Diego  │
+│                                         │%Melody │
+│                                         │+Max    │
+│                                         │ celia  │
+│                                         │ Eva    │
+│                                         │ freddy │
+│                                         │ Harold^│
+│                                         │ henry4 │
+│                                         │ jimmy17│
+│                                         │ jodie ▼│
+│[12:55] [6] [irc/freenode] 3:#test(+n){24}        │
+└──────────────────────────────────────────────────┘
+                filling_left_right = vertical ▲
+
+┌──────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel          │
+│12:54:15 peter | hey!           │@carl     lee    │
+│12:55:01  +Max | hello          │@jessika  louise │
+│                                │@maddy    mario  │
+│                                │%Diego    mark   │
+│                                │%Melody   peter  │
+│                                │+Max      Rachel │
+│                                │ celia    richard│
+│                                │ Eva      sheryl │
+│                                │ freddy   Vince  │
+│                                │ Harold^  warren │
+│                                │ henry4   zack   │
+│                                │ jimmy17         │
+│                                │ jodie           │
+│[12:55] [6] [irc/freenode] 3:#test(+n){24}        │
+└──────────────────────────────────────────────────┘
+        filling_left_right = columns_vertical ▲
+
+┌───────────────────────────────────────────────────────────────────────┐
+│@carl    %Diego    celia    Harold^  jodie    mario    Rachel   Vince  │
+│@jessika %Melody   Eva      henry4   lee      mark     richard  warren │
+│@maddy   +Max      freddy   jimmy17  louise   peter    sheryl   zack   │
+│───────────────────────────────────────────────────────────────────────│
+│                                                                       │
+        filling_top_bottom = columns_vertical ▲
+
+┌───────────────────────────────────────────────────────────────────────┐
+│@carl    @jessika @maddy   %Diego   %Melody  +Max      celia    Eva    │
+│ freddy   Harold^  henry4   jimmy17  jodie    lee      louise   mario  │
+│ mark     peter    Rachel   richard  sheryl   Vince    warren   zack   │
+│───────────────────────────────────────────────────────────────────────│
+│                                                                       │
+      filling_top_bottom = columns_horizontal ▲
+........................................
+
+[[bar_conditions]]
+==== 状態 ====
+
+'conditions' オプションはバーをウィンドウ内に表示するか否かを評価する文字列です
+(このオプションは 'window' 型のバーだけに有効です)。
+
+文字列は以下のいずれか:
+
+* 'active': 非アクティブ状態のウィンドウ
+* 'inactive': 非アクティブ状態のウィンドウ
+* 'nicklist': ニックネームリストが含まれるバッファのウィンドウ
+* 式: ブール値として評価
+  (<<command_weechat_eval,/eval>> コマンドを参照)
+
+式に使える変数は以下:
+
+* `${active}`: ウィンドウがアクティブ状態の時に真
+* `${inactive}`: ウィンドウが非アクティブ状態の時に真
+* `$[nicklist}`: ウィンドウに表示されるバッファがニックネームリストの場合に真。
+
+式に使えるポインタは以下:
+
+* `${window}`: 状態が評価されたウィンドウ
+* `${buffer}`: 状態が評価されたウィンドウのバッファ
+
+ニックネームリストを持ち、ウィンドウ幅が 100
+より大きい全てのバッファにニックネームリストバーを表示する例:
+
+----------------------------------------
+/set weechat.bar.nicklist.conditions "${nicklist} && ${window.win_width} > 100"
+----------------------------------------
+
+上と同じだが、'&bitlbee' バッファでは常にニックネームリストを表示
+(ウィンドウ幅が狭くても):
+
+----------------------------------------
+/set weechat.bar.nicklist.conditions "${nicklist} && (${window.win_width} > 100 || ${buffer.full_name} == irc.bitlbee.&bitlbee)"
+----------------------------------------
+
 [[notify_levels]]
 === 通知レベル ===
 
@@ -644,6 +851,7 @@ irc サーバ "freenode" に含まれる全てのバッファに対して設定�
 | @k(C-)@k(l)               | 全ウィンドウを再描画 | /window refresh
 | @k(C-)@k(s) , @k(C-)@k(u) | すべてのバッファに未読マークをセット | /input set_unread
 | @k(C-)@k(x)               | 同じ番号を持つバッファにアタッチされていた場合、現在のバッファに移動 | /input switch_active_buffer
+| @k(A-)@k(x)               | マージされたバッファに再ズーム (@k(A-)@k(x): 全てのマージされたバッファを表示) | /input zoom_merged_buffer
 | @k(PgUp)                  | バッファ履歴を 1 ページ分上方向にスクロール | /window page_up
 | @k(PgDn)                  | バッファ履歴を 1 ページ分下方向にスクロール | /window page_down
 | @k(A-)@k(PgUp)            | バッファ履歴を数行分上方向にスクロール | /window scroll_up
@@ -743,28 +951,37 @@ irc サーバ "freenode" に含まれる全てのバッファに対して設定�
 
 [width="100%",cols="^.^3,^.^3,^.^3,.^10,.^8l",options="header"]
 |========================================
-| ボタン  | ジェスチャー | エリア   | 説明 | コマンド
-| ◾◽◽     | -            | チャット | ウィンドウに移動 | /window ${_window_number}
-| ◾◽◽     | 左           | チャット | 前のバッファに移動 | /window ${_window_number};/buffer +1
-| ◾◽◽     | 右           | チャット | 次のバッファに移動 | /window ${_window_number};/buffer +1
-| ◾◽◽     | 左 (長く)    | チャット | 最初のバッファに移動 | /window ${_window_number};/buffer 1
-| ◾◽◽     | 右 (長く)    | チャット | 最後のバッファに移動 | /window ${_window_number};/input jump_last_buffer
-| ホイール ⇑ | -            | チャット | バッファ履歴を上方向にスクロール | /window scroll_up -window ${_window_number}
-| ホイール ⇓ | -            | チャット | バッファ履歴を下方向にスクロール | /window scroll_down -window ${_window_number}
-| ◾◽◽     | 上           | ニックネームリスト | ニックネームリストを 1 ページ分上方向にスクロール | /bar scroll nicklist ${_window_number} -100%
-| ◾◽◽     | 下           | ニックネームリスト | ニックネームリストを 1 ページ分下方向にスクロール | /bar scroll nicklist ${_window_number} +100%
-| ◾◽◽     | 上 (長く)    | ニックネームリスト | ニックネームリストの最初に移動 | /bar scroll nicklist ${_window_number} b
-| ◾◽◽     | 下 (長く)    | ニックネームリスト | ニックネームリストの最後に移動 | /bar scroll nicklist ${_window_number} e
-| ◾◽◽     | -            | ニックネームリスト | ニックネームに対するクエリを開く | /window ${_window_number};/query ${nick}
-| ◽◽◾     | -            | ニックネームリスト | ニックネームに対する whois を行う | /window ${_window_number};/whois ${nick}
-| ◾◽◽     | 左           | ニックネームリスト | ニックネームをキックする | /window ${_window_number};/kick ${nick}
-| ◾◽◽     | 左 (長く)    | ニックネームリスト | ニックネームをキックとバンする | /window ${_window_number};/kickban ${nick}
-| ◽◽◾     | 左           | ニックネームリスト | ニックネームをバンする | /window ${_window_number};/ban ${nick}
-| ◽◽◾     | -            | 入力     | マウスイベントを奪ってコマンドラインにコードを入力 | /input grab_mouse_area
-| ホイール ⇑ | -            | 任意のバー | バーを -10% スクロール | /bar scroll ${_bar_name} ${_window_number} -20%
-| ホイール ⇓ | -            | 任意のバー | バーを +10% スクロール | /bar scroll ${_bar_name} ${_window_number} +20%
-| ◽◾◽     | -            | 任意の場所 | この場所でカーソルモードを開始 | /cursor go ${_x},${_y}
+| ボタン^(1)^ | ジェスチャー| エリア| 説明 | コマンド
+| ◾◽◽     | -            | チャット                      | ウィンドウに移動 | /window ${_window_number}
+| ◾◽◽     | 左           | チャット                      | 前のバッファに移動 | /window ${_window_number};/buffer +1
+| ◾◽◽     | 右           | チャット                      | 次のバッファに移動 | /window ${_window_number};/buffer +1
+| ◾◽◽     | 左 (長く)    | チャット                      | 最初のバッファに移動 | /window ${_window_number};/buffer 1
+| ◾◽◽     | 右 (長く)    | チャット                      | 最後のバッファに移動 | /window ${_window_number};/input jump_last_buffer
+| ◾◽◽     | -            | チャット (スクリプトバッファ) | スクリプトバッファで行選択 | /script go ${_chat_line_y}
+| ◽◽◾     | -            | チャット (スクリプトバッファ) | スクリプトのインストール / 削除 | /script go ${_chat_line_y};/script installremove ${script_name_with_extension}
+| ⇑       | -            | チャット                      | バッファ履歴を上方向にスクロール | /window scroll_up -window ${_window_number}
+| ⇓       | -            | チャット                      | バッファ履歴を下方向にスクロール | /window scroll_down -window ${_window_number}
+| ⇑       | -            | チャット (スクリプトバッファ) | スクリプトバッファを 5 行上方向にスクロール | /script up 5
+| ⇓       | -            | チャット (スクリプトバッファ) | スクリプトバッファで 5 行下方向にスクロール | /script down 5
+| @k(C-)⇑ | -            | チャット                      | 水平左方向にスクロール | /window scroll_horiz -window ${_window_number} -10%
+| @k(C-)⇓ | -            | チャット                      | 水平右方向にスクロール | /window scroll_horiz -window ${_window_number} +10%
+| ◾◽◽     | 上           | ニックネームリスト            | ニックネームリストを 1 ページ分上方向にスクロール | /bar scroll nicklist ${_window_number} -100%
+| ◾◽◽     | 下           | ニックネームリスト            | ニックネームリストを 1 ページ分下方向にスクロール | /bar scroll nicklist ${_window_number} +100%
+| ◾◽◽     | 上 (長く)    | ニックネームリスト            | ニックネームリストの最初に移動 | /bar scroll nicklist ${_window_number} b
+| ◾◽◽     | 下 (長く)    | ニックネームリスト            | ニックネームリストの最後に移動 | /bar scroll nicklist ${_window_number} e
+| ◾◽◽     | -            | ニックネームリスト            | ニックネームに対するクエリを開く | /window ${_window_number};/query ${nick}
+| ◽◽◾     | -            | ニックネームリスト            | ニックネームに対する whois を行う | /window ${_window_number};/whois ${nick}
+| ◾◽◽     | 左           | ニックネームリスト            | ニックネームをキックする | /window ${_window_number};/kick ${nick}
+| ◾◽◽     | 左 (長く)    | ニックネームリスト            | ニックネームをキックとバンする | /window ${_window_number};/kickban ${nick}
+| ◽◽◾     | 左           | ニックネームリスト            | ニックネームをバンする | /window ${_window_number};/ban ${nick}
+| ◽◽◾     | -            | 入力                          | マウスイベントを奪ってコマンドラインにコードを入力 | /input grab_mouse_area
+| ⇑       | -            | 任意のバー                    | バーを -20% スクロール | /bar scroll ${_bar_name} ${_window_number} -20%
+| ⇓       | -            | 任意のバー                    | バーを +20% スクロール | /bar scroll ${_bar_name} ${_window_number} +20%
+| ◽◾◽     | -            | 任意の場所                    | この場所でカーソルモードを開始 | /cursor go ${_x},${_y}
 |========================================
+
+[NOTE]
+^(1)^ "⇑" と "⇓" はホイールの上方向回転と下方向回転に対応します。
 
 [[mouse]]
 === マウスサポート ===
@@ -851,11 +1068,22 @@ WeeChat はデフォルトマウスイベントの多くを定義しています
 | gesture-right-long | ≥ 40
 |========================================
 
+未完了イベントのリスト (ボタンのみ、プラグイン/スクリプトで便利):
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| イベント   | 説明
+| event-down | マウスボタンが押され、離されていない状態
+| event-drag | マウスボタンが押された状態でマウスが動かされた
+|========================================
+
 イベントの表記例:
 
 * `button1`
 * `ctrl-button1`
 * `button1-gesture-right`
+* `button1-event-down`
+* `button1-event-drag`
 * `alt-button2-gesture-down-long`
 * `wheelup`
 * `ctrl-alt-wheeldown`
@@ -990,7 +1218,7 @@ WeeChat ではバーやチャットエリアにおけるテキスト表示に 25
 256 色を利用したい場合に推奨される 'TERM' 環境変数の値は:
 
 * screen の中: 'screen-256color'
-* screen の外: 'xterm-256color'、'rxvt-256color'、'putty-256color'、...
+* screen の外: 'xterm-256color' 、'rxvt-256color' 、'putty-256color' 、...
 
 [NOTE]
 'TERM' 環境変数の値に上の値を設定するには、"ncurses-term"
@@ -1117,7 +1345,6 @@ include::autogen/user/weechat_options.txt[]
 
 include::autogen/user/weechat_commands.txt[]
 
-
 [[plugins]]
 == プラグイン ==
 
@@ -1221,6 +1448,30 @@ $ aspell config
 /set aspell.option.ignore-case "true"
 ----------------------------------------
 
+[[aspell_suggestions]]
+==== 修正候補 ====
+
+"aspell_suggest" バーアイテム内に修正候補が表示されます。修正候補の数は
+'aspell.check.suggestions' オプションで設定します。
+
+修正候補を利用するには、'aspell.check.suggestions' オプションをゼロ以上の整数に設定し、'status'
+バーなどに "aspell_suggest" バーアイテムを追加してください。
+
+英語辞書 (`en`) を用いた修正候補の例:
+
+........................................
+│[12:55] [6] [irc/freenode] 3:#test(+n){4} [print,prone,prune]                    │
+│[@Flashy] prinr █                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+英語とフランス語辞書 (`en,fr`) を用いた修正候補の例:
+
+........................................
+│[12:55] [6] [irc/freenode] 3:#test(+n){4} [print,prone,prune/prime,primer,primé] │
+│[@Flashy] prinr █                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+........................................
 
 [[charset_plugin]]
 === Charset プラグイン ===
@@ -1638,27 +1889,33 @@ CTCP 応答時に自動的に WeeChat によって展開されます:
 |========================================
 | コード       | 説明                                     | 値/例
 | $clientinfo  | サポートしている CTCP オプションのリスト | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| $version     | WeeChat バージョン                       | 0.3.0
-| $compilation | WeeChat コンパイル日時                   | Sep 13 2009
-| $osinfo      | info about OS に関する情報               | Linux 2.6.31 / i686
-| $site        | WeeChat ウェブサイト                     | http://www.weechat.org
+| $version     | WeeChat バージョン                       | 0.4.0-dev
+| $versiongit  | WeeChat バージョン + git バージョン      | 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| $git         | git バージョン                           | v0.3.9-104-g7eb5cc4
+| $compilation | WeeChat コンパイル日時                   | Dec 16 2012
+| $osinfo      | OS に関する情報                          | Linux 2.6.32-5-amd64 / x86_64
+| $site        | WeeChat ウェブサイト                     | http://www.weechat.org/
 | $download    | WeeChat ウェブサイトのダウンロードページ | http://www.weechat.org/download
-| $time        | 現在の日時                               | Sun Sep 13 15:48:31 2009
-| $username    | IRC サーバのユーザネーム                 | nick
-| $realname    | IRC サーバのリアルネーム                 | My name
+| $time        | 現在の日時                               | Sun, 16 Dec 2012 10:40:48 +0100
+| $username    | IRC サーバのユーザネーム                 | ログイン名
+| $realname    | IRC サーバのリアルネーム                 | John Doe
 |========================================
+
+[NOTE]
+git バージョンとは `git describe` コマンドの出力です。git リポジトリで
+WeeChat をコンパイルし、git がインストールされている場合のみ値が設定されます。
 
 CTCP オプションが設定されていない (デフォルトの) 場合、CTCP 応答は以下のようになります:
 
 [width="100%",cols="^2,4l,8l",options="header"]
 |========================================
-| CTCP       | 応答フォーマット                | 例
-| CLIENTINFO | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| FINGER     | WeeChat $version                | WeeChat 0.3.0
-| SOURCE     | $download                       | http://www.weechat.org/download
-| TIME       | $time                           | Sun Sep 13 15:48:31 2009
-| USERINFO   | $username ($realname)           | nick (My name)
-| VERSION    | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
+| CTCP       | 応答フォーマット                   | 例
+| CLIENTINFO | $clientinfo                        | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
+| FINGER     | WeeChat $versiongit                | WeeChat 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| SOURCE     | $download                          | http://www.weechat.org/download
+| TIME       | $time                              | Sun, 16 Dec 2012 10:40:48 +0100
+| USERINFO   | $username ($realname)              | ログイン名 (John Doe)
+| VERSION    | WeeChat $versiongit ($compilation) | WeeChat 0.4.0-dev (git: v0.3.9-104-g7eb5cc4) (Dec 16 2012)
 |========================================
 
 [[irc_target_buffer]]
@@ -1753,6 +2010,8 @@ weechat::
 | 433     |               | ニックネームが使用されています
 | 438     |               | ニックネームを変更する権限がありません
 | 671     | whois         | whois (セキュアな接続)
+| 728     | quietlist     | 発言禁止リスト
+| 729     | quietlist     | 発言禁止リストの終了
 | 901     |               | ログインに成功
 |========================================
 
@@ -2074,10 +2333,22 @@ WeeChat は 6 種類のスクリプトプラグインを備えています: Pyth
 (scheme)。
 これらのプラグインでそれぞれの言語で書かれたスクリプトのロード、実行、アンロードができます。
 
+"スクリプト" と呼ばれるほかのプラグインはスクリプトマネージャで、任意の言語で書かれたスクリプトをロード
+/ アンロードしたり、WeeChat スクリプトリポジトリ (http://www.weechat.org/scripts から参照可能)
+のスクリプトをインストール / 削除するために利用します。
+
 スクリプトの書き方やスクリプト用の WeeChat API についての詳しい情報は、
 'WeeChat スクリプト製作ガイド' を参照してください。
 
-WeeChat 用のスクリプトは以下のページから入手できます: http://www.weechat.org/scripts
+[[script_options]]
+==== スクリプトオプション (script.conf) ====
+
+include::autogen/user/script_options.txt[]
+
+[[script_commands]]
+==== Script コマンド ====
+
+include::autogen/user/script_commands.txt[]
 
 [[python_commands]]
 ==== Python コマンド ====
@@ -2128,35 +2399,6 @@ include::autogen/user/xfer_options.txt[]
 
 include::autogen/user/xfer_commands.txt[]
 
-
-[[authors]]
-== 作者 ==
-
-[[developers]]
-=== 開発者 ===
-
-主任開発者::
-    Sébastien Helleu (FlashCode)
-
-[[contributors]]
-=== 貢献者 ===
-
-パッケージ化::
-    Emmanuel Bouthenot (kolter)、Julien Louis (ptitlouis)、Odin
-
-翻訳::
-    Jiri Golembiovsky (GolemJ)、soltys、Nils Görs (nils_2)、rettub、
-    Frank Zacharias、Pavel Shevchuk、Elián Hanisch (m4v)、Voroskoi、
-    Marco Paolone、Ivan Sichmann Freitas、Lázaro A.、Ryuunosuke Ayanokouzi、
-    Quico Noizeux
-
-パッチ::
-    Dmitry Kobylin、Rudolf Polzer、Jim Ramsay、Pistos、Gwenn、Dominik Honnef、
-    JD Horelick、Stefano Pigozzi、Gu1ll4um3r0m41n、Kyle Fuller、
-    Quentin Glidic (SardemFF7)、Simon Kuhnle、Mateusz Poszwa、Peter Boström、
-    Arvydas Sidorenko
-
-
 [[support]]
 == サポート ==
 
@@ -2166,9 +2408,8 @@ include::autogen/user/xfer_commands.txt[]
 
 サポートを得る方法:
 
-* IRC: サーバ 'irc.freenode.net'、チャンネル '#weechat' (英語) と
+* IRC: サーバ 'irc.freenode.net' 、チャンネル '#weechat' (英語) と
   '#weechat-fr' (フランス語)
-* WeeChat フォーラム: http://forums.flashtux.org/
 * メーリングリスト:
 ** 購読: http://mail.nongnu.org/mailman/listinfo/weechat-support
 ** weechat-support@nongnu.org 宛にメールを送信

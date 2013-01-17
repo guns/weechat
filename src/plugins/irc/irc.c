@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc.c - IRC (Internet Relay Chat) plugin for WeeChat
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc.c: IRC (Internet Relay Chat) plugin for WeeChat
  */
 
 #include <stdlib.h>
@@ -61,7 +59,7 @@ int irc_signal_upgrade_received = 0;   /* signal "upgrade" received ?       */
 
 
 /*
- * irc_signal_quit_cb: callback for "quit" signal
+ * Callback for signal "quit".
  */
 
 int
@@ -88,7 +86,7 @@ irc_signal_quit_cb (void *data, const char *signal, const char *type_data,
 }
 
 /*
- * irc_signal_upgrade_cb: callback for "upgrade" signal
+ * Callback for signal "upgrade".
  */
 
 int
@@ -96,33 +94,37 @@ irc_signal_upgrade_cb (void *data, const char *signal, const char *type_data,
                        void *signal_data)
 {
     struct t_irc_server *ptr_server;
-    int disconnected;
+    int quit, ssl_disconnected;
 
     /* make C compiler happy */
     (void) data;
     (void) signal;
     (void) type_data;
-    (void) signal_data;
 
     irc_signal_upgrade_received = 1;
 
-    /*
-     * FIXME: it's not possible to upgrade with SSL servers connected (GnuTLS
-     * lib can't reload data after upgrade), so we close connection for
-     * all SSL servers currently connected
-     */
-    disconnected = 0;
+    quit = (signal_data && (strcmp (signal_data, "quit") == 0));
+    ssl_disconnected = 0;
+
     for (ptr_server = irc_servers; ptr_server;
          ptr_server = ptr_server->next_server)
     {
-        if (ptr_server->is_connected && ptr_server->ssl_connected)
+        /*
+         * FIXME: it's not possible to upgrade with SSL servers connected (GnuTLS
+         * lib can't reload data after upgrade), so we close connection for
+         * all SSL servers currently connected
+         */
+        if (ptr_server->is_connected && (ptr_server->ssl_connected || quit))
         {
-            disconnected++;
-            weechat_printf (ptr_server->buffer,
-                            _("%s%s: disconnecting from server because upgrade "
-                              "can't work for servers connected via SSL"),
-                            weechat_prefix ("error"),
-                            IRC_PLUGIN_NAME);
+            if (!quit)
+            {
+                ssl_disconnected++;
+                weechat_printf (ptr_server->buffer,
+                                _("%s%s: disconnecting from server because upgrade "
+                                  "can't work for servers connected via SSL"),
+                                weechat_prefix ("error"),
+                                IRC_PLUGIN_NAME);
+            }
             irc_server_disconnect (ptr_server, 0, 0);
             /*
              * schedule reconnection: WeeChat will reconnect to this server
@@ -133,22 +135,22 @@ irc_signal_upgrade_cb (void *data, const char *signal, const char *type_data,
             ptr_server->reconnect_start = time (NULL) - ptr_server->reconnect_delay - 1;
         }
     }
-    if (disconnected > 0)
+    if (ssl_disconnected > 0)
     {
         weechat_printf (NULL,
                         /* TRANSLATORS: "%s" after "%d" is "server" or "servers" */
                         _("%s%s: disconnected from %d %s (SSL connection "
                           "not supported with upgrade)"),
                         weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                        disconnected,
-                        NG_("server", "servers", disconnected));
+                        ssl_disconnected,
+                        NG_("server", "servers", ssl_disconnected));
     }
 
     return WEECHAT_RC_OK;
 }
 
 /*
- * weechat_plugin_init: initialize IRC plugin
+ * Initializes IRC plugin.
  */
 
 int
@@ -244,7 +246,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: end IRC plugin
+ * Ends IRC plugin.
  */
 
 int

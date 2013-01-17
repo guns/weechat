@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * plugin-api.c - extra functions for plugin API
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * plugin-api.c: extra functions for plugin API
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <locale.h>
 
 #include "../core/weechat.h"
 #include "../core/wee-config.h"
@@ -44,6 +43,7 @@
 #include "../core/wee-string.h"
 #include "../core/wee-url.h"
 #include "../core/wee-util.h"
+#include "../core/wee-version.h"
 #include "../gui/gui-bar.h"
 #include "../gui/gui-bar-item.h"
 #include "../gui/gui-bar-window.h"
@@ -65,7 +65,7 @@
 
 
 /*
- * plugin_api_charset_set: set plugin charset
+ * Sets plugin charset.
  */
 
 void
@@ -81,7 +81,7 @@ plugin_api_charset_set (struct t_weechat_plugin *plugin, const char *charset)
 }
 
 /*
- * plugin_api_gettext: translate a string using gettext
+ * Translates a string using gettext.
  */
 
 const char *
@@ -91,7 +91,7 @@ plugin_api_gettext (const char *string)
 }
 
 /*
- * plugin_api_ngettext: translate a string using gettext
+ * Translates a string using gettext (with plural form).
  */
 
 const char *
@@ -105,7 +105,7 @@ plugin_api_ngettext (const char *single, const char *plural, int count)
 }
 
 /*
- * plugin_api_config_get: get value of an option
+ * Gets pointer on an option.
  */
 
 struct t_config_option *
@@ -119,7 +119,7 @@ plugin_api_config_get (const char *option_name)
 }
 
 /*
- * plugin_api_config_get_plugin: get value of a plugin config option
+ * Gets value of a plugin option.
  */
 
 const char *
@@ -140,7 +140,11 @@ plugin_api_config_get_plugin (struct t_weechat_plugin *plugin,
 }
 
 /*
- * plugin_api_config_is_set_plugin: return 1 if plugin option is set, otherwise 0
+ * Checks if a plugin option is set.
+ *
+ * Returns:
+ *   1: plugin option is set
+ *   0: plugin option does not exist
  */
 
 int
@@ -160,7 +164,7 @@ plugin_api_config_is_set_plugin (struct t_weechat_plugin *plugin,
 }
 
 /*
- * plugin_api_config_set_plugin: set value of a plugin config option
+ * Sets value of a plugin option.
  */
 
 int
@@ -174,7 +178,7 @@ plugin_api_config_set_plugin (struct t_weechat_plugin *plugin,
 }
 
 /*
- * plugin_api_config_set_desc_plugin: set description of a plugin config option
+ * Sets description of a plugin option.
  */
 
 void
@@ -187,7 +191,7 @@ plugin_api_config_set_desc_plugin (struct t_weechat_plugin *plugin,
 }
 
 /*
- * plugin_api_config_unset_plugin: unset plugin config option
+ * Unsets a plugin option.
  */
 
 int
@@ -207,7 +211,7 @@ plugin_api_config_unset_plugin (struct t_weechat_plugin *plugin,
 }
 
 /*
- * plugin_api_prefix: return a prefix for display with printf
+ * Returns a prefix for display with printf.
  */
 
 const char *
@@ -231,7 +235,7 @@ plugin_api_prefix (const char *prefix)
 }
 
 /*
- * plugin_api_color: return a WeeChat color for display with printf
+ * Returns a WeeChat color for display with printf.
  */
 
 const char *
@@ -251,7 +255,7 @@ plugin_api_color (const char *color_name)
 }
 
 /*
- * plugin_api_command: execute a command (simulate user entry)
+ * Executes a command on a buffer (simulates user entry).
  */
 
 void
@@ -272,7 +276,7 @@ plugin_api_command (struct t_weechat_plugin *plugin,
 }
 
 /*
- * plugin_api_info_get_inernal: get info about WeeChat
+ * Gets info about WeeChat.
  */
 
 const char *
@@ -292,20 +296,24 @@ plugin_api_info_get_internal (void *data, const char *info_name,
 
     if (string_strcasecmp (info_name, "version") == 0)
     {
-        return PACKAGE_VERSION;
+        return version_get_version ();
     }
     else if (string_strcasecmp (info_name, "version_number") == 0)
     {
         if (!version_number[0])
         {
             snprintf (version_number, sizeof (version_number), "%d",
-                      util_version_number (PACKAGE_VERSION));
+                      util_version_number (version_get_version ()));
         }
         return version_number;
     }
+    else if (string_strcasecmp (info_name, "version_git") == 0)
+    {
+        return version_get_git ();
+    }
     else if (string_strcasecmp (info_name, "date") == 0)
     {
-        return __DATE__;
+        return version_get_compilation_date ();
     }
     else if (string_strcasecmp (info_name, "dir_separator") == 0)
     {
@@ -354,6 +362,10 @@ plugin_api_info_get_internal (void *data, const char *info_name,
     {
         return WEECHAT_INTERNAL_CHARSET;
     }
+    else if (string_strcasecmp (info_name, "locale") == 0)
+    {
+        return setlocale (LC_MESSAGES, NULL);
+    }
     else if (string_strcasecmp (info_name, "inactivity") == 0)
     {
         if (gui_key_last_activity_time == 0)
@@ -379,10 +391,9 @@ plugin_api_info_get_internal (void *data, const char *info_name,
 }
 
 /*
- * plugin_api_infolist_get_internal: get list with infos about WeeChat structures
- *                                   WARNING: caller has to free string returned
- *                                            by this function after use, with
- *                                            weechat_infolist_free()
+ * Gets infolist about WeeChat.
+ *
+ * Note: result must be freed with function "weechat_infolist_free".
  */
 
 struct t_infolist *
@@ -636,7 +647,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (ptr_infolist)
         {
             for (ptr_history = (pointer) ?
-                     ((struct t_gui_buffer *)pointer)->history : history_global;
+                     ((struct t_gui_buffer *)pointer)->history : gui_history;
                  ptr_history; ptr_history = ptr_history->next_history)
             {
                 if (!gui_history_add_to_infolist (ptr_infolist, ptr_history))
@@ -867,9 +878,11 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
 }
 
 /*
- * plugin_api_infolist_next: move item pointer to next item in a list
- *                           return 1 if pointer is still ok
- *                                  0 if end of list was reached
+ * Moves item pointer to next item in an infolist.
+ *
+ * Returns:
+ *   1: pointer is still OK
+ *   0: end of infolist was reached
  */
 
 int
@@ -882,9 +895,11 @@ plugin_api_infolist_next (struct t_infolist *infolist)
 }
 
 /*
- * plugin_api_infolist_prev: move item pointer to previous item in a list
- *                           return 1 if pointer is still ok
- *                                  0 if beginning of list was reached
+ * Moves pointer to previous item in an infolist.
+ *
+ * Returns:
+ *   1: pointer is still OK
+ *   0: beginning of infolist was reached
  */
 
 int
@@ -897,7 +912,7 @@ plugin_api_infolist_prev (struct t_infolist *infolist)
 }
 
 /*
- * plugin_api_infolist_reset_item_cursor: reset item cursor in infolist
+ * Resets item cursor in infolist.
  */
 
 void
@@ -910,7 +925,7 @@ plugin_api_infolist_reset_item_cursor (struct t_infolist *infolist)
 }
 
 /*
- * plugin_api_infolist_fields: get list of fields for current list item
+ * Gets list of fields for current infolist item.
  */
 
 const char *
@@ -923,7 +938,7 @@ plugin_api_infolist_fields (struct t_infolist *infolist)
 }
 
 /*
- * plugin_api_infolist_integer: get an integer variable value in current list item
+ * Gets integer value for a variable in current infolist item.
  */
 
 int
@@ -936,7 +951,7 @@ plugin_api_infolist_integer (struct t_infolist *infolist, const char *var)
 }
 
 /*
- * plugin_api_infolist_string: get a string variable value in current list item
+ * Gets string value for a variable in current infolist item.
  */
 
 const char *
@@ -949,7 +964,7 @@ plugin_api_infolist_string (struct t_infolist *infolist, const char *var)
 }
 
 /*
- * plugin_api_infolist_pointer: get a pointer variable value in current list item
+ * Gets pointer value for a variable in current infolist item.
  */
 
 void *
@@ -962,7 +977,9 @@ plugin_api_infolist_pointer (struct t_infolist *infolist, const char *var)
 }
 
 /*
- * plugin_api_infolist_buffer: get a buffer variable value in current list item
+ * Gets buffer value for a variable in current infolist item.
+ *
+ * Argument "size" is set with the size of buffer.
  */
 
 void *
@@ -976,7 +993,7 @@ plugin_api_infolist_buffer (struct t_infolist *infolist, const char *var,
 }
 
 /*
- * plugin_api_infolist_time: get a time variable value in current list item
+ * Gets time value for a variable in current infolist item.
  */
 
 time_t
@@ -989,7 +1006,7 @@ plugin_api_infolist_time (struct t_infolist *infolist, const char *var)
 }
 
 /*
- * plugin_api_infolist_free: free an infolist
+ * Frees an infolist.
  */
 
 void
@@ -1000,7 +1017,7 @@ plugin_api_infolist_free (struct t_infolist *infolist)
 }
 
 /*
- * plugin_api_init: init plugin API
+ * Initializes plugin API.
  */
 
 void
@@ -1010,6 +1027,11 @@ plugin_api_init ()
     hook_info (NULL, "version", N_("WeeChat version"), NULL,
                &plugin_api_info_get_internal, NULL);
     hook_info (NULL, "version_number", N_("WeeChat version (as number)"), NULL,
+               &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "version_git", N_("WeeChat git version (output of "
+                                       "command \"git describe\" for a "
+                                       "development version only, empty for a "
+                                       "stable release)"), NULL,
                &plugin_api_info_get_internal, NULL);
     hook_info (NULL, "date", N_("WeeChat compilation date"), NULL,
                &plugin_api_info_get_internal, NULL);
@@ -1032,6 +1054,8 @@ plugin_api_init ()
     hook_info (NULL, "charset_terminal", N_("terminal charset"), NULL,
                &plugin_api_info_get_internal, NULL);
     hook_info (NULL, "charset_internal", N_("WeeChat internal charset"), NULL,
+               &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "locale", N_("locale used for translating messages"), NULL,
                &plugin_api_info_get_internal, NULL);
     hook_info (NULL, "inactivity", N_("keyboard inactivity (seconds)"), NULL,
                &plugin_api_info_get_internal, NULL);

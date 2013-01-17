@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-hotlist.c - hotlist management (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,11 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-hotlist.c: hotlist management (list of buffers with activity)
- *                (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -54,7 +51,7 @@ int gui_add_hotlist = 1;                    /* 0 is for temporarly disable  */
 
 
 /*
- * gui_hotlist_changed_signal: send signal "hotlist_changed"
+ * Sends signal "hotlist_changed".
  */
 
 void
@@ -64,7 +61,9 @@ gui_hotlist_changed_signal ()
 }
 
 /*
- * gui_hotlist_search: find hotlist with buffer pointer
+ * Searches for hotlist with buffer pointer.
+ *
+ * Returns pointer to hotlist found, NULL if not found.
  */
 
 struct t_gui_hotlist *
@@ -82,7 +81,7 @@ gui_hotlist_search (struct t_gui_hotlist *hotlist, struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_hotlist_free: free a hotlist and remove it from hotlist queue
+ * Frees a hotlist and removes it from hotlist queue.
  */
 
 void
@@ -111,7 +110,7 @@ gui_hotlist_free (struct t_gui_hotlist **hotlist,
 }
 
 /*
- * gui_hotlist_free_all: free all hotlists
+ * Frees all hotlists.
  */
 
 void
@@ -126,11 +125,11 @@ gui_hotlist_free_all (struct t_gui_hotlist **hotlist,
 }
 
 /*
- * gui_hotlist_check_buffer_notify: return: 1 if buffer notify is ok according
- *                                            to priority (buffer will be added
- *                                            to hotlist)
- *                                          0 if buffer will not be added to
- *                                            hotlist
+ * Checks if a buffer must be added to hotlist, according to its notify level.
+ *
+ * Returns:
+ *   1: buffer must be added to hotlist
+ *   0: buffer must not be added to hotlist
  */
 
 int
@@ -157,8 +156,7 @@ gui_hotlist_check_buffer_notify (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_hotlist_find_pos: find position for a inserting in hotlist
- *                       (for sorting hotlist)
+ * Searches for position of hotlist (to keep hotlist sorted).
  */
 
 struct t_gui_hotlist *
@@ -232,7 +230,7 @@ gui_hotlist_find_pos (struct t_gui_hotlist *hotlist,
 }
 
 /*
- * gui_hotlist_add_hotlist: add new hotlist in list
+ * Adds new hotlist in list.
  */
 
 void
@@ -276,10 +274,12 @@ gui_hotlist_add_hotlist (struct t_gui_hotlist **hotlist,
 }
 
 /*
- * gui_hotlist_add: add a buffer to hotlist, with priority
- *                  if creation_time is NULL, current time is used
- *                  return pointer to hotlist created or changed, or NULL if no
- *                  hotlist was created/changed
+ * Adds a buffer to hotlist, with priority.
+ *
+ * If creation_time is NULL, current time is used.
+ *
+ * Returns pointer to hotlist created or changed, NULL if no hotlist was
+ * created/changed.
  */
 
 struct t_gui_hotlist *
@@ -367,7 +367,9 @@ gui_hotlist_add (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_hotlist_dup: duplicate hotlist element
+ * Duplicates a hotlist element.
+ *
+ * Returns pointer to new hotlist, NULL if error.
  */
 
 struct t_gui_hotlist *
@@ -391,7 +393,7 @@ gui_hotlist_dup (struct t_gui_hotlist *hotlist)
 }
 
 /*
- * gui_hotlist_resort: resort hotlist with new sort type
+ * Resorts hotlist with new sort type.
  */
 
 void
@@ -419,7 +421,7 @@ gui_hotlist_resort ()
 }
 
 /*
- * gui_hotlist_clear: clear hotlist
+ * Clears hotlist.
  */
 
 void
@@ -430,7 +432,7 @@ gui_hotlist_clear ()
 }
 
 /*
- * gui_hotlist_remove_buffer: remove a buffer from hotlist
+ * Removes a buffer from hotlist.
  */
 
 void
@@ -463,7 +465,7 @@ gui_hotlist_remove_buffer (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_hotlist_hdata_hotlist_cb: return hdata for hotlist
+ * Returns hdata for hotlist.
  */
 
 struct t_hdata *
@@ -474,16 +476,17 @@ gui_hotlist_hdata_hotlist_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_hotlist", "next_hotlist");
+    hdata = hdata_new (NULL, hdata_name, "prev_hotlist", "next_hotlist",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_hotlist, priority, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_hotlist, creation_time.tv_sec, TIME, NULL, NULL);
-        HDATA_VAR(struct t_gui_hotlist, creation_time.tv_usec, LONG, NULL, NULL);
-        HDATA_VAR(struct t_gui_hotlist, buffer, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_gui_hotlist, count, INTEGER, GUI_HOTLIST_NUM_PRIORITIES_STR, NULL);
-        HDATA_VAR(struct t_gui_hotlist, prev_hotlist, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_hotlist, next_hotlist, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_hotlist, priority, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_hotlist, creation_time.tv_sec, TIME, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_hotlist, creation_time.tv_usec, LONG, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_hotlist, buffer, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_hotlist, count, INTEGER, 0, GUI_HOTLIST_NUM_PRIORITIES_STR, NULL);
+        HDATA_VAR(struct t_gui_hotlist, prev_hotlist, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_hotlist, next_hotlist, POINTER, 0, NULL, hdata_name);
         HDATA_LIST(gui_hotlist);
         HDATA_LIST(last_gui_hotlist);
     }
@@ -491,8 +494,11 @@ gui_hotlist_hdata_hotlist_cb (void *data, const char *hdata_name)
 }
 
 /*
- * gui_hotlist_add_to_infolist: add a hotlist in an infolist
- *                              return 1 if ok, 0 if error
+ * Adds a hotlist in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -562,7 +568,7 @@ gui_hotlist_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_hotlist_print_log: print hotlist in log (usually for crash dump)
+ * Prints hotlist in WeeChat log file (usually for crash dump).
  */
 
 void

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-backtrace.c - backtrace after a segfault
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-backtrace.c: display backtrace after a segfault
  */
 
 #ifdef HAVE_CONFIG_H
@@ -44,12 +42,12 @@
 #include "wee-backtrace.h"
 #include "wee-log.h"
 #include "wee-string.h"
+#include "wee-version.h"
 #include "../plugins/plugin.h"
 
 
 /*
- * weechat_backtrace_printf: display a backtrace line (on stderr and in
- *                           WeeChat log)
+ * Displays a backtrace line on standard error output and in WeeChat log.
  */
 
 void
@@ -65,8 +63,7 @@ weechat_backtrace_printf (const char *message, ...)
 }
 
 /*
- * weechat_backtrace_addr2line: display function name and line with a
- *                              backtrace address
+ * Displays function name and line with a backtrace address.
  */
 
 void
@@ -147,7 +144,7 @@ weechat_backtrace_addr2line (int number, void *address, const char *symbol)
 }
 
 /*
- * weechat_backtrace: display backtrace (called when a SIGSEGV is received)
+ * Displays backtrace (function called when a SIGSEGV is received).
  */
 
 void
@@ -161,7 +158,9 @@ weechat_backtrace ()
 
     weechat_backtrace_printf ("======= WeeChat backtrace =======");
     weechat_backtrace_printf ("(written by %s, compiled on %s %s)",
-                              PACKAGE_STRING, __DATE__, __TIME__);
+                              version_get_name_version (),
+                              version_get_compilation_date (),
+                              version_get_compilation_time ());
 
 #ifdef HAVE_BACKTRACE
     trace_size = backtrace (trace, BACKTRACE_MAX);

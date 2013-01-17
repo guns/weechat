@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -23,7 +23,7 @@
 #
 
 %define name weechat
-%define version 0.3.8
+%define version 0.3.9
 %define release 1
 
 Name:      %{name}
@@ -64,7 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}.lang
 %defattr(-,root,root,0755)
-%doc AUTHORS ChangeLog COPYING INSTALL NEWS README UPGRADE_0.3
+%doc AUTHORS ChangeLog COPYING INSTALL NEWS README
 %doc %{_docdir}/%{name}/*.html
 %{_mandir}/man1/%{name}-curses.1*
 %{_bindir}/%{name}-curses
@@ -73,6 +73,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/%{name}/weechat-plugin.h
 
 %changelog
+* Sat Sep 29 2012 Sebastien Helleu <flashcode@flashtux.org> 0.3.9-1
+- Released version 0.3.9
 * Sun Jun 03 2012 Sebastien Helleu <flashcode@flashtux.org> 0.3.8-1
 - Released version 0.3.8
 * Sun Feb 26 2012 Sebastien Helleu <flashcode@flashtux.org> 0.3.7-1

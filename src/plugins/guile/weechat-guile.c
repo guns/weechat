@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * weechat-guile.c - guile (scheme) plugin for WeeChat
+ *
+ * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat-guile.c: guile (scheme) plugin for WeeChat
  */
 
 #undef _
@@ -77,7 +75,7 @@ char *guile_action_remove_list = NULL;
 
 
 /*
- * weechat_guile_stdout_flush: flush stdout
+ * Flushes stdout.
  */
 
 void
@@ -94,8 +92,7 @@ weechat_guile_stdout_flush ()
 }
 
 /*
- * weechat_guile_catch: execute scheme procedure with internal catch
- *                      and return value
+ * Executes scheme procedure with internal catch and returns value.
  */
 
 SCM
@@ -112,7 +109,7 @@ weechat_guile_catch (void *procedure, void *data)
 }
 
 /*
- * weechat_guile_scm_call_1: encapsulate call to scm_call_1 (to give arguments)
+ * Encapsulates call to scm_call_1 (to give arguments).
  */
 
 SCM
@@ -126,8 +123,7 @@ weechat_guile_scm_call_1 (void *proc)
 }
 
 /*
- * weechat_guile_exec_function: execute scheme function (with optional args)
- *                              and return value
+ * Executes scheme function (with optional args) and returns value.
  */
 
 SCM
@@ -154,8 +150,7 @@ weechat_guile_exec_function (const char *function, SCM args)
 }
 
 /*
- * weechat_guile_hashtable_map_cb: callback called for each key/value in a
- *                                 hashtable
+ * Callback called for each key/value in a hashtable.
  */
 
 void
@@ -179,7 +174,7 @@ weechat_guile_hashtable_map_cb (void *data,
 }
 
 /*
- * weechat_guile_hashtable_to_alist: get Guile alist with a WeeChat hashtable
+ * Gets guile alist with a WeeChat hashtable.
  */
 
 SCM
@@ -197,23 +192,23 @@ weechat_guile_hashtable_to_alist (struct t_hashtable *hashtable)
 }
 
 /*
- * weechat_guile_alist_to_hashtable: get WeeChat hashtable with Guile alist
- *                                   Hashtable returned has type string for
- *                                   both keys and values
- *                                   Note: hashtable has to be released after
- *                                   use with call to weechat_hashtable_free()
+ * Gets WeeChat hashtable with guile alist.
+ *
+ * Note: hashtable must be free after use.
  */
 
 struct t_hashtable *
-weechat_guile_alist_to_hashtable (SCM alist, int hashtable_size)
+weechat_guile_alist_to_hashtable (SCM alist, int size, const char *type_keys,
+                                  const char *type_values)
 {
     struct t_hashtable *hashtable;
     int length, i;
     SCM pair;
+    char *str, *str2;
 
-    hashtable = weechat_hashtable_new (hashtable_size,
-                                       WEECHAT_HASHTABLE_STRING,
-                                       WEECHAT_HASHTABLE_STRING,
+    hashtable = weechat_hashtable_new (size,
+                                       type_keys,
+                                       type_values,
                                        NULL,
                                        NULL);
     if (!hashtable)
@@ -223,18 +218,35 @@ weechat_guile_alist_to_hashtable (SCM alist, int hashtable_size)
     for (i = 0; i < length; i++)
     {
         pair = scm_list_ref (alist, scm_from_int (i));
-        weechat_hashtable_set (hashtable,
-                               scm_i_string_chars (scm_list_ref (pair,
-                                                                 scm_from_int (0))),
-                               scm_i_string_chars (scm_list_ref (pair,
-                                                                 scm_from_int (1))));
+        if (strcmp (type_values, WEECHAT_HASHTABLE_STRING) == 0)
+        {
+            str = scm_to_locale_string (scm_list_ref (pair, scm_from_int (0)));
+            str2 = scm_to_locale_string (scm_list_ref (pair, scm_from_int (1)));
+            weechat_hashtable_set (hashtable, str, str2);
+            if (str)
+                free (str);
+            if (str2)
+                free (str2);
+        }
+        else if (strcmp (type_values, WEECHAT_HASHTABLE_POINTER) == 0)
+        {
+            str = scm_to_locale_string (scm_list_ref (pair, scm_from_int (0)));
+            str2 = scm_to_locale_string (scm_list_ref (pair, scm_from_int (1)));
+            weechat_hashtable_set (hashtable, str,
+                                   plugin_script_str2ptr (weechat_guile_plugin,
+                                                          NULL, NULL, str2));
+            if (str)
+                free (str);
+            if (str2)
+                free (str2);
+        }
     }
 
     return hashtable;
 }
 
 /*
- * weechat_guile_exec: execute a Guile function
+ * Executes a guile function.
  */
 
 void *
@@ -305,7 +317,9 @@ weechat_guile_exec (struct t_plugin_script *script,
     else if (ret_type == WEECHAT_SCRIPT_EXEC_HASHTABLE)
     {
         ret_value = weechat_guile_alist_to_hashtable (rc,
-                                                      WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                                      WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                                      WEECHAT_HASHTABLE_STRING,
+                                                      WEECHAT_HASHTABLE_STRING);
     }
     else
     {
@@ -331,7 +345,7 @@ weechat_guile_exec (struct t_plugin_script *script,
 }
 
 /*
- * weechat_guile_module_init_script: init Guile module for script
+ * Initializes guile module for script.
  */
 
 void
@@ -358,7 +372,11 @@ weechat_guile_module_init_script (void *data)
 }
 
 /*
- * weechat_guile_load: load a Guile script
+ * Loads a guile script.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -419,7 +437,7 @@ weechat_guile_load (const char *filename)
 }
 
 /*
- * weechat_guile_load_cb: callback for script_auto_load() function
+ * Callback for script_auto_load() function.
  */
 
 void
@@ -432,7 +450,7 @@ weechat_guile_load_cb (void *data, const char *filename)
 }
 
 /*
- * weechat_guile_unload: unload a Guile script
+ * Unloads a guile script.
  */
 
 void
@@ -477,7 +495,7 @@ weechat_guile_unload (struct t_plugin_script *script)
 }
 
 /*
- * weechat_guile_unload_name: unload a Guile script by name
+ * Unloads a guile script by name.
  */
 
 void
@@ -489,9 +507,12 @@ weechat_guile_unload_name (const char *name)
     if (ptr_script)
     {
         weechat_guile_unload (ptr_script);
-        weechat_printf (NULL,
-                        weechat_gettext ("%s: script \"%s\" unloaded"),
-                        GUILE_PLUGIN_NAME, name);
+        if (!guile_quiet)
+        {
+            weechat_printf (NULL,
+                            weechat_gettext ("%s: script \"%s\" unloaded"),
+                            GUILE_PLUGIN_NAME, name);
+        }
     }
     else
     {
@@ -502,7 +523,7 @@ weechat_guile_unload_name (const char *name)
 }
 
 /*
- * weechat_guile_unload_all: unload all Guile scripts
+ * Unloads all guile scripts.
  */
 
 void
@@ -515,7 +536,7 @@ weechat_guile_unload_all ()
 }
 
 /*
- * weechat_guile_reload_name: reload a Guile script by name
+ * Reloads a guile script by name.
  */
 
 void
@@ -531,9 +552,12 @@ weechat_guile_reload_name (const char *name)
         if (filename)
         {
             weechat_guile_unload (ptr_script);
-            weechat_printf (NULL,
-                            weechat_gettext ("%s: script \"%s\" unloaded"),
-                            GUILE_PLUGIN_NAME, name);
+            if (!guile_quiet)
+            {
+                weechat_printf (NULL,
+                                weechat_gettext ("%s: script \"%s\" unloaded"),
+                                GUILE_PLUGIN_NAME, name);
+            }
             weechat_guile_load (filename);
             free (filename);
         }
@@ -547,14 +571,14 @@ weechat_guile_reload_name (const char *name)
 }
 
 /*
- * weechat_guile_cmd: callback for "/guile" command
+ * Callback for command "/guile".
  */
 
 int
 weechat_guile_command_cb (void *data, struct t_gui_buffer *buffer,
                           int argc, char **argv, char **argv_eol)
 {
-    char *path_script;
+    char *ptr_name, *path_script;
     SCM value;
 
     /* make C compiler happy */
@@ -604,28 +628,44 @@ weechat_guile_command_cb (void *data, struct t_gui_buffer *buffer,
             plugin_script_display_list (weechat_guile_plugin, guile_scripts,
                                         argv_eol[2], 1);
         }
-        else if (weechat_strcasecmp (argv[1], "load") == 0)
+        else if ((weechat_strcasecmp (argv[1], "load") == 0)
+                 || (weechat_strcasecmp (argv[1], "reload") == 0)
+                 || (weechat_strcasecmp (argv[1], "unload") == 0))
         {
-            /* load Guile script */
-            path_script = plugin_script_search_path (weechat_guile_plugin,
-                                                     argv_eol[2]);
-            weechat_guile_load ((path_script) ? path_script : argv_eol[2]);
-            if (path_script)
-                free (path_script);
-        }
-        else if (weechat_strcasecmp (argv[1], "reload") == 0)
-        {
-            /* reload one Guile script */
-            weechat_guile_reload_name (argv_eol[2]);
-        }
-        else if (weechat_strcasecmp (argv[1], "unload") == 0)
-        {
-            /* unload Guile script */
-            weechat_guile_unload_name (argv_eol[2]);
+            ptr_name = argv_eol[2];
+            if (strncmp (ptr_name, "-q ", 3) == 0)
+            {
+                guile_quiet = 1;
+                ptr_name += 3;
+                while (ptr_name[0] == ' ')
+                {
+                    ptr_name++;
+                }
+            }
+            if (weechat_strcasecmp (argv[1], "load") == 0)
+            {
+                /* load guile script */
+                path_script = plugin_script_search_path (weechat_guile_plugin,
+                                                         ptr_name);
+                weechat_guile_load ((path_script) ? path_script : ptr_name);
+                if (path_script)
+                    free (path_script);
+            }
+            else if (weechat_strcasecmp (argv[1], "reload") == 0)
+            {
+                /* reload one guile script */
+                weechat_guile_reload_name (ptr_name);
+            }
+            else if (weechat_strcasecmp (argv[1], "unload") == 0)
+            {
+                /* unload guile script */
+                weechat_guile_unload_name (ptr_name);
+            }
+            guile_quiet = 0;
         }
         else if (weechat_strcasecmp (argv[1], "eval") == 0)
         {
-            /* eval Guile code */
+            /* eval guile code */
             value = weechat_guile_catch (scm_c_eval_string, argv_eol[2]);
             if (!SCM_EQ_P (value, SCM_UNDEFINED)
                 && !SCM_EQ_P (value, SCM_UNSPECIFIED))
@@ -648,7 +688,7 @@ weechat_guile_command_cb (void *data, struct t_gui_buffer *buffer,
 }
 
 /*
- * weechat_guile_completion_cb: callback for script completion
+ * Adds guile scripts to completion list.
  */
 
 int
@@ -667,7 +707,7 @@ weechat_guile_completion_cb (void *data, const char *completion_item,
 }
 
 /*
- * weechat_guile_hdata_cb: callback for hdata
+ * Returns hdata for guile scripts.
  */
 
 struct t_hdata *
@@ -682,7 +722,7 @@ weechat_guile_hdata_cb (void *data, const char *hdata_name)
 }
 
 /*
- * weechat_guile_infolist_cb: callback for infolist
+ * Returns infolist with guile scripts.
  */
 
 struct t_infolist *
@@ -706,8 +746,7 @@ weechat_guile_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * weechat_guile_signal_debug_dump_cb: dump Guile plugin data in WeeChat log
- *                                     file
+ * Dumps guile plugin data in WeeChat log file.
  */
 
 int
@@ -729,8 +768,7 @@ weechat_guile_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_guile_signal_buffer_closed_cb: callback called when a buffer is
- *                                        closed
+ * Callback called when a buffer is closed.
  */
 
 int
@@ -750,7 +788,7 @@ weechat_guile_signal_buffer_closed_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_guile_timer_action_cb: timer for executing actions
+ * Timer for executing actions.
  */
 
 int
@@ -767,6 +805,7 @@ weechat_guile_timer_action_cb (void *data, int remaining_calls)
                                           guile_scripts,
                                           &weechat_guile_unload,
                                           &weechat_guile_load,
+                                          &guile_quiet,
                                           &guile_action_install_list);
         }
         else if (data == &guile_action_remove_list)
@@ -774,6 +813,7 @@ weechat_guile_timer_action_cb (void *data, int remaining_calls)
             plugin_script_action_remove (weechat_guile_plugin,
                                          guile_scripts,
                                          &weechat_guile_unload,
+                                         &guile_quiet,
                                          &guile_action_remove_list);
         }
     }
@@ -782,8 +822,7 @@ weechat_guile_timer_action_cb (void *data, int remaining_calls)
 }
 
 /*
- * weechat_guile_signal_script_action_cb: callback called when a script action
- *                                        is asked (install/remove a script)
+ * Callback called when a script action is asked (install/remove a script).
  */
 
 int
@@ -818,7 +857,7 @@ weechat_guile_signal_script_action_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_guile_port_fill_input: fill input
+ * Fills input.
  */
 
 int
@@ -831,7 +870,7 @@ weechat_guile_port_fill_input (SCM port)
 }
 
 /*
- * weechat_guile_port_write: write
+ * Write.
  */
 
 void
@@ -873,7 +912,7 @@ weechat_guile_port_write (SCM port, const void *data, size_t size)
 }
 
 /*
- * weechat_plugin_init: initialize Guile plugin
+ * Initializes guile plugin.
  */
 
 int
@@ -914,7 +953,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: shutdown Guile interface
+ * Ends guile plugin.
  */
 
 int

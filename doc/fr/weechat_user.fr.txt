@@ -48,7 +48,6 @@ Pour installer WeeChat, vous devez avoir :
 * droits "root" (pour installer WeeChat dans un répertoire système)
 * la bibliothèque ncurses
 
-
 [[install]]
 Installation
 ------------
@@ -93,19 +92,18 @@ compiler WeeChat.
 | cmake                  |             | *oui*  | construction (autotools toujours possible, mais cmake est recommandé)
 | libncursesw5-dev ^(2)^ |             | *oui*  | interface ncurses
 | libcurl4-gnutls-dev    |             | *oui*  | transfert d'URL
-| gettext                |             |        | internationalisation (traduction des messages; la langue de base est l'anglais)
-| libgcrypt11-dev        |             |        | authentification SASL avec le serveur IRC, en utilisant le mécanisme DH-BLOWFISH
+| zlib1g-dev             |             | *oui*  | compression des paquets dans l'extension relay (protocole weechat), extension script
+| libgcrypt11-dev        |             | *oui*  | authentification SASL avec le serveur IRC, en utilisant le mécanisme DH-BLOWFISH, extension script
 | libgnutls-dev          | ≥ 2.2.0     |        | connexion SSL au serveur IRC, support SSL dans l'extension relay
+| gettext                |             |        | internationalisation (traduction des messages; la langue de base est l'anglais)
 | ca-certificates        |             |        | certificats pour les connexions SSL
-// TRANSLATION MISSING
-| zlib1g-dev             |             |        | compression des paquets dans l'extension relay (protocole weechat)
 | libaspell-dev          |             |        | extension aspell
 | python-dev             | ≥ 2.5 ^(3)^ |        | extension python
 | libperl-dev            |             |        | extension perl
-| ruby1.8-dev            |             |        | extension ruby
+| ruby1.9.1-dev          | ≥ 1.8       |        | extension ruby
 | liblua5.1-0-dev        |             |        | extension lua
 | tcl-dev                | ≥ 8.5       |        | extension tcl
-| guile-1.8-dev          |             |        | extention guile (scheme)
+| guile-1.8-dev          |             |        | extension guile (scheme)
 | asciidoc               | ≥ 8.5.0     |        | construction de la documentation (fichiers HTML)
 | source-highlight       |             |        | coloration des sources dans la documentation HTML
 |========================================
@@ -146,9 +144,17 @@ $ make install
 Compilation avec autotools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+[WARNING]
+Seulement cmake est officiellement supporté pour construire WeeChat. Vous ne
+devriez utiliser les autotools que si vous n'avez pas la possibilité d'utiliser
+cmake. +
+La compilation avec les autotools requiert plus de dépendances et est plus lente
+qu'avec cmake.
+
 * Installation dans les répertoires systèmes (nécessite les droits 'root') :
 
 ----------------------------------------
+$ ./autogen.sh
 $ ./configure
 $ make
 % make install    (en root)
@@ -157,6 +163,7 @@ $ make
 * Installation dans un répertoire spécifique :
 
 ----------------------------------------
+$ ./autogen.sh
 $ ./configure --prefix=/chemin/vers/repertoire
 $ make
 $ make install
@@ -166,19 +173,13 @@ $ make install
 Sources Git
 ~~~~~~~~~~~
 
-Attention : les sources GIT sont réservés aux utilisateurs avancés : il se peut
+Attention : les sources git sont réservés aux utilisateurs avancés : il se peut
 que WeeChat ne compile pas et qu'il soit très instable. Vous êtes prévenus !
 
-Pour récupérer les sources GIT, tapez cette commande :
+Pour récupérer les sources git, tapez cette commande :
 
 ----------------------------------------
 $ git clone git://git.sv.gnu.org/weechat.git
-----------------------------------------
-
-Si vous utilisez les autotools (et non cmake), exécutez ce script :
-
-----------------------------------------
-$ ./autogen.sh
 ----------------------------------------
 
 Suivez alors les instructions du paquet source (voir
@@ -311,7 +312,6 @@ Ensuite comme pour un crash, utilisez la commande `bt full` :
 (gdb) bt full
 ----------------------------------------
 
-
 [[usage]]
 Utilisation
 -----------
@@ -434,7 +434,7 @@ La barre 'status' contient les objets (items) suivants par défaut :
 | buffer_nicklist_count | {4}                   | nombre de pseudos dans la liste des pseudos
 | buffer_filter         | *                     | indicateur de filtrage : `*` signifie que des lignes sont filtrées (cachées), une valeur vide signifie que toutes les lignes sont affichées
 | lag                   | [Lag: 2.5]            | indicateur de "lag" (ralentissements réseau), en secondes (caché si le lag est faible)
-| hotlist               | [Act: 4:#abc(2,5), 6] | liste des tampons où il y a de l'activité (messages non lus) (dans cet exemple, 2 highlights et 5 messages non lus sur '#abc', un message non lu sur le buffer numéro 6)
+| hotlist               | [Act: 4:#abc(2,5), 6] | liste des tampons où il y a de l'activité (messages non lus) (dans cet exemple, 2 highlights et 5 messages non lus sur '#abc', un message non lu sur le tampon numéro 6)
 | completion            | abc(2) def(5)         | liste des mots pour la complétion, avec le nombre de complétions possibles pour chaque mot
 | scroll                | -PLUS(50)-            | indicateur de scroll, avec le nombre de lignes sous la dernière ligne affichée
 |========================================
@@ -566,6 +566,229 @@ Exemple de découpage vertical + horizontal :
                   (tampon n°3)
 ........................................
 
+[[bars]]
+Barres
+~~~~~~
+
+Une 'barre' est une zone à côté de la discussion qui peut contenir tout type de
+texte.
+
+Les options de barre sont définies avec les options `weechat.bar.nom.option` où
+`nom` et le nom de la barre et `option` l'option pour cette barre.
+
+Liste des options de barre :
+
+[width="100%",cols="2m,2,10",options="header"]
+|========================================
+| Option | Valeurs | Description
+
+| type | `root`, `window` |
+  Une barre avec le type `root` est affichée exactement une fois à l'écran, en
+  dehors de toutes les fenêtres. Il n'y a pas de barre root par défaut, mais un
+  exemple est la barre 'buffers' créée par le script 'buffers.pl' (barre
+  latérale avec la liste des tampons). +
+  Une barre avec le type `window` est affichée dans chaque fenêtre, par exemple
+  si vous découpez l'écran (avec `/window splith` ou `/window splitv`), vous
+  aurez une barre dans chaque fenêtre. Les quatre barres par défaut ('title',
+  'status', 'input', 'nicklist') sont de type `window`.
+
+| position | `top`, `bottom`, `left`, `right` |
+  Position de la barre : au dessus/en dessous de la discussion, sur la
+  gauche/droite.
+
+| priority | entier ≥ 0 |
+  Priorité de la barre : elle est utilisée pour ordonner les barres à l'écran,
+  quand plusieurs barres utilisent le même type et position. +
+  Les barres sont affichées depuis le bord de l'écran vers le centre. Une
+  priorité plus haute affichera la barre au début, donc près du bord. +
+  Exemple : la barre 'input' a une priorité de 1000, donc elle est affichée
+  avant la barre 'status', qui a une priorité de 500.
+
+| size | entier ≥ 0 |
+  La taille de la barre : nombre de colonnes pour une position left/right,
+  nombre de lignes pour une position top/bottom. Une taille de `0` signifie
+  automatique, donc la taille sera calculée en fonction du contenu affiché dans
+  la barre.
+
+| size_max | entier ≥ 0 |
+  La taille maximum pour la barre, `0` = pas de limite (cette option est
+  utilisée seulement si `size` = `0`).
+
+| color_bg | couleur |
+  La couleur par défaut du fond de la barre.
+
+| color_fg | couleur |
+  La couleur par défaut du texte dans la barre.
+
+| color_delim | couleur |
+  La couleur des délimiteurs dans la barre.
+
+| hidden | `on`, `off` |
+  Lorsque l'option est `on`, la barre est cachée. +
+  Note : plutôt que de changer cette option, il est préférable d'utiliser la
+  commande `/bar`, par exemple : `/bar toggle nicklist` (voir la commande
+  <<command_weechat_bar,/bar>>).
+
+| separator | `on`, `off` |
+  Lorsque l'option est `on`, un séparateur (ligne) est affiché entre la barre et
+  les autres barres (ou la discussion).
+
+| items | chaîne |
+  Une liste d'objets (voir <<bar_items,objets>> pour plus d'infos).
+
+| filling_left_right | `horizontal`, `vertical`, `columns_horizontal`, `columns_vertical` |
+  Type de remplissage pour la barre lorsqu'elle a une position `left` ou
+  `right` (voir <<bar_filling,remplissage>> pour plus d'infos).
+
+| filling_top_bottom | `horizontal`, `vertical`, `columns_horizontal`, `columns_vertical` |
+  Type de remplissage pour la barre lorsqu'elle a une position `top` ou `bottom`
+  (voir <<bar_filling,remplissage>> pour plus d'infos).
+
+| conditions | chaîne |
+  Les conditions pour afficher la barre (voir <<bar_conditions,conditions>> pour
+  plus d'infos).
+|========================================
+
+[[bar_items]]
+Objets
+^^^^^^
+
+L'option 'items' est une chaîne avec une liste d'objets de barre, séparés par
+une virgule (espace entre les objets à l'écran) ou un "+" (objets collés).
+
+La liste des objets de barre est affichée avec la commande `/bar listitems`.
+
+Exemple de barre avec les objets
+"[time],buffer_number+:+buffer_plugin+.+buffer_name" :
+
+........................................
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│[12:55] 3:irc/freenode.#weechat                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+[[bar_filling]]
+Remplissage
+^^^^^^^^^^^
+
+Il y a quatre types de remplissage :
+
+* `horizontal` : les objets sont affichés horizontalement, de gauche à droite.
+  S'il y a des retours à la ligne dans les objets, un espace est utilisé pour
+  séparer les lignes.
+* `vertical` : les objets sont affichés de haut en bas. S'il y a des retours à
+  la ligne dans les objets, une nouvelle ligne est utilisée pour séparer les
+  lignes.
+* `columns_horizontal` : les objets sont affichés en utilisant des colonnes, où
+  le texte est aligné à gauche. Le premier objet est en haut à gauche, le second
+  est sur la même ligne, sur la droite.
+* `columns_vertical` : les objets sont affichés en utilisant des colonnes, où
+  le texte est aligné à gauche. Le premier objet est en haut à gauche, le second
+  est sur la ligne en dessous.
+
+Les barres par défaut 'title', 'status' et 'input' ont un remplissage
+'horizontal', et la barre par défaut 'nicklist' a un remplissage 'vertical'.
+
+Quelques exemples de remplissage pour la barre 'nicklist' :
+
+........................................
+┌──────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel          │
+│12:54:15 peter | hey!                    │@carl   │
+│12:55:01  +Max | hello                   │@jessika│
+│                                         │@maddy  │
+│                                         │%Diego  │
+│                                         │%Melody │
+│                                         │+Max    │
+│                                         │ celia  │
+│                                         │ Eva    │
+│                                         │ freddy │
+│                                         │ Harold^│
+│                                         │ henry4 │
+│                                         │ jimmy17│
+│                                         │ jodie ▼│
+│[12:55] [6] [irc/freenode] 3:#test(+n){24}        │
+└──────────────────────────────────────────────────┘
+                filling_left_right = vertical ▲
+
+┌──────────────────────────────────────────────────┐
+│Welcome to #test, this is a test channel          │
+│12:54:15 peter | hey!           │@carl     lee    │
+│12:55:01  +Max | hello          │@jessika  louise │
+│                                │@maddy    mario  │
+│                                │%Diego    mark   │
+│                                │%Melody   peter  │
+│                                │+Max      Rachel │
+│                                │ celia    richard│
+│                                │ Eva      sheryl │
+│                                │ freddy   Vince  │
+│                                │ Harold^  warren │
+│                                │ henry4   zack   │
+│                                │ jimmy17         │
+│                                │ jodie           │
+│[12:55] [6] [irc/freenode] 3:#test(+n){24}        │
+└──────────────────────────────────────────────────┘
+        filling_left_right = columns_vertical ▲
+
+┌───────────────────────────────────────────────────────────────────────┐
+│@carl    %Diego    celia    Harold^  jodie    mario    Rachel   Vince  │
+│@jessika %Melody   Eva      henry4   lee      mark     richard  warren │
+│@maddy   +Max      freddy   jimmy17  louise   peter    sheryl   zack   │
+│───────────────────────────────────────────────────────────────────────│
+│                                                                       │
+        filling_top_bottom = columns_vertical ▲
+
+┌───────────────────────────────────────────────────────────────────────┐
+│@carl    @jessika @maddy   %Diego   %Melody  +Max      celia    Eva    │
+│ freddy   Harold^  henry4   jimmy17  jodie    lee      louise   mario  │
+│ mark     peter    Rachel   richard  sheryl   Vince    warren   zack   │
+│───────────────────────────────────────────────────────────────────────│
+│                                                                       │
+      filling_top_bottom = columns_horizontal ▲
+........................................
+
+[[bar_conditions]]
+Conditions
+^^^^^^^^^^
+
+L'option 'conditions' est une chaîne évaluée pour savoir si la barre doit être
+affichée ou non dans la fenêtre (elle est utilisée seulement pour les barres
+avec type 'window').
+
+La chaîne peut être :
+
+* 'active' : la fenêtre doit être active
+* 'inactive' : la fenêtre doit être inactive
+* 'nicklist' : le tampon affiché dans la fenêtre doit avoir une liste de pseudos
+* une expression : elle est évaluée comme booléen (voir la commande
+  <<command_weechat_eval,/eval>>)
+
+Pour une expression, les variables suivantes sont disponibles :
+
+* `${active}` : vrai si la fenêtre est active
+* `${inactive}` : vrai si la fenêtre est inactive
+* `$[nicklist}` : vrai si le tampon affiché dans la fenêtre a une liste de
+  pseudos
+
+Les pointeurs suivants sont disponibles :
+
+* `${window}` : la fenêtre où la condition est évaluée
+* `${buffer}` : le tampon de la fenêtre où la condition est évaluée
+
+Exemple pour afficher la liste de pseudos dans tous les tampons possédant une
+liste de pseudos, et seulement si la largeur de fenêtre est supérieurs à 100 :
+
+----------------------------------------
+/set weechat.bar.nicklist.conditions "${nicklist} && ${window.win_width} > 100"
+----------------------------------------
+
+Même condition, mais afficher toujours la liste de pseudos sur le tampon
+'&bitlbee' (même si la fenêtre est petite) :
+
+----------------------------------------
+/set weechat.bar.nicklist.conditions "${nicklist} && (${window.win_width} > 100 || ${buffer.full_name} == irc.bitlbee.&bitlbee)"
+----------------------------------------
+
 [[notify_levels]]
 Niveaux de notification
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -642,7 +865,7 @@ Touches pour la ligne de commande
 | @k(C-)@k(c) , @k(b) | Insérer le code pour mettre le texte en gras | /input insert \x02
 | @k(C-)@k(c) , @k(c) | Insérer le code pour écrire en couleur | /input insert \x03
 | @k(C-)@k(c) , @k(i) | Insérer le code pour mettre le texte en italique | /input insert \x1D
-| @k(C-)@k(c) , @k(o) | Insérer le code pour réinitaliser la couleur | /input insert \x0F
+| @k(C-)@k(c) , @k(o) | Insérer le code pour réinitialiser la couleur | /input insert \x0F
 | @k(C-)@k(c) , @k(r) | Insérer le code pour écrire en couleur inversée | /input insert \x12
 | @k(C-)@k(c) , @k(u) | Insérer le code pour écrire en souligné | /input insert \x15
 | @k(Del)          .2+| Effacer le caractère suivant sur la ligne de commande .2+| /input delete_next_char
@@ -682,6 +905,7 @@ Touches pour les tampons / fenêtres
 | @k(C-)@k(l)               | Réafficher toute la fenêtre | /window refresh
 | @k(C-)@k(s) , @k(C-)@k(u) | Positionner le marqueur de données non lues sur tous les tampons | /input set_unread
 | @k(C-)@k(x)               | Changer de tampon courant si plusieurs tampons sont attachés avec le même numéro | /input switch_active_buffer
+| @k(A-)@k(x)               | Zoomer sur le tampon mélangé (@k(A-)@k(x) de nouveau : afficher tous les tampons mélangés) | /input zoom_merged_buffer
 | @k(PgUp)                  | Monter d'une page dans l'historique du tampon | /window page_up
 | @k(PgDn)                  | Descendre d'une page dans l'historique du tampon | /window page_down
 | @k(A-)@k(PgUp)            | Monter de quelques lignes dans l'historique du tampon | /window scroll_up
@@ -721,7 +945,7 @@ Touches pour les tampons / fenêtres
 | @k(A-)@k(w) , @k(A-)@k(→) | Sauter à la fenêtre de droite | /window right
 | @k(A-)@k(w) , @k(A-)@k(b) | Equilibrer la taille de toutes les fenêtres | /window balance
 | @k(A-)@k(w) , @k(A-)@k(s) | Echanger les tampons de deux fenêtres | /window swap
-| @k(A-)@k(z)               | Zoom sur la fenêtre courante (@k(A-)@k(z) de nouveau : restaurer l'état initial des fenêtres, avant le zoom) | /window zoom
+| @k(A-)@k(z)               | Zoomer sur la fenêtre courante (@k(A-)@k(z) de nouveau : restaurer l'état initial des fenêtres, avant le zoom) | /window zoom
 | @k(A-)@k(<)               | Sauter au tampon précédent dans la liste des tampons visités | /input jump_previously_visited_buffer
 | @k(A-)@k(>)               | Sauter au tampon suivant dans la liste des tampons visités | /input jump_next_visited_buffer
 | @k(A-)@k(/)               | Sauter au dernier tampon affiché (avant le dernier saut vers un tampon) | /input jump_last_buffer_displayed
@@ -772,7 +996,7 @@ Ces touches sont utilisées dans le contexte "cursor" (mouvement libre du curseu
 | @k(K)        | liste des pseudos | Retirer par la force et bannir le pseudo | /window ${_window_number};/kickban ${nick}
 | @k(q)        | liste des pseudos | Ouvrir une discussion avec le pseudo | /window ${_window_number};/query ${nick};/cursor stop
 | @k(w)        | liste des pseudos | Effectuer un whois sur le pseudo | /window ${_window_number};/whois ${nick}
-| @k(Enter) .3+| -              .3+| Stop cursor mode .3+| /cursor stop
+| @k(Enter) .3+| -              .3+| Arrêter le mode curseur ("cursor") .3+| /cursor stop
 | @k(C-)@k(j)
 | @k(C-)@k(m)
 |========================================
@@ -786,28 +1010,37 @@ Ces touches sont utilisées dans le contexte "mouse", c'est-à-dire lorsqu'un
 
 [width="100%",cols="^.^3,^.^3,^.^3,.^10,.^8l",options="header"]
 |========================================
-| Bouton     | Geste        | Zone              | Description | Commande
-| ◾◽◽        | -            | chat              | Aller à la fenêtre | /window ${_window_number}
-| ◾◽◽        | left         | chat              | Aller au tampon précédent | /window ${_window_number};/buffer +1
-| ◾◽◽        | right        | chat              | Aller au tampon suivant | /window ${_window_number};/buffer +1
-| ◾◽◽        | left (long)  | chat              | Aller au premier tampon | /window ${_window_number};/buffer 1
-| ◾◽◽        | right (long) | chat              | Aller au dernier tampon | /window ${_window_number};/input jump_last_buffer
-| roulette ⇑ | -            | chat              | Monter de quelques lignes dans l'historique du tampon | /window scroll_up -window ${_window_number}
-| roulette ⇓ | -            | chat              | Descendre de quelques lignes dans l'historique du tampon | /window scroll_down -window ${_window_number}
-| ◾◽◽        | up           | liste des pseudos | Monter d'une page dans la liste des pseudos | /bar scroll nicklist ${_window_number} -100%
-| ◾◽◽        | down         | liste des pseudos | Descendre d'une page dans la liste des pseudos | /bar scroll nicklist ${_window_number} +100%
-| ◾◽◽        | up (long)    | liste des pseudos | Aller au début de la liste des pseudos | /bar scroll nicklist ${_window_number} b
-| ◾◽◽        | down (long)  | liste des pseudos | Aller à la fin de la liste des pseudos | /bar scroll nicklist ${_window_number} e
-| ◾◽◽        | -            | liste des pseudos | Ouvrir une discussion avec le pseudo | /window ${_window_number};/query ${nick}
-| ◽◽◾        | -            | liste des pseudos | Effectuer un whois sur le pseudo | /window ${_window_number};/whois ${nick}
-| ◾◽◽        | left         | liste des pseudos | Retirer par la force le pseudo | /window ${_window_number};/kick ${nick}
-| ◾◽◽        | left (long)  | liste des pseudos | Retirer par la force et bannir le pseudo | /window ${_window_number};/kickban ${nick}
-| ◽◽◾        | left         | liste des pseudos | Bannir le pseudo | /window ${_window_number};/ban ${nick}
-| ◽◽◾        | -            | ligne de commande | Capturer un évènement de la souris et insérer son code sur la ligne de commande | /input grab_mouse_area
-| roulette ⇑ | -            | toute barre       | Faire défiler la barre de -10% | /bar scroll ${_bar_name} ${_window_number} -20%
-| roulette ⇓ | -            | toute barre       | Faire défiler la barre de +10% | /bar scroll ${_bar_name} ${_window_number} +20%
-| ◽◾◽        | -            | n'importe où      | Démarrer le mode curseur ("cursor") à ce point | /cursor go ${_x},${_y}
+| Bouton ^(1)^ | Geste | Zone | Description | Commande
+| ◾◽◽     | -            | chat                 | Aller à la fenêtre | /window ${_window_number}
+| ◾◽◽     | left         | chat                 | Aller au tampon précédent | /window ${_window_number};/buffer +1
+| ◾◽◽     | right        | chat                 | Aller au tampon suivant | /window ${_window_number};/buffer +1
+| ◾◽◽     | left (long)  | chat                 | Aller au premier tampon | /window ${_window_number};/buffer 1
+| ◾◽◽     | right (long) | chat                 | Aller au dernier tampon | /window ${_window_number};/input jump_last_buffer
+| ◾◽◽     | -            | chat (tampon script) | Sélectionner la ligne dans le tampon script | /script go ${_chat_line_y}
+| ◽◽◾     | -            | chat (tampon script) | Installer/supprimer un script | /script go ${_chat_line_y};/script installremove -q ${script_name_with_extension}
+| ⇑       | -            | chat                 | Monter de quelques lignes dans l'historique du tampon | /window scroll_up -window ${_window_number}
+| ⇓       | -            | chat                 | Descendre de quelques lignes dans l'historique du tampon | /window scroll_down -window ${_window_number}
+| ⇑       | -            | chat (tampon script) | Monter de 5 lignes dans le tampon script | /script up 5
+| ⇓       | -            | chat (tampon script) | Descendre de 5 lignes dans le tampon script | /script down 5
+| @k(C-)⇑ | -            | chat                 | Faire défiler horizontalement vers la gauche | /window scroll_horiz -window ${_window_number} -10%
+| @k(C-)⇓ | -            | chat                 | Faire défiler horizontalement vers la droite | /window scroll_horiz -window ${_window_number} +10%
+| ◾◽◽     | up           | liste des pseudos    | Monter d'une page dans la liste des pseudos | /bar scroll nicklist ${_window_number} -100%
+| ◾◽◽     | down         | liste des pseudos    | Descendre d'une page dans la liste des pseudos | /bar scroll nicklist ${_window_number} +100%
+| ◾◽◽     | up (long)    | liste des pseudos    | Aller au début de la liste des pseudos | /bar scroll nicklist ${_window_number} b
+| ◾◽◽     | down (long)  | liste des pseudos    | Aller à la fin de la liste des pseudos | /bar scroll nicklist ${_window_number} e
+| ◾◽◽     | -            | liste des pseudos    | Ouvrir une discussion avec le pseudo | /window ${_window_number};/query ${nick}
+| ◽◽◾     | -            | liste des pseudos    | Effectuer un whois sur le pseudo | /window ${_window_number};/whois ${nick}
+| ◾◽◽     | left         | liste des pseudos    | Retirer par la force le pseudo | /window ${_window_number};/kick ${nick}
+| ◾◽◽     | left (long)  | liste des pseudos    | Retirer par la force et bannir le pseudo | /window ${_window_number};/kickban ${nick}
+| ◽◽◾     | left         | liste des pseudos    | Bannir le pseudo | /window ${_window_number};/ban ${nick}
+| ◽◽◾     | -            | ligne de commande    | Capturer un évènement de la souris et insérer son code sur la ligne de commande | /input grab_mouse_area
+| ⇑       | -            | toute barre          | Faire défiler la barre de -20% | /bar scroll ${_bar_name} ${_window_number} -20%
+| ⇓       | -            | toute barre          | Faire défiler la barre de +20% | /bar scroll ${_bar_name} ${_window_number} +20%
+| ◽◾◽     | -            | n'importe où         | Démarrer le mode curseur ("cursor") à ce point | /cursor go ${_x},${_y}
 |========================================
+
+[NOTE]
+^(1)^ "⇑" et "⇓" sont la roulette vers le haut et le bas.
 
 [[mouse]]
 Support souris
@@ -901,11 +1134,23 @@ Liste des gestes (seulement pour les boutons, pas la roulette) :
 | gesture-right-long | ≥ 40
 |========================================
 
-Exemple d'évènements :
+Liste des évènements incomplets (seulement pour les boutons, pratique pour les
+extensions/scripts) :
+
+[width="50%",cols="3m,4",options="header"]
+|========================================
+| Evènement  | Description
+| event-down | le bouton a été pressé mais pas encore relâché
+| event-drag | la souris a bougé avec le bouton pressé
+|========================================
+
+Exemples d'évènements :
 
 * `button1`
 * `ctrl-button1`
 * `button1-gesture-right`
+* `button1-event-down`
+* `button1-event-drag`
 * `alt-button2-gesture-down-long`
 * `wheelup`
 * `ctrl-alt-wheeldown`
@@ -919,7 +1164,7 @@ avec le bouton gauche.
 
 [TIP]
 Vous pouvez trouver le nom de l'évènement avec la commande `/input grab_mouse`
-puis en faisant l'action avec la souris. Cela insèrera le nom de l'évènement
+puis en faisant l'action avec la souris. Cela insérera le nom de l'évènement
 sur la ligne de commande.
 
 [[command_line]]
@@ -1186,7 +1431,6 @@ Commandes WeeChat
 
 include::autogen/user/weechat_commands.txt[]
 
-
 [[plugins]]
 Extensions
 ----------
@@ -1299,6 +1543,33 @@ Par exemple, pour activer l'option "ignore-case":
 ----------------------------------------
 /set aspell.option.ignore-case "true"
 ----------------------------------------
+
+[[aspell_suggestions]]
+Suggestions
+^^^^^^^^^^^
+
+Les suggestions sont affichées dans un objet de barre appelé "aspell_suggest".
+Le nombre de suggestions est défini dans l'option 'aspell.check.suggestions'.
+
+Pour activer les suggestions, vous devez modifier l'option
+'aspell.check.suggestions' avec un entier ≥ 0 et ajouter l'objet de barre
+"aspell_suggest" à une barre, par exemple 'status'.
+
+Exemple de suggestions avec un dictionnaire anglais (`en`) :
+
+........................................
+│[12:55] [6] [irc/freenode] 3:#test(+n){4} [print,prone,prune]                    │
+│[@Flashy] prinr █                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+........................................
+
+Exemple de suggestions avec des dictionnaires anglais et français (`en,fr`) :
+
+........................................
+│[12:55] [6] [irc/freenode] 3:#test(+n){4} [print,prone,prune/prime,primer,primé] │
+│[@Flashy] prinr █                                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+........................................
 
 [[charset_plugin]]
 Extension Charset
@@ -1754,27 +2025,34 @@ automatiquement remplacées par WeeChat lors de la réponse au CTCP :
 |========================================
 | Code         | Description                       | Valeur / exemple
 | $clientinfo  | liste des CTCP supportés          | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| $version     | version de WeeChat                | 0.3.0
-| $compilation | date de compilation WeeChat       | Sep 13 2009
-| $osinfo      | information sur l'OS              | Linux 2.6.31 / i686
-| $site        | site WeeChat                      | http://www.weechat.org
+| $version     | version de WeeChat                | 0.4.0-dev
+| $versiongit  | version de WeeChat + version git  | 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| $git         | version git                       | v0.3.9-104-g7eb5cc4
+| $compilation | date de compilation WeeChat       | Dec 16 2012
+| $osinfo      | information sur l'OS              | Linux 2.6.32-5-amd64 / x86_64
+| $site        | site WeeChat                      | http://www.weechat.org/
 | $download    | site WeeChat, page téléchargement | http://www.weechat.org/download
-| $time        | date/heure courante               | Sun, 13 Sep 2009 15:48:31 +0200
-| $username    | nom d'utilisateur sur le serveur  | pseudo
-| $realname    | nom réel sur le serveur           | Mon nom
+| $time        | date/heure courante               | Sun, 16 Dec 2012 10:40:48 +0100
+| $username    | nom d'utilisateur sur le serveur  | nom
+| $realname    | nom réel sur le serveur           | John Doe
 |========================================
+
+[NOTE]
+La version git est la sortie de la commande `git describe`. Elle est connue
+seulement si WeeChat a été compilé dans le repository git et si git était
+installé.
 
 Si les options CTCP ne sont pas définies (par défaut), les réponses CTCP sont :
 
 [width="100%",cols="^2,4l,8l",options="header"]
 |========================================
-| CTCP       | Format de réponse               | Exemple
-| CLIENTINFO | $clientinfo                     | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| FINGER     | WeeChat $version                | WeeChat 0.3.0
-| SOURCE     | $download                       | http://www.weechat.org/download
-| TIME       | $time                           | Sun Sep 13 15:48:31 2009
-| USERINFO   | $username ($realname)           | pseudo (Mon nom)
-| VERSION    | WeeChat $version ($compilation) | WeeChat 0.3.0 (Sep 13 2009)
+| CTCP       | Format de réponse                  | Exemple
+| CLIENTINFO | $clientinfo                        | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
+| FINGER     | WeeChat $versiongit                | WeeChat 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| SOURCE     | $download                          | http://www.weechat.org/download
+| TIME       | $time                              | Sun, 16 Dec 2012 10:40:48 +0100
+| USERINFO   | $username ($realname)              | nom (John Doe)
+| VERSION    | WeeChat $versiongit ($compilation) | WeeChat 0.4.0-dev (git: v0.3.9-104-g7eb5cc4) (Dec 16 2012)
 |========================================
 
 [[irc_target_buffer]]
@@ -1871,6 +2149,8 @@ Liste non exhaustive des messages ou alias que vous pouvez paramétrer :
 | 433     |               | pseudo déjà en cours d'utilisation
 | 438     |               | pas autorisé à changer de pseudo
 | 671     | whois         | whois (connexion sécurisée)
+| 728     | quietlist     | liste des "quiet"
+| 729     | quietlist     | fin de la liste des "quiet"
 | 901     |               | vous êtes maintenant identifié
 |========================================
 
@@ -2222,11 +2502,25 @@ Guile (scheme).
 Ces extensions peuvent charger, exécuter et décharger des scripts pour ces
 langages.
 
+Une autre extension appelée "script" est un gestionnaire de scripts et est
+utilisé pour charger/décharger des scripts pour n'importe quel langage, et
+installer/supprimer des scripts du repository WeeChat, qui sont visibles à cette
+URL: http://www.weechat.org/scripts
+
 Pour plus d'informations sur comment écrire des scripts, ou sur l'API
 WeeChat pour les scripts, merci de lire le 'Le Guide pour Scripts WeeChat'.
 
-Vous pouvez trouver des scripts pour WeeChat ici :
-http://www.weechat.org/scripts
+[[script_options]]
+Options Script (script.conf)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+include::autogen/user/script_options.txt[]
+
+[[script_commands]]
+Commandes Script
+^^^^^^^^^^^^^^^^
+
+include::autogen/user/script_commands.txt[]
 
 [[python_commands]]
 Commandes Python
@@ -2286,38 +2580,6 @@ Commandes
 
 include::autogen/user/xfer_commands.txt[]
 
-
-[[authors]]
-Auteurs
--------
-
-[[developers]]
-Développeurs
-~~~~~~~~~~~~
-
-Développeur principal::
-    Sébastien Helleu (FlashCode)
-
-[[contributors]]
-Contributeurs
-~~~~~~~~~~~~~
-
-Empaqueteurs::
-    Emmanuel Bouthenot (kolter), Julien Louis (ptitlouis), Odin
-
-Traductions::
-    Jiri Golembiovsky (GolemJ), soltys, Nils Görs (nils_2), rettub,
-    Frank Zacharias, Pavel Shevchuk, Elián Hanisch (m4v), Voroskoi,
-    Marco Paolone, Ivan Sichmann Freitas, Lázaro A., Ryuunosuke Ayanokouzi,
-    Quico Noizeux
-
-Patchs::
-    Dmitry Kobylin, Rudolf Polzer, Jim Ramsay, Pistos, Gwenn, Dominik Honnef,
-    JD Horelick, Stefano Pigozzi, Gu1ll4um3r0m41n, Kyle Fuller,
-    Quentin Glidic (SardemFF7), Simon Kuhnle, Mateusz Poszwa, Peter Boström,
-    Arvydas Sidorenko
-
-
 [[support]]
 Support
 -------
@@ -2330,7 +2592,6 @@ Moyens d'obtenir du support :
 
 * IRC : serveur 'irc.freenode.net', canaux '#weechat' (anglais) et
   '#weechat-fr' (français)
-* Forum WeeChat : http://forums.flashtux.org/
 * Liste de diffusion :
 ** inscription : http://mail.nongnu.org/mailman/listinfo/weechat-support
 ** envoi d'un mail à weechat-support@nongnu.org

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-dcc.c - file transfer via DCC protocol
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * xfer-dcc.c: file transfer via DCC protocol
  */
 
 #include <stdlib.h>
@@ -40,7 +38,7 @@
 
 
 /*
- * xfer_dcc_send_file_child: child process for sending file with DCC protocol
+ * Child process for sending file with DCC protocol.
  */
 
 void
@@ -73,7 +71,7 @@ xfer_dcc_send_file_child (struct t_xfer *xfer)
             {
                 num_read = recv (xfer->sock, (char *) &ack, 4, MSG_PEEK);
                 if ((num_read < 1) &&
-                    ((num_read != -1) || (errno != EAGAIN)))
+                    ((num_read != -1) || ((errno != EAGAIN) && (errno != EWOULDBLOCK))))
                 {
                     xfer_network_write_pipe (xfer, XFER_STATUS_FAILED,
                                              XFER_ERROR_SEND_BLOCK);
@@ -125,7 +123,7 @@ xfer_dcc_send_file_child (struct t_xfer *xfer)
                      * socket is temporarily not available (receiver can't
                      * receive amount of data we sent ?!)
                      */
-                    if (errno == EAGAIN)
+                    if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
                         usleep (1000);
                     else
                     {
@@ -175,7 +173,7 @@ xfer_dcc_send_file_child (struct t_xfer *xfer)
 }
 
 /*
- * xfer_dcc_recv_file_child: child process for receiving file
+ * Child process for receiving file with DCC protocol.
  */
 
 void
@@ -185,10 +183,11 @@ xfer_dcc_recv_file_child (struct t_xfer *xfer)
     static char buffer[XFER_BLOCKSIZE_MAX];
     uint32_t pos;
     time_t last_sent, new_time;
+    unsigned long long bytes_remaining;
 
     /* first connect to sender (blocking) */
     if (!weechat_network_connect_to (xfer->proxy, xfer->sock,
-                                     xfer->address, xfer->port))
+                                     xfer->remote_address, xfer->port))
     {
         xfer_network_write_pipe (xfer, XFER_STATUS_FAILED,
                                  XFER_ERROR_CONNECT_SENDER);
@@ -202,11 +201,14 @@ xfer_dcc_recv_file_child (struct t_xfer *xfer)
     last_sent = time (NULL);
     while (1)
     {
-        num_read = recv (xfer->sock, buffer, sizeof (buffer), 0);
+        bytes_remaining = xfer->size - xfer->pos;
+        num_read = recv (xfer->sock, buffer,
+                         (bytes_remaining >= sizeof (buffer)) ? sizeof (buffer) : bytes_remaining,
+                         0);
         if (num_read == -1)
         {
             /* socket is temporarily not available (sender is not fast ?!) */
-            if ((errno == EAGAIN) || (errno == EINTR))
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR))
                 usleep (1000);
             else
             {

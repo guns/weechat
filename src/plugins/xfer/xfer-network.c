@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-network.c - network functions for xfer plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * xfer-network.c: network functions for xfer plugin
  */
 
 #include <stdlib.h>
@@ -43,8 +41,11 @@
 
 
 /*
- * xfer_network_create_pipe: create pipe for communication with child process
- *                           return 1 if ok, 0 if error
+ * Creates pipe for communication with child process.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -69,7 +70,7 @@ xfer_network_create_pipe (struct t_xfer *xfer)
 }
 
 /*
- * xfer_network_write_pipe: write data into pipe
+ * Writes data into pipe.
  */
 
 void
@@ -85,7 +86,7 @@ xfer_network_write_pipe (struct t_xfer *xfer, int status, int error)
 }
 
 /*
- * xfer_network_child_read_cb: read data from child via pipe
+ * Reads data from child via pipe.
  */
 
 int
@@ -174,7 +175,7 @@ xfer_network_child_read_cb (void *arg_xfer, int fd)
 }
 
 /*
- * xfer_network_send_file_fork: fork process for sending file
+ * Forks process for sending file.
  */
 
 void
@@ -215,6 +216,22 @@ xfer_network_send_file_fork (struct t_xfer *xfer)
             _exit (EXIT_SUCCESS);
     }
 
+    weechat_printf (NULL,
+                    _("%s: sending file to %s (%ld.%ld.%ld.%ld, %s.%s), "
+                      "name: %s (local filename: %s), %llu bytes (protocol: %s)"),
+                    XFER_PLUGIN_NAME,
+                    xfer->remote_nick,
+                    xfer->remote_address >> 24,
+                    (xfer->remote_address >> 16) & 0xff,
+                    (xfer->remote_address >> 8) & 0xff,
+                    xfer->remote_address & 0xff,
+                    xfer->plugin_name,
+                    xfer->plugin_id,
+                    xfer->filename,
+                    xfer->local_filename,
+                    xfer->size,
+                    xfer_protocol_string[xfer->protocol]);
+
     /* parent process */
     xfer->child_pid = pid;
     close (xfer->child_write);
@@ -226,7 +243,7 @@ xfer_network_send_file_fork (struct t_xfer *xfer)
 }
 
 /*
- * xfer_network_recv_file_fork: fork process for receiving file
+ * Forks process for receiving file.
  */
 
 void
@@ -284,7 +301,7 @@ xfer_network_recv_file_fork (struct t_xfer *xfer)
 }
 
 /*
- * xfer_network_child_kill: kill child process and close pipe
+ * Kills child process and closes pipe.
  */
 
 void
@@ -312,7 +329,7 @@ xfer_network_child_kill (struct t_xfer *xfer)
 }
 
 /*
- * xfer_network_fd_cb: callback called when data is available on xfer socket
+ * Callback called when data is available on xfer socket.
  */
 
 int
@@ -364,7 +381,7 @@ xfer_network_fd_cb (void *arg_xfer, int fd)
                 xfer_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
                 return WEECHAT_RC_OK;
             }
-            xfer->address = ntohl (addr.sin_addr.s_addr);
+            xfer->remote_address = ntohl (addr.sin_addr.s_addr);
             xfer->status = XFER_STATUS_ACTIVE;
             xfer->start_transfer = time (NULL);
             xfer_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
@@ -406,7 +423,7 @@ xfer_network_fd_cb (void *arg_xfer, int fd)
                 xfer_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
                 return WEECHAT_RC_OK;
             }
-            xfer->address = ntohl (addr.sin_addr.s_addr);
+            xfer->remote_address = ntohl (addr.sin_addr.s_addr);
             xfer->status = XFER_STATUS_ACTIVE;
             xfer_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
             xfer->hook_fd = weechat_hook_fd (xfer->sock,
@@ -421,8 +438,8 @@ xfer_network_fd_cb (void *arg_xfer, int fd)
 }
 
 /*
- * xfer_network_timer_cb: callback called to check if there's a timeout for xfer
- *                        (called only one time for xfer)
+ * Callback called to check if there's a timeout for xfer (called only one time
+ * for xfer).
  */
 
 int
@@ -450,7 +467,11 @@ xfer_network_timer_cb (void *arg_xfer, int remaining_calls)
 }
 
 /*
- * xfer_network_connect: connect to another host
+ * Connects to another host.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -506,8 +527,8 @@ xfer_network_connect (struct t_xfer *xfer)
             flags = 0;
         if (fcntl (xfer->sock, F_SETFL, flags | O_NONBLOCK) == -1)
             return 0;
-        weechat_network_connect_to (xfer->proxy, xfer->sock, xfer->address,
-                                    xfer->port);
+        weechat_network_connect_to (xfer->proxy, xfer->sock,
+                                    xfer->remote_address, xfer->port);
 
         xfer->hook_fd = weechat_hook_fd (xfer->sock,
                                          1, 0, 0,
@@ -521,7 +542,7 @@ xfer_network_connect (struct t_xfer *xfer)
 }
 
 /*
- * xfer_network_connect_init: connect to sender and init file or chat
+ * Connects to sender and initializes file or chat.
  */
 
 void
@@ -551,7 +572,7 @@ xfer_network_connect_init (struct t_xfer *xfer)
 }
 
 /*
- * xfer_network_accept: accept a xfer file or chat request
+ * Accepts a xfer file or chat request.
  */
 
 void

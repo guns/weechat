@@ -11,7 +11,7 @@ message: message for away (if no message is given, away status is removed)
 [command]*`bar`* manage bars::
 ........................................
 /bar  list|listfull|listitems
-      add <name> <type>[,<cond1>[,<cond2>...]] <position> <size> <separator> <item1>[,<item2>...]
+      add <name> <type>[,<condition>] <position> <size> <separator> <item1>[,<item2>...]
       default [input|title|status|nicklist]
       del <name>|-all
       set <name> <option> <value>
@@ -25,11 +25,12 @@ message: message for away (if no message is given, away status is removed)
          name: name of bar (must be unique)
          type:   root: outside windows,
                window: inside windows, with optional conditions (see below)
-    cond1,...: condition(s) for displaying bar (only for type "window"):
+    condition: condition(s) for displaying bar (only for type "window"):
                  active: on active window
                inactive: on inactive windows
                nicklist: on windows with nicklist
-               without condition, bar is always displayed
+               other condition: see /help weechat.bar.xxx.conditions and /help eval
+               without condition, the bar is always displayed
      position: bottom, top, left or right
          size: size of bar (in chars)
     separator: 1 for using separator (line), 0 or nothing means no separator
@@ -199,6 +200,61 @@ infolists: display infos about infolists
   windows: display windows tree
 ........................................
 
+[[command_weechat_eval]]
+[command]*`eval`* evaluate expression and send result to buffer::
+........................................
+/eval  [-n] <expression>
+       [-n] <expression1> <operator> <expression2>
+
+        -n: display result without sending it to buffer (debug mode)
+expression: expression to evaluate, variables with format ${variable} are replaced (see below)
+  operator: a logical or comparison operator:
+            - logical operators:
+                &&  boolean "and"
+                ||  boolean "or"
+            - comparison operators:
+                ==  equal
+                !=  not equal
+                <=  less or equal
+                <   less
+                >=  greater or equal
+                >   greater
+                =~  is matching regex
+                !~  is NOT matching regex
+
+An expression is considered as "true" if it is not NULL, not empty, and different from "0".
+The comparison is made using integers if the two expressions are valid integers.
+To force a string comparison, add double quotes around each expression, for example:
+  50 > 100      ==> 0
+  "50" > "100"  ==> 1
+
+Some variables are replaced in expression, using the format ${variable}, variable can be, by order of prioity :
+  1. the name of an option (file.section.option)
+  2. the name of a local variable in buffer
+  3. a hdata name/variable (the value is automatically converted to string), by default "window" and "buffer" point to current window/buffer.
+Format for hdata can be one of following:
+  hdata.var1.var2...: start with a hdata (pointer must be known), and ask variables one after one (other hdata can be followed)
+  hdata(list).var1.var2...: start with a hdata using a list, for example:
+    ${buffer[gui_buffers].full_name}: full name of first buffer in linked list of buffers
+    ${plugin[weechat_plugins].name}: name of first plugin in linked list of plugins
+For name of hdata and variables, please look at "Plugin API reference", function "weechat_hdata_get".
+
+Examples:
+  /eval -n ${weechat.look.scroll_amount}  ==> 3
+  /eval -n ${window}                      ==> 0x2549aa0
+  /eval -n ${window.buffer}               ==> 0x2549320
+  /eval -n ${window.buffer.full_name}     ==> core.weechat
+  /eval -n ${window.buffer.number}        ==> 1
+  /eval -n ${window.buffer.number} > 2    ==> 0
+  /eval -n ${window.win_width} > 100      ==> 1
+  /eval -n (8 > 12) || (5 > 2)            ==> 1
+  /eval -n (8 > 12) && (5 > 2)            ==> 0
+  /eval -n abcd =~ ^ABC                   ==> 1
+  /eval -n abcd =~ (?-i)^ABC              ==> 0
+  /eval -n abcd =~ (?-i)^abc              ==> 1
+  /eval -n abcd !~ abc                    ==> 0
+........................................
+
 [[command_weechat_filter]]
 [command]*`filter`* filter messages in buffers, to hide/show them according to tags or regex::
 ........................................
@@ -325,6 +381,7 @@ list of actions:
   set_unread_current_buffer: set unread marker for current buffer
   switch_active_buffer: switch to next merged buffer
   switch_active_buffer_previous: switch to previous merged buffer
+  zoom_merged_buffer: zoom on merged buffer
   insert: insert text in command line
   paste_start: start paste (bracketed paste mode)
   paste_stop: stop paste (bracketed paste mode)
@@ -490,7 +547,7 @@ Examples:
   create a http proxy, running on local host, port 8888:
     /proxy add local http 127.0.0.1 8888
   create a http proxy using IPv6 protocol:
-    /proxy add local http 127.0.0.1 8888
+    /proxy add local http ::1 8888
     /proxy set local ipv6 on
   create a socks5 proxy with username/password:
     /proxy add myproxy socks5 sample.host.org 3128 myuser mypass
@@ -548,15 +605,17 @@ Without argument, all files (WeeChat and plugins) are saved.
 [command]*`set`* set config options::
 ........................................
 /set  [<option> [<value>]]
+      diff [<option> [<option>...]]
 
 option: name of an option (can start or end with '*' to list many options)
  value: new value for option
+  diff: display only changed options
 
 New value can be, according to variable type:
   boolean: on, off or toggle
   integer: number, ++number or --number
-  string : any string ("" for empty string)
-  color  : color name, ++number or --number
+   string: any string ("" for empty string)
+    color: color name, ++number or --number
 
 For all types, you can use null to remove option value (undefined value). This works only for some special plugin variables.
 
@@ -565,6 +624,10 @@ Examples:
     /set *highlight*
   add a word to highlight:
     /set weechat.look.highlight "word"
+  display changed options:
+    /set diff
+  display changed options in irc plugin:
+    /set diff irc.*
 ........................................
 
 [[command_weechat_unset]]
@@ -586,9 +649,10 @@ Examples:
 [[command_weechat_upgrade]]
 [command]*`upgrade`* upgrade WeeChat without disconnecting from servers::
 ........................................
-/upgrade  [<path_to_binary>]
+/upgrade  [<path_to_binary>|-quit]
 
 path_to_binary: path to WeeChat binary (default is current binary)
+         -quit: close *ALL* connections, save session and quit WeeChat, which makes possible a delayed restoration (see below)
 
 This command upgrades and reloads a running WeeChat session. The new WeeChat binary must have been compiled or installed with a package manager before running this command.
 
@@ -599,6 +663,16 @@ Upgrade process has 4 steps:
   2. unload all plugins (configuration files (*.conf) are written on disk)
   3. save WeeChat configuration (weechat.conf)
   4. execute new WeeChat binary and reload session.
+
+With option "-quit", the process is slightly different:
+  1. close *ALL* connections (irc, xfer, relay, ...)
+  2. save session into files (*.upgrade)
+  3. unload all plugins
+  4. save WeeChat configuration
+  5. quit WeeChat
+Then later you can restore session with command: weechat-curses --upgrade
+IMPORTANT: you must restore the session with exactly same configuration (files *.conf).
+It is possible to restore WeeChat session on another machine if you copy the content of directory "~/.weechat"
 ........................................
 
 [[command_weechat_uptime]]

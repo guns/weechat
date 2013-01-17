@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-gtk-term.c - terminal functions for Gtk GUI
+ *
+ * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,16 +19,12 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * gui-gtk-term.c: terminal functions for Gtk GUI
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 /*
- * gui_term_set_eat_newline_glitch: not used in Gtk GUI
+ * Not used in Gtk GUI.
  */
 
 void

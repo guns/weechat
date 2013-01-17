@@ -101,10 +101,10 @@ Paramètres :
 * 'license' : chaîne, licence du script
 * 'description' : chaîne, description courte du script
 * 'shutdown_function' : chaîne, nom de la fonction appelée lorsque le script
-  est déchargé (optionnel)
-* 'charset' : chaîne, jeu de caractères du script (optionnel, si votre script
-  est UTF-8, vous pouvez utiliser une valeur vide ici, car UTF-8 est le jeu de
-  caractères par défaut)
+  est déchargé (peut être une chaîne vide)
+* 'charset' : chaîne, jeu de caractères du script (si votre script est UTF-8,
+  vous pouvez utiliser une valeur vide ici, car UTF-8 est le jeu de caractères
+  par défaut)
 
 Exemple, pour chaque langage :
 
@@ -394,7 +394,8 @@ Liste des constantes de l'API script :
   WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND, WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED,
   WEECHAT_HOOK_CONNECT_PROXY_ERROR, WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR,
   WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR, WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR,
-  WEECHAT_HOOK_CONNECT_MEMORY_ERROR, WEECHAT_HOOK_CONNECT_TIMEOUT
+  WEECHAT_HOOK_CONNECT_MEMORY_ERROR, WEECHAT_HOOK_CONNECT_TIMEOUT,
+  WEECHAT_HOOK_CONNECT_SOCKET_ERROR
 | hook signal               |
   WEECHAT_HOOK_SIGNAL_STRING, WEECHAT_HOOK_SIGNAL_INT, WEECHAT_HOOK_SIGNAL_POINTER
 |========================================
@@ -703,7 +704,7 @@ script_options = {
     "option2" : "valeur2",
     "option3" : "valeur3",
 }
-for option, default_value in script_options.iteritems():
+for option, default_value in script_options.items():
     if not weechat.config_is_set_plugin(option):
         weechat.config_set_plugin(option, default_value)
 ----------------------------------------
@@ -732,7 +733,7 @@ def config_cb(data, option, value):
 # ...
 
 weechat.hook_config("plugins.var.python." + SCRIPT_NAME + ".*", "config_cb", "")
-# pour les autres languages, remplacez "python" par le language ("perl", "ruby", "lua" ou "tcl")
+# pour les autres langages, remplacez "python" par le langage ("perl", "ruby", "lua" ou "tcl")
 ----------------------------------------
 
 [[config_options_weechat]]

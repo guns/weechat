@@ -14,7 +14,9 @@
  * ##                                                                      ##
  * ##########################################################################
  *
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * weechat.c - WeeChat main functions
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,10 +32,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat.c: core functions for WeeChat
  */
 
 #ifdef HAVE_CONFIG_H
@@ -67,6 +65,7 @@
 #include "wee-upgrade.h"
 #include "wee-utf8.h"
 #include "wee-util.h"
+#include "wee-version.h"
 #include "../gui/gui-chat.h"
 #include "../gui/gui-color.h"
 #include "../gui/gui-completion.h"
@@ -90,41 +89,43 @@ char *weechat_local_charset = NULL;    /* example: ISO-8859-1, UTF-8        */
 int weechat_server_cmd_line = 0;       /* at least 1 server on cmd line     */
 int weechat_auto_load_plugins = 1;     /* auto load plugins                 */
 int weechat_plugin_no_dlclose = 0;     /* remove calls to dlclose for libs  */
-                                       /* (useful when using valgrind)      */
+                                       /* (useful with valgrind)            */
+int weechat_no_gnutls = 0;             /* remove init/deinit of gnutls      */
+                                       /* (useful with valgrind/electric-f.)*/
+int weechat_no_gcrypt = 0;             /* remove init/deinit of gcrypt      */
+                                       /* (useful with valgrind)            */
 char *weechat_startup_commands = NULL; /* startup commands (-r flag)        */
 
 
 /*
- * weechat_init_vars: initialize some variables
- */
-
-void
-weechat_init_vars ()
-{
-    weechat_first_start_time = time (NULL);
-    gettimeofday (&weechat_current_start_timeval, NULL);
-}
-
-/*
- * weechat_display_copyright: display WeeChat copyright
+ * Displays WeeChat copyright on standard output.
  */
 
 void
 weechat_display_copyright ()
 {
+    const char *git_version;
+
+    git_version = version_get_git ();
     string_iconv_fprintf (stdout, "\n");
     string_iconv_fprintf (stdout,
                           /* TRANSLATORS: "%s %s" after "compiled on" is date and time */
-                          _("WeeChat %s Copyright %s, compiled on %s %s\n"
+                          _("WeeChat %s%s%s%s Copyright %s, compiled on %s %s\n"
                             "Developed by Sebastien Helleu <flashcode@flashtux.org> "
                             "- %s"),
-                          PACKAGE_VERSION, WEECHAT_COPYRIGHT_DATE,
-                          __DATE__, __TIME__, WEECHAT_WEBSITE);
+                          version_get_version (),
+                          (git_version && git_version[0]) ? " (git: " : "",
+                          (git_version && git_version[0]) ? git_version : "",
+                          (git_version && git_version[0]) ? ")" : "",
+                          WEECHAT_COPYRIGHT_DATE,
+                          version_get_compilation_date (),
+                          version_get_compilation_time (),
+                          WEECHAT_WEBSITE);
     string_iconv_fprintf (stdout, "\n");
 }
 
 /*
- * weechat_display_usage: display WeeChat usage
+ * Displays WeeChat usage on standard output.
  */
 
 void
@@ -159,7 +160,7 @@ weechat_display_usage (char *exec_name)
 }
 
 /*
- * weechat_display_keys: display WeeChat default keys
+ * Displays WeeChat default keys on standard output.
  */
 
 void
@@ -177,7 +178,7 @@ weechat_display_keys ()
                               _("%s default keys (context: \"%s\"):\n"),
                               (gui_key_context_string[i] && gui_key_context_string[i][0]) ?
                               _(gui_key_context_string[i]) : "",
-                              PACKAGE_NAME);
+                              version_get_name ());
         string_iconv_fprintf (stdout, "\n");
         for (ptr_key = gui_keys[i]; ptr_key; ptr_key = ptr_key->next_key)
         {
@@ -193,7 +194,9 @@ weechat_display_keys ()
 }
 
 /*
- * weechat_parse_args: parse command line args
+ * Parses command line arguments.
+ *
+ * Arguments argc and argv come from main() function.
  */
 
 void
@@ -253,12 +256,32 @@ weechat_parse_args (int argc, char *argv[])
         else if (strcmp (argv[i], "--no-dlclose") == 0)
         {
             /*
-             * tools like valgrind work better when dlclose() is not done
-             * after plugins are unloaded, they can display stack for plugins,
-             * otherwise you'll see "???" in stack for functions of unloaded
-             * plugins -- this option should not be used for other purposes!
+             * Valgrind works better when dlclose() is not done after plugins
+             * are unloaded, it can display stack for plugins,* otherwise
+             * you'll see "???" in stack for functions of unloaded plugins.
+             * This option disables the call to dlclose(),
+             * it must NOT be used for other purposes!
              */
             weechat_plugin_no_dlclose = 1;
+        }
+        else if (strcmp (argv[i], "--no-gnutls") == 0)
+        {
+            /*
+             * Electric-fence is not working fine when gnutls loads
+             * certificates and valgrind reports many memory errors with gnutls.
+             * This option disables the init/deinit of gnutls,
+             * it must NOT be used for other purposes!
+             */
+            weechat_no_gnutls = 1;
+        }
+        else if (strcmp (argv[i], "--no-gcrypt") == 0)
+        {
+            /*
+             * Valgrind reports many memory errors with gcrypt.
+             * This option disables the init/deinit of gcrypt,
+             * it must NOT be used for other purposes!
+             */
+            weechat_no_gcrypt = 1;
         }
         else if ((strcmp (argv[i], "-p") == 0)
                  || (strcmp (argv[i], "--no-plugin") == 0))
@@ -286,18 +309,22 @@ weechat_parse_args (int argc, char *argv[])
         else if ((strcmp (argv[i], "-v") == 0)
                  || (strcmp (argv[i], "--version") == 0))
         {
-            string_iconv_fprintf (stdout, PACKAGE_VERSION "\n");
+            string_iconv_fprintf (stdout, version_get_version ());
+            fprintf (stdout, "\n");
             weechat_shutdown (EXIT_SUCCESS, 0);
         }
     }
 }
 
 /*
- * weechat_create_home_dirs: create WeeChat directories
+ * Creates WeeChat home directory (by default ~/.weechat).
+ *
+ * Any error in this function is fatal: WeeChat can not run without a home
+ * directory.
  */
 
 void
-weechat_create_home_dirs ()
+weechat_create_home_dir ()
 {
     char *ptr_home, *config_weechat_home = WEECHAT_HOME;
     int dir_length;
@@ -374,7 +401,7 @@ weechat_create_home_dirs ()
 }
 
 /*
- * weechat_welcome_message: display WeeChat welcome message - yeah!
+ * Displays WeeChat welcome message.
  */
 
 void
@@ -396,7 +423,7 @@ weechat_welcome_message ()
     }
     if (CONFIG_BOOLEAN(config_startup_display_version))
     {
-        command_version_display (NULL, 0, 0);
+        command_version_display (NULL, 0, 0, 0);
     }
     if (CONFIG_BOOLEAN(config_startup_display_logo) ||
         CONFIG_BOOLEAN(config_startup_display_version))
@@ -407,7 +434,7 @@ weechat_welcome_message ()
 }
 
 /*
- * weechat_shutdown: shutdown WeeChat
+ * Shutdowns WeeChat.
  */
 
 void
@@ -430,13 +457,14 @@ weechat_shutdown (int return_code, int crash)
 }
 
 /*
- * main: WeeChat startup
+ * Entry point for WeeChat.
  */
 
 int
 main (int argc, char *argv[])
 {
-    weechat_init_vars ();               /* initialize some variables        */
+    weechat_first_start_time = time (NULL); /* initialize start time        */
+    gettimeofday (&weechat_current_start_timeval, NULL);
 
     setlocale (LC_ALL, "");             /* initialize gettext               */
 #ifdef ENABLE_NLS
@@ -467,7 +495,7 @@ main (int argc, char *argv[])
     if (!config_weechat_init ())        /* init options with default values */
         exit (EXIT_FAILURE);
     weechat_parse_args (argc, argv);    /* parse command line args          */
-    weechat_create_home_dirs ();        /* create WeeChat directories       */
+    weechat_create_home_dir ();         /* create WeeChat home directory    */
     log_init ();                        /* init log file                    */
     if (config_weechat_read () < 0)     /* read WeeChat configuration       */
         exit (EXIT_FAILURE);
@@ -497,6 +525,7 @@ main (int argc, char *argv[])
         (void) config_weechat_write (NULL); /* save WeeChat config file     */
     gui_main_end (1);                   /* shut down WeeChat GUI            */
     proxy_free_all ();                  /* free all proxies                 */
+    config_weechat_free ();             /* free weechat.conf and vars       */
     config_file_free_all ();            /* free all configuration files     */
     gui_key_end ();                     /* remove all keys                  */
     unhook_all ();                      /* remove all hooks                 */

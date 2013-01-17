@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-curses-main.c - main loop for Curses GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-curses-main.c: main loop for Curses GUI
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,6 +38,7 @@
 #include "../../core/wee-string.h"
 #include "../../core/wee-utf8.h"
 #include "../../core/wee-util.h"
+#include "../../core/wee-version.h"
 #include "../../plugins/plugin.h"
 #include "../gui-main.h"
 #include "../gui-bar.h"
@@ -63,8 +62,9 @@ int gui_reload_config = 0;
 int gui_term_cols = 0;
 int gui_term_lines = 0;
 
+
 /*
- * gui_main_pre_init: pre-initialize GUI (called before gui_init)
+ * Pre-initializes GUI (called before gui_init).
  */
 
 void
@@ -82,7 +82,7 @@ gui_main_pre_init (int *argc, char **argv[])
 }
 
 /*
- * gui_main_init: init GUI
+ * Initializes GUI.
  */
 
 void
@@ -91,6 +91,7 @@ gui_main_init ()
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_bar *ptr_bar;
     struct t_gui_bar_window *ptr_bar_win;
+    char title[256];
 
     initscr ();
 
@@ -104,7 +105,7 @@ gui_main_init ()
 
     gui_color_init ();
 
-    /* build prefixes according to config */
+    /* build prefixes according to configuration */
     gui_chat_prefix_build ();
 
     refresh ();
@@ -139,9 +140,11 @@ gui_main_init ()
             ptr_buffer->short_name = strdup (GUI_BUFFER_MAIN);
 
         /* set title for core buffer */
-        gui_buffer_set_title (ptr_buffer,
-                              "WeeChat " PACKAGE_VERSION " "
-                              WEECHAT_COPYRIGHT_DATE " - " WEECHAT_WEBSITE);
+        snprintf (title, sizeof (title), "WeeChat %s %s - %s",
+                  version_get_version (),
+                  WEECHAT_COPYRIGHT_DATE,
+                  WEECHAT_WEBSITE);
+        gui_buffer_set_title (ptr_buffer, title);
 
         /* create main window (using full space) */
         if (gui_window_new (NULL, ptr_buffer, 0, 0,
@@ -150,7 +153,7 @@ gui_main_init ()
             gui_current_window = gui_windows;
 
             if (CONFIG_BOOLEAN(config_look_set_title))
-                gui_window_set_title (PACKAGE_NAME " " PACKAGE_VERSION);
+                gui_window_set_title (version_get_name_version ());
         }
 
         /*
@@ -182,7 +185,7 @@ gui_main_init ()
 }
 
 /*
- * gui_main_signal_sigquit: quit WeeChat
+ * Callback for system signal SIGQUIT: quits WeeChat.
  */
 
 void
@@ -195,7 +198,7 @@ gui_main_signal_sigquit ()
 }
 
 /*
- * gui_main_signal_sigterm: quit WeeChat
+ * Callback for system signal SIGTERM: quits WeeChat.
  */
 
 void
@@ -208,7 +211,7 @@ gui_main_signal_sigterm ()
 }
 
 /*
- * gui_main_signal_sighup: reload WeeChat configuration
+ * Callback for system signal SIGHUP: reloads WeeChat configuration.
  */
 
 void
@@ -217,14 +220,14 @@ gui_main_signal_sighup ()
     /*
      * SIGHUP signal is received when terminal is closed (exit of WeeChat
      * without using /quit command), that's why we set only flag to reload
-     * config files later (when terminal is closed, config files are NOT
+     * configuration files later (when terminal is closed, config files are NOT
      * reloaded, but they are if signal SIGHUP is sent to WeeChat by user)
      */
     gui_reload_config = 1;
 }
 
 /*
- * gui_main_signal_sigwinch: called when signal SIGWINCH is received
+ * Callback for system signal SIGWINCH: refreshes screen.
  */
 
 void
@@ -234,7 +237,7 @@ gui_main_signal_sigwinch ()
 }
 
 /*
- * gui_main_refreshs: refreshs for windows, buffers, bars
+ * Refreshs for windows, buffers, bars.
  */
 
 void
@@ -265,6 +268,13 @@ gui_main_refreshs ()
         {
             gui_bar_draw (ptr_bar);
         }
+    }
+
+    /* refresh window if needed (if asked during refresh of bars) */
+    if (gui_window_refresh_needed)
+    {
+        gui_window_refresh_screen ((gui_window_refresh_needed > 1) ? 1 : 0);
+        gui_window_refresh_needed = 0;
     }
 
     /* refresh windows if needed */
@@ -304,7 +314,7 @@ gui_main_refreshs ()
 }
 
 /*
- * gui_main_loop: main loop for WeeChat with ncurses GUI
+ * Main loop for WeeChat with ncurses GUI.
  */
 
 void
@@ -382,9 +392,10 @@ gui_main_loop ()
 }
 
 /*
- * gui_main_end: GUI end
- *               clean_exit is 0 when WeeChat is crashing (we don't clean
- *               objects because WeeChat can crash again during this cleanup...)
+ * Ends GUI.
+ *
+ * Argument "clean_exit" is 0 when WeeChat is crashing (we don't clean objects
+ * because WeeChat can crash again during this cleanup...).
  */
 
 void

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-log.c - WeeChat log file (weechat.log)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-log.c: WeeChat log file
  */
 
 #ifdef HAVE_CONFIG_H
@@ -43,6 +41,7 @@
 #include "wee-log.h"
 #include "wee-debug.h"
 #include "wee-string.h"
+#include "wee-version.h"
 #include "../plugins/plugin.h"
 
 
@@ -53,7 +52,11 @@ int weechat_log_use_time = 1;      /* 0 to temporary disable time in log,   */
 
 
 /*
- * log_open: initialize log file
+ * Opens the WeeChat log file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -101,7 +104,7 @@ log_open (const char *filename, const char *mode)
 }
 
 /*
- * log_init: initialize log file
+ * Initializes the WeeChat log file.
  */
 
 void
@@ -116,11 +119,14 @@ log_init ()
         exit (1);
     }
     log_printf ("%s (%s %s %s)",
-                PACKAGE_STRING, _("compiled on"), __DATE__, __TIME__);
+                version_get_name_version (),
+                _("compiled on"),
+                version_get_compilation_date (),
+                version_get_compilation_time ());
 }
 
 /*
- * log_printf: write a message in WeeChat log (<weechat_home>/weechat.log)
+ * Writes a message in WeeChat log file.
  */
 
 void
@@ -173,7 +179,7 @@ log_printf (const char *message, ...)
 }
 
 /*
- * log_printf_hexa: dump a string as hexa data in log file
+ * Dumps a string as hexa data in WeeChat log file.
  */
 
 void
@@ -207,7 +213,7 @@ log_printf_hexa (const char *spaces, const char *string)
 }
 
 /*
- * log_close: close log file
+ * Closes the WeeChat log file.
  */
 
 void
@@ -232,7 +238,10 @@ log_close ()
 }
 
 /*
- * log_crash_rename: rename log file when crashing
+ * Renames the WeeChat log file (when crashing).
+ *
+ * The file "weechat.log" is renamed to "weechat_crash_YYYYMMDD_NNNN.log",
+ * where YYYYMMDD is the current date and NNNN the PID of WeeChat process.
  */
 
 int

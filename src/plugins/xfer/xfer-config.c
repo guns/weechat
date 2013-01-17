@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-config.c - xfer configuration options (file xfer.conf)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * xfer-config.c: xfer configuration options (file xfer.conf)
  */
 
 #include <stdlib.h>
@@ -67,8 +65,7 @@ struct t_config_option *xfer_config_file_auto_accept_chats;
 
 
 /*
- * xfer_config_refresh_cb: callback called when user changes xfer option that
- *                         needs a refresh of xfer list
+ * Callback for changes on an option that requires a refresh of xfer list.
  */
 
 void
@@ -83,7 +80,7 @@ xfer_config_refresh_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * xfer_config_reload: reload xfer configuration file
+ * Reloads xfer configuration file.
  */
 
 int
@@ -96,8 +93,11 @@ xfer_config_reload (void *data, struct t_config_file *config_file)
 }
 
 /*
- * xfer_config_init: init xfer configuration file
- *                   return: 1 if ok, 0 if error
+ * Initializes xfer configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -309,7 +309,7 @@ xfer_config_init ()
 }
 
 /*
- * xfer_config_read: read xfer configuration file
+ * Reads xfer configuration file.
  */
 
 int
@@ -319,7 +319,7 @@ xfer_config_read ()
 }
 
 /*
- * xfer_config_write: write xfer configuration file
+ * Writes xfer configuration file.
  */
 
 int

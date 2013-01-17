@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-info.c - info and infolist hooks for xfer plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * xfer-info.c: info and infolist hooks for xfer plugin
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -29,7 +27,7 @@
 
 
 /*
- * xfer_info_get_infolist_cb: callback called when xfer infolist is asked
+ * Returns infolist with xfer info.
  */
 
 struct t_infolist *
@@ -85,13 +83,12 @@ xfer_info_get_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * xfer_info_init: initialize info and infolist hooks for xfer plugin
+ * Hooks infolist.
  */
 
 void
 xfer_info_init ()
 {
-    /* xfer infolist hooks */
     weechat_hook_infolist ("xfer", N_("list of xfer"),
                            N_("xfer pointer (optional)"),
                            NULL,

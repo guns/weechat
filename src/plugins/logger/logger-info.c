@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * logger-info.c - info and infolist hooks for logger plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * logger-info.c: info and infolist hooks for logger plugin
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -30,7 +28,7 @@
 
 
 /*
- * logger_info_get_infolist_cb: callback called when logger infolist is asked
+ * Returns infolist with logger info.
  */
 
 struct t_infolist *
@@ -87,13 +85,12 @@ logger_info_get_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * logger_info_init: initialize info and infolist hooks for logger plugin
+ * Hooks infolist for logger plugin.
  */
 
 void
 logger_info_init ()
 {
-    /* logger infolist hooks */
     weechat_hook_infolist ("logger_buffer", N_("list of logger buffers"),
                            N_("logger pointer (optional)"),
                            NULL,

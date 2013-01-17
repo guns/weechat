@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * fifo-info.c - info and infolist hooks for fifo plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * fifo-info.c: info and infolist hooks for fifo plugin
- */
-
 #include <stdlib.h>
 
 #include "../weechat-plugin.h"
@@ -28,7 +26,7 @@
 
 
 /*
- * fifo_info_get_info_cb: callback called when fifo info is asked
+ * Returns info about FIFO pipe.
  */
 
 const char *
@@ -48,13 +46,12 @@ fifo_info_get_info_cb (void *data, const char *info_name,
 }
 
 /*
- * fifo_info_init: initialize info and infolist hooks for fifo plugin
+ * Hooks info for fifo plugin.
  */
 
 void
 fifo_info_init ()
 {
-    /* fifo info hooks */
     weechat_hook_info ("fifo_filename", N_("name of FIFO pipe"), NULL,
                        &fifo_info_get_info_cb, NULL);
 }

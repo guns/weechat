@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * script-callback.c - script callbacks management
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * script-callback.c: script callbacks management
- */
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -31,7 +29,7 @@
 
 
 /*
- * plugin_script_callback_alloc: allocate a new callback and initializes it
+ * Allocates a new callback and initializes it.
  */
 
 struct t_plugin_script_cb *
@@ -59,9 +57,9 @@ plugin_script_callback_alloc ()
 }
 
 /*
- * plugin_script_callback_add: allocate a new callback, initialize it
- *                             (script/function/data) and add it to list
- *                             return pointer to new callback or NULL if error
+ * Adds a callback to list of callbacks.
+ *
+ * Returns pointer to new callback, NULL if error.
  */
 
 struct t_plugin_script_cb *
@@ -93,7 +91,7 @@ plugin_script_callback_add (struct t_plugin_script *script,
 }
 
 /*
- * plugin_script_callback_free_data: free data of a script callback
+ * Frees data of a script callback.
  */
 
 void
@@ -106,7 +104,7 @@ plugin_script_callback_free_data (struct t_plugin_script_cb *script_callback)
 }
 
 /*
- * plugin_script_callback_remove: remove a callback from a script
+ * Removes a callback from a script.
  */
 
 void
@@ -129,7 +127,7 @@ plugin_script_callback_remove (struct t_plugin_script *script,
 }
 
 /*
- * plugin_script_callback_remove_all: remove all callbacks from a script
+ * Removes all callbacks from a script.
  */
 
 void
@@ -142,7 +140,7 @@ plugin_script_callback_remove_all (struct t_plugin_script *script)
 }
 
 /*
- * plugin_script_callback_print_log: print callback infos in log (usually for crash dump)
+ * Prints callbacks in WeeChat log file (usually for crash dump).
  */
 
 void

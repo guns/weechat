@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-upgrade.c - save/restore IRC plugin data when upgrading WeeChat
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-upgrade.c: save/restore IRC plugin data when upgrading WeeChat
  */
 
 #include <stdlib.h>
@@ -44,7 +42,11 @@ struct t_irc_channel *irc_upgrade_current_channel = NULL;
 
 
 /*
- * irc_upgrade_save_all_data: save servers/channels/nicks info to upgrade file
+ * Saves servers/channels/nicks info to irc upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -209,8 +211,11 @@ irc_upgrade_save_all_data (struct t_upgrade_file *upgrade_file)
 }
 
 /*
- * irc_upgrade_save: save upgrade file
- *                   return 1 if ok, 0 if error
+ * Saves irc upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -231,8 +236,8 @@ irc_upgrade_save ()
 }
 
 /*
- * irc_upgrade_set_buffer_callbacks: restore buffers callbacks (input and
- *                                   close) for buffers created by IRC plugin
+ * Restores buffers callbacks (input and close) for buffers created by irc
+ * plugin.
  */
 
 void
@@ -270,7 +275,7 @@ irc_upgrade_set_buffer_callbacks ()
 }
 
 /*
- * irc_upgrade_read_cb: read callback for upgrade
+ * Reads callback for irc upgrade.
  */
 
 int
@@ -343,6 +348,7 @@ irc_upgrade_read_cb (void *data,
                     }
                     irc_upgrade_current_server->is_connected = weechat_infolist_integer (infolist, "is_connected");
                     irc_upgrade_current_server->ssl_connected = weechat_infolist_integer (infolist, "ssl_connected");
+                    irc_upgrade_current_server->disconnected = weechat_infolist_integer (infolist, "disconnected");
                     str = weechat_infolist_string (infolist, "unterminated_message");
                     if (str)
                         irc_upgrade_current_server->unterminated_message = strdup (str);
@@ -632,8 +638,11 @@ irc_upgrade_read_cb (void *data,
 }
 
 /*
- * irc_upgrade_load: load upgrade file
- *                   return 1 if ok, 0 if error
+ * Loads irc upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int

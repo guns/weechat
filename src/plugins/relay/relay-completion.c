@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-completion.c - completion for relay command
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * relay-completion.c: completion for relay command
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,8 +29,7 @@
 
 
 /*
- * relay_completion_protocol_name_cb: callback for completion with protocol and
- *                                    name
+ * Adds protocol and name to completion list.
  */
 
 int
@@ -74,8 +71,7 @@ relay_completion_protocol_name_cb (void *data, const char *completion_item,
 }
 
 /*
- * relay_completion_relays_cb: callback for completion with protocol and name
- *                             of current relays
+ * Adds protocol and name of current relays to completion list.
  */
 
 int
@@ -84,7 +80,6 @@ relay_completion_relays_cb (void *data, const char *completion_item,
                             struct t_gui_completion *completion)
 {
     struct t_relay_server *ptr_server;
-    char protocol_name[512];
 
     /* make C compiler happy */
     (void) data;
@@ -94,12 +89,8 @@ relay_completion_relays_cb (void *data, const char *completion_item,
     for (ptr_server = relay_servers; ptr_server;
          ptr_server = ptr_server->next_server)
     {
-        snprintf (protocol_name, sizeof (protocol_name), "%s%s%s%s",
-                  (ptr_server->ssl) ? "ssl." : "",
-                  relay_protocol_string[ptr_server->protocol],
-                  (ptr_server->protocol_args) ? "." : "",
-                  (ptr_server->protocol_args) ? ptr_server->protocol_args : "");
-        weechat_hook_completion_list_add (completion, protocol_name,
+        weechat_hook_completion_list_add (completion,
+                                          ptr_server->protocol_string,
                                           0, WEECHAT_LIST_POS_SORT);
     }
 
@@ -107,7 +98,7 @@ relay_completion_relays_cb (void *data, const char *completion_item,
 }
 
 /*
- * relay_completion_free_port_cb: callback for completion with a free port
+ * Adds free ports to completion list.
  */
 
 int
@@ -142,7 +133,7 @@ relay_completion_free_port_cb (void *data, const char *completion_item,
 }
 
 /*
- * relay_completion_init: init completion for relay plugin
+ * Hooks completions.
  */
 
 void

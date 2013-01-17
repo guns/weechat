@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -81,6 +81,10 @@ ENDIF(ENABLE_RELAY)
 IF(ENABLE_RMODIFIER)
   ADD_SUBDIRECTORY( rmodifier )
 ENDIF(ENABLE_RMODIFIER)
+
+IF(ENABLE_SCRIPT)
+  ADD_SUBDIRECTORY( script )
+ENDIF(ENABLE_SCRIPT)
 
 IF(ENABLE_XFER)
   ADD_SUBDIRECTORY( xfer )

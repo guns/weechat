@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-line.c - line functions (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-line.c: line functions (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -50,7 +48,9 @@
 
 
 /*
- * gui_lines_alloc: alloc structure "t_gui_lines" and initialize it
+ * Allocates structure "t_gui_lines" and initializes it.
+ *
+ * Returns pointer to new lines, NULL if error.
  */
 
 struct t_gui_lines *
@@ -75,7 +75,7 @@ gui_lines_alloc ()
 }
 
 /*
- * gui_lines_free: free a "t_gui_lines" structure
+ * Frees a "t_gui_lines" structure.
  */
 
 void
@@ -85,9 +85,11 @@ gui_lines_free (struct t_gui_lines *lines)
 }
 
 /*
- * gui_line_prefix_is_same_nick_as_previous: return 1 if prefix on line is a
- *                                           nick and is the same as nick on
- *                                           previour line, otherwise 0
+ * Checks if prefix on line is a nick and is the same as nick on previous line.
+ *
+ * Returns:
+ *   1: prefix is a nick and same as nick on previous line
+ *   0: prefix is not a nick, or different from nick on previous line
  */
 
 int
@@ -137,12 +139,11 @@ gui_line_prefix_is_same_nick_as_previous (struct t_gui_line *line)
 }
 
 /*
- * gui_line_get_prefix_for_display: get prefix and its length (for display only)
- *                                  if the prefix can be hidden (same nick as
- *                                  previous message), and if the option is
- *                                  enabled (not empty string), then this
- *                                  this function will return empty prefix or
- *                                  prefix from option
+ * Gets prefix and its length (for display only).
+ *
+ * If the prefix can be hidden (same nick as previous message), and if the
+ * option is enabled (not empty string), then returns empty prefix or prefix
+ * from option.
  */
 
 void
@@ -195,12 +196,12 @@ gui_line_get_prefix_for_display (struct t_gui_line *line,
 }
 
 /*
- * gui_line_get_align: get alignment for a line
+ * Gets alignment for a line.
  */
 
 int
 gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
-                    int with_suffix, int first_line, int force_prefix_for_line)
+                    int with_suffix, int first_line)
 {
     int length_time, length_buffer, length_suffix, prefix_length;
 
@@ -227,7 +228,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
     }
 
     /* length of buffer name (when many buffers are merged) */
-    if (buffer->mixed_lines)
+    if (buffer->mixed_lines && (buffer->active != 2))
     {
         if ((CONFIG_INTEGER(config_look_prefix_buffer_align) == CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
             && (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE))
@@ -252,10 +253,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
         return length_time + length_buffer;
     }
 
-    if (force_prefix_for_line)
-        prefix_length = line->data->prefix_length;
-    else
-        gui_line_get_prefix_for_display (line, NULL, &prefix_length, NULL);
+    gui_line_get_prefix_for_display (line, NULL, &prefix_length, NULL);
 
     if (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_NONE)
     {
@@ -279,8 +277,11 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
 }
 
 /*
- * gui_line_is_displayed: return 1 if line is displayed (no filter on line,
- *                        or filters disabled), 0 if line is hidden
+ * Checks if a line is displayed (no filter on line or filters disabled).
+ *
+ * Returns:
+ *   1: line is displayed
+ *   0: line is hidden
  */
 
 int
@@ -295,7 +296,9 @@ gui_line_is_displayed (struct t_gui_line *line)
 }
 
 /*
- * gui_line_get_first_displayed: get first line displayed of a buffer
+ * Gets the first line displayed of a buffer.
+ *
+ * Returns pointer to first line displayed, NULL if not found.
  */
 
 struct t_gui_line *
@@ -313,7 +316,9 @@ gui_line_get_first_displayed (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_line_get_last_displayed: get last line displayed of a buffer
+ * Gets the last line displayed of a buffer.
+ *
+ * Returns pointer to last line displayed, NULL if not found.
  */
 
 struct t_gui_line *
@@ -331,7 +336,9 @@ gui_line_get_last_displayed (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_line_get_prev_displayed: get previous line displayed
+ * Gets previous line displayed.
+ *
+ * Returns pointer to previous line displayed, NULL if not found.
  */
 
 struct t_gui_line *
@@ -349,7 +356,9 @@ gui_line_get_prev_displayed (struct t_gui_line *line)
 }
 
 /*
- * gui_line_get_next_displayed: get next line displayed
+ * Gets next line displayed.
+ *
+ * Returns pointer to next line displayed, NULL if not found.
  */
 
 struct t_gui_line *
@@ -367,7 +376,11 @@ gui_line_get_next_displayed (struct t_gui_line *line)
 }
 
 /*
- * gui_line_search_text: search for text in a line
+ * Searches for text in a line.
+ *
+ * Returns:
+ *   1: text found in line
+ *   0: text not found in line
  */
 
 int
@@ -410,8 +423,11 @@ gui_line_search_text (struct t_gui_line *line, const char *text,
 }
 
 /*
- * gui_line_match_regex: return 1 if message matches regex
- *                       0 if it doesn't match
+ * Checks if a line matches regex.
+ *
+ * Returns:
+ *   1: line matches regex
+ *   0: line does not match regex
  */
 
 int
@@ -465,8 +481,11 @@ gui_line_match_regex (struct t_gui_line *line, regex_t *regex_prefix,
 }
 
 /*
- * gui_line_match_tags: return 1 if line matches tags
- *                      0 if it doesn't match any tag in array
+ * Checks if line matches tags.
+ *
+ * Returns:
+ *   1: line matches tags
+ *   0: line does not match tags
  */
 
 int
@@ -497,8 +516,7 @@ gui_line_match_tags (struct t_gui_line *line, int tags_count,
 }
 
 /*
- * gui_line_search_tag_starting_with: return pointer on tag starting with "tag",
- *                                    NULL if such tag is not found
+ * Returns pointer on tag starting with "tag", NULL if such tag is not found.
  */
 
 const char *
@@ -522,8 +540,7 @@ gui_line_search_tag_starting_with (struct t_gui_line *line, const char *tag)
 }
 
 /*
- * gui_line_get_nick_tag: get nick in tags: return "xxx" if tag "nick_xxx"
- *                        is found
+ * Gets nick in tags: returns "xxx" if tag "nick_xxx" is found.
  */
 
 const char *
@@ -539,8 +556,12 @@ gui_line_get_nick_tag (struct t_gui_line *line)
 }
 
 /*
- * gui_line_has_highlight: return 1 if given message contains highlight (with
- *                         a string in global highlight or buffer highlight)
+ * Checks if a line has highlight (with a string in global highlight or buffer
+ * highlight).
+ *
+ * Returns:
+ *   1: line has highlight
+ *   0: line has no highlight
  */
 
 int
@@ -637,8 +658,11 @@ gui_line_has_highlight (struct t_gui_line *line)
 }
 
 /*
- * gui_line_has_offline_nick: return 1 if nick of line is offline
- *                            (not in nicklist any more)
+ * Checks if nick of line is offline (not in nicklist any more).
+ *
+ * Returns:
+ *   1: nick is offline
+ *   0: nick is still there (in nicklist)
  */
 
 int
@@ -663,8 +687,7 @@ gui_line_has_offline_nick (struct t_gui_line *line)
 }
 
 /*
- * gui_line_compute_buffer_max_length: compute "buffer_max_length" for a
- *                                     "t_gui_lines" structure
+ * Computes "buffer_max_length" for a "t_gui_lines" structure.
  */
 
 void
@@ -690,8 +713,7 @@ gui_line_compute_buffer_max_length (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_line_compute_prefix_max_length: compute "prefix_max_length" for a
- *                                     "t_gui_lines" structure
+ * Computes "prefix_max_length" for a "t_gui_lines" structure.
  */
 
 void
@@ -711,7 +733,7 @@ gui_line_compute_prefix_max_length (struct t_gui_lines *lines)
 }
 
 /*
- * gui_line_add_to_list: add a line to a "t_gui_lines" structure
+ * Adds a line to a "t_gui_lines" structure.
  */
 
 void
@@ -737,7 +759,7 @@ gui_line_add_to_list (struct t_gui_lines *lines,
 }
 
 /*
- * gui_line_remove_from_list: remove a line from a "t_gui_lines" structure
+ * Removes a line from a "t_gui_lines" structure.
  */
 
 void
@@ -820,7 +842,7 @@ gui_line_remove_from_list (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_line_mixed_add: add line to mixed lines for a buffer
+ * Adds line to mixed lines for a buffer.
  */
 
 void
@@ -838,7 +860,7 @@ gui_line_mixed_add (struct t_gui_lines *lines,
 }
 
 /*
- * gui_line_mixed_free_buffer: free all mixed lines matching a buffer
+ * Frees all mixed lines matching a buffer.
  */
 
 void
@@ -867,7 +889,7 @@ gui_line_mixed_free_buffer (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_line_mixed_free_all: free all mixed lines in a buffer
+ * Frees all mixed lines in a buffer.
  */
 
 void
@@ -886,7 +908,7 @@ gui_line_mixed_free_all (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_line_free: delete a line from a buffer
+ * Deletes a line from a buffer.
  */
 
 void
@@ -916,7 +938,7 @@ gui_line_free (struct t_gui_buffer *buffer, struct t_gui_line *line)
 }
 
 /*
- * gui_line_free_all: delete all formatted lines from a buffer
+ * Deletes all formatted lines from a buffer.
  */
 
 void
@@ -929,9 +951,10 @@ gui_line_free_all (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_line_get_notify_level: get notify level for a line
- *                            return -1 if "notify_none" is found (no notify
- *                            for line)
+ * Gets notify level for a line.
+ *
+ * Returns notify level of line, -1 if tag "notify_none" is found (meaning no
+ * notify at all for line).
  */
 
 int
@@ -954,7 +977,7 @@ gui_line_get_notify_level (struct t_gui_line *line)
 }
 
 /*
- * gui_line_add: add a new line for a buffer
+ * Adds a new line for a buffer.
  */
 
 struct t_gui_line *
@@ -1012,8 +1035,7 @@ gui_line_add (struct t_gui_buffer *buffer, time_t date,
     new_line->data->y = -1;
     new_line->data->date = date;
     new_line->data->date_printed = date_printed;
-    new_line->data->str_time = (date == 0) ?
-        NULL : gui_chat_get_time_string (date);
+    new_line->data->str_time = gui_chat_get_time_string (date);
     if (tags)
     {
         new_line->data->tags_array = string_split (tags, ",", 0, 0,
@@ -1048,11 +1070,13 @@ gui_line_add (struct t_gui_buffer *buffer, time_t date,
     else
         new_line->data->highlight = gui_line_has_highlight (new_line);
 
+    /* check if line is filtered or not */
+    new_line->data->displayed = gui_filter_check_line (new_line);
+
     /* add line to lines list */
     gui_line_add_to_list (buffer->own_lines, new_line);
 
-    /* check if line is filtered or not */
-    new_line->data->displayed = gui_filter_check_line (new_line);
+    /* update hotlist and/or send signals for line */
     if (new_line->data->displayed)
     {
         if (new_line->data->highlight)
@@ -1130,7 +1154,7 @@ gui_line_add (struct t_gui_buffer *buffer, time_t date,
 }
 
 /*
- * gui_line_add_y: add or update a line for a buffer with free content
+ * Adds or updates a line for a buffer with free content.
  */
 
 void
@@ -1229,8 +1253,7 @@ gui_line_add_y (struct t_gui_buffer *buffer, int y, const char *message)
 }
 
 /*
- * gui_line_clear: clear prefix and message on a line
- *                 (used on buffers with free content only)
+ * Clears prefix and message on a line (used on buffers with free content only).
  */
 
 void
@@ -1246,8 +1269,7 @@ gui_line_clear (struct t_gui_line *line)
 }
 
 /*
- * gui_line_mix_buffers: mix lines of a buffer (or group of buffers) with a new
- *                       buffer
+ * Mixes lines of a buffer (or group of buffers) with a new buffer.
  */
 
 void
@@ -1342,7 +1364,7 @@ gui_line_mix_buffers (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_line_hdata_lines_cb: return hdata for lines
+ * Returns hdata for lines.
  */
 
 struct t_hdata *
@@ -1353,23 +1375,23 @@ gui_line_hdata_lines_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, NULL, NULL);
+    hdata = hdata_new (NULL, hdata_name, NULL, NULL, 0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_lines, first_line, POINTER, NULL, "line");
-        HDATA_VAR(struct t_gui_lines, last_line, POINTER, NULL, "line");
-        HDATA_VAR(struct t_gui_lines, last_read_line, POINTER, NULL, "line");
-        HDATA_VAR(struct t_gui_lines, lines_count, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_lines, first_line_not_read, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_lines, lines_hidden, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_lines, buffer_max_length, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_lines, prefix_max_length, INTEGER, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, first_line, POINTER, 0, NULL, "line");
+        HDATA_VAR(struct t_gui_lines, last_line, POINTER, 0, NULL, "line");
+        HDATA_VAR(struct t_gui_lines, last_read_line, POINTER, 0, NULL, "line");
+        HDATA_VAR(struct t_gui_lines, lines_count, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, first_line_not_read, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, lines_hidden, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, buffer_max_length, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, prefix_max_length, INTEGER, 0, NULL, NULL);
     }
     return hdata;
 }
 
 /*
- * gui_line_hdata_line_cb: return hdata for line
+ * Returns hdata for line.
  */
 
 struct t_hdata *
@@ -1380,18 +1402,103 @@ gui_line_hdata_line_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_line", "next_line");
+    hdata = hdata_new (NULL, hdata_name, "prev_line", "next_line",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_line, data, POINTER, NULL, "line_data");
-        HDATA_VAR(struct t_gui_line, prev_line, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_line, next_line, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_line, data, POINTER, 0, NULL, "line_data");
+        HDATA_VAR(struct t_gui_line, prev_line, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_line, next_line, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * gui_line_hdata_line_data_cb: return hdata for line data
+ * Callback for updating data of a line.
+ */
+
+int
+gui_line_hdata_line_data_update_cb (void *data,
+                                    struct t_hdata *hdata,
+                                    void *pointer,
+                                    struct t_hashtable *hashtable)
+{
+    const char *value;
+    struct t_gui_line_data *line_data;
+    int rc;
+
+    /* make C compiler happy */
+    (void) data;
+
+    line_data = (struct t_gui_line_data *)pointer;
+
+    rc = 0;
+
+    if (hashtable_has_key (hashtable, "date"))
+    {
+        value = hashtable_get (hashtable, "date");
+        if (value)
+        {
+            hdata_set (hdata, pointer, "date", value);
+            if (line_data->str_time)
+                free (line_data->str_time);
+            line_data->str_time = gui_chat_get_time_string (line_data->date);
+            rc++;
+        }
+    }
+
+    if (hashtable_has_key (hashtable, "date_printed"))
+    {
+        value = hashtable_get (hashtable, "date_printed");
+        if (value)
+        {
+            hdata_set (hdata, pointer, "date_printed", value);
+            rc++;
+        }
+    }
+
+    if (hashtable_has_key (hashtable, "tags_array"))
+    {
+        value = hashtable_get (hashtable, "tags_array");
+        if (line_data->tags_array)
+            string_free_split (line_data->tags_array);
+        if (value)
+        {
+            line_data->tags_array = string_split (value, ",", 0, 0,
+                                                  &line_data->tags_count);
+        }
+        else
+        {
+            line_data->tags_count = 0;
+            line_data->tags_array = NULL;
+        }
+        rc++;
+    }
+
+    if (hashtable_has_key (hashtable, "prefix"))
+    {
+        value = hashtable_get (hashtable, "prefix");
+        hdata_set (hdata, pointer, "prefix", value);
+        line_data->prefix_length = (line_data->prefix) ?
+            gui_chat_strlen_screen (line_data->prefix) : 0;
+        gui_line_compute_prefix_max_length (line_data->buffer->lines);
+        rc++;
+    }
+
+    if (hashtable_has_key (hashtable, "message"))
+    {
+        value = hashtable_get (hashtable, "message");
+        hdata_set (hdata, pointer, "message", value);
+        rc++;
+    }
+
+    gui_buffer_ask_chat_refresh (line_data->buffer, 1);
+
+    return rc;
+}
+
+/*
+ * Returns hdata for line data.
  */
 
 struct t_hdata *
@@ -1402,29 +1509,33 @@ gui_line_hdata_line_data_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, NULL, NULL);
+    hdata = hdata_new (NULL, hdata_name, NULL, NULL,
+                       0, 0, &gui_line_hdata_line_data_update_cb, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_line_data, buffer, POINTER, NULL, "buffer");
-        HDATA_VAR(struct t_gui_line_data, y, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, date, TIME, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, date_printed, TIME, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, str_time, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, tags_count, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, tags_array, STRING, "tags_count", NULL);
-        HDATA_VAR(struct t_gui_line_data, displayed, CHAR, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, highlight, CHAR, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, refresh_needed, CHAR, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, prefix, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, prefix_length, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, message, STRING, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, buffer, POINTER, 0, NULL, "buffer");
+        HDATA_VAR(struct t_gui_line_data, y, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, date, TIME, 1, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, date_printed, TIME, 1, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, str_time, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, tags_count, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, tags_array, STRING, 1, "tags_count", NULL);
+        HDATA_VAR(struct t_gui_line_data, displayed, CHAR, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, highlight, CHAR, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, refresh_needed, CHAR, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, prefix, STRING, 1, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, prefix_length, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, message, STRING, 1, NULL, NULL);
     }
     return hdata;
 }
 
 /*
- * gui_line_add_to_infolist: add a line in an infolist
- *                           return 1 if ok, 0 if error
+ * Adds a line in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1497,7 +1608,7 @@ gui_line_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_lines_print_log: print lines structure infos in log (usually for crash dump)
+ * Prints lines structure infos in WeeChat log file (usually for crash dump).
  */
 
 void

@@ -1,6 +1,8 @@
 /*
+ * weechat-aspell-speller.c - speller management for aspell plugin
+ *
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -18,10 +20,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * weechat-aspell-speller.c: speller management for aspell plugin
- */
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,8 +33,11 @@ struct t_aspell_speller *last_weechat_aspell_speller = NULL;
 
 
 /*
- * weechat_aspell_speller_exists: return 1 if an aspell dict exists for a lang,
- *                                0 otherwise
+ * Checks if an aspell dictionary exists for a lang.
+ *
+ * Returns:
+ *   1: aspell dict exists for the lang
+ *   0: aspell dict does not exist for the lang
  */
 
 int
@@ -44,7 +45,7 @@ weechat_aspell_speller_exists (const char *lang)
 {
     struct AspellConfig *config;
     AspellDictInfoList *list;
-    AspellDictInfoEnumeration *el;
+    AspellDictInfoEnumeration *elements;
     const AspellDictInfo *dict;
     int rc;
 
@@ -52,9 +53,9 @@ weechat_aspell_speller_exists (const char *lang)
 
     config = new_aspell_config ();
     list = get_aspell_dict_info_list (config);
-    el = aspell_dict_info_list_elements (list);
+    elements = aspell_dict_info_list_elements (list);
 
-    while ((dict = aspell_dict_info_enumeration_next (el)))
+    while ((dict = aspell_dict_info_enumeration_next (elements)) != NULL)
     {
         if (strcmp (dict->name, lang) == 0)
         {
@@ -63,16 +64,17 @@ weechat_aspell_speller_exists (const char *lang)
         }
     }
 
-    delete_aspell_dict_info_enumeration (el);
+    delete_aspell_dict_info_enumeration (elements);
     delete_aspell_config (config);
 
     return rc;
 }
 
 /*
- * weechat_aspell_speller_check_dictionaries: check dictionaries (called when
- *                                            user creates/changes dictionaries
- *                                            for a buffer)
+ * Checks if dictionaries are valid (called when user creates/changes
+ * dictionaries for a buffer).
+ *
+ * An error is displayed for each invalid dictionary found.
  */
 
 void
@@ -102,7 +104,9 @@ weechat_aspell_speller_check_dictionaries (const char *dict_list)
 }
 
 /*
- * weechat_aspell_speller_search: search a speller
+ * Searches for a speller by lang.
+ *
+ * Returns pointer to speller found, NULL if not found.
  */
 
 struct t_aspell_speller *
@@ -122,7 +126,9 @@ weechat_aspell_speller_search (const char *lang)
 }
 
 /*
- * weechat_aspell_speller_new: create and add a new speller instance
+ * Creates and adds a new speller instance.
+ *
+ * Returns pointer to new speller, NULL if error.
  */
 
 struct t_aspell_speller *
@@ -195,14 +201,14 @@ weechat_aspell_speller_new (const char *lang)
         weechat_aspell_spellers = new_speller;
     last_weechat_aspell_speller = new_speller;
 
-    /* free config */
+    /* free configuration */
     delete_aspell_config (config);
 
     return new_speller;
 }
 
 /*
- * weechat_aspell_speller_free: remove a speller instance
+ * Removes a speller instance.
  */
 
 void
@@ -241,7 +247,7 @@ weechat_aspell_speller_free (struct t_aspell_speller *speller)
 }
 
 /*
- * weechat_aspell_speller_free_all: free all spellers
+ * Frees all spellers.
  */
 
 void

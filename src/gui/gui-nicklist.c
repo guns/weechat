@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-nicklist.c - nicklist functions (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-nicklist.c: nicklist functions (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -50,8 +48,7 @@
 
 
 /*
- * gui_nicklist_send_signal: send a signal when something has changed in
- *                           nicklist
+ * Sends a signal when something has changed in nicklist.
  */
 
 void
@@ -83,7 +80,7 @@ gui_nicklist_send_signal (const char *signal, struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_find_pos_group: find position for a group (for sorting nicklist)
+ * Searches for position of a group (to keep nicklist sorted).
  */
 
 struct t_gui_nick_group *
@@ -103,7 +100,7 @@ gui_nicklist_find_pos_group (struct t_gui_nick_group *groups,
 }
 
 /*
- * gui_nicklist_insert_group_sorted: insert group into sorted list
+ * Inserts group into sorted list.
  */
 
 void
@@ -147,7 +144,9 @@ gui_nicklist_insert_group_sorted (struct t_gui_nick_group **groups,
 }
 
 /*
- * gui_nicklist_search_group_internal: search a group in buffer nicklist
+ * Searches for a group in nicklist (this function must not be called directly).
+ *
+ * Returns pointer to group found, NULL if not found.
  */
 
 struct t_gui_nick_group *
@@ -193,7 +192,9 @@ gui_nicklist_search_group_internal (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_search_group: search a group in buffer nicklist
+ * Searches for a group in nicklist.
+ *
+ * Returns pointer to group found, NULL if not found.
  */
 
 struct t_gui_nick_group *
@@ -210,7 +211,9 @@ gui_nicklist_search_group (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_add_group: add a group to nicklist for a buffer
+ * Adds a group to nicklist.
+ *
+ * Returns pointer to new group, NULL if error.
  */
 
 struct t_gui_nick_group *
@@ -259,7 +262,7 @@ gui_nicklist_add_group (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_find_pos_nick: find position for a nick (for sorting nicklist)
+ * Searches for position of a nick (to keep nicklist sorted).
  */
 
 struct t_gui_nick *
@@ -282,7 +285,7 @@ gui_nicklist_find_pos_nick (struct t_gui_nick_group *group,
 }
 
 /*
- * gui_nicklist_insert_nick_sorted: insert nick into sorted list
+ * Inserts nick into sorted list.
  */
 
 void
@@ -325,7 +328,9 @@ gui_nicklist_insert_nick_sorted (struct t_gui_nick_group *group,
 }
 
 /*
- * gui_nicklist_search_nick: search a nick in buffer nicklist
+ * Searches for a nick in nicklist.
+ *
+ * Returns pointer to nick found, NULL if not found.
  */
 
 struct t_gui_nick *
@@ -374,7 +379,9 @@ gui_nicklist_search_nick (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_add_nick: add a nick to nicklist for a buffer
+ * Adds a nick to nicklist.
+ *
+ * Returns pointer to new nick, NULL if error.
  */
 
 struct t_gui_nick *
@@ -414,7 +421,7 @@ gui_nicklist_add_nick (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_remove_nick: remove a nick from a group
+ * Removes a nick from a group.
  */
 
 void
@@ -466,7 +473,7 @@ gui_nicklist_remove_nick (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_remove_group: remove a group from nicklist
+ * Removes a group from nicklist.
  */
 
 void
@@ -531,7 +538,7 @@ gui_nicklist_remove_group (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_remove_all: remove all nicks in nicklist
+ * Removes all nicks in nicklist.
  */
 
 void
@@ -548,7 +555,7 @@ gui_nicklist_remove_all (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_nicklist_get_next_item: get next item (group or nick) of a group/nick
+ * Gets next item (group or nick) of a group/nick.
  */
 
 void
@@ -621,10 +628,10 @@ gui_nicklist_get_next_item (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_get_group_start: return first char of a group that will be
- *                               displayed on screen: if name begins with
- *                               some digits followed by '|', then start is
- *                               after '|', otherwise it's beginning of name
+ * Returns first char of a group that will be displayed on screen.
+ *
+ * If name begins with some digits followed by '|', then start is after '|',
+ * otherwise it's beginning of name.
  */
 
 const char *
@@ -646,7 +653,7 @@ gui_nicklist_get_group_start (const char *name)
 }
 
 /*
- * gui_nicklist_get_max_length: return longer nickname on a buffer
+ * Returns longer nickname in the nicklist.
  */
 
 int
@@ -695,8 +702,7 @@ gui_nicklist_get_max_length (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_compute_visible_count: compute visible_count variable for a
- *                                     buffer
+ * Computes visible_count variable for a nicklist.
  */
 
 void
@@ -728,7 +734,7 @@ gui_nicklist_compute_visible_count (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_group_get_integer: get a group property as integer
+ * Gets a group property as integer.
  */
 
 int
@@ -751,7 +757,7 @@ gui_nicklist_group_get_integer (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_group_get_string: get a group property as string
+ * Gets a group property as string.
  */
 
 const char *
@@ -774,7 +780,7 @@ gui_nicklist_group_get_string (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_group_get_pointer: get a group property as pointer
+ * Gets a group property as pointer.
  */
 
 void *
@@ -795,7 +801,7 @@ gui_nicklist_group_get_pointer (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_group_set: set a group property (string)
+ * Sets a group property (string).
  */
 
 void
@@ -836,7 +842,7 @@ gui_nicklist_group_set (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_nick_get_integer: get a nick property as integer
+ * Gets a nick property as integer.
  */
 
 int
@@ -857,7 +863,7 @@ gui_nicklist_nick_get_integer (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_nick_get_string: get a nick property as string
+ * Gets a nick property as string.
  */
 
 const char *
@@ -884,7 +890,7 @@ gui_nicklist_nick_get_string (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_nick_get_pointer: get a nick property as pointer
+ * Gets a nick property as pointer.
  */
 
 void *
@@ -905,7 +911,7 @@ gui_nicklist_nick_get_pointer (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_nick_set: set a nick property (string)
+ * Sets a nick property (string).
  */
 
 void
@@ -960,7 +966,7 @@ gui_nicklist_nick_set (struct t_gui_buffer *buffer,
 }
 
 /*
- * gui_nicklist_hdata_nick_group_cb: return hdata for nick_group
+ * Returns hdata for nick_group.
  */
 
 struct t_hdata *
@@ -971,26 +977,27 @@ gui_nicklist_hdata_nick_group_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_group", "next_group");
+    hdata = hdata_new (NULL, hdata_name, "prev_group", "next_group",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_nick_group, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick_group, color, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick_group, visible, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick_group, level, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick_group, parent, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_nick_group, children, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_nick_group, last_child, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_nick_group, nicks, POINTER, NULL, "nick");
-        HDATA_VAR(struct t_gui_nick_group, last_nick, POINTER, NULL, "nick");
-        HDATA_VAR(struct t_gui_nick_group, prev_group, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_nick_group, next_group, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick_group, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick_group, color, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick_group, visible, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick_group, level, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick_group, parent, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick_group, children, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick_group, last_child, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick_group, nicks, POINTER, 0, NULL, "nick");
+        HDATA_VAR(struct t_gui_nick_group, last_nick, POINTER, 0, NULL, "nick");
+        HDATA_VAR(struct t_gui_nick_group, prev_group, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick_group, next_group, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * gui_nicklist_hdata_nick_cb: return hdata for nick
+ * Returns hdata for nick.
  */
 
 struct t_hdata *
@@ -1001,24 +1008,28 @@ gui_nicklist_hdata_nick_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_nick", "next_nick");
+    hdata = hdata_new (NULL, hdata_name, "prev_nick", "next_nick",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_nick, group, POINTER, NULL, "nick_group");
-        HDATA_VAR(struct t_gui_nick, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, color, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, prefix, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, prefix_color, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, visible, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, prev_nick, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_nick, next_nick, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick, group, POINTER, 0, NULL, "nick_group");
+        HDATA_VAR(struct t_gui_nick, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, color, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, prefix, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, prefix_color, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, visible, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, prev_nick, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_nick, next_nick, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * gui_nicklist_add_group_to_infolist: add a group in an infolist
- *                                     return 1 if ok, 0 if error
+ * Adds a group in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1054,8 +1065,11 @@ gui_nicklist_add_group_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_nicklist_add_nick_to_infolist: add a nick in an infolist
- *                                    return 1 if ok, 0 if error
+ * Adds a nick in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1093,8 +1107,11 @@ gui_nicklist_add_nick_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_nicklist_add_to_infolist: add a nicklist in an infolist
- *                               return 1 if ok, 0 if error
+ * Adds a nicklist in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1143,7 +1160,7 @@ gui_nicklist_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_nicklist_print_log: print nicklist infos in log (usually for crash dump)
+ * Prints nicklist infos in WeeChat log file (usually for crash dump).
  */
 
 void

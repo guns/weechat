@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * plugin-config.c - plugin configuration options (file plugins.conf)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * plugin-config.c: plugin configuration options (file plugins.conf)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -47,7 +45,7 @@ struct t_config_section *plugin_config_section_desc = NULL;
 
 
 /*
- * plugin_config_search: search a plugin option
+ * Searches for a plugin option.
  */
 
 struct t_config_option *
@@ -75,8 +73,7 @@ plugin_config_search (const char *plugin_name, const char *option_name)
 }
 
 /*
- * plugin_config_set_internal: set value for a plugin option (internal function)
- *                             This function should not be called directly.
+ * Sets value for a plugin option (this function must not be called directly).
  */
 
 int
@@ -105,7 +102,7 @@ plugin_config_set_internal (const char *option, const char *value)
 }
 
 /*
- * plugin_config_set: set value for a plugin option (create it if not found)
+ * Sets value for a plugin option (option is created if not found).
  */
 
 int
@@ -132,8 +129,7 @@ plugin_config_set (const char *plugin_name, const char *option_name,
 }
 
 /*
- * plugin_config_desc_changed_cb: called when description of an option is
- *                                changed
+ * Callback for changes on a description option.
  */
 
 void
@@ -160,9 +156,8 @@ plugin_config_desc_changed_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * plugin_config_set_desc_internal: set description for a plugin option
- *                                  (internal function)
- *                                  This function should not be called directly.
+ * Sets description for a plugin option (this function must not be called
+ * directly).
  */
 
 void
@@ -191,7 +186,7 @@ plugin_config_set_desc_internal (const char *option, const char *value)
 }
 
 /*
- * plugin_config_set_desc: set description for a plugin option
+ * Sets description for a plugin option.
  */
 
 void
@@ -214,7 +209,7 @@ plugin_config_set_desc (const char *plugin_name, const char *option_name,
 }
 
 /*
- * plugin_config_reload: reload plugins configuration file
+ * Reloads plugins configuration file.
  */
 
 int
@@ -227,12 +222,12 @@ plugin_config_reload (void *data, struct t_config_file *config_file)
     config_file_section_free_options (plugin_config_section_var);
     config_file_section_free_options (plugin_config_section_desc);
 
-    /* reload plugins config file */
+    /* reload plugins configuration file */
     return config_file_reload (config_file);
 }
 
 /*
- * plugin_config_create_option: set plugin option
+ * Sets a plugin option.
  */
 
 int
@@ -260,7 +255,7 @@ plugin_config_create_option (void *data, struct t_config_file *config_file,
 }
 
 /*
- * plugin_config_create_desc: set plugin option description
+ * Sets a plugin option description.
  */
 
 int
@@ -298,7 +293,7 @@ plugin_config_create_desc (void *data, struct t_config_file *config_file,
 }
 
 /*
- * plugin_config_delete_desc: delete plugin option description
+ * Deletes a plugin option description.
  */
 
 int
@@ -328,7 +323,7 @@ plugin_config_delete_desc (void *data, struct t_config_file *config_file,
 }
 
 /*
- * plugin_config_init: init plugins config structure
+ * Initializes plugins configuration structure.
  */
 
 void
@@ -361,7 +356,7 @@ plugin_config_init ()
 }
 
 /*
- * plugin_config_read: read plugins configuration file
+ * Reads plugins configuration file.
  */
 
 int
@@ -371,7 +366,7 @@ plugin_config_read ()
 }
 
 /*
- * plugin_config_write: write plugins configuration file
+ * Writes plugins configuration file.
  */
 
 int
@@ -381,13 +376,13 @@ plugin_config_write ()
 }
 
 /*
- * plugin_config_end: end plugin config
+ * Ends plugin configuration.
  */
 
 void
 plugin_config_end ()
 {
-    /* free all plugin config options and descriptions */
+    /* free all plugin configuration options and descriptions */
     config_file_section_free_options (plugin_config_section_var);
     config_file_section_free_options (plugin_config_section_desc);
 }

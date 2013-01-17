@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * rmodifier-config.c - rmodifier configuration options (file rmodifier.conf)
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * rmodifier-config.c: rmodifier configuration options (file rmodifier.conf)
  */
 
 #include <stdlib.h>
@@ -58,7 +56,7 @@ char *rmodifier_config_default_list[][4] =
 
 
 /*
- * rmodifier_config_reload: reload rmodifier configuration file
+ * Reloads rmodifier configuration file.
  */
 
 int
@@ -74,8 +72,7 @@ rmodifier_config_reload (void *data, struct t_config_file *config_file)
 }
 
 /*
- * rmodifier_config_modifier_change_cb: callback called when a rmodifier is
- *                                      modified in section "modifier"
+ * Callback for changes on options in section "modifier".
  */
 
 void
@@ -89,8 +86,7 @@ rmodifier_config_modifier_change_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * rmodifier_config_modifier_delete_cb: callback called when rmodifier option
- *                           is deleted in section "modifier"
+ * Callback called when a rmodifier option is deleted in section "modifier".
  */
 
 void
@@ -108,9 +104,7 @@ rmodifier_config_modifier_delete_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * rmodifier_config_modifier_write_default_cb: write default rmodifiers in
- *                                             configuration file in section
- *                                             "modifier"
+ * Writes default rmodifiers in in section "modifier".
  */
 
 int
@@ -141,7 +135,7 @@ rmodifier_config_modifier_write_default_cb (void *data,
 }
 
 /*
- * rmodifier_config_modifier_new_option: create new option in section "modifier"
+ * Creates a new option in section "modifier".
  */
 
 void
@@ -171,8 +165,7 @@ rmodifier_config_modifier_new_option (const char *name, const char *modifiers,
 }
 
 /*
- * rmodifier_config_modifier_create_option_cb: callback to create option in
- *                                             "modifier" section
+ * Callback called when an option is created in section "modifier".
  */
 
 int
@@ -225,8 +218,11 @@ rmodifier_config_modifier_create_option_cb (void *data,
 }
 
 /*
- * rmodifier_config_init: init rmodifier configuration file
- *                        return: 1 if ok, 0 if error
+ * Initializes rmodifier configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -276,7 +272,7 @@ rmodifier_config_init ()
 }
 
 /*
- * rmodifier_config_read: read rmodifier configuration file
+ * Reads rmodifier configuration file.
  */
 
 int
@@ -286,7 +282,7 @@ rmodifier_config_read ()
 }
 
 /*
- * rmodifier_config_write: write rmodifier configuration file
+ * Writes rmodifier configuration file.
  */
 
 int

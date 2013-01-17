@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -70,6 +70,7 @@ struct t_relay_client
     char *address;                     /* string with IP address            */
     enum t_relay_status status;        /* status (connecting, active,..)    */
     enum t_relay_protocol protocol;    /* protocol (irc,..)                 */
+    char *protocol_string;             /* example: "ipv6.ssl.irc.freenode"  */
     char *protocol_args;               /* arguments used for protocol       */
                                        /* example: server for irc protocol  */
     time_t listen_start_time;          /* when listening started            */

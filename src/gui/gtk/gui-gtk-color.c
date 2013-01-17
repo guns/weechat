@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-gtk-color.c - color functions for Gtk GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-gtk-color.c: color functions for Gtk GUI
  */
 
 #ifdef HAVE_CONFIG_H
@@ -57,8 +55,9 @@ struct t_gui_color gui_weechat_colors[] =
 
 
 /*
- * gui_color_search: search a color by name
- *                   Return: number of color in WeeChat colors table
+ * Searches for a color by name.
+ *
+ * Returns index of color in WeeChat colors table.
  */
 
 int
@@ -77,7 +76,7 @@ gui_color_search (const char *color_name)
 }
 
 /*
- * gui_color_assign: assign a WeeChat color (read from config)
+ * Assigns a WeeChat color (read from configuration).
  */
 
 int
@@ -102,12 +101,14 @@ gui_color_assign (int *color, const char *color_name)
 }
 
 /*
- * gui_color_assign_by_diff: assign color by difference
- *                           It is called when a color option is
- *                           set with value ++X or --X, to search
- *                           another color (for example ++1 is
- *                           next color/alias in list)
- *                           return 1 if ok, 0 if error
+ * Assigns color by difference.
+ *
+ * It is called when a color option is set with value ++X or --X, to search
+ * another color (for example ++1 is next color/alias in list).
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -122,7 +123,7 @@ gui_color_assign_by_diff (int *color, const char *color_name, int diff)
 }
 
 /*
- * gui_color_get_weechat_colors_number: get number of available colors
+ * Gets number of available colors.
  */
 
 int
@@ -132,7 +133,7 @@ gui_color_get_weechat_colors_number ()
 }
 
 /*
- * gui_color_get_term_colors: get number of colors supported by terminal
+ * Gets number of colors supported by terminal.
  */
 
 int
@@ -142,7 +143,7 @@ gui_color_get_term_colors ()
 }
 
 /*
- * gui_color_get_pair: get a pair with given foreground/background colors
+ * Gets a pair with given foreground/background colors.
  */
 
 int
@@ -155,7 +156,7 @@ gui_color_get_pair (int fg, int bg)
 }
 
 /*
- * gui_color_weechat_get_pair: get color pair with a WeeChat color number
+ * Gets color pair with a WeeChat color number.
  */
 
 int
@@ -167,7 +168,7 @@ gui_color_weechat_get_pair (int weechat_color)
 }
 
 /*
- * gui_color_get_name: get color name
+ * Gets color name.
  */
 
 const char *
@@ -177,7 +178,7 @@ gui_color_get_name (int num_color)
 }
 
 /*
- * gui_color_init_weechat: init WeeChat colors
+ * Initializes WeeChat colors.
  */
 
 void
@@ -187,7 +188,7 @@ gui_color_init_weechat ()
 }
 
 /*
- * gui_color_rebuild_weechat: rebuild WeeChat colors
+ * Rebuilds WeeChat colors.
  */
 
 void
@@ -209,9 +210,9 @@ gui_color_rebuild_weechat ()
 }
 
 /*
- * gui_color_display_terminal_colors: display terminal colors
- *                                    This is called by command line option
- *                                    "-c" / "--colors"
+ * Displays terminal colors.
+ *
+ * This is called by command line option "-c" / "--colors".
  */
 
 void
@@ -221,7 +222,7 @@ gui_color_display_terminal_colors ()
 }
 
 /*
- * gui_color_buffer_display: display content of color buffer
+ * Displays content of color buffer.
  */
 
 void
@@ -231,7 +232,7 @@ gui_color_buffer_display ()
 }
 
 /*
- * gui_color_switch_colrs: switch between WeeChat and terminal colors
+ * Switches between WeeChat and terminal colors.
  */
 
 void
@@ -241,7 +242,7 @@ gui_color_switch_colors ()
 }
 
 /*
- * gui_color_reset_pairs: reset all color pairs
+ * Resets all color pairs.
  */
 
 void
@@ -251,7 +252,7 @@ gui_color_reset_pairs ()
 }
 
 /*
- * gui_color_buffer_assign: assign color buffer to pointer if it is not yet set
+ * Assigns color buffer to pointer if it is not yet set.
  */
 
 void
@@ -261,7 +262,7 @@ gui_color_buffer_assign ()
 }
 
 /*
- * gui_color_buffer_open: open a buffer to display colors
+ * Opens a buffer to display colors.
  */
 
 void
@@ -271,7 +272,7 @@ gui_color_buffer_open ()
 }
 
 /*
- * gui_color_palette_build_aliases: build aliases for palette
+ * Builds aliases for palette.
  */
 
 void
@@ -281,7 +282,7 @@ gui_color_palette_build_aliases ()
 }
 
 /*
- * gui_color_palette_new: create a new color in palette
+ * Creates a new color in palette.
  */
 
 struct t_gui_color_palette *
@@ -295,7 +296,7 @@ gui_color_palette_new (int number, const char *value)
 }
 
 /*
- * gui_color_palette_free: free a color in palette
+ * Frees a color in palette.
  */
 
 void
@@ -306,7 +307,7 @@ gui_color_palette_free (struct t_gui_color_palette *color_palette)
 }
 
 /*
- * gui_color_pre_init: pre-init colors
+ * Pre-initializes colors.
  */
 
 void
@@ -321,7 +322,7 @@ gui_color_pre_init ()
 }
 
 /*
- * gui_color_init: init GUI colors
+ * Initializes GUI colors.
  */
 
 void
@@ -331,7 +332,7 @@ gui_color_init ()
 }
 
 /*
- * gui_color_dump: dump colors
+ * Dumps colors.
  */
 
 void
@@ -341,7 +342,7 @@ gui_color_dump ()
 }
 
 /*
- * gui_color_end: end GUI colors
+ * Ends GUI colors.
  */
 
 void

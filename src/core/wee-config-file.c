@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-config-file.c - configuration files/sections/options management
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-config-file.c: configuration files/sections/options management
  */
 
 #ifdef HAVE_CONFIG_H
@@ -41,6 +39,7 @@
 #include "wee-infolist.h"
 #include "wee-log.h"
 #include "wee-string.h"
+#include "wee-version.h"
 #include "../gui/gui-color.h"
 #include "../gui/gui-chat.h"
 #include "../plugins/plugin.h"
@@ -59,7 +58,7 @@ void config_file_option_free_data (struct t_config_option *option);
 
 
 /*
- * config_file_search: search a configuration file
+ * Searches for a configuration file.
  */
 
 struct t_config_file *
@@ -82,7 +81,9 @@ config_file_search (const char *name)
 }
 
 /*
- * config_file_new: create new configuration options structure
+ * Creates a new configuration file.
+ *
+ * Returns pointer to new configuration file, NULL if error.
  */
 
 struct t_config_file *
@@ -98,7 +99,7 @@ config_file_new (struct t_weechat_plugin *plugin, const char *name,
     if (!name)
         return NULL;
 
-    /* it's NOT authorized to create two configuration files with same filename */
+    /* two configuration files can not have same name */
     if (config_file_search (name))
         return NULL;
 
@@ -147,7 +148,9 @@ config_file_new (struct t_weechat_plugin *plugin, const char *name,
 }
 
 /*
- * config_file_new_section: create a new section in a config
+ * Creates a new section in a configuration file.
+ *
+ * Returns pointer to new section, NULL if error.
  */
 
 struct t_config_section *
@@ -225,7 +228,9 @@ config_file_new_section (struct t_config_file *config_file, const char *name,
 }
 
 /*
- * config_file_search_section: search a section in a configuration structure
+ * Searches for a section in a configuration file.
+ *
+ * Returns pointer to section found, NULL if not found.
  */
 
 struct t_config_section *
@@ -249,7 +254,7 @@ config_file_search_section (struct t_config_file *config_file,
 }
 
 /*
- * config_file_option_full_name: build full name for an option
+ * Builds full name for an option, using format: "file.section.option".
  */
 
 char *
@@ -277,7 +282,7 @@ config_file_option_full_name (struct t_config_option *option)
 }
 
 /*
- * config_file_hook_config_exec: execute hook_config for modified option
+ * Executes hook_config for modified option.
  */
 
 void
@@ -330,8 +335,7 @@ config_file_hook_config_exec (struct t_config_option *option)
 }
 
 /*
- * config_file_option_find_pos: find position for an option in section
- *                              (for sorting options)
+ * Searches for position of option in section (to keep options sorted by name).
  */
 
 struct t_config_option *
@@ -354,8 +358,7 @@ config_file_option_find_pos (struct t_config_section *section, const char *name)
 }
 
 /*
- * config_file_option_insert_in_section: insert option in section (for sorting
- *                                       options)
+ * Inserts an option in section (keeping options sorted by name).
  */
 
 void
@@ -401,7 +404,9 @@ config_file_option_insert_in_section (struct t_config_option *option)
 }
 
 /*
- * config_file_option_malloc: allocate memory for new option and fill it with 0/NULL
+ * Allocates memory for a new option and initializes it.
+ *
+ * Returns pointer to new option, NULL if error.
  */
 
 struct t_config_option *
@@ -438,7 +443,9 @@ config_file_option_malloc ()
 }
 
 /*
- * config_file_new_option: create a new option
+ * Creates a new option.
+ *
+ * Returns pointer to new option, NULL if error.
  */
 
 struct t_config_option *
@@ -698,7 +705,9 @@ error:
 }
 
 /*
- * config_file_search_option: search an option in a configuration file or section
+ * Searches for an option in a configuration file or section.
+ *
+ * Returns pointer to option found, NULL if error.
  */
 
 struct t_config_option *
@@ -737,8 +746,10 @@ config_file_search_option (struct t_config_file *config_file,
 }
 
 /*
- * config_file_search_section_option: search an option in a configuration file
- *                                    or section and return section/option
+ * Searches for an option in a configuration file or section.
+ *
+ * Returns section/option found (in section_found/option_found), NULL if not
+ * found.
  */
 
 void
@@ -786,9 +797,8 @@ config_file_search_section_option (struct t_config_file *config_file,
 }
 
 /*
- * config_file_search_with_string: search file/section/option for
- *                                 an option with full string
- *                                 (file.section.option)
+ * Searches for a file/section/option using a full name of option (format:
+ * "file.section.option").
  */
 
 void
@@ -861,7 +871,11 @@ config_file_search_with_string (const char *option_name,
 }
 
 /*
- * config_file_string_boolean_is_valid: return 1 if boolean is valid, otherwise 0
+ * Checks if a string with boolean value is valid.
+ *
+ * Returns:
+ *   1: boolean value is valid
+ *   0: boolean value is NOT valid
  */
 
 int
@@ -889,8 +903,11 @@ config_file_string_boolean_is_valid (const char *text)
 }
 
 /*
- * config_file_string_to_boolean: return boolean value of string
- *                                (1 for true, 0 for false)
+ * Converts string to boolean value.
+ *
+ * Returns:
+ *   1: boolean value is true
+ *   0: boolean value is false
  */
 
 int
@@ -911,11 +928,12 @@ config_file_string_to_boolean (const char *text)
 }
 
 /*
- * config_file_option_reset: set default value for an option
- *                           return one of these values:
- *                             WEECHAT_CONFIG_OPTION_SET_OK_CHANGED
- *                             WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE
- *                             WEECHAT_CONFIG_OPTION_SET_ERROR
+ * Resets an option to its default value.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_OPTION_SET_OK_CHANGED: OK, value has been changed
+ *   WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE: OK, value not changed
+ *   WEECHAT_CONFIG_OPTION_SET_ERROR: error
  */
 
 int
@@ -1037,11 +1055,12 @@ config_file_option_reset (struct t_config_option *option, int run_callback)
 }
 
 /*
- * config_file_option_set: set value for an option
- *                         return one of these values:
- *                           WEECHAT_CONFIG_OPTION_SET_OK_CHANGED
- *                           WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE
- *                           WEECHAT_CONFIG_OPTION_SET_ERROR
+ * Sets the value for an option.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_OPTION_SET_OK_CHANGED: OK, value has been changed
+ *   WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE: OK, value not changed
+ *   WEECHAT_CONFIG_OPTION_SET_ERROR: error
  */
 
 int
@@ -1349,11 +1368,12 @@ config_file_option_set (struct t_config_option *option, const char *value,
 }
 
 /*
- * config_file_option_set_null: set null (undefined) value for an option
- *                              return one of these values:
- *                                WEECHAT_CONFIG_OPTION_SET_OK_CHANGED
- *                                WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE
- *                                WEECHAT_CONFIG_OPTION_SET_ERROR
+ * Sets null (undefined) value for an option.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_OPTION_SET_OK_CHANGED: OK, value has been changed
+ *   WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE: OK, value not changed
+ *   WEECHAT_CONFIG_OPTION_SET_ERROR: error
  */
 
 int
@@ -1399,12 +1419,13 @@ config_file_option_set_null (struct t_config_option *option, int run_callback)
 }
 
 /*
- * config_file_option_unset: unset/reset option
- *                           return one of these values:
- *                             WEECHAT_CONFIG_OPTION_UNSET_OK_NO_RESET
- *                             WEECHAT_CONFIG_OPTION_UNSET_OK_RESET
- *                             WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED
- *                             WEECHAT_CONFIG_OPTION_UNSET_ERROR
+ * Unsets/resets an option.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_OPTION_UNSET_OK_NO_RESET: OK, value has not been reset
+ *   WEECHAT_CONFIG_OPTION_UNSET_OK_RESET: OK, value has been reset
+ *   WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED: OK, value has been removed
+ *   WEECHAT_CONFIG_OPTION_UNSET_ERROR: error
  */
 
 int
@@ -1471,7 +1492,7 @@ config_file_option_unset (struct t_config_option *option)
 }
 
 /*
- * config_file_option_rename: rename an option
+ * Renames an option.
  */
 
 void
@@ -1512,7 +1533,7 @@ config_file_option_rename (struct t_config_option *option,
 }
 
 /*
- * config_file_option_get_pointer: get a pointer of an option property
+ * Gets a pointer of an option property.
  */
 
 void *
@@ -1551,8 +1572,11 @@ config_file_option_get_pointer (struct t_config_option *option,
 }
 
 /*
- * config_file_option_is_null: return 1 if value of option is null
- *                                    0 if it is not null
+ * Checks if an option has a null value.
+ *
+ * Returns:
+ *   1: value of option is null
+ *   0: value of option is not null
  */
 
 int
@@ -1565,8 +1589,11 @@ config_file_option_is_null (struct t_config_option *option)
 }
 
 /*
- * config_file_option_default_is_null: return 1 if default value of option is null
- *                                            0 if it is not null
+ * Checks if an option has a null default value.
+ *
+ * Returns:
+ *   1: default value of option is null
+ *   0: default value of option is not null
  */
 
 int
@@ -1579,13 +1606,55 @@ config_file_option_default_is_null (struct t_config_option *option)
 }
 
 /*
- * config_file_option_set_with_string: set value for an option (with a string
- *                                     for name of option)
- *                                     return one of these values:
- *                                       WEECHAT_CONFIG_OPTION_SET_OK_CHANGED
- *                                       WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE
- *                                       WEECHAT_CONFIG_OPTION_SET_ERROR
- *                                       WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND
+ * Checks if an option has changed (current value different from default value).
+ *
+ * Returns:
+ *   1: option has changed
+ *   0: option has default value
+ */
+
+int config_file_option_has_changed (struct t_config_option *option)
+{
+    /* both default and current value are null => not changed */
+    if (!option->default_value && !option->value)
+        return 0;
+
+    /* default is null and current value is not null => changed! */
+    if (!option->default_value && option->value)
+        return 1;
+
+    /* default is not null and current value is null => changed! */
+    if (option->default_value && !option->value)
+        return 1;
+
+    /* both default and current value are not null, compare their values */
+    switch (option->type)
+    {
+        case CONFIG_OPTION_TYPE_BOOLEAN:
+            return CONFIG_BOOLEAN(option) != CONFIG_BOOLEAN_DEFAULT(option);
+        case CONFIG_OPTION_TYPE_INTEGER:
+            return CONFIG_INTEGER(option) != CONFIG_INTEGER_DEFAULT(option);
+        case CONFIG_OPTION_TYPE_STRING:
+            return strcmp(CONFIG_STRING(option), CONFIG_STRING_DEFAULT(option)) != 0;
+        case CONFIG_OPTION_TYPE_COLOR:
+            return CONFIG_COLOR(option) != CONFIG_COLOR_DEFAULT(option);
+        case CONFIG_NUM_OPTION_TYPES:
+            /* make C compiler happy */
+            break;
+    }
+
+    return 0;
+}
+
+/*
+ * Sets the value for an option using a full name of option (format:
+ * "file.section.option").
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_OPTION_SET_OK_CHANGED: OK, value has been changed
+ *   WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE: OK, value not changed
+ *   WEECHAT_CONFIG_OPTION_SET_ERROR: error
+ *   WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND: option not found
  */
 
 int
@@ -1629,7 +1698,9 @@ config_file_option_set_with_string (const char *option_name, const char *value)
 }
 
 /*
- * config_file_option_boolean: return boolean value of an option
+ * Returns boolean value of an option.
+ *
+ * Returns 1 if value is true, 0 if it is false.
  */
 
 int
@@ -1645,7 +1716,9 @@ config_file_option_boolean (struct t_config_option *option)
 }
 
 /*
- * config_file_option_boolean_default: return default boolean value of an option
+ * Returns default boolean value of an option.
+ *
+ * Returns 1 if default value is true, 0 if it is false.
  */
 
 int
@@ -1661,7 +1734,7 @@ config_file_option_boolean_default (struct t_config_option *option)
 }
 
 /*
- * config_file_option_integer: return integer value of an option
+ * Returns integer value of an option.
  */
 
 int
@@ -1689,7 +1762,7 @@ config_file_option_integer (struct t_config_option *option)
 }
 
 /*
- * config_file_option_integer_default: return default integer value of an option
+ * Returns default integer value of an option.
  */
 
 int
@@ -1717,7 +1790,7 @@ config_file_option_integer_default (struct t_config_option *option)
 }
 
 /*
- * config_file_option_string: return string value of an option
+ * Returns string value of an option.
  */
 
 const char *
@@ -1748,7 +1821,7 @@ config_file_option_string (struct t_config_option *option)
 }
 
 /*
- * config_file_option_string_default: return default string value of an option
+ * Returns default string value of an option.
  */
 
 const char *
@@ -1779,7 +1852,7 @@ config_file_option_string_default (struct t_config_option *option)
 }
 
 /*
- * config_file_option_color: return color value of an option
+ * Returns color value of an option.
  */
 
 const char *
@@ -1792,7 +1865,7 @@ config_file_option_color (struct t_config_option *option)
 }
 
 /*
- * config_file_option_color_default: return default color value of an option
+ * Returns default color value of an option.
  */
 
 const char *
@@ -1805,10 +1878,11 @@ config_file_option_color_default (struct t_config_option *option)
 }
 
 /*
- * config_file_option_escape: return "\" if name of option must be escaped,
- *                            or empty string if option must not be escaped
- *                            The option is escaped if it is begining with one
- *                            of these chars: # [ \
+ * Returns a char to add before the name of option to escape it.
+ *
+ * Returns:
+ *   "\": name must be escaped with "\" (if names begins with # [ \)
+ *   "": name must not be escaped
  */
 
 const char *
@@ -1826,8 +1900,11 @@ config_file_option_escape (const char *name)
 }
 
 /*
- * config_file_write_option: write an option in a configuration file
- *                           return 1 if ok, 0 if error
+ * Writes an option in a configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1891,9 +1968,13 @@ config_file_write_option (struct t_config_file *config_file,
 }
 
 /*
- * config_file_write_line: write a line in a configuration file
- *                         if value is NULL, then write a section with [ ] around
- *                         return 1 if ok, 0 if error
+ * Writes a line in a configuration file.
+ *
+ * If value is NULL, then writes a section with [ ] around.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1927,12 +2008,12 @@ config_file_write_line (struct t_config_file *config_file,
 }
 
 /*
- * config_file_write_internal: write a configuration file
- *                             (should not be called directly)
- *                             return one of these values:
- *                               WEECHAT_CONFIG_WRITE_OK
- *                               WEECHAT_CONFIG_WRITE_ERROR
- *                               WEECHAT_CONFIG_WRITE_MEMORY_ERROR
+ * Writes a configuration file (this function must not be called directly).
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_WRITE_OK: OK
+ *   WEECHAT_CONFIG_WRITE_ERROR: error
+ *   WEECHAT_CONFIG_WRITE_MEMORY_ERROR: not enough memory
  */
 
 int
@@ -2003,7 +2084,9 @@ config_file_write_internal (struct t_config_file *config_file,
         goto error;
     if (!string_iconv_fprintf (config_file->file,
                                "# %s -- %s v%s\n#\n",
-                               config_file->filename, PACKAGE_NAME, PACKAGE_VERSION))
+                               config_file->filename,
+                               version_get_name (),
+                               version_get_version ()))
         goto error;
 
     /* write all sections */
@@ -2080,11 +2163,12 @@ error:
 }
 
 /*
- * config_file_write: write a configuration file
- *                    return one of these values:
- *                      WEECHAT_CONFIG_WRITE_OK
- *                      WEECHAT_CONFIG_WRITE_ERROR
- *                      WEECHAT_CONFIG_WRITE_MEMORY_ERROR
+ * Writes a configuration file.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_WRITE_OK: OK
+ *   WEECHAT_CONFIG_WRITE_ERROR: error
+ *   WEECHAT_CONFIG_WRITE_MEMORY_ERROR: not enough memory
  */
 
 int
@@ -2094,12 +2178,12 @@ config_file_write (struct t_config_file *config_file)
 }
 
 /*
- * config_file_read_internal: read a configuration file
- *                            (should not be called directly)
- *                            return one of these values:
- *                              WEECHAT_CONFIG_READ_OK
- *                              WEECHAT_CONFIG_READ_MEMORY_ERROR
- *                              WEECHAT_CONFIG_READ_FILE_NOT_FOUND
+ * Reads a configuration file (this function must not be called directly).
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_READ_OK: OK
+ *   WEECHAT_CONFIG_READ_MEMORY_ERROR: not enough memory
+ *   WEECHAT_CONFIG_READ_FILE_NOT_FOUND: file not found
  */
 
 int
@@ -2339,11 +2423,12 @@ config_file_read_internal (struct t_config_file *config_file, int reload)
 }
 
 /*
- * config_file_read: read a configuration file
- *                   return one of these values:
- *                     WEECHAT_CONFIG_READ_OK
- *                     WEECHAT_CONFIG_READ_MEMORY_ERROR
- *                     WEECHAT_CONFIG_READ_FILE_NOT_FOUND
+ * Reads a configuration file.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_READ_OK: OK
+ *   WEECHAT_CONFIG_READ_MEMORY_ERROR: not enough memory
+ *   WEECHAT_CONFIG_READ_FILE_NOT_FOUND: file not found
  */
 
 int
@@ -2353,11 +2438,12 @@ config_file_read (struct t_config_file *config_file)
 }
 
 /*
- * config_file_reload: reload a configuration file
- *                     return one of these values:
- *                       WEECHAT_CONFIG_READ_OK
- *                       WEECHAT_CONFIG_READ_MEMORY_ERROR
- *                       WEECHAT_CONFIG_READ_FILE_NOT_FOUND
+ * Reloads a configuration file.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_READ_OK: OK
+ *   WEECHAT_CONFIG_READ_MEMORY_ERROR: not enough memory
+ *   WEECHAT_CONFIG_READ_FILE_NOT_FOUND: file not found
  */
 
 int
@@ -2408,7 +2494,7 @@ config_file_reload (struct t_config_file *config_file)
 }
 
 /*
- * config_file_option_free_data: free data in an option
+ * Frees data in an option.
  */
 
 void
@@ -2427,7 +2513,7 @@ config_file_option_free_data (struct t_config_option *option)
 }
 
 /*
- * config_file_option_free: free an option
+ * Frees an option.
  */
 
 void
@@ -2440,6 +2526,9 @@ config_file_option_free (struct t_config_option *option)
         return;
 
     ptr_section = option->section;
+
+    /* free data */
+    config_file_option_free_data (option);
 
     /* remove option from section */
     if (ptr_section)
@@ -2458,14 +2547,11 @@ config_file_option_free (struct t_config_option *option)
         ptr_section->options = new_options;
     }
 
-    /* free data */
-    config_file_option_free_data (option);
-
     free (option);
 }
 
 /*
- * config_file_section_free_options: free options in a section
+ * Frees options in a section.
  */
 
 void
@@ -2481,7 +2567,7 @@ config_file_section_free_options (struct t_config_section *section)
 }
 
 /*
- * config_file_section_free: free a section
+ * Frees a section.
  */
 
 void
@@ -2495,7 +2581,12 @@ config_file_section_free (struct t_config_section *section)
 
     ptr_config = section->config_file;
 
-    /* remove section */
+    /* free data */
+    config_file_section_free_options (section);
+    if (section->name)
+        free (section->name);
+
+    /* remove section from list */
     if (ptr_config->last_section == section)
         ptr_config->last_section = section->prev_section;
     if (section->prev_section)
@@ -2509,18 +2600,13 @@ config_file_section_free (struct t_config_section *section)
     if (section->next_section)
         (section->next_section)->prev_section = section->prev_section;
 
-    /* free data */
-    config_file_section_free_options (section);
-    if (section->name)
-        free (section->name);
-
     free (section);
 
     ptr_config->sections = new_sections;
 }
 
 /*
- * config_file_free: free a configuration file
+ * Frees a configuration file.
  */
 
 void
@@ -2531,7 +2617,17 @@ config_file_free (struct t_config_file *config_file)
     if (!config_file)
         return;
 
-    /* remove configuration file */
+    /* free data */
+    while (config_file->sections)
+    {
+        config_file_section_free (config_file->sections);
+    }
+    if (config_file->name)
+        free (config_file->name);
+    if (config_file->filename)
+        free (config_file->filename);
+
+    /* remove configuration file from list */
     if (last_config_file == config_file)
         last_config_file = config_file->prev_config;
     if (config_file->prev_config)
@@ -2545,23 +2641,13 @@ config_file_free (struct t_config_file *config_file)
     if (config_file->next_config)
         (config_file->next_config)->prev_config = config_file->prev_config;
 
-    /* free data */
-    while (config_file->sections)
-    {
-        config_file_section_free (config_file->sections);
-    }
-    if (config_file->name)
-        free (config_file->name);
-    if (config_file->filename)
-        free (config_file->filename);
-
     free (config_file);
 
     config_files = new_config_files;
 }
 
 /*
- * config_file_free_all: free all configuration files
+ * Frees all configuration files.
  */
 
 void
@@ -2574,7 +2660,7 @@ config_file_free_all ()
 }
 
 /*
- * config_file_free_all: free all configuration files for a plugin
+ * Frees all configuration files for a plugin.
  */
 
 void
@@ -2595,7 +2681,7 @@ config_file_free_all_plugin (struct t_weechat_plugin *plugin)
 }
 
 /*
- * config_file_hdata_config_file_cb: return hdata for config_file
+ * Returns hdata for structure t_config_file.
  */
 
 struct t_hdata *
@@ -2606,19 +2692,20 @@ config_file_hdata_config_file_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_config", "next_config");
+    hdata = hdata_new (NULL, hdata_name, "prev_config", "next_config",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_config_file, plugin, POINTER, NULL, "plugin");
-        HDATA_VAR(struct t_config_file, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_config_file, filename, STRING, NULL, NULL);
-        HDATA_VAR(struct t_config_file, file, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_file, callback_reload, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_file, callback_reload_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_file, sections, POINTER, NULL, "config_section");
-        HDATA_VAR(struct t_config_file, last_section, POINTER, NULL, "config_section");
-        HDATA_VAR(struct t_config_file, prev_config, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_config_file, next_config, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_config_file, plugin, POINTER, 0, NULL, "plugin");
+        HDATA_VAR(struct t_config_file, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_file, filename, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_file, file, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_file, callback_reload, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_file, callback_reload_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_file, sections, POINTER, 0, NULL, "config_section");
+        HDATA_VAR(struct t_config_file, last_section, POINTER, 0, NULL, "config_section");
+        HDATA_VAR(struct t_config_file, prev_config, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_config_file, next_config, POINTER, 0, NULL, hdata_name);
         HDATA_LIST(config_files);
         HDATA_LIST(last_config_file);
     }
@@ -2626,7 +2713,7 @@ config_file_hdata_config_file_cb (void *data, const char *hdata_name)
 }
 
 /*
- * config_file_hdata_config_section_cb: return hdata for config_section
+ * Returns hdata for structure t_config_section.
  */
 
 struct t_hdata *
@@ -2637,33 +2724,34 @@ config_file_hdata_config_section_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_section", "next_section");
+    hdata = hdata_new (NULL, hdata_name, "prev_section", "next_section",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_config_section, config_file, POINTER, NULL, "config_file");
-        HDATA_VAR(struct t_config_section, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_config_section, user_can_add_options, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, user_can_delete_options, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_read, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_read_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_write, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_write_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_write_default, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_write_default_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_create_option, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_create_option_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_delete_option, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, callback_delete_option_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_section, options, POINTER, NULL, "config_option");
-        HDATA_VAR(struct t_config_section, last_option, POINTER, NULL, "config_option");
-        HDATA_VAR(struct t_config_section, prev_section, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_config_section, next_section, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_config_section, config_file, POINTER, 0, NULL, "config_file");
+        HDATA_VAR(struct t_config_section, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, user_can_add_options, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, user_can_delete_options, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_read, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_read_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_write, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_write_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_write_default, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_write_default_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_create_option, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_create_option_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_delete_option, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, callback_delete_option_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_section, options, POINTER, 0, NULL, "config_option");
+        HDATA_VAR(struct t_config_section, last_option, POINTER, 0, NULL, "config_option");
+        HDATA_VAR(struct t_config_section, prev_section, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_config_section, next_section, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * config_file_hdata_config_option_cb: return hdata for config_option
+ * Returns hdata for structure t_config_option.
  */
 
 struct t_hdata *
@@ -2674,36 +2762,40 @@ config_file_hdata_config_option_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_option", "next_option");
+    hdata = hdata_new (NULL, hdata_name, "prev_option", "next_option",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_config_option, config_file, POINTER, NULL, "config_file");
-        HDATA_VAR(struct t_config_option, section, POINTER, NULL, "config_section");
-        HDATA_VAR(struct t_config_option, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_config_option, type, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, description, STRING, NULL, NULL);
-        HDATA_VAR(struct t_config_option, string_values, STRING, "*", NULL);
-        HDATA_VAR(struct t_config_option, min, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, max, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, default_value, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, value, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, null_value_allowed, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, callback_check_value, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, callback_check_value_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, callback_change, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, callback_change_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, callback_delete, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, callback_delete_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, loaded, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_config_option, prev_option, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_config_option, next_option, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_config_option, config_file, POINTER, 0, NULL, "config_file");
+        HDATA_VAR(struct t_config_option, section, POINTER, 0, NULL, "config_section");
+        HDATA_VAR(struct t_config_option, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, type, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, description, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, string_values, STRING, 0, "*", NULL);
+        HDATA_VAR(struct t_config_option, min, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, max, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, default_value, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, value, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, null_value_allowed, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, callback_check_value, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, callback_check_value_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, callback_change, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, callback_change_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, callback_delete, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, callback_delete_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, loaded, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_config_option, prev_option, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_config_option, next_option, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * config_file_add_to_infolist: add configuration options in an infolist
- *                              return 1 if ok, 0 if error
+ * Adds configuration options in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -3012,7 +3104,7 @@ config_file_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * config_file_print_log: print configuration in log (usually for crash dump)
+ * Prints configuration file in WeeChat log file (usually for crash dump).
  */
 
 void

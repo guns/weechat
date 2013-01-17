@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-hook.c - WeeChat hooks management
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-hook.c: WeeChat hooks management
  */
 
 #ifdef HAVE_CONFIG_H
@@ -76,7 +75,7 @@ void hook_process_run (struct t_hook *hook_process);
 
 
 /*
- * hook_init: init hooks lists
+ * Initializes lists of hooks.
  */
 
 void
@@ -93,7 +92,9 @@ hook_init ()
 }
 
 /*
- * hook_search_type: search type string and return integer (-1 if not found)
+ * Searches for a hook type.
+ *
+ * Returns index of type in enum t_hook_type, -1 if type is not found.
  */
 
 int
@@ -115,9 +116,10 @@ hook_search_type (const char *type)
 }
 
 /*
- * hook_find_pos: find position for new hook:
- *                - for type command: sort on command name, then priority
- *                - for all other types: sort on priority
+ * Searches for position of hook in list (to keep hooks sorted).
+ *
+ * Hooks are sorted by priority, except commands which are sorted by command
+ * name, and then priority.
  */
 
 struct t_hook *
@@ -159,7 +161,7 @@ hook_find_pos (struct t_hook *hook)
 }
 
 /*
- * hook_add_to_list: add a hook to list
+ * Adds a hook to list.
  */
 
 void
@@ -200,7 +202,7 @@ hook_add_to_list (struct t_hook *new_hook)
 }
 
 /*
- * hook_remove_from_list: remove a hook from list
+ * Removes a hook from list.
  */
 
 void
@@ -230,7 +232,7 @@ hook_remove_from_list (struct t_hook *hook)
 }
 
 /*
- * hook_remove_deleted: remove deleted hooks from list
+ * Removes hooks marked as "deleted" from list.
  */
 
 void
@@ -259,31 +261,31 @@ hook_remove_deleted ()
 }
 
 /*
- * hook_get_priority_and_name: get priority (integer) and pointer to start of
- *                             name, from argument "name"
- *                             name may be:
- *                             - a simple name like "test":
- *                               => priority = 1000 (default), ptr_name = "test"
- *                             - a priority + "|" + name, like "500|test":
- *                               => priority = 500, ptr_name = "test"
+ * Extracts priority and name from a string.
+ *
+ * String can be:
+ *   - a simple name like "test":
+ *       => priority = 1000 (default), name = "test"
+ *   - a priority + "|" + name, like "500|test":
+ *       => priority = 500, name = "test"
  */
 
 void
-hook_get_priority_and_name (const char *name,
-                            int *priority, const char **ptr_name)
+hook_get_priority_and_name (const char *string,
+                            int *priority, const char **name)
 {
     char *pos, *str_priority, *error;
     long number;
 
     if (priority)
         *priority = HOOK_PRIORITY_DEFAULT;
-    if (ptr_name)
-        *ptr_name = name;
+    if (name)
+        *name = string;
 
-    pos = strchr (name, '|');
+    pos = strchr (string, '|');
     if (pos)
     {
-        str_priority = string_strndup (name, pos - name);
+        str_priority = string_strndup (string, pos - string);
         if (str_priority)
         {
             error = NULL;
@@ -292,8 +294,8 @@ hook_get_priority_and_name (const char *name,
             {
                 if (priority)
                     *priority = number;
-                if (ptr_name)
-                    *ptr_name = pos + 1;
+                if (name)
+                    *name = pos + 1;
             }
             free (str_priority);
         }
@@ -301,7 +303,7 @@ hook_get_priority_and_name (const char *name,
 }
 
 /*
- * hook_init_data: init data a new hook with default values
+ * Initializes a new hook with default values.
  */
 
 void
@@ -329,9 +331,11 @@ hook_init_data (struct t_hook *hook, struct t_weechat_plugin *plugin,
 }
 
 /*
- * hook_valid: check if a hook pointer exists
- *                   return 1 if hook exists
- *                          0 if hook is not found
+ * Checks if a hook pointer is valid.
+ *
+ * Returns:
+ *   1: hook exists
+ *   0: hook does not exist
  */
 
 int
@@ -355,7 +359,7 @@ hook_valid (struct t_hook *hook)
 }
 
 /*
- * hook_exec_start: code executed before a hook exec
+ * Starts a hook exec.
  */
 
 void
@@ -365,7 +369,7 @@ hook_exec_start ()
 }
 
 /*
- * hook_exec_end: code executed after a hook exec
+ * Ends a hook_exec.
  */
 
 void
@@ -379,7 +383,9 @@ hook_exec_end ()
 }
 
 /*
- * hook_search_command: search command hook in list
+ * Searches for a command hook in list.
+ *
+ * Returns pointer to hook found, NULL if not found.
  */
 
 struct t_hook *
@@ -401,8 +407,8 @@ hook_search_command (struct t_weechat_plugin *plugin, const char *command)
 }
 
 /*
- * hook_command_build_completion: build variables/arrays that will be used for
- *                                completion of commands arguments
+ * Builds variables/arrays that will be used for completion of commands
+ * arguments.
  */
 
 void
@@ -571,7 +577,9 @@ hook_command_build_completion (struct t_hook_command *hook_command)
 }
 
 /*
- * hook_command: hook a command
+ * Hooks a command.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -640,14 +648,15 @@ hook_command (struct t_weechat_plugin *plugin, const char *command,
 }
 
 /*
- * hook_command_exec: execute command hook
- *                    return:  0 if command executed and failed
- *                             1 if command executed successfully
- *                            -1 if command not found
- *                            -2 if command is ambigous (same command exists
- *                               for another plugin, and we don't know which
- *                               one to run)
- *                            -3 if command is already running
+ * Executes a command hook.
+ *
+ * Returns:
+ *    0: command executed and failed
+ *    1: command executed successfully
+ *   -1: command not found
+ *   -2: command is ambiguous (same command exists for another plugin, and we
+ *       don't know which one to run)
+ *   -3: command is already running
  */
 
 int
@@ -655,9 +664,9 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
                    struct t_weechat_plugin *plugin, const char *string)
 {
     struct t_hook *ptr_hook, *next_hook;
-    struct t_hook *hook_for_plugin, *hook_for_other_plugin;
+    struct t_hook *hook_plugin, *hook_other_plugin, *hook_other_plugin2;
     char **argv, **argv_eol, *ptr_command_name;
-    int argc, rc, number_for_other_plugin;
+    int argc, rc, count_other_plugin;
 
     if (!buffer || !string || !string[0])
         return -1;
@@ -680,9 +689,10 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
 
     hook_exec_start ();
 
-    hook_for_plugin = NULL;
-    hook_for_other_plugin = NULL;
-    number_for_other_plugin = 0;
+    hook_plugin = NULL;
+    hook_other_plugin = NULL;
+    hook_other_plugin2 = NULL;
+    count_other_plugin = 0;
     ptr_hook = weechat_hooks[HOOK_TYPE_COMMAND];
     while (ptr_hook)
     {
@@ -694,16 +704,18 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
         {
             if (ptr_hook->plugin == plugin)
             {
-                if (!hook_for_plugin)
-                    hook_for_plugin = ptr_hook;
+                if (!hook_plugin)
+                    hook_plugin = ptr_hook;
             }
             else
             {
                 if (any_plugin)
                 {
-                    if (!hook_for_other_plugin)
-                        hook_for_other_plugin = ptr_hook;
-                    number_for_other_plugin++;
+                    if (!hook_other_plugin)
+                        hook_other_plugin = ptr_hook;
+                    else if (!hook_other_plugin2)
+                        hook_other_plugin2 = ptr_hook;
+                    count_other_plugin++;
                 }
             }
         }
@@ -711,31 +723,53 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
         ptr_hook = next_hook;
     }
 
-    if (!hook_for_plugin && !hook_for_other_plugin)
+    if (!hook_plugin && !hook_other_plugin)
     {
-        /* command not found */
+        /* command not found at all */
         rc = -1;
     }
     else
     {
-        if (!hook_for_plugin && (number_for_other_plugin > 1))
+        if (!hook_plugin && (count_other_plugin > 1)
+            && (hook_other_plugin->priority == hook_other_plugin2->priority))
         {
             /*
              * ambiguous: no command for current plugin, but more than one
-             * command was found for other plugins, we don't know which one to
-             * run!
+             * command was found for other plugins with the same priority
+             * => we don't know which one to run!
              */
             rc = -2;
         }
         else
         {
-            ptr_hook = (hook_for_plugin) ?
-                hook_for_plugin : hook_for_other_plugin;
-
-            if (ptr_hook->running >= HOOK_COMMAND_MAX_CALLS)
-                rc = -3;
+            if (hook_plugin && hook_other_plugin)
+            {
+                /*
+                 * if we have a command in current plugin and another plugin,
+                 * choose the command with the higher priority (if priority
+                 * is the same, always choose the command for the current
+                 * plugin)
+                 */
+                ptr_hook = (hook_other_plugin->priority > hook_plugin->priority) ?
+                    hook_other_plugin : hook_plugin;
+            }
             else
             {
+                /*
+                 * choose the command for current plugin, if found, otherwise
+                 * use command found in another plugin
+                 */
+                ptr_hook = (hook_plugin) ? hook_plugin : hook_other_plugin;
+            }
+
+            if (ptr_hook->running >= HOOK_COMMAND_MAX_CALLS)
+            {
+                /* loop in execution of command => do NOT execute again */
+                rc = -3;
+            }
+            else
+            {
+                /* execute the command! */
                 ptr_hook->running++;
                 rc = (int) (HOOK_COMMAND(ptr_hook, callback))
                     (ptr_hook->callback_data, buffer, argc, argv, argv_eol);
@@ -757,7 +791,9 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
 }
 
 /*
- * hook_command_run: hook a command when it's run by WeeChat
+ * Hooks a command when it's run by WeeChat.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -797,7 +833,7 @@ hook_command_run (struct t_weechat_plugin *plugin, const char *command,
 }
 
 /*
- * hook_command_run_exec: execute command_run hook
+ * Executes a command_run hook.
  */
 
 int
@@ -869,7 +905,7 @@ hook_command_run_exec (struct t_gui_buffer *buffer, const char *command)
 }
 
 /*
- * hook_timer_init: init a timer hook
+ * Initializes a timer hook.
  */
 
 void
@@ -924,7 +960,9 @@ hook_timer_init (struct t_hook *hook)
 }
 
 /*
- * hook_timer: hook a timer
+ * Hooks a timer.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -965,10 +1003,9 @@ hook_timer (struct t_weechat_plugin *plugin, long interval, int align_second,
 }
 
 /*
- * hook_timer_check_system_clock: check if system clock is older than previous
- *                                call to this function (that means new time
- *                                is lower that in past). If yes, then adjust
- *                                all timers to current time
+ * Checks if system clock is older than previous call to this function (that
+ * means new time is lower than in past). If yes, adjusts all timers to current
+ * time.
  */
 
 void
@@ -1008,9 +1045,7 @@ hook_timer_check_system_clock ()
 }
 
 /*
- * hook_timer_time_to_next: get time to next timeout
- *                          return 1 if timeout is set with next timeout
- *                                 0 if there's no timeout
+ * Sets time until next timeout.
  */
 
 void
@@ -1080,7 +1115,7 @@ hook_timer_time_to_next (struct timeval *tv_timeout)
 }
 
 /*
- * hook_timer_exec: execute timer hooks
+ * Executes timer hooks.
  */
 
 void
@@ -1135,7 +1170,9 @@ hook_timer_exec ()
 }
 
 /*
- * hook_search_fd: search fd hook in list
+ * Searches for a fd hook in list.
+ *
+ * Returns pointer to hook found, NULL if not found.
  */
 
 struct t_hook *
@@ -1155,7 +1192,9 @@ hook_search_fd (int fd)
 }
 
 /*
- * hook_fd: hook a fd event
+ * Hooks a fd event.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -1200,8 +1239,9 @@ hook_fd (struct t_weechat_plugin *plugin, int fd, int flag_read,
 }
 
 /*
- * hook_fd_set: fill sets according to hd hooked
- *              return highest fd set
+ * Fills sets according to fd hooked.
+ *
+ * Returns highest fd set.
  */
 
 int
@@ -1258,7 +1298,7 @@ hook_fd_set (fd_set *read_fds, fd_set *write_fds, fd_set *exception_fds)
 }
 
 /*
- * hook_fd_exec: execute fd callbacks with sets
+ * Executes fd callbacks with sets.
  */
 
 void
@@ -1295,7 +1335,9 @@ hook_fd_exec (fd_set *read_fds, fd_set *write_fds, fd_set *exception_fds)
 }
 
 /*
- * hook_process_hashtable: hook a process (using fork) with options in hashtable
+ * Hooks a process (using fork) with options in hashtable.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -1367,7 +1409,9 @@ hook_process_hashtable (struct t_weechat_plugin *plugin,
 }
 
 /*
- * hook_process: hook a process (using fork)
+ * Hooks a process (using fork).
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -1380,16 +1424,16 @@ hook_process (struct t_weechat_plugin *plugin,
 }
 
 /*
- * hook_process_child: child process for hook process: execute function and
- *                     return string result into pipe for WeeChat process
+ * Child process for hook process: executes command and returns string result
+ * into pipe for WeeChat process.
  */
 
 void
 hook_process_child (struct t_hook *hook_process)
 {
-    char *exec_args[4] = { "sh", "-c", NULL, NULL };
-    const char *ptr_url;
-    int rc;
+    char **exec_args, *arg0, str_arg[64];
+    const char *ptr_url, *ptr_arg;
+    int rc, i, num_args;
 
     /*
      * close stdin, so that process will fail to read stdin (process reading
@@ -1428,10 +1472,76 @@ hook_process_child (struct t_hook *hook_process)
     else
     {
         /* launch command */
-        exec_args[2] = HOOK_PROCESS(hook_process, command);
-        execvp (exec_args[0], exec_args);
+        num_args = 0;
+        if (HOOK_PROCESS(hook_process, options))
+        {
+            /*
+             * count number of arguments given in the hashable options,
+             * keys are: "arg1", "arg2", ...
+             */
+            while (1)
+            {
+                snprintf (str_arg, sizeof (str_arg), "arg%d", num_args + 1);
+                ptr_arg = hashtable_get (HOOK_PROCESS(hook_process, options),
+                                         str_arg);
+                if (!ptr_arg)
+                    break;
+                num_args++;
+            }
+        }
+        if (num_args > 0)
+        {
+            /*
+             * if at least one argument was found in hashtable option, the
+             * "command" contains only path to binary (without arguments), and
+             * the arguments are in hashtable
+             */
+            exec_args = malloc ((num_args + 2) * sizeof (exec_args[0]));
+            if (exec_args)
+            {
+                exec_args[0] = strdup (HOOK_PROCESS(hook_process, command));
+                for (i = 1; i <= num_args; i++)
+                {
+                    snprintf (str_arg, sizeof (str_arg), "arg%d", i);
+                    ptr_arg = hashtable_get (HOOK_PROCESS(hook_process, options),
+                                             str_arg);
+                    exec_args[i] = (ptr_arg) ? strdup (ptr_arg) : NULL;
+                }
+                exec_args[num_args + 1] = NULL;
+            }
+        }
+        else
+        {
+            /*
+             * if no arguments were found in hashtable, make an automatic split
+             * of command, like the shell does
+             */
+            exec_args = string_split_shell (HOOK_PROCESS(hook_process, command));
+        }
+
+        if (exec_args)
+        {
+            arg0 = string_expand_home (exec_args[0]);
+            if (arg0)
+            {
+                free (exec_args[0]);
+                exec_args[0] = arg0;
+            }
+            if (weechat_debug_core >= 1)
+            {
+                log_printf ("hook_process, command='%s'",
+                            HOOK_PROCESS(hook_process, command));
+                for (i = 0; exec_args[i]; i++)
+                {
+                    log_printf ("  args[%02d] == '%s'", i, exec_args[i]);
+                }
+            }
+            execvp (exec_args[0], exec_args);
+        }
 
         /* should not be executed if execvp was ok */
+        if (exec_args)
+            string_free_split (exec_args);
         fprintf (stderr, "Error with command '%s'\n",
                  HOOK_PROCESS(hook_process, command));
         rc = EXIT_FAILURE;
@@ -1444,7 +1554,7 @@ hook_process_child (struct t_hook *hook_process)
 }
 
 /*
- * hook_process_send_buffers: send buffers (stdout/stderr) to callback
+ * Sends buffers (stdout/stderr) to callback.
  */
 
 void
@@ -1476,7 +1586,7 @@ hook_process_send_buffers (struct t_hook *hook_process, int callback_rc)
 }
 
 /*
- * hook_process_add_to_buffer: add some data to buffer (stdout or stderr)
+ * Adds some data to buffer (stdout or stderr).
  */
 
 void
@@ -1493,8 +1603,7 @@ hook_process_add_to_buffer (struct t_hook *hook_process, int index_buffer,
 }
 
 /*
- * hook_process_child_read: read process output (stdout or stderr) from child
- *                          process
+ * Reads process output (stdout or stderr) from child process.
  */
 
 void
@@ -1521,8 +1630,7 @@ hook_process_child_read (struct t_hook *hook_process, int fd,
 }
 
 /*
- * hook_process_child_read_stdout_cb: read process output (stdout) from child
- *                                    process
+ * Reads process output (stdout) from child process.
  */
 
 int
@@ -1537,8 +1645,7 @@ hook_process_child_read_stdout_cb (void *arg_hook_process, int fd)
 }
 
 /*
- * hook_process_child_read_stderr_cb: read process output (stderr) from child
- *                                    process
+ * Reads process output (stderr) from child process.
  */
 
 int
@@ -1553,7 +1660,7 @@ hook_process_child_read_stderr_cb (void *arg_hook_process, int fd)
 }
 
 /*
- * hook_process_timer_cb: timer to check if child is died or not
+ * Checks if child process is still alive.
  */
 
 int
@@ -1602,8 +1709,8 @@ hook_process_timer_cb (void *arg_hook_process, int remaining_calls)
 }
 
 /*
- * hook_process_run: fork, execute process function in child, and read data in
- *                   current process, with fd hook
+ * Executes process command in child, and read data in current process,
+ * with fd hook.
  */
 
 void
@@ -1708,18 +1815,23 @@ hook_process_run (struct t_hook *hook_process)
 }
 
 /*
- * hook_connect: hook a connection to peer (using fork)
+ * Hooks a connection to a peer (using fork).
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
 hook_connect (struct t_weechat_plugin *plugin, const char *proxy,
-              const char *address, int port, int sock, int ipv6,
+              const char *address, int port, int ipv6, int retry,
               void *gnutls_sess, void *gnutls_cb, int gnutls_dhkey_size,
               const char *gnutls_priorities, const char *local_hostname,
               t_hook_callback_connect *callback, void *callback_data)
 {
     struct t_hook *new_hook;
     struct t_hook_connect *new_hook_connect;
+#ifdef HOOK_CONNECT_MAX_SOCKETS
+    int i;
+#endif
 
 #ifndef HAVE_GNUTLS
     /* make C compiler happy */
@@ -1729,7 +1841,7 @@ hook_connect (struct t_weechat_plugin *plugin, const char *proxy,
     (void) gnutls_priorities;
 #endif
 
-    if ((sock < 0) || !address || (port <= 0) || !callback)
+    if (!address || (port <= 0) || !callback)
         return NULL;
 
     new_hook = malloc (sizeof (*new_hook));
@@ -1750,8 +1862,9 @@ hook_connect (struct t_weechat_plugin *plugin, const char *proxy,
     new_hook_connect->proxy = (proxy) ? strdup (proxy) : NULL;
     new_hook_connect->address = strdup (address);
     new_hook_connect->port = port;
-    new_hook_connect->sock = sock;
+    new_hook_connect->sock = -1;
     new_hook_connect->ipv6 = ipv6;
+    new_hook_connect->retry = retry;
 #ifdef HAVE_GNUTLS
     new_hook_connect->gnutls_sess = gnutls_sess;
     new_hook_connect->gnutls_cb = gnutls_cb;
@@ -1763,6 +1876,8 @@ hook_connect (struct t_weechat_plugin *plugin, const char *proxy,
         strdup (local_hostname) : NULL;
     new_hook_connect->child_read = -1;
     new_hook_connect->child_write = -1;
+    new_hook_connect->child_recv = -1;
+    new_hook_connect->child_send = -1;
     new_hook_connect->child_pid = 0;
     new_hook_connect->hook_child_timer = NULL;
     new_hook_connect->hook_fd = NULL;
@@ -1770,6 +1885,13 @@ hook_connect (struct t_weechat_plugin *plugin, const char *proxy,
     new_hook_connect->handshake_hook_timer = NULL;
     new_hook_connect->handshake_fd_flags = 0;
     new_hook_connect->handshake_ip_address = NULL;
+#ifdef HOOK_CONNECT_MAX_SOCKETS
+    for (i = 0; i < HOOK_CONNECT_MAX_SOCKETS; i++)
+    {
+        new_hook_connect->sock_v4[i] = -1;
+        new_hook_connect->sock_v6[i] = -1;
+    }
+#endif
 
     hook_add_to_list (new_hook);
 
@@ -1779,7 +1901,7 @@ hook_connect (struct t_weechat_plugin *plugin, const char *proxy,
 }
 
 /*
- * hook_connect_gnutls_verify_certificates: verify certificates
+ * Verifies certificates.
  */
 
 #ifdef HAVE_GNUTLS
@@ -1812,7 +1934,7 @@ hook_connect_gnutls_verify_certificates (gnutls_session_t tls_session)
 #endif
 
 /*
- * hook_connect_gnutls_set_certificates: set certificates
+ * Sets certificates.
  */
 
 #ifdef HAVE_GNUTLS
@@ -1853,7 +1975,9 @@ hook_connect_gnutls_set_certificates (gnutls_session_t tls_session,
 #endif
 
 /*
- * hook_print: hook a message printed by WeeChat
+ * Hooks a message printed by WeeChat.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -1902,7 +2026,7 @@ hook_print (struct t_weechat_plugin *plugin, struct t_gui_buffer *buffer,
 }
 
 /*
- * hook_print_exec: execute print hook
+ * Executes a print hook.
  */
 
 void
@@ -2003,7 +2127,9 @@ hook_print_exec (struct t_gui_buffer *buffer, struct t_gui_line *line)
 }
 
 /*
- * hook_signal: hook a signal
+ * Hooks a signal.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2042,13 +2168,14 @@ hook_signal (struct t_weechat_plugin *plugin, const char *signal,
 }
 
 /*
- * hook_signal_send: send a signal
+ * Sends a signal.
  */
 
 void
 hook_signal_send (const char *signal, const char *type_data, void *signal_data)
 {
     struct t_hook *ptr_hook, *next_hook;
+    int rc;
 
     hook_exec_start ();
 
@@ -2062,9 +2189,12 @@ hook_signal_send (const char *signal, const char *type_data, void *signal_data)
             && (string_match (signal, HOOK_SIGNAL(ptr_hook, signal), 0)))
         {
             ptr_hook->running = 1;
-            (void) (HOOK_SIGNAL(ptr_hook, callback))
+            rc = (HOOK_SIGNAL(ptr_hook, callback))
                 (ptr_hook->callback_data, signal, type_data, signal_data);
             ptr_hook->running = 0;
+
+            if (rc == WEECHAT_RC_OK_EAT)
+                break;
         }
 
         ptr_hook = next_hook;
@@ -2074,7 +2204,9 @@ hook_signal_send (const char *signal, const char *type_data, void *signal_data)
 }
 
 /*
- * hook_hsignal: hook a hsignal (signal with hashtable)
+ * Hooks a hsignal (signal with hashtable).
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2113,13 +2245,14 @@ hook_hsignal (struct t_weechat_plugin *plugin, const char *signal,
 }
 
 /*
- * hook_hsignal_send: send a hsignal (signal with hashtable)
+ * Sends a hsignal (signal with hashtable).
  */
 
 void
 hook_hsignal_send (const char *signal, struct t_hashtable *hashtable)
 {
     struct t_hook *ptr_hook, *next_hook;
+    int rc;
 
     hook_exec_start ();
 
@@ -2133,9 +2266,12 @@ hook_hsignal_send (const char *signal, struct t_hashtable *hashtable)
             && (string_match (signal, HOOK_HSIGNAL(ptr_hook, signal), 0)))
         {
             ptr_hook->running = 1;
-            (void) (HOOK_HSIGNAL(ptr_hook, callback))
+            rc = (HOOK_HSIGNAL(ptr_hook, callback))
                 (ptr_hook->callback_data, signal, hashtable);
             ptr_hook->running = 0;
+
+            if (rc == WEECHAT_RC_OK_EAT)
+                break;
         }
 
         ptr_hook = next_hook;
@@ -2145,7 +2281,9 @@ hook_hsignal_send (const char *signal, struct t_hashtable *hashtable)
 }
 
 /*
- * hook_config: hook a config option
+ * Hooks a configuration option.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2185,7 +2323,7 @@ hook_config (struct t_weechat_plugin *plugin, const char *option,
 }
 
 /*
- * hook_config_exec: execute config hooks
+ * Executes a config hook.
  */
 
 void
@@ -2218,7 +2356,9 @@ hook_config_exec (const char *option, const char *value)
 }
 
 /*
- * hook_completion: hook a completion
+ * Hooks a completion.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2262,7 +2402,7 @@ hook_completion (struct t_weechat_plugin *plugin, const char *completion_item,
 }
 
 /*
- * hook_completion_get_string: get a completion property as string
+ * Gets a completion property as string.
  */
 
 const char *
@@ -2273,7 +2413,7 @@ hook_completion_get_string (struct t_gui_completion *completion,
 }
 
 /*
- * hook_completion_list_add: add a word for a completion (called by plugins)
+ * Adds a word for a completion.
  */
 
 void
@@ -2285,7 +2425,7 @@ hook_completion_list_add (struct t_gui_completion *completion,
 }
 
 /*
- * hook_completion_exec: execute completion hook
+ * Executes a completion hook.
  */
 
 void
@@ -2324,7 +2464,9 @@ hook_completion_exec (struct t_weechat_plugin *plugin,
 }
 
 /*
- * hook_modifier: hook a modifier
+ * Hooks a modifier.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2363,7 +2505,7 @@ hook_modifier (struct t_weechat_plugin *plugin, const char *modifier,
 }
 
 /*
- * hook_modifier_exec: execute modifier hook
+ * Executes a modifier hook.
  */
 
 char *
@@ -2427,7 +2569,9 @@ hook_modifier_exec (struct t_weechat_plugin *plugin, const char *modifier,
 }
 
 /*
- * hook_info: hook an info
+ * Hooks an info.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2470,7 +2614,7 @@ hook_info (struct t_weechat_plugin *plugin, const char *info_name,
 }
 
 /*
- * hook_info_get: get info (as string) via info hook
+ * Gets info (as string) via info hook.
  */
 
 const char *
@@ -2517,7 +2661,9 @@ hook_info_get (struct t_weechat_plugin *plugin, const char *info_name,
 }
 
 /*
- * hook_info_hashtable: hook an info using hashtable
+ * Hooks an info using hashtable.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2565,7 +2711,7 @@ hook_info_hashtable (struct t_weechat_plugin *plugin, const char *info_name,
 }
 
 /*
- * hook_info_get_hashtable: get info (as hashtable) via info hook
+ * Gets info (as hashtable) via info hook.
  */
 
 struct t_hashtable *
@@ -2612,7 +2758,9 @@ hook_info_get_hashtable (struct t_weechat_plugin *plugin, const char *info_name,
 }
 
 /*
- * hook_infolist: hook an infolist
+ * Hooks an infolist.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2659,7 +2807,7 @@ hook_infolist (struct t_weechat_plugin *plugin, const char *infolist_name,
 }
 
 /*
- * hook_infolist_get: get infolist via infolist hook
+ * Gets an infolist via infolist hook.
  */
 
 struct t_infolist *
@@ -2706,7 +2854,9 @@ hook_infolist_get (struct t_weechat_plugin *plugin, const char *infolist_name,
 }
 
 /*
- * hook_hdata: hook a hdata
+ * Hooks a hdata.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2748,7 +2898,7 @@ hook_hdata (struct t_weechat_plugin *plugin, const char *hdata_name,
 }
 
 /*
- * hook_hdata_get: get hdata via info hook
+ * Gets hdata via hdata hook.
  */
 
 struct t_hdata *
@@ -2801,7 +2951,9 @@ hook_hdata_get (struct t_weechat_plugin *plugin, const char *hdata_name)
 }
 
 /*
- * hook_focus: hook a focus
+ * Hooks a focus.
+ *
+ * Returns pointer to new hook, NULL if error.
  */
 
 struct t_hook *
@@ -2840,7 +2992,7 @@ hook_focus (struct t_weechat_plugin *plugin, const char *area,
 }
 
 /*
- * hook_focus_hashtable_map_cb: add keys of a hashtable into another
+ * Adds keys of a hashtable into another.
  */
 
 void
@@ -2859,8 +3011,7 @@ hook_focus_hashtable_map_cb (void *data, struct t_hashtable *hashtable,
 }
 
 /*
- * hook_focus_hashtable_map2_cb: add keys of a hashtable into another
- *                               (adding suffix "2" to keys)
+ * Adds keys of a hashtable into another (adding suffix "2" to keys).
  */
 
 void
@@ -2888,9 +3039,10 @@ hook_focus_hashtable_map2_cb (void *data, struct t_hashtable *hashtable,
 }
 
 /*
- * hook_focus_get_data: get data for focus on (x,y) on screen
- *                      hashtable_focus2 is not NULL only for a mouse gesture
- *                      (it's for point where mouse button has been released)
+ * Gets data for focus on (x,y) on screen.
+ *
+ * Argument hashtable_focus2 is not NULL only for a mouse gesture (it's for
+ * point where mouse button has been released).
  */
 
 struct t_hashtable *
@@ -3013,7 +3165,7 @@ hook_focus_get_data (struct t_hashtable *hashtable_focus1,
 }
 
 /*
- * hook_set: set a hook property (string)
+ * Sets a hook property (string).
  */
 
 void
@@ -3028,7 +3180,7 @@ hook_set (struct t_hook *hook, const char *property, const char *value)
 }
 
 /*
- * unhook: unhook something
+ * Unhooks something.
  */
 
 void
@@ -3166,6 +3318,19 @@ unhook (struct t_hook *hook)
                     close (HOOK_CONNECT(hook, child_read));
                 if (HOOK_CONNECT(hook, child_write) != -1)
                     close (HOOK_CONNECT(hook, child_write));
+                if (HOOK_CONNECT(hook, child_recv) != -1)
+                    close (HOOK_CONNECT(hook, child_recv));
+                if (HOOK_CONNECT(hook, child_send) != -1)
+                    close (HOOK_CONNECT(hook, child_send));
+#ifdef HOOK_CONNECT_MAX_SOCKETS
+                for (i = 0; i < HOOK_CONNECT_MAX_SOCKETS; i++)
+                {
+                    if (HOOK_CONNECT(hook, sock_v4[i]) != -1)
+                        close (HOOK_CONNECT(hook, sock_v4[i]));
+                    if (HOOK_CONNECT(hook, sock_v6[i]) != -1)
+                        close (HOOK_CONNECT(hook, sock_v6[i]));
+                }
+#endif
                 break;
             case HOOK_TYPE_PRINT:
                 if (HOOK_PRINT(hook, message))
@@ -3256,7 +3421,7 @@ unhook (struct t_hook *hook)
 }
 
 /*
- * unhook_all_plugin: unhook all for a plugin
+ * Unhooks everything for a plugin.
  */
 
 void
@@ -3279,7 +3444,7 @@ unhook_all_plugin (struct t_weechat_plugin *plugin)
 }
 
 /*
- * unhook_all: unhook all
+ * Unhooks everything.
  */
 
 void
@@ -3301,8 +3466,11 @@ unhook_all ()
 }
 
 /*
- * hook_add_to_infolist_type: add hooks of a type in an infolist
- *                            return 1 if ok, 0 if error
+ * Adds hooks of a type in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -3478,6 +3646,8 @@ hook_add_to_infolist_type (struct t_infolist *infolist, int type,
                         return 0;
                     if (!infolist_new_var_integer (ptr_item, "ipv6", HOOK_CONNECT(ptr_hook, ipv6)))
                         return 0;
+                    if (!infolist_new_var_integer (ptr_item, "retry", HOOK_CONNECT(ptr_hook, retry)))
+                        return 0;
 #ifdef HAVE_GNUTLS
                     if (!infolist_new_var_pointer (ptr_item, "gnutls_sess", HOOK_CONNECT(ptr_hook, gnutls_sess)))
                         return 0;
@@ -3491,6 +3661,10 @@ hook_add_to_infolist_type (struct t_infolist *infolist, int type,
                     if (!infolist_new_var_integer (ptr_item, "child_read", HOOK_CONNECT(ptr_hook, child_read)))
                         return 0;
                     if (!infolist_new_var_integer (ptr_item, "child_write", HOOK_CONNECT(ptr_hook, child_write)))
+                        return 0;
+                    if (!infolist_new_var_integer (ptr_item, "child_recv", HOOK_CONNECT(ptr_hook, child_recv)))
+                        return 0;
+                    if (!infolist_new_var_integer (ptr_item, "child_send", HOOK_CONNECT(ptr_hook, child_send)))
                         return 0;
                     if (!infolist_new_var_integer (ptr_item, "child_pid", HOOK_CONNECT(ptr_hook, child_pid)))
                         return 0;
@@ -3698,10 +3872,13 @@ hook_add_to_infolist_type (struct t_infolist *infolist, int type,
 }
 
 /*
- * hook_add_to_infolist: add hooks in an infolist
- *                       arguments can be a hook type with optional comma +
- *                       name after
- *                       return 1 if ok, 0 if error
+ * Adds hooks in an infolist.
+ *
+ * Argument "arguments" can be a hook type with optional comma + name after.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -3744,7 +3921,7 @@ hook_add_to_infolist (struct t_infolist *infolist, const char *arguments)
 }
 
 /*
- * hook_print_log: print hooks in log (usually for crash dump)
+ * Prints hooks in WeeChat log file (usually for crash dump).
  */
 
 void
@@ -3886,6 +4063,7 @@ hook_print_log ()
                         log_printf ("    port. . . . . . . . . : %d",    HOOK_CONNECT(ptr_hook, port));
                         log_printf ("    sock. . . . . . . . . : %d",    HOOK_CONNECT(ptr_hook, sock));
                         log_printf ("    ipv6. . . . . . . . . : %d",    HOOK_CONNECT(ptr_hook, ipv6));
+                        log_printf ("    retry . . . . . . . . : %d",    HOOK_CONNECT(ptr_hook, retry));
 #ifdef HAVE_GNUTLS
                         log_printf ("    gnutls_sess . . . . . : 0x%lx", HOOK_CONNECT(ptr_hook, gnutls_sess));
                         log_printf ("    gnutls_cb . . . . . . : 0x%lx", HOOK_CONNECT(ptr_hook, gnutls_cb));
@@ -3895,6 +4073,8 @@ hook_print_log ()
                         log_printf ("    local_hostname. . . . : '%s'",  HOOK_CONNECT(ptr_hook, local_hostname));
                         log_printf ("    child_read. . . . . . : %d",    HOOK_CONNECT(ptr_hook, child_read));
                         log_printf ("    child_write . . . . . : %d",    HOOK_CONNECT(ptr_hook, child_write));
+                        log_printf ("    child_recv. . . . . . : %d",    HOOK_CONNECT(ptr_hook, child_recv));
+                        log_printf ("    child_send. . . . . . : %d",    HOOK_CONNECT(ptr_hook, child_send));
                         log_printf ("    child_pid . . . . . . : %d",    HOOK_CONNECT(ptr_hook, child_pid));
                         log_printf ("    hook_child_timer. . . : 0x%lx", HOOK_CONNECT(ptr_hook, hook_child_timer));
                         log_printf ("    hook_fd . . . . . . . : 0x%lx", HOOK_CONNECT(ptr_hook, hook_fd));
@@ -3902,6 +4082,13 @@ hook_print_log ()
                         log_printf ("    handshake_hook_timer. : 0x%lx", HOOK_CONNECT(ptr_hook, handshake_hook_timer));
                         log_printf ("    handshake_fd_flags. . : %d",    HOOK_CONNECT(ptr_hook, handshake_fd_flags));
                         log_printf ("    handshake_ip_address. : '%s'",  HOOK_CONNECT(ptr_hook, handshake_ip_address));
+#ifdef HOOK_CONNECT_MAX_SOCKETS
+                        for (i = 0; i < HOOK_CONNECT_MAX_SOCKETS; i++)
+                        {
+                            log_printf ("    sock_v4[%d]. . . . . . : '%d'", HOOK_CONNECT(ptr_hook, sock_v4[i]));
+                            log_printf ("    sock_v6[%d]. . . . . . : '%d'", HOOK_CONNECT(ptr_hook, sock_v6[i]));
+                        }
+#endif
                     }
                     break;
                 case HOOK_TYPE_PRINT:

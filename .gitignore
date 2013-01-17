@@ -18,7 +18,9 @@ ABOUT-NLS
 autom4te*
 build*/*
 config.guess
-config.h*
+config.h
+config.h.in*
+config-git.h
 config.log
 config.rpath
 config.status
@@ -40,9 +42,6 @@ POTFILES
 remove-potcdate.sed
 Rules-quot
 weechat.pc
-doc/de/build/*
-doc/en/build/*
-doc/fr/build/*
 
 *stamp
 stamp*

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-input.c - input data management for IRC buffers
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-input.c: input data management for IRC buffers
  */
 
 #include <stdlib.h>
@@ -38,16 +36,35 @@
 
 
 /*
- * irc_input_user_message_display: display user message
+ * Displays user message.
+ *
+ * If action != 0, then message is displayed as an action (like command /me).
+ * If action == 0, but message is detected as an action (beginning with
+ * "\01ACTION "), then action is forced.
  */
 
 void
-irc_input_user_message_display (struct t_gui_buffer *buffer, const char *text)
+irc_input_user_message_display (struct t_gui_buffer *buffer, int action,
+                                const char *text)
 {
     struct t_irc_nick *ptr_nick;
-    char *text_decoded, str_tags[256], *str_color;
+    char *pos, *text2, *text_decoded, str_tags[256], *str_color;
+    const char *ptr_text;
 
-    text_decoded = irc_color_decode (text,
+    /* if message is an action, force "action" to 1 and extract message */
+    if (strncmp (text, "\01ACTION ", 8) == 0)
+    {
+        action = 1;
+        pos = strchr (text + 8, '\01');
+        if (pos)
+            text2 = weechat_strndup (text + 8, pos - text - 8);
+        else
+            text2 = strdup (text + 8);
+    }
+    else
+        text2 = strdup (text);
+
+    text_decoded = irc_color_decode ((text2) ? text2 : text,
                                      weechat_config_boolean (irc_config_network_colors_send));
 
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
@@ -61,40 +78,67 @@ irc_input_user_message_display (struct t_gui_buffer *buffer, const char *text)
                                         ptr_server->nick);
         }
 
-        str_color = irc_color_for_tags (weechat_config_color (weechat_config_get ("weechat.color.chat_nick_self")));
-        snprintf (str_tags, sizeof (str_tags),
-                  "notify_none,no_highlight,prefix_nick_%s",
-                  (str_color) ? str_color : "default");
-        if (str_color)
-            free (str_color);
-        weechat_printf_tags (buffer,
-                             irc_protocol_tags ("privmsg",
-                                                str_tags,
-                                                (ptr_nick) ? ptr_nick->name : ptr_server->nick),
-                             "%s%s",
-                             irc_nick_as_prefix (ptr_server,
-                                                 (ptr_nick) ? ptr_nick : NULL,
-                                                 (ptr_nick) ? NULL : ptr_server->nick,
-                                                 IRC_COLOR_CHAT_NICK_SELF),
-                             (text_decoded) ? text_decoded : text);
+        if (action)
+        {
+            snprintf (str_tags, sizeof (str_tags),
+                      "irc_action,notify_none,no_highlight");
+        }
+        else
+        {
+            str_color = irc_color_for_tags (weechat_config_color (weechat_config_get ("weechat.color.chat_nick_self")));
+            snprintf (str_tags, sizeof (str_tags),
+                      "notify_none,no_highlight,prefix_nick_%s",
+                      (str_color) ? str_color : "default");
+            if (str_color)
+                free (str_color);
+        }
+        ptr_text = (text_decoded) ? text_decoded : ((text2) ? text2 : text);
+        if (action)
+        {
+            weechat_printf_tags (buffer,
+                                 irc_protocol_tags ("privmsg",
+                                                    str_tags,
+                                                    (ptr_nick) ? ptr_nick->name : ptr_server->nick),
+                                 "%s%s%s%s%s %s",
+                                 weechat_prefix ("action"),
+                                 irc_nick_mode_for_display (ptr_server, ptr_nick, 0),
+                                 IRC_COLOR_CHAT_NICK_SELF,
+                                 ptr_server->nick,
+                                 IRC_COLOR_RESET,
+                                 ptr_text);
+        }
+        else
+        {
+            weechat_printf_tags (buffer,
+                                 irc_protocol_tags ("privmsg",
+                                                    str_tags,
+                                                    (ptr_nick) ? ptr_nick->name : ptr_server->nick),
+                                 "%s%s",
+                                 irc_nick_as_prefix (ptr_server,
+                                                     (ptr_nick) ? ptr_nick : NULL,
+                                                     (ptr_nick) ? NULL : ptr_server->nick,
+                                                     IRC_COLOR_CHAT_NICK_SELF),
+                                 ptr_text);
+        }
     }
 
+    if (text2)
+        free (text2);
     if (text_decoded)
         free (text_decoded);
 }
 
 /*
- * irc_input_send_user_message: send a PRIVMSG message, and split it if message
- *                              size is > 512 bytes
- *                              Warning: this function makes temporarirly
- *                                       changes in "message"
+ * Sends a PRIVMSG message, and split it if message size is > 512 bytes.
+ *
+ * Warning: this function makes temporary changes in "message".
  */
 
 void
 irc_input_send_user_message (struct t_gui_buffer *buffer, int flags,
                              const char *tags, char *message)
 {
-    int number;
+    int number, action;
     char hash_key[32], *str_args;
     struct t_hashtable *hashtable;
 
@@ -117,6 +161,7 @@ irc_input_send_user_message (struct t_gui_buffer *buffer, int flags,
                                   ptr_channel->name, message);
     if (hashtable)
     {
+        action = (strncmp (message, "\01ACTION ", 8) == 0);
         number = 1;
         while (1)
         {
@@ -124,7 +169,7 @@ irc_input_send_user_message (struct t_gui_buffer *buffer, int flags,
             str_args = weechat_hashtable_get (hashtable, hash_key);
             if (!str_args)
                 break;
-            irc_input_user_message_display (buffer, str_args);
+            irc_input_user_message_display (buffer, action, str_args);
             number++;
         }
         weechat_hashtable_free (hashtable);
@@ -132,7 +177,7 @@ irc_input_send_user_message (struct t_gui_buffer *buffer, int flags,
 }
 
 /*
- * irc_input_data: input data in a buffer
+ * Input data in a buffer.
  */
 
 int
@@ -195,7 +240,7 @@ irc_input_data (struct t_gui_buffer *buffer, const char *input_data, int flags)
 }
 
 /*
- * irc_input_data_cb: callback for input data in a buffer
+ * Callback for input data in a buffer.
  */
 
 int
@@ -209,17 +254,17 @@ irc_input_data_cb (void *data, struct t_gui_buffer *buffer,
 }
 
 /*
- * irc_input_send_cb: callback for "irc_input_send" signal
- *                    This signal can be used by other plugins/scripts, it
- *                    simulates input or command from user on an IRC buffer
- *                    (it is used for example by Relay plugin)
- *                    Format of signal_data (string) is:
- *                      "server;channel;flags;tags;text"
- *                      - server: server name (required)
- *                      - channel: channel name (optional)
- *                      - flags: flags for irc_server_sendf() (optional)
- *                      - tags: tags for irc_server_sendf() (optional)
- *                      - text: text or command (required)
+ * Callback for signal "irc_input_send" signal.
+ *
+ * This signal can be used by other plugins/scripts, it simulates input or
+ * command from user on an IRC buffer (it is used for example by Relay plugin).
+ *
+ * Format of signal_data (string) is "server;channel;flags;tags;text"
+ *   server: server name (required)
+ *   channel: channel name (optional)
+ *   flags: flags for irc_server_sendf() (optional)
+ *   tags: tags for irc_server_sendf() (optional)
+ *   text: text or command (required).
  */
 
 int

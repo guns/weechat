@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -48,6 +48,8 @@ struct t_gui_bar_window
     int **items_num_lines;          /* number of lines for each (sub)item   */
     int **items_refresh_needed;     /* refresh needed for (sub)item?        */
     int screen_col_size;            /* size of columns on screen            */
+                                    /* (for filling with columns)           */
+    int screen_lines;               /* number of lines on screen            */
                                     /* (for filling with columns)           */
     int coords_count;               /* number of coords saved               */
     struct t_gui_bar_window_coords **coords; /* coords for filling horiz.   */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -85,9 +85,9 @@ struct t_gui_buffer
                                        /* 2 = highlight + msg               */
                                        /* 3 = highlight + msg + join/part   */
     int num_displayed;                 /* number of windows displaying buf. */
-    int active;                        /* it is 0 only if buffers are       */
-                                       /* merged and that this one is not   */
-                                       /* selected buffer                   */
+    int active;                        /* 0 = buffer merged and not active  */
+                                       /* 1 = active (merged or not)        */
+                                       /* 2 = the only active (merged)      */
     int print_hooks_enabled;           /* 1 if print hooks are enabled      */
 
     /* close callback */
@@ -120,7 +120,7 @@ struct t_gui_buffer
                             const char *nick2);
     void *nickcmp_callback_data;       /* data for callback                 */
 
-    /* inupt */
+    /* input */
     int input;                         /* = 1 if input is enabled           */
     int (*input_callback)(void *data,  /* called when user send data        */
                           struct t_gui_buffer *buffer,

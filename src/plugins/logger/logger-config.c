@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * logger-config.c - logger configuration options (file logger.conf)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * logger-config.c: logger configuration options (file logger.conf)
  */
 
 #include <stdlib.h>
@@ -57,9 +55,8 @@ struct t_config_option *logger_config_file_time_format;
 
 
 /*
- * logger_config_change_file_option_restart_log: called when a file option is
- *                                               changed and that logging must
- *                                               be restarted for all buffers
+ * Callback for changes on option that require a restart of logging for all
+ * buffers.
  */
 
 void
@@ -75,7 +72,7 @@ logger_config_change_file_option_restart_log (void *data,
 }
 
 /*
- * logger_config_flush_delay_change: called when flush delay is changed
+ * Callback for changes on option "logger.file.flush_delay".
  */
 
 void
@@ -118,7 +115,7 @@ logger_config_flush_delay_change (void *data,
 }
 
 /*
- * logger_config_level_change: called when a level option is changed
+ * Callback for changes on a level option.
  */
 
 void
@@ -134,7 +131,7 @@ logger_config_level_change (void *data,
 }
 
 /*
- * logger_config_level_delete_option: delete option in "level" section
+ * Callback called when an option is deleted in section "level".
  */
 
 int
@@ -156,7 +153,7 @@ logger_config_level_delete_option (void *data,
 }
 
 /*
- * logger_config_level_create_option: create option in "level" section
+ * Callback called when an option is created in section "level".
  */
 
 int
@@ -215,7 +212,7 @@ logger_config_level_create_option (void *data,
 }
 
 /*
- * logger_config_get_level: get a level option
+ * Gets a level option.
  */
 
 struct t_config_option *
@@ -227,7 +224,7 @@ logger_config_get_level (const char *name)
 }
 
 /*
- * logger_config_set_level: set a level option
+ * Sets a level option.
  */
 
 int
@@ -241,7 +238,7 @@ logger_config_set_level (const char *name, const char *value)
 }
 
 /*
- * logger_config_mask_change: called when a mask option is changed
+ * Callback for changes on a mask option.
  */
 
 void
@@ -257,7 +254,7 @@ logger_config_mask_change (void *data,
 }
 
 /*
- * logger_config_mask_delete_option: delete option in "mask" section
+ * Callback called when an option is deleted in section "mask".
  */
 
 int
@@ -279,7 +276,7 @@ logger_config_mask_delete_option (void *data,
 }
 
 /*
- * logger_config_mask_create_option: create option in "mask" section
+ * Callback called when an option is created in section "mask".
  */
 
 int
@@ -338,7 +335,7 @@ logger_config_mask_create_option (void *data,
 }
 
 /*
- * logger_config_get_mask: get a mask option
+ * Gets a mask option.
  */
 
 struct t_config_option *
@@ -350,8 +347,11 @@ logger_config_get_mask (const char *name)
 }
 
 /*
- * logger_config_init: init logger configuration file
- *                     return: 1 if ok, 0 if error
+ * Initializes logger configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -509,7 +509,7 @@ logger_config_init ()
 }
 
 /*
- * logger_config_read: read logger configuration file
+ * Reads logger configuration file.
  */
 
 int
@@ -527,7 +527,7 @@ logger_config_read ()
 }
 
 /*
- * logger_config_write: write logger configuration file
+ * Writes logger configuration file.
  */
 
 int
@@ -537,7 +537,7 @@ logger_config_write ()
 }
 
 /*
- * logger_config_free: free logger configuration
+ * Frees logger configuration.
  */
 
 void

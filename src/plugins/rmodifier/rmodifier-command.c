@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * rmodifier-command.c - rmodifier command
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * rmodifier-command.c: rmodifier command
- */
-
 #include <stdlib.h>
 
 #include "../weechat-plugin.h"
@@ -30,7 +28,7 @@
 
 
 /*
- * rmodifier_command_print: print a rmodifier
+ * Displays a rmodifier.
  */
 
 void
@@ -55,7 +53,7 @@ rmodifier_command_print (const char *name, const char *modifiers,
 }
 
 /*
- * rmodifier_command_list: list rmodifiers
+ * Displays list of rmodifiers.
  */
 
 void
@@ -81,7 +79,7 @@ rmodifier_command_list (const char *message)
 }
 
 /*
- * rmodifier_command_cb: manage rmodifiers
+ * Callback for command "/rmodifier": manages rmodifiers.
  */
 
 int
@@ -139,7 +137,7 @@ rmodifier_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
                             argv[2]);
             return WEECHAT_RC_OK;
         }
-        /* create config option */
+        /* create configuration option */
         ptr_option = weechat_config_search_option (rmodifier_config_file,
                                                    rmodifier_config_section_modifier,
                                                    argv[2]);
@@ -226,7 +224,7 @@ rmodifier_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * rmodifier_command_init: add /rmodifier command
+ * Hooks command.
  */
 
 void

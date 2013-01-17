@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * rmodifier-debug.c - debug functions for rmodifier plugin
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * rmodifier-debug.c: debug functions for rmodifier plugin
- */
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,7 +28,7 @@
 
 
 /*
- * rmodifier_debug_signal_debug_dump_cb: dump rmodifier data in WeeChat log file
+ * Dumps rmodifier data in WeeChat log file.
  */
 
 int
@@ -60,7 +58,7 @@ rmodifier_debug_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
- * rmodifier_debug_init: initialize debug for rmodifier plugin
+ * Initializes debug for rmodifier plugin.
  */
 
 void

@@ -56,16 +56,17 @@ Ohne Angabe von Argumenten wird die Ban-Liste für den aktuellen Channel angezei
 [command]*`connect`* Mit IRC-Server(n) verbinden::
 ........................................
 /connect  <server> [<server>...] [-<option>[=<value>]] [-no<option>] [-nojoin] [-switch]
-          -all|-open [-nojoin] [-switch]
+          -all|-auto|-open [-nojoin] [-switch]
 
-    server:  Name des Servers (folgende Möglichkeiten bestehen):
-            - intern genutzter Servername mit dem verbunden werden soll (Der Server sollte zuerst mittels "/server add" angelegt werden)
+    server: Name des Servers (folgende Möglichkeiten bestehen):
+            - intern genutzter Servername, zu dem eine Verbindung aufgebaut werden soll (Der Server sollte zuerst mittels "/server add" angelegt werden)
             - Hostname/Port oder IP/Port (damit wird lediglich ein TEMPORÄRER Server erstellt), Port 6667 wird standardmäßig verwendet
             - URL mit folgendem Format: irc[6][s]://[nickname[:password]@]irc.example.org[:port][/#channel1][,#channel2[...]]
-    option: legt die Optionen für den Server fest (die Boolean-Optionen können weggelassen werden)
-  nooption: stellt die Boolean Option auf "off" (Beispiel: -nossl)
-      -all: Verbindung wird mit allen Servern hergestellt
-     -open: stellt eine Verbindung zu allen geöffneten Servern her, zu denen aktuell keine Verbindung besteht
+    option: legt Option für den Server fest (die Boolean-Optionen können weggelassen werden)
+  nooption: deaktiviert eine Boolean Option (Beispiel: -nossl)
+      -all: Verbindung wird zu den Servern hergestellt, für die eine Konfiguration vorhanden ist
+     -auto: Verbindung zu den Servern herstellen, für die die Option "autoconnect" aktiviert ist
+     -open: stellt eine Verbindung zu allen geöffneten Servern her, zu denen aktuell aber keine Verbindung besteht
    -nojoin: Channel(s) werden nicht betreten (auch falls die Funktion "autojoin" aktiviert sein sollte)
    -switch: wechselt zur nächsten Server-Adresse
 
@@ -212,16 +213,18 @@ nick: Nickname
 [[command_irc_join]]
 [command]*`join`* einen Channel betreten::
 ........................................
-/join  [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
+/join  [-noswitch] [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
 
- server: Verbindung zu diesem Server (interner Name)
-channel: Name des Channels der betreten werden soll
-    key: Zugriffsschlüssel für einen Channel (Channels die einen Zugriffsschlüssel benötigen müssen zuerst aufgeführt werden)
+-noswitch: es wird nicht zu dem angegebenen Channel gewechselt
+   server: an angegebenen Server (interner Name) senden
+  channel: Name des Channels, der betreten werden soll
+      key: Zugriffsschlüssel für einen Channel (Channel, die einen Zugriffsschlüssel benötigen, müssen zuerst aufgeführt werden)
 
 Beispiele:
   /join #weechat
   /join #geschützter_Channel,#weechat Zugriffsschlüssel
   /join -server freenode #weechat
+  /join -noswitch #weechat
 ........................................
 
 [[command_irc_kick]]
@@ -287,7 +290,7 @@ Beispiele:
 ........................................
 
 [[command_irc_lusers]]
-[command]*`lusers`* Statistik über die Größe dieses IRC-Netzwerks abfragen::
+[command]*`lusers`* Statistik über die Größe des IRC-Netzwerks abfragen::
 ........................................
 /lusers  [<mask> [<target>]]
 
@@ -465,6 +468,17 @@ server: an diesen Server senden (interner Name)
   text: Text der gesendet werden soll
 ........................................
 
+[[command_irc_quiet]]
+[command]*`quiet`* Nicks oder Hosts das Wort entziehen (User können im Channel erst schreiben, wenn sie "+v" oder höher besitzen)::
+........................................
+/quiet  [<channel>] [<nick> [<nick>...]]
+
+channel: Channel in dem jemanden das Wort entzogen werden soll
+   nick: User oder Host dem das Wort entzogen werden soll
+
+Ohne Angabe von Argumenten wird, für den aktuellen Channel, eine Liste ausgegeben mit den User/Hosts denen das Wort entzogen worden ist.
+........................................
+
 [[command_irc_quote]]
 [command]*`quote`* Daten direkt an Server senden (siehe RFC 2812)::
 ........................................
@@ -487,7 +501,7 @@ data: unbearbeitete (RAW) Daten die gesendet werden sollen
 ........................................
 
 [[command_irc_rehash]]
-[command]*`rehash`* Den Server dazu bringen seine Konfigurationsdatei neu zu laden::
+[command]*`rehash`* Den Server auffordern seine Konfigurationsdatei neu zu laden::
 ........................................
 /rehash  [<option>]
 
@@ -723,7 +737,7 @@ text: Text der gesendet werden soll
 ........................................
 
 [[command_irc_who]]
-[command]*`who`* Erstellung einer Anfrage die eine Anzahl von Informationen zurück gibt.::
+[command]*`who`* Sendet eine Anfrage die eine Anzahl von Informationen zurück gibt.::
 ........................................
 /who  [<mask> [o]]
 
@@ -734,10 +748,14 @@ mask: nur Information über betreffende Nicknamen abfragen
 [[command_irc_whois]]
 [command]*`whois`* Information über User abfragen::
 ........................................
-/whois  [<server>] <nick>[,<nick>...]
+/whois  [<server>] [<nick>[,<nick>...]]
 
-server: Servername
-  nick: Nickname (oder eine Maske)
+server: Name des Servers (interner Servername)
+  nick: Nick, welcher abgefragt werden soll (kann auch eine Maske sein)
+
+Ohne Angabe von Argumenten, nutzt /whois folgende Nicks:
+- den eigenen Nick, falls es sich um einen Server/Channel Buffer handelt
+- den Nick des Gesprächspartners, falls es sich um einen privaten Buffer handelt.
 ........................................
 
 [[command_irc_whowas]]

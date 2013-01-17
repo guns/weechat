@@ -55,27 +55,28 @@ Senza argomento, il comando mostra la lista dei ban per il canale corrente.
 [[command_irc_connect]]
 [command]*`connect`* connette ad uno o più server IRC::
 ........................................
-/connect  <server> [<server>...] [-<opzione>[=<valore>]] [-no<option>] [-nojoin] [-switch]
-          -all|-open [-nojoin] [-switch]
+/connect  <server> [<server>...] [-<option>[=<value>]] [-no<option>] [-nojoin] [-switch]
+          -all|-auto|-open [-nojoin] [-switch]
 
-    server: nome del server, che può essere:
-            - nome interno del server (creato da /server add, uso raccomandato)
-            - nome host/porta o IP/porta (in questo modo viene creato un server
-    TEMPORANEO), la porta 6667 è la predefinita
-            - URL con il formato: irc[6][s]://[nick[:password]@]irc.esempio.org[:porta][/#canale1][,#canale2[...]]
-   opzione: imposta opzione per il server (per un'opzione bool, il valore può essere omesso)
-  nooption: imposta un'opzione bool su 'off' (ad esempio: -nossl)
-      -all: connette a tutti i server definiti nella configurazione
-     -open: connette a tutti i server aperti a cui non si è connessi
-   -nojoin: non entra su nessun canale (anche se l'ingresso automatico è attivo sul server)
-   -switch: passa al successivo indirizzo del server
+    server: server name, which can be:
+            - internal server name (created by /server add, recommended usage)
+            - hostname/port or IP/port (this will create a TEMPORARY server), port is 6667 by default
+            - URL with format: irc[6][s]://[nickname[:password]@]irc.example.org[:port][/#channel1][,#channel2[...]]
+    option: set option for server (for boolean option, value can be omitted)
+  nooption: set boolean option to 'off' (for example: -nossl)
+      -all: connect to all servers defined in configuration
+     -auto: connect to servers with autoconnect enabled
+     -open: connect to all opened servers that are not currently connected
+   -nojoin: do not join any channel (even if autojoin is enabled on server)
+   -switch: switch to next server address
 
-Esempi:
+Examples:
   /connect freenode
   /connect irc.oftc.net/6667
   /connect irc6.oftc.net/6667 -ipv6
   /connect irc6.oftc.net/6697 -ipv6 -ssl
-  /connect mio.server.org/6697 -ssl -password=test
+  /connect my.server.org/6697 -ssl -password=test
+  /connect irc://nick@irc.oftc.net/#channel
   /connect -switch
 ........................................
 
@@ -212,16 +213,18 @@ nick: nick
 [[command_irc_join]]
 [command]*`join`* entra in un canale::
 ........................................
-/join  [-server <server>] [<canale1>[,<canale2>...]] [<chiave1>[,<chiave2>...]]
+/join  [-noswitch] [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
 
-server: invia a questo server (nome interno)
-canale: nome del canale in cui entrare
-chiave: chiave per entrare nel canale (i canali con una chiave devono essere primi nella lista)
+-noswitch: do not switch to new buffer
+   server: send to this server (internal name)
+  channel: channel name to join
+      key: key to join the channel (channels with a key must be the first in list)
 
-Esempi:
+Examples:
   /join #weechat
-  /join #canaleprotetto,#weechat chiave
+  /join #protectedchan,#weechat key
   /join -server freenode #weechat
+  /join -noswitch #weechat
 ........................................
 
 [[command_irc_kick]]
@@ -463,6 +466,17 @@ demone2: reindirizza messaggio a questo demone
 server: invia a questo server (nome interno)
   nick: nick per la conversazione privata
  testo: testo da inviare
+........................................
+
+[[command_irc_quiet]]
+[command]*`quiet`* quiet nicks or hosts::
+........................................
+/quiet  [<canale>] [<nick> [<nick>...]]
+
+channel: channel for quiet
+   nick: user or host to quiet
+
+Without argument, this command display quiet list for current channel.
 ........................................
 
 [[command_irc_quote]]
@@ -734,10 +748,14 @@ mask: solo l'informazione corrispondente al mask
 [[command_irc_whois]]
 [command]*`whois`* richiedi informazioni su uno o più utenti::
 ........................................
-/whois  [<server>] <nick>[,<nick>...]
+/whois  [<server>] [<nick>[,<nick>...]]
 
-server: nome server
-  nick: nick (può essere una mask)
+server: server name
+  nick: nick (may be a mask)
+
+Without argument, this command will do a whois on:
+- your own nick if buffer is a server/channel
+- remote nick if buffer is a private.
 ........................................
 
 [[command_irc_whowas]]

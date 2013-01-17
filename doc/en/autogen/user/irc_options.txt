@@ -238,6 +238,16 @@
 ** type: integer
 ** values: off, speakers, speakers_highlights (default value: `speakers`)
 
+* [[option_irc.look.nick_mode]] *irc.look.nick_mode*
+** description: `display nick mode (op, voice, ...) before nick (none = never, prefix = in prefix only (default), action = in action messages only, both = prefix + action messages)`
+** type: integer
+** values: none, prefix, action, both (default value: `prefix`)
+
+* [[option_irc.look.nick_mode_empty]] *irc.look.nick_mode_empty*
+** description: `display a space if nick mode is enabled but nick has no mode (not op, voice, ...)`
+** type: boolean
+** values: on, off (default value: `off`)
+
 * [[option_irc.look.nick_prefix]] *irc.look.nick_prefix*
 ** description: `text to display before nick in chat window`
 ** type: string
@@ -308,6 +318,11 @@
 ** type: boolean
 ** values: on, off (default value: `off`)
 
+* [[option_irc.network.alternate_nick]] *irc.network.alternate_nick*
+** description: `get an alternate nick when the nick is already used on server: add some "_" until the nick has a length of 9, and then replace last char (or the two last chars) by a number from 1 to 99, until we find a nick not used on server`
+** type: boolean
+** values: on, off (default value: `on`)
+
 * [[option_irc.network.autoreconnect_delay_growing]] *irc.network.autoreconnect_delay_growing*
 ** description: `growing factor for autoreconnect delay to server (1 = always same delay, 2 = delay*2 for each retry, ..)`
 ** type: integer
@@ -363,6 +378,11 @@
 ** type: boolean
 ** values: on, off (default value: `off`)
 
+* [[option_irc.network.whois_double_nick]] *irc.network.whois_double_nick*
+** description: `double the nick in /whois command (if only one nick is given), to get idle time in answer; for example: "/whois nick" will send "whois nick nick"`
+** type: boolean
+** values: on, off (default value: `on`)
+
 * [[option_irc.server_default.addresses]] *irc.server_default.addresses*
 ** description: `list of hostname/port or IP/port for server (separated by comma)`
 ** type: string
@@ -399,7 +419,7 @@
 ** values: 1 .. 65535 (default value: `10`)
 
 * [[option_irc.server_default.autorejoin]] *irc.server_default.autorejoin*
-** description: `automatically rejoin channels after kick`
+** description: `automatically rejoin channels after kick; you can define a buffer local variable on a channel to override this value (name of variable: "autorejoin", value: "on" or "off")`
 ** type: boolean
 ** values: on, off (default value: `off`)
 
@@ -449,9 +469,9 @@
 ** values: any string (default value: `"WeeChat %v"`)
 
 * [[option_irc.server_default.ipv6]] *irc.server_default.ipv6*
-** description: `use IPv6 protocol for server communication`
+** description: `use IPv6 protocol for server communication (try IPv6 then fallback to IPv4); if disabled, only IPv4 is used`
 ** type: boolean
-** values: on, off (default value: `off`)
+** values: on, off (default value: `on`)
 
 * [[option_irc.server_default.local_hostname]] *irc.server_default.local_hostname*
 ** description: `custom local hostname/IP for server (optional, if empty local hostname is used)`

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-info.c - info, infolist and hdata hooks for IRC plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-info.c: info, infolist and hdata hooks for IRC plugin
  */
 
 #include <stdlib.h>
@@ -39,8 +37,7 @@
 
 
 /*
- * irc_info_create_string_with_pointer: create a string with a pointer inside
- *                                      an IRC structure
+ * Creates a string with a pointer inside an IRC structure.
  */
 
 void
@@ -62,7 +59,7 @@ irc_info_create_string_with_pointer (char **string, void *pointer)
 }
 
 /*
- * irc_info_get_info_cb: callback called when IRC info is asked
+ * Returns IRC info.
  */
 
 const char *
@@ -243,8 +240,7 @@ irc_info_get_info_cb (void *data, const char *info_name,
 }
 
 /*
- * irc_info_get_info_hashtable_cb: callback called when IRC info_hashtable is
- *                                 asked
+ * Returns IRC info with hashtable.
  */
 
 struct t_hashtable *
@@ -288,7 +284,7 @@ irc_info_get_info_hashtable_cb (void *data, const char *info_name,
 }
 
 /*
- * irc_info_get_infolist_cb: callback called when IRC infolist is asked
+ * Returns infolist with IRC info.
  */
 
 struct t_infolist *
@@ -572,7 +568,7 @@ irc_info_get_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * irc_info_init: initialize info and infolist hooks for IRC plugin
+ * Hooks info, infolist, hdata IRC plugin.
  */
 
 void
@@ -622,9 +618,11 @@ irc_info_init ()
                                  N_("\"message\": IRC message, "
                                     "\"server\": server name (optional)"),
                                  /* TRANSLATORS: please do not translate key names (enclosed by quotes) */
-                                 N_("\"nick\": nick, \"host\": host, "
-                                    "\"command\": command, \"channel\": channel, "
-                                    "\"arguments\": arguments (includes channel)"),
+                                 N_("\"tags\": tags, \"message_without_tags\": "
+                                    "message without the tags, \"nick\": nick, "
+                                    "\"host\": host, \"command\": command, "
+                                    "\"channel\": channel, \"arguments\": "
+                                    "arguments (includes channel)"),
                                  &irc_info_get_info_hashtable_cb, NULL);
     weechat_hook_info_hashtable ("irc_message_split",
                                  N_("split an IRC message (to fit in 512 bytes)"),

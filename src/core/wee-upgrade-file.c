@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-upgrade-file.c - save/restore data for upgrading WeeChat
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-upgrade-file.c: save/restore data for upgrading WeeChat
  */
 
 #ifdef HAVE_CONFIG_H
@@ -48,7 +46,7 @@ struct t_upgrade_file *last_upgrade_file = NULL;
 
 
 /*
- * upgrade_file_error: display error
+ * Displays an error with upgrade.
  */
 
 void
@@ -85,8 +83,11 @@ upgrade_file_error (struct t_upgrade_file *upgrade_file, char *message1,
 }
 
 /*
- * upgrade_file_write_integer: write int value in upgrade file
- *                             return 1 if ok, 0 if error
+ * Writes an integer value in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -99,8 +100,11 @@ upgrade_file_write_integer (struct t_upgrade_file *upgrade_file, int value)
 }
 
 /*
- * upgrade_file_write_time: write int value in upgrade file
- *                          return 1 if ok, 0 if error
+ * Writes a time value in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -113,8 +117,11 @@ upgrade_file_write_time (struct t_upgrade_file *upgrade_file, time_t date)
 }
 
 /*
- * upgrade_file_write_string: write string in upgrade file
- *                            return 1 if ok, 0 if error
+ * Writes a string in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -141,8 +148,11 @@ upgrade_file_write_string (struct t_upgrade_file *upgrade_file,
 }
 
 /*
- * upgrade_file_write_buffer: write buffer in upgrade file
- *                            return 1 if ok, 0 if error
+ * Writes a buffer in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -166,9 +176,11 @@ upgrade_file_write_buffer (struct t_upgrade_file *upgrade_file, void *pointer,
 }
 
 /*
- * upgrade_file_new: create an upgrade file
- *                   if write == 1 then it's opened in write mode, otherwise
- *                   read mode
+ * Creates an upgrade file.
+ *
+ * If write == 1, then opens in write mode, otherwise in read mode.
+ *
+ * Returns pointer to new upgrade file, NULL if error.
  */
 
 struct t_upgrade_file *
@@ -233,8 +245,11 @@ upgrade_file_new (const char *filename, int write)
 }
 
 /*
- * upgrade_file_write_object: write object to file
- *                            return 1 if ok, 0 if error
+ * Writes an object in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -386,7 +401,11 @@ upgrade_file_write_object (struct t_upgrade_file *upgrade_file, int object_id,
 }
 
 /*
- * upgrade_file_read_integer: read integer from upgrade file
+ * Reads an integer in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -409,7 +428,11 @@ upgrade_file_read_integer (struct t_upgrade_file *upgrade_file, int *value)
 }
 
 /*
- * upgrade_file_read_string: read string from upgrade file
+ * Reads a string in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -455,7 +478,11 @@ upgrade_file_read_string (struct t_upgrade_file *upgrade_file, char **string)
 }
 
 /*
- * upgrade_file_read_string_utf8: read string from file, then normalize UTF-8
+ * Reads an UTF-8 string in upgrade file (reads a string then normalizes it).
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -472,7 +499,11 @@ upgrade_file_read_string_utf8 (struct t_upgrade_file *upgrade_file,
 }
 
 /*
- * upgrade_file_read_buffer: read buffer from upgrade file
+ * Reads a buffer in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -514,7 +545,11 @@ upgrade_file_read_buffer (struct t_upgrade_file *upgrade_file,
 }
 
 /*
- * upgrade_file_read_time: read time from upgrade file
+ * Reads time in upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -538,8 +573,11 @@ upgrade_file_read_time (struct t_upgrade_file *upgrade_file, time_t *time)
 }
 
 /*
- * upgrade_file_read_object: read object from file, then call read callback
- *                           return 1 if ok, 0 if error
+ * Reads an object in upgrade file and calls read callback.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -687,8 +725,11 @@ end:
 }
 
 /*
- * upgrade_file_read: read an upgrade file
- *                    return 1 if ok, 0 if error
+ * Reads an upgrade file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -733,7 +774,7 @@ upgrade_file_read (struct t_upgrade_file *upgrade_file,
 }
 
 /*
- * upgrade_file_close: close an upgrade file
+ * Closes an upgrade file.
  */
 
 void

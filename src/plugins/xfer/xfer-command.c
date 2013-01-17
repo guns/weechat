@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-command.c - xfer command
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * xfer-command.c: xfer command
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -33,7 +31,7 @@
 
 
 /*
- * xfer_command_me: send a ctcp action to remote host
+ * Callback for command "/me": sends a ctcp action to remote host.
  */
 
 int
@@ -76,7 +74,7 @@ xfer_command_me (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * xfer_command_xfer_list: list xfer
+ * Displays a list of xfer.
  */
 
 void
@@ -159,15 +157,15 @@ xfer_command_xfer_list (int full)
                     weechat_printf (NULL,
                                     _("     plugin: %s (id: %s), file: %llu "
                                       "bytes (position: %llu), address: "
-                                      "%d.%d.%d.%d (port %d)"),
+                                      "%ld.%ld.%ld.%ld (port %d)"),
                                     ptr_xfer->plugin_name,
                                     ptr_xfer->plugin_id,
                                     ptr_xfer->size,
                                     ptr_xfer->pos,
-                                    ptr_xfer->address >> 24,
-                                    (ptr_xfer->address >> 16) & 0xff,
-                                    (ptr_xfer->address >> 8) & 0xff,
-                                    ptr_xfer->address & 0xff,
+                                    ptr_xfer->remote_address >> 24,
+                                    (ptr_xfer->remote_address >> 16) & 0xff,
+                                    (ptr_xfer->remote_address >> 8) & 0xff,
+                                    ptr_xfer->remote_address & 0xff,
                                     ptr_xfer->port);
                     date[0] = '\0';
                     date_tmp = localtime (&(ptr_xfer->start_transfer));
@@ -193,7 +191,7 @@ xfer_command_xfer_list (int full)
 }
 
 /*
- * xfer_command_xfer: command /xfer
+ * Callback for command "/xfer".
  */
 
 int
@@ -245,7 +243,7 @@ xfer_command_xfer (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * xfer_command_init: add /xfer command
+ * Hooks commands.
  */
 
 void

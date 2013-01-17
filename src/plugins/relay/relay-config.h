@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -39,11 +39,19 @@ extern struct t_config_option *relay_config_color_status[];
 extern struct t_config_option *relay_config_network_allowed_ips;
 extern struct t_config_option *relay_config_network_bind_address;
 extern struct t_config_option *relay_config_network_compression_level;
+extern struct t_config_option *relay_config_network_ipv6;
 extern struct t_config_option *relay_config_network_max_clients;
 extern struct t_config_option *relay_config_network_password;
 extern struct t_config_option *relay_config_network_ssl_cert_key;
 
+extern struct t_config_option *relay_config_irc_backlog_max_number;
+extern struct t_config_option *relay_config_irc_backlog_max_minutes;
+extern struct t_config_option *relay_config_irc_backlog_since_last_disconnect;
+extern struct t_config_option *relay_config_irc_backlog_tags;
+extern struct t_config_option *relay_config_irc_backlog_time_format;
+
 extern regex_t *relay_config_regex_allowed_ips;
+extern struct t_hashtable *relay_config_hashtable_irc_backlog_tags;
 
 extern int relay_config_create_option_port (void *data,
                                             struct t_config_file *config_file,
@@ -53,5 +61,6 @@ extern int relay_config_create_option_port (void *data,
 extern int relay_config_init ();
 extern int relay_config_read ();
 extern int relay_config_write ();
+extern void relay_config_free ();
 
 #endif /* __WEECHAT_RELAY_CONFIG_H */

@@ -42,21 +42,21 @@ arguments: コマンドの引数
 ........................................
 
 [[command_irc_ban]]
-[command]*`ban`* ニックネームかホスト名の禁止::
+[command]*`ban`* ニックネームかホスト名を指定してバン::
 ........................................
 /ban  [<channel>] [<nick> [<nick>...]]
 
-channel: 禁止対象チャンネル
-   nick: 禁止するユーザ名かホスト名
+channel: バン対象チャンネル
+   nick: バンするユーザ名かホスト名
 
-引数無しの場合は、現在のチャンネルの禁止リストを表示。
+引数無しの場合は、現在のチャンネルのバンリストを表示。
 ........................................
 
 [[command_irc_connect]]
 [command]*`connect`* IRC サーバに接続::
 ........................................
 /connect  <server> [<server>...] [-<option>[=<value>]] [-no<option>] [-nojoin] [-switch]
-          -all|-open [-nojoin] [-switch]
+          -all|-auto|-open [-nojoin] [-switch]
 
     server: サーバ名、これは:
             - 内部サーバ名 (/server add で作成されたもの、利用推奨)
@@ -65,6 +65,7 @@ channel: 禁止対象チャンネル
     option: サーバに関するオプション (ブール型オプションでは、value は無視される)
   nooption: ブール型オプションを 'off' にする (例: -nossl)
       -all: 設定された全てのサーバに接続
+     -auto: 自動接続を有効化してサーバに接続
      -open: 現在接続されていないがオープンされているサーバに接続
    -nojoin: チャンネルに入らない (autojoin が有効化されていても)
    -switch: 次のサーバアドレスに移動
@@ -80,7 +81,7 @@ channel: 禁止対象チャンネル
 ........................................
 
 [[command_irc_ctcp]]
-[command]*`ctcp`* CTCP メッセージを送信 (Client-To-Client Protocol)::
+[command]*`ctcp`* CTCP メッセージの送信 (Client-To-Client Protocol)::
 ........................................
 /ctcp  <target> <type> [<arguments>]
 
@@ -90,7 +91,7 @@ arguments: CTCP の引数
 ........................................
 
 [[command_irc_cycle]]
-[command]*`cycle`* チャンネルから退出し再度入る::
+[command]*`cycle`* チャンネルから退出し再参加::
 ........................................
 /cycle  [<channel>[,<channel>...]] [<message>]
 
@@ -141,7 +142,7 @@ target: サーバ名
 ........................................
 
 [[command_irc_disconnect]]
-[command]*`disconnect`* 一つか全ての IRC との接続を切断::
+[command]*`disconnect`* 特定のまたは全ての IRC サーバとの接続を切断::
 ........................................
 /disconnect  [<server>|-all|-pending [<reason>]]
 
@@ -152,13 +153,13 @@ target: サーバ名
 ........................................
 
 [[command_irc_halfop]]
-[command]*`halfop`* ニックネームに half-operator 権を付与::
+[command]*`halfop`* 指定したニックネームに half-operator 権を付与::
 ........................................
 /halfop  <nick> [<nick>...]
 ........................................
 
 [[command_irc_ignore]]
-[command]*`ignore`* サーバかチャンネルからニックネーム/ホスト名を無視::
+[command]*`ignore`* あるサーバかチャンネルで、指定したニックネーム/ホスト名を無視::
 ........................................
 /ignore  list
          add [re:]<nick> [<server> [<channel>]]
@@ -212,16 +213,18 @@ nick: nick
 [[command_irc_join]]
 [command]*`join`* チャンネルに参加::
 ........................................
-/join  [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
+/join  [-noswitch] [-server <server>] [<channel1>[,<channel2>...]] [<key1>[,<key2>...]]
 
- server: 送信先サーバ (内部サーバ名)
-channel: 参加するチャンネルの名前
-    key: チャンネルに参加するためのキー (キーが必要なチャンネルは最初に置くこと)
+-noswitch: 新しいバッファに移動しない
+   server: 送信先サーバ (内部サーバ名)
+  channel: 参加するチャンネルの名前
+      key: チャンネルに参加するためのキー (キーが必要なチャンネルは最初に置くこと)
 
 例:
   /join #weechat
   /join #protectedchan,#weechat key
   /join -server freenode #weechat
+  /join -noswitch #weechat
 ........................................
 
 [[command_irc_kick]]
@@ -390,7 +393,7 @@ target: ニックネーム又はチャンネル
 ........................................
 
 [[command_irc_notify]]
-[command]*`notify`* サーバ上のニックネームに対して接続か離籍状態の通知を追加する::
+[command]*`notify`* サーバ上のニックネームに対して接続か離席状態の通知を追加する::
 ........................................
 /notify  add <nick> [<server> [-away]]
          del <nick>|-all [<server>]
@@ -463,6 +466,17 @@ daemon2: メッセージをデーモンに転送
 server: 送信先サーバ (内部サーバ名)
   nick: プライベート会話を行うニックネーム
   text: 送信テキスト
+........................................
+
+[[command_irc_quiet]]
+[command]*`quiet`* ニックネームかホストを発言禁止に::
+........................................
+/quiet  [<channel>] [<nick> [<nick>...]]
+
+channel: 発言禁止にするチャンネル
+   nick: 発言禁止にするユーザ名かホスト名
+
+引数無しの場合は、現在のチャンネルの発言禁止リストを表示。
 ........................................
 
 [[command_irc_quote]]
@@ -734,10 +748,14 @@ mask: マスクにマッチする情報
 [[command_irc_whois]]
 [command]*`whois`* ユーザに関する情報を要求::
 ........................................
-/whois  [<server>] <nick>[,<nick>...]
+/whois  [<server>] [<nick>[,<nick>...]]
 
 server: サーバ名
-  nick: ニックネーム (マスクが使えるかも)
+  nick: ニックネーム (マスクも可)
+
+引数が無い場合、このコマンドは以下のユーザに対する whois を行います:
+- バッファがサーバ/チャンネルの場合、自分自身のニックネーム
+- バッファがプライベートの場合、相手のニックネーム
 ........................................
 
 [[command_irc_whowas]]

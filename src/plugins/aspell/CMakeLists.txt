@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
-# Copyright (C) 2006-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2006-2013 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -20,6 +20,7 @@
 
 ADD_LIBRARY(aspell MODULE
 weechat-aspell.c weechat-aspell.h
+weechat-aspell-bar-item.c weechat-aspell-bar-item.h
 weechat-aspell-config.c weechat-aspell-config.h
 weechat-aspell-speller.c weechat-aspell-speller.h)
 SET_TARGET_PROPERTIES(aspell PROPERTIES PREFIX "")

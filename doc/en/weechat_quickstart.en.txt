@@ -90,7 +90,7 @@ For each server option, WeeChat uses its value if it is defined (not
 For example there's default nicks (based on your un*x login), and you can
 override them for oftc server with following command:
 
-  /set irc.server.oftc.nicks "mynick1,mynick2,mynick3,mynick4,mynick5"
+  /set irc.server.oftc.nicks "mynick,mynick2,mynick3,mynick4,mynick5"
 
 To set username and realname:
 
@@ -101,12 +101,20 @@ To enable auto-connect to server at startup:
 
   /set irc.server.oftc.autoconnect on
 
-To run a command after connection to server, for example to identify
-with nickserv:
+If SASL is available on server, you can use it for authentication (you will be
+identified before you join channels):
 
-  /set irc.server.oftc.command "/msg nickserv identify xxxxxx"
+  /set irc.server_default.sasl_mechanism dh-blowfish
+  /set irc.server.oftc.sasl_username "mynick"
+  /set irc.server.oftc.sasl_password "xxxxxxx"
 
-Note: many commands can be separated by ';' (semi-colon)
+To run a command after connection to server, for example to authenticate
+with nickserv (only if you don't use SASL for authentication):
+
+  /set irc.server.oftc.command "/msg nickserv identify xxxxxxx"
+
+[NOTE]
+Many commands can be separated by ';' (semi-colon).
 
 To auto-join some channels when connecting to server:
 
@@ -153,7 +161,7 @@ Join/part IRC channels
 `/part [quit message]`::
     part a channel (keeping buffer open)
 
-`/close [quit message]`::
+`/close`::
     close server or channel buffer (`/close` is an alias for `/buffer close`)
 
 
@@ -222,20 +230,11 @@ On some distros like Debian, plugins are available via a separate package
 Plugins are automatically loaded when found (please look at the WeeChat
 documentation to load/unload plugins or scripts).
 
-Some plugins let you use scripts in WeeChat (in many languages like Perl,
-Python, Ruby, Lua and Tcl). These plugins must be loaded with the `/plugin`
-command and they provide commands like `/perl`, used to load scripts.
+Many external scripts (from contributors) are available for WeeChat:
+http://www.weechat.org/scripts
 
-Many external plugins/scripts (from contributors) are available for
-WeeChat: http://www.weechat.org/scripts
-
-Easiest way to install scripts is to use script 'weeget.py':
-
-. `mkdir -p ~/.weechat/python/autoload`
-. `cd ~/.weechat/python/autoload`
-. `wget http://weechat.org/files/scripts/weeget.py`
-. load script: `/python autoload`
-. scripts list: `/weeget list` (for help: `/help weeget`)
+You can manage scripts in WeeChat with command `/script` (see `/help script`
+for more info).
 
 
 [[more_doc]]

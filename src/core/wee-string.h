@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -59,6 +59,7 @@ extern int string_has_highlight_regex_compiled (const char *string,
 extern int string_has_highlight_regex (const char *string, const char *regex);
 extern char **string_split (const char *string, const char *separators,
                             int keep_eol, int num_items_max, int *num_items);
+extern char **string_split_shell (const char *string);
 extern void string_free_split (char **split_string);
 extern char *string_build_with_split_string (const char **split_string,
                                              const char *separator);
@@ -75,8 +76,9 @@ extern void string_encode_base64 (const char *from, int length, char *to);
 extern int string_decode_base64 (const char *from, char *to);
 extern int string_is_command_char (const char *string);
 extern const char *string_input_for_buffer (const char *string);
-extern char *string_replace_with_hashtable (const char *string,
-                                            struct t_hashtable *hashtable,
-                                            int *errors);
+extern char *string_replace_with_callback (const char *string,
+                                           char *(*callback)(void *data, const char *text),
+                                           void *callback_data,
+                                           int *errors);
 
 #endif /* __WEECHAT_STRING_H */

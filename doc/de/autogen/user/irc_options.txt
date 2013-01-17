@@ -189,7 +189,7 @@
 ** Werte: on, off (Standardwert: `on`)
 
 * [[option_irc.look.item_channel_modes_hide_key]] *irc.look.item_channel_modes_hide_key*
-** Beschreibung: `unterdrückt Channel-Key im Channel Modus (diese Option unterdrückt alle Channel-Modi falls der Modus für den Channel auf +k gesetzt wurde)`
+** Beschreibung: `der Channel-Schlüssel wird nicht im Channel Modus angezeigt (diese Option unterdrückt alle Channel-Modi falls der Modus für den Channel auf +k gesetzt wurde)`
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
@@ -237,6 +237,16 @@
 ** Beschreibung: `intelligente Vervollständigung für Nicks (es wird zuerst mit den letzten Rednern vervollständigt): speakers = alle Redner (einschließlich Highlights), speakers_highlight = nur Redner die eine Highlight Nachricht geschrieben haben`
 ** Typ: integer
 ** Werte: off, speakers, speakers_highlights (Standardwert: `speakers`)
+
+* [[option_irc.look.nick_mode]] *irc.look.nick_mode*
+** Beschreibung: `vor dem Nick wird der entsprechende Nickmodus (op, voice,...) angezeigt (none = Funktion ist deaktiviert, prefix = wird nur im Präfix angezeigt (Standardeinstellung), action = wird nur in action Nachrichten angezeigt, both = im Präfix und in action Nachrichten)`
+** Typ: integer
+** Werte: none, prefix, action, both (Standardwert: `prefix`)
+
+* [[option_irc.look.nick_mode_empty]] *irc.look.nick_mode_empty*
+** Beschreibung: `es wird ein Leerzeichen anstelle eines Nickmodus verwendet, falls kein Nickmodus ((half)op/voice [@%+]) vorhanden ist`
+** Typ: boolesch
+** Werte: on, off (Standardwert: `off`)
 
 * [[option_irc.look.nick_prefix]] *irc.look.nick_prefix*
 ** Beschreibung: `Text, der im Chatfenster vor dem Nickname erscheinen soll`
@@ -308,6 +318,11 @@
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
+* [[option_irc.network.alternate_nick]] *irc.network.alternate_nick*
+** Beschreibung: `bezieht einen alternativen Nick, sofern alle voreingestellten Nicks am Server schon genutzt werden. Dazu wird das Zeichen "_" an den Nick an gehangen, sofern der Nick nicht mehr als neun Zeichen besitzt. Andernfalls wird das letzte bzw. vorletzte Zeichen durch eine Zahl zwischen 1 und 99 ersetzt, bis ein freier Nick für den Server gefunden wird`
+** Typ: boolesch
+** Werte: on, off (Standardwert: `on`)
+
 * [[option_irc.network.autoreconnect_delay_growing]] *irc.network.autoreconnect_delay_growing*
 ** Beschreibung: `Multiplikator für die Verzögerung bei der automatischen Wiederverbindung zum Server (1 = immer die selbe Verzögerung nutzen, 2 = Verzögerung*2 für jeden weiteren Versuch, ..)`
 ** Typ: integer
@@ -363,6 +378,11 @@
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
+* [[option_irc.network.whois_double_nick]] *irc.network.whois_double_nick*
+** Beschreibung: `dupliziert den Nick, für den /whois Befehl (falls nur ein Nick angegeben wird), um die Idle-Zeit zu erhalten. Zum Beispiel: "/whois nick" wird als "whois nick nick" verschickt`
+** Typ: boolesch
+** Werte: on, off (Standardwert: `on`)
+
 * [[option_irc.server_default.addresses]] *irc.server_default.addresses*
 ** Beschreibung: `Liste der Hostnamen/Ports oder IP/Ports des Servers (durch Komma getrennt)`
 ** Typ: Zeichenkette
@@ -399,7 +419,7 @@
 ** Werte: 1 .. 65535 (Standardwert: `10`)
 
 * [[option_irc.server_default.autorejoin]] *irc.server_default.autorejoin*
-** Beschreibung: `Channels automatisch betreten, falls man rausgeworfen wurde`
+** Beschreibung: `Channels automatisch betreten, falls man rausgeworfen wurde. Es kann eine lokale Buffer Variable für einen Channel erstellt werden, diese lokale Variable wird vorrangig behandelt (Name der lokalen Variable: "autorejoin", Wert: "on" oder "off")`
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
@@ -449,9 +469,9 @@
 ** Werte: beliebige Zeichenkette (Standardwert: `"WeeChat %v"`)
 
 * [[option_irc.server_default.ipv6]] *irc.server_default.ipv6*
-** Beschreibung: `Server über IPv6 ansprechen`
+** Beschreibung: `bei der Kommunikation mit dem Server wird das IPv6 Protokoll genutzt (sollte IPv6 nicht genutzt werden können, wird automatisch auf IPv4 zurückgegriffen); wird die Funktion deaktiviert, dann wird ausschließlich IPv4 genutzt.`
 ** Typ: boolesch
-** Werte: on, off (Standardwert: `off`)
+** Werte: on, off (Standardwert: `on`)
 
 * [[option_irc.server_default.local_hostname]] *irc.server_default.local_hostname*
 ** Beschreibung: `benutzerdefinierter lokaler Hostname bzw. IP-Adresse für den entsprechenden Server (optional). Falls kein Eintrag vorhanden sein sollte wird der lokale Hostname verwendet`

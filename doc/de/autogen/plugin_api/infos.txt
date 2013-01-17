@@ -38,7 +38,11 @@
 
 | weechat | inactivity | Inaktivität der Tastatur (Sekunden) | -
 
+| weechat | locale | Lokalisation welche für die übersetzten Nachrichten verwendet werden soll | -
+
 | weechat | version | WeeChat Version | -
+
+| weechat | version_git | WeeChat Git Version (Ausgabe des Befehls "git describe", ausschließlich für eine Entwicklerversion. Eine stabile Version gibt keine Information zurück) | -
 
 | weechat | version_number | WeeChat Version (als Nummer) | -
 

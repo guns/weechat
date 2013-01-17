@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -150,8 +150,6 @@ extern struct t_config_option *config_look_jump_previous_buffer_when_closing;
 extern struct t_config_option *config_look_jump_smart_back_to_buffer;
 extern struct t_config_option *config_look_mouse;
 extern struct t_config_option *config_look_mouse_timer_delay;
-extern struct t_config_option *config_look_nickmode;
-extern struct t_config_option *config_look_nickmode_empty;
 extern struct t_config_option *config_look_paste_bracketed;
 extern struct t_config_option *config_look_paste_bracketed_timer_delay;
 extern struct t_config_option *config_look_paste_max_lines;
@@ -279,5 +277,6 @@ extern int config_weechat_notify_set (struct t_gui_buffer *buffer,
 extern int config_weechat_init ();
 extern int config_weechat_read ();
 extern int config_weechat_write ();
+extern void config_weechat_free ();
 
 #endif /* __WEECHAT_CONFIG_H */

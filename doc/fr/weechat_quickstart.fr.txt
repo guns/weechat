@@ -96,7 +96,7 @@ définie (non "null"). Sinon WeeChat utilise la valeur par défaut
 Par exemple il y a des pseudos par défaut (basés sur votre login un*x), et
 vous pouvez les écraser pour le serveur oftc avec la commande suivante :
 
-  /set irc.server.oftc.nicks "pseudo1,pseudo2,pseudo3,pseudo4,pseudo5"
+  /set irc.server.oftc.nicks "pseudo,pseudo2,pseudo3,pseudo4,pseudo5"
 
 Pour modifier le nom d'utilisateur et nom réel :
 
@@ -107,12 +107,21 @@ Pour activer la connexion automatique au serveur lors du démarrage :
 
   /set irc.server.oftc.autoconnect on
 
+Si SASL est disponible sur le serveur, vous pouvez l'utiliser pour
+l'authentification (vous serez identifié avant de rejoindre les canaux) :
+
+  /set irc.server_default.sasl_mechanism dh-blowfish
+  /set irc.server.oftc.sasl_username "pseudo"
+  /set irc.server.oftc.sasl_password "xxxxxxx"
+
 Pour lancer une commande après connexion au serveur, par exemple pour
-s'identifier auprès de nickserv :
+s'authentifier auprès de nickserv (seulement si vous n'utilisez pas SASL pour
+l'authentification) :
 
-  /set irc.server.oftc.command "/msg nickserv identify xxxxxx"
+  /set irc.server.oftc.command "/msg nickserv identify xxxxxxx"
 
-NB: plusieurs commandes peuvent être séparées par ';' (point-virgule)
+[NOTE]
+Plusieurs commandes peuvent être séparées par ';' (point-virgule).
 
 Pour rejoindre automatiquement des canaux lors de la connexion au serveur :
 
@@ -138,7 +147,7 @@ Se connecter au serveur IRC et rejoindre les canaux
 
 [NOTE]
 Cette commande peut aussi être utilisée pour créer et se connecter au serveur
-sans utiliser la commande `/server` (devrais-je répéter que vous pouvez voir
+sans utiliser la commande `/server` (dois-je répéter que vous pouvez voir
 l'aide pour cette commande avec `/help connect` ?).
 
 Par défaut, les tampons des serveurs sont mélangés avec le tampon 'core'
@@ -152,16 +161,16 @@ tampon distinct par serveur :
 
 
 [[join_part_irc_channels]]
-Joindre/quitter les canaux IRC
+Rejoindre/quitter les canaux IRC
 ------------------------------
 
 `/join #channel`:
-    joindre un canal
+    rejoindre un canal
 
 `/part [message de fin]`::
     quitter un canal (en laissant le tampon ouvert)
 
-`/close [message de fin]`::
+`/close`::
     quitter un canal et fermer le tampon (`/close` est un alias sur
     `/buffer close`)
 
@@ -234,22 +243,11 @@ Les extensions sont automatiquement chargées lorsqu'elles sont trouvées
 (merci de regarder la documentation WeeChat pour charger/décharger des
 extensions ou des scripts).
 
-Des extensions permettent d'utiliser des scripts dans WeeChat (dans
-différent langages comme Perl, Python, Ruby, Lua et Tcl). Ces extensions
-doivent être chargées avec la commande `/plugin` et elles fournissent des
-commandes telles que `/perl`, utilisées pour charger les scripts.
+De nombreux scripts externes (de contributeurs) sont disponibles pour WeeChat :
+http://www.weechat.org/scripts
 
-Plusieurs extensions/scripts (de contributeurs) sont disponibles pour
-WeeChat : http://www.weechat.org/scripts
-
-La manière la plus simple pour installer des scripts consiste à utiliser le
-script 'weeget.py' :
-
-. `mkdir -p ~/.weechat/python/autoload`
-. `cd ~/.weechat/python/autoload`
-. `wget http://weechat.org/files/scripts/weeget.py`
-. chargez le script : `/python autoload`
-. liste des scripts : `/weeget list` (pour l'aide: `/help weeget`)
+Vous pouvez gérer les scripts dans WeeChat avec la commande `/script` (voir
+`/help script` pour plus d'infos).
 
 
 [[more_doc]]

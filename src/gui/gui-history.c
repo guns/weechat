@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-history.c - memorize commands or text for buffers (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -18,20 +20,18 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * gui-history.c: memorize commands or text for buffers (used by all GUI)
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "../core/weechat.h"
 #include "../core/wee-config.h"
+#include "../core/wee-hashtable.h"
 #include "../core/wee-hdata.h"
 #include "../core/wee-hook.h"
 #include "../core/wee-infolist.h"
@@ -41,14 +41,14 @@
 #include "gui-buffer.h"
 
 
-struct t_gui_history *history_global = NULL;
-struct t_gui_history *last_history_global = NULL;
-struct t_gui_history *history_global_ptr = NULL;
-int num_history_global = 0;
+struct t_gui_history *gui_history = NULL;
+struct t_gui_history *last_gui_history = NULL;
+struct t_gui_history *gui_history_ptr = NULL;
+int num_gui_history = 0;
 
 
 /*
- * gui_history_buffer_add: add a text/command to buffer's history
+ * Adds a text/command to buffer's history.
  */
 
 void
@@ -95,7 +95,7 @@ gui_history_buffer_add (struct t_gui_buffer *buffer, const char *string)
 }
 
 /*
- * history_global_add: add a text/command to global history
+ * Adds a text/command to global history.
  */
 
 void
@@ -106,43 +106,43 @@ gui_history_global_add (const char *string)
     if (!string)
         return;
 
-    if (!history_global
-        || (history_global
-            && (strcmp (history_global->text, string) != 0)))
+    if (!gui_history
+        || (gui_history
+            && (strcmp (gui_history->text, string) != 0)))
     {
         new_history = malloc (sizeof (*new_history));
         if (new_history)
         {
             new_history->text = strdup (string);
-            if (history_global)
-                history_global->prev_history = new_history;
+            if (gui_history)
+                gui_history->prev_history = new_history;
             else
-                last_history_global = new_history;
-            new_history->next_history = history_global;
+                last_gui_history = new_history;
+            new_history->next_history = gui_history;
             new_history->prev_history = NULL;
-            history_global = new_history;
-            num_history_global++;
+            gui_history = new_history;
+            num_gui_history++;
 
             /* remove one command if necessary */
             if ((CONFIG_INTEGER(config_history_max_commands) > 0)
-                && (num_history_global > CONFIG_INTEGER(config_history_max_commands)))
+                && (num_gui_history > CONFIG_INTEGER(config_history_max_commands)))
             {
-                ptr_history = last_history_global->prev_history;
-                if (history_global_ptr == last_history_global)
-                    history_global_ptr = ptr_history;
-                (last_history_global->prev_history)->next_history = NULL;
-                if (last_history_global->text)
-                    free (last_history_global->text);
-                free (last_history_global);
-                last_history_global = ptr_history;
-                num_history_global--;
+                ptr_history = last_gui_history->prev_history;
+                if (gui_history_ptr == last_gui_history)
+                    gui_history_ptr = ptr_history;
+                (last_gui_history->prev_history)->next_history = NULL;
+                if (last_gui_history->text)
+                    free (last_gui_history->text);
+                free (last_gui_history);
+                last_gui_history = ptr_history;
+                num_gui_history--;
             }
         }
     }
 }
 
 /*
- * gui_history_add: add a text/command to buffer's history + global history
+ * Adds a text/command to buffer's history + global history.
  */
 
 void
@@ -169,7 +169,7 @@ gui_history_add (struct t_gui_buffer *buffer, const char *string)
 }
 
 /*
- * gui_history_global_free: free global history
+ * Frees global history.
  */
 
 void
@@ -177,23 +177,23 @@ gui_history_global_free ()
 {
     struct t_gui_history *ptr_history;
 
-    while (history_global)
+    while (gui_history)
     {
-        ptr_history = history_global->next_history;
-        if (history_global->text)
-            free (history_global->text);
-        free (history_global);
-        history_global = ptr_history;
+        ptr_history = gui_history->next_history;
+        if (gui_history->text)
+            free (gui_history->text);
+        free (gui_history);
+        gui_history = ptr_history;
     }
-    history_global = NULL;
-    last_history_global = NULL;
-    history_global_ptr = NULL;
-    num_history_global = 0;
+    gui_history = NULL;
+    last_gui_history = NULL;
+    gui_history_ptr = NULL;
+    num_gui_history = 0;
 }
 
 
 /*
- * gui_history_buffer_free: free history for a buffer
+ * Frees history for a buffer.
  */
 
 void
@@ -216,7 +216,64 @@ gui_history_buffer_free (struct t_gui_buffer *buffer)
 }
 
 /*
- * gui_history_hdata_history_cb: return hdata for history
+ * Callback for updating history.
+ */
+
+int
+gui_history_hdata_history_update_cb (void *data,
+                                     struct t_hdata *hdata,
+                                     void *pointer,
+                                     struct t_hashtable *hashtable)
+{
+    struct t_gui_history *ptr_history;
+    struct t_gui_buffer *ptr_buffer;
+    const char *text, *buffer;
+    long unsigned int value;
+    int rc;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) hdata;
+
+    rc = 0;
+
+    text = hashtable_get (hashtable, "text");
+    if (!text)
+        return rc;
+
+    if (pointer)
+    {
+        /* update history */
+        ptr_history = (struct t_gui_history *)pointer;
+        if (ptr_history->text)
+            free (ptr_history->text);
+        ptr_history->text = strdup (text);
+    }
+    else
+    {
+        /* create new entry in history */
+        ptr_buffer = NULL;
+        if (hashtable_has_key (hashtable, "buffer"))
+        {
+            buffer = hashtable_get (hashtable, "buffer");
+            if (buffer)
+            {
+                rc = sscanf (buffer, "%lx", &value);
+                if ((rc != EOF) && (rc != 0))
+                    ptr_buffer = (struct t_gui_buffer *)value;
+            }
+        }
+        if (ptr_buffer)
+            gui_history_add (ptr_buffer, text);
+        else
+            gui_history_global_add (text);
+    }
+
+    return rc;
+}
+
+/*
+ * Returns hdata for history.
  */
 
 struct t_hdata *
@@ -227,20 +284,25 @@ gui_history_hdata_history_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_history", "next_history");
+    hdata = hdata_new (NULL, hdata_name, "prev_history", "next_history",
+                       1, 1, &gui_history_hdata_history_update_cb, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_history, text, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_history, prev_history, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_history, next_history, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_history, text, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_history, prev_history, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_history, next_history, POINTER, 0, NULL, hdata_name);
+        HDATA_LIST(gui_history);
+        HDATA_LIST(last_gui_history);
     }
     return hdata;
 }
 
 /*
- * gui_history_add_to_infolist: add history of commands in an infolist
- *                              if buffer is NULL, global history is returned
- *                              return 1 if ok, 0 if error
+ * Adds history in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int

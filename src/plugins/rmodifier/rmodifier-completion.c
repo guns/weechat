@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * rmodifier-completion.c - completion for rmodifier command
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * rmodifier-completion.c: completion for rmodifier command
- */
-
 #include <stdlib.h>
 
 #include "../weechat-plugin.h"
@@ -29,7 +27,7 @@
 
 
 /*
- * rmodifier_completion_cb: callback for completion with list of rmodifiers
+ * Adds list of rmodifiers to completion list.
  */
 
 int
@@ -55,7 +53,7 @@ rmodifier_completion_cb (void *data, const char *completion_item,
 }
 
 /*
- * rmodifier_completion_init: initialize rmodifier plugin
+ * Hooks completion.
  */
 
 void

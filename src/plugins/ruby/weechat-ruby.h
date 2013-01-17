@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -37,7 +37,9 @@ extern const char *ruby_current_script_filename;
 
 extern VALUE weechat_ruby_hashtable_to_hash (struct t_hashtable *hashtable);
 extern struct t_hashtable *weechat_ruby_hash_to_hashtable (VALUE dict,
-                                                           int hashtable_size);
+                                                           int size,
+                                                           const char *type_keys,
+                                                           const char *type_values);
 void *weechat_ruby_exec (struct t_plugin_script *script,
                          int ret_type, const char *function,
                          const char *format, void **argv);

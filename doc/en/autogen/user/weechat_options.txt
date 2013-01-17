@@ -204,7 +204,7 @@
 ** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `blue`)
 
 * [[option_weechat.color.separator]] *weechat.color.separator*
-** description: `background color for window separators (when split)`
+** description: `color for window separators (when split) and separators beside bars (like nicklist)`
 ** type: color
 ** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `blue`)
 
@@ -593,16 +593,6 @@
 ** type: integer
 ** values: 1 .. 10000 (default value: `100`)
 
-* [[option_weechat.look.nickmode]] *weechat.look.nickmode*
-** description: `display nick mode ((half)op/voice) before each nick`
-** type: boolean
-** values: on, off (default value: `on`)
-
-* [[option_weechat.look.nickmode_empty]] *weechat.look.nickmode_empty*
-** description: `display space if nick mode is not (half)op/voice`
-** type: boolean
-** values: on, off (default value: `off`)
-
 * [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
 ** description: `enable terminal "bracketed paste mode" (not supported in all terminals/multiplexers): in this mode, pasted text is bracketed with control sequences so that WeeChat can differentiate pasted text from typed-in text ("ESC[200~", followed by the pasted text, followed by "ESC[201~")`
 ** type: boolean
@@ -619,7 +609,7 @@
 ** values: -1 .. 2147483647 (default value: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
-** description: `prefix for action messages`
+** description: `prefix for action messages, colors are allowed with format "${color}"`
 ** type: string
 ** values: any string (default value: `" *"`)
 
@@ -659,22 +649,22 @@
 ** values: any string (default value: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
-** description: `prefix for error messages`
+** description: `prefix for error messages, colors are allowed with format "${color}"`
 ** type: string
 ** values: any string (default value: `"=!="`)
 
 * [[option_weechat.look.prefix_join]] *weechat.look.prefix_join*
-** description: `prefix for join messages`
+** description: `prefix for join messages, colors are allowed with format "${color}"`
 ** type: string
 ** values: any string (default value: `"-->"`)
 
 * [[option_weechat.look.prefix_network]] *weechat.look.prefix_network*
-** description: `prefix for network messages`
+** description: `prefix for network messages, colors are allowed with format "${color}"`
 ** type: string
 ** values: any string (default value: `"--"`)
 
 * [[option_weechat.look.prefix_quit]] *weechat.look.prefix_quit*
-** description: `prefix for quit messages`
+** description: `prefix for quit messages, colors are allowed with format "${color}"`
 ** type: string
 ** values: any string (default value: `"<--"`)
 

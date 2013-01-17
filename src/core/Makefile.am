@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -35,6 +35,8 @@ lib_weechat_core_a_SOURCES = weechat.c \
                              wee-config-file.h \
                              wee-debug.c \
                              wee-debug.h \
+                             wee-eval.c \
+                             wee-eval.h \
                              wee-hashtable.c \
                              wee-hashtable.h \
                              wee-hdata.c \
@@ -64,6 +66,8 @@ lib_weechat_core_a_SOURCES = weechat.c \
                              wee-utf8.c \
                              wee-utf8.h \
                              wee-util.c \
-                             wee-util.h
+                             wee-util.h \
+                             wee-version.c \
+                             wee-version.h
 
 EXTRA_DIST = CMakeLists.txt

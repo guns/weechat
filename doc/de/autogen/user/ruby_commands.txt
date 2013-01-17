@@ -2,9 +2,9 @@
 [command]*`ruby`* auflisten/installieren/deinstallieren von Skripten::
 ........................................
 /ruby  list|listfull [<name>]
-       load <filename>
+       load [-q] <filename>
        autoload
-       reload|unload [<name>]
+       reload|unload [-q] [<name>]
 
     list: installierte Skripten werden aufgelistet
 listfull: detaillierte Auflistung aller installierten Skripten
@@ -14,6 +14,7 @@ autoload: installiert automatisch alle Skripten aus dem "autoload" Verzeichnis
   unload: deinstalliert ein Skript (wird kein Name angegeben, dann werden alle Skripten deinstalliert)
 filename: Skript (Datei) welches geladen werden soll
     name: Name eines Skriptes (der Name der in der "register" Funktion der Skript-API genutzt wird)
+      -q: unterdrückter Modus: Es werden keine Nachrichten ausgegeben
 
 Ohne Angabe eines Argumentes listet dieser Befehl alle geladenen Skripten auf.
 ........................................

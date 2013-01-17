@@ -204,7 +204,7 @@
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `blue`)
 
 * [[option_weechat.color.separator]] *weechat.color.separator*
-** Beschreibung: `Hintergrundfarbe der Fenster-Separatoren im Chatfenster (bei geteiltem Bildschirm)`
+** Beschreibung: `Farbe der Trennlinie von Fenstern (bei Fenster geteilt sind) und Bars (wie z.B. Nicklist)`
 ** Typ: Farbe
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `blue`)
 
@@ -279,7 +279,7 @@
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `default`)
 
 * [[option_weechat.completion.base_word_until_cursor]] *weechat.completion.base_word_until_cursor*
-** Beschreibung: `ist diese Option aktiviert, dann kann ein zu vervollständigendes Wort einem anderen Wort vorangestellt werden und es wird ein Leerzeichen zur Trennung hinzugefügt. Ist diese Funktion deaktiviert, muss man selber erst ein Leerzeichen einfügen um eine Vervollständigung vor einem anderen Wort ausführen zu können (zum Beispiel um einen Nick vor einen schon geschriebenen Text einzusetzen)`
+** Beschreibung: `ist diese Option aktiviert wird ein zu vervollständigendes Wort in den fließenden Text, mit einem Leerzeichen, hinzugefügt. Ist diese  Option deaktiviert, muss in den fließenden Text ein Leerzeichen manuell einfügt werden, um eine Vervollständigung durchführen zu können (Beispiel: In einen schon geschriebenen Text, einen Nick einzufügen)`
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `on`)
 
@@ -339,7 +339,7 @@
 ** Werte: 0 .. 2147483647 (Standardwert: `5`)
 
 * [[option_weechat.history.max_buffer_lines_minutes]] *weechat.history.max_buffer_lines_minutes*
-** Beschreibung: `maximale Anzahl, in Minuten, wie Lange die Zeilen im Verlaufsspeicher, pro Buffer, gehalten werden sollen (0 = unbegrenzt, Beispiele: 1440 = einen Tag, 10080 = eine Woche, 43200 = einen Monat, 525600 = ein Jahr)`
+** Beschreibung: `Zeitangabe, in Minuten, wie lange die Zeilen im Verlaufsspeicher, pro Buffer, gehalten werden sollen (0 = unbegrenzt, Beispiele: 1440 = einen Tag, 10080 = eine Woche, 43200 = einen Monat, 525600 = ein Jahr)`
 ** Typ: integer
 ** Werte: 0 .. 2147483647 (Standardwert: `0`)
 
@@ -494,7 +494,7 @@
 ** Werte: beliebige Zeichenkette (Standardwert: `", "`)
 
 * [[option_weechat.look.hotlist_count_max]] *weechat.look.hotlist_count_max*
-** Beschreibung: `maximale Anzahl an Nachrichten für den Nachrichtenzähler in der Hotlist, pro Buffer (0 = der Nachrichtenzähler wird nicht dargestellt)`
+** Beschreibung: `maximale Anzahl an Nachrichten für den Nachrichtenzähler in der Hotlist, für jeden Buffer (0 = der Nachrichtenzähler wird nicht dargestellt, siehe weechat.look.buffer_notify_default)`
 ** Typ: integer
 ** Werte: 0 .. 4 (Standardwert: `2`)
 
@@ -564,7 +564,7 @@
 ** Werte: beliebige Zeichenkette (Standardwert: `"*"`)
 
 * [[option_weechat.look.item_time_format]] *weechat.look.item_time_format*
-** Beschreibung: `Format für die Zeitanzeige, "time", in der Bar-Item (siehe man strftime für Platzhalter für das Datum und die Uhrzeit)`
+** Beschreibung: `Format für die Zeitanzeige des Bar-Items, "time" (siehe man strftime für Platzhalter für das Datum und die Uhrzeit)`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"%H:%M"`)
 
@@ -593,18 +593,8 @@
 ** Typ: integer
 ** Werte: 1 .. 10000 (Standardwert: `100`)
 
-* [[option_weechat.look.nickmode]] *weechat.look.nickmode*
-** Beschreibung: `vor dem Nicknamen wird der entsprechende Nickmode ((half)op/voice [@%+]) angezeigt`
-** Typ: boolesch
-** Werte: on, off (Standardwert: `on`)
-
-* [[option_weechat.look.nickmode_empty]] *weechat.look.nickmode_empty*
-** Beschreibung: `Leerzeichen statt des Nickmode nutzen, wenn kein Nickmode ((half)op/voice [@%+]) vorhanden ist`
-** Typ: boolesch
-** Werte: on, off (Standardwert: `off`)
-
 * [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
-** Beschreibung: `aktiviert den "bracketed paste mode" des Terminals (wird nicht durch alle Terminals/Multiplexer unterstützt): Dieser Modus erlaubt das Einfügen von Steuersequenzen die in Klammern gesetzt sind. WeeChat kann dadurch ermitteln ob ein Text eingefügt oder geschrieben wurde ("ESC[200~", followed by the pasted text, followed by "ESC[201~")`
+** Beschreibung: `aktiviert den "bracketed paste mode" des Terminals (wird nicht durch alle Terminals/Multiplexer unterstützt): Dieser Modus erlaubt das Einfügen von Steuersequenzen die in Klammern gesetzt sind. WeeChat kann dadurch ermitteln ob ein Text eingefügt oder geschrieben wurde ("ESC[200~", gefolgt von dem einzufügenden Text und einem abschließenden "ESC[201~")`
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
@@ -619,7 +609,7 @@
 ** Werte: -1 .. 2147483647 (Standardwert: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
-** Beschreibung: `Präfix für Action-Nachrichten`
+** Beschreibung: `Präfix, dass bei einer Action-Nachricht angezeigt wird. Durch das Format "${Farbe}" ist es möglich eine Farbauswahl zu treffen.`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `" *"`)
 
@@ -659,22 +649,22 @@
 ** Werte: beliebige Zeichenkette (Standardwert: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
-** Beschreibung: `Präfix für Fehlermeldungen`
+** Beschreibung: `Präfix, dass bei einer Fehler-Nachricht angezeigt wird. Durch das Format "${Farbe}" ist es möglich eine Farbauswahl zu treffen.`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"=!="`)
 
 * [[option_weechat.look.prefix_join]] *weechat.look.prefix_join*
-** Beschreibung: `Präfix für Join-Nachrichten`
+** Beschreibung: `Präfix, dass bei einer Join-Nachricht angezeigt wird. Durch das Format "${Farbe}" ist es möglich eine Farbauswahl zu treffen.`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"-->"`)
 
 * [[option_weechat.look.prefix_network]] *weechat.look.prefix_network*
-** Beschreibung: `Präfix für Netzwerkmeldungen`
+** Beschreibung: `Präfix, dass bei einer Netzwerk-Nachricht angezeigt wird. Durch das Format "${Farbe}" ist es möglich eine Farbauswahl zu treffen.`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"--"`)
 
 * [[option_weechat.look.prefix_quit]] *weechat.look.prefix_quit*
-** Beschreibung: `Präfix für Quit-Nachrichten`
+** Beschreibung: `Präfix, dass bei einer Quit-Nachricht angezeigt wird. Durch das Format "${Farbe}" ist es möglich eine Farbauswahl zu treffen.`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"<--"`)
 

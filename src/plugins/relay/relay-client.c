@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-client.c - client functions for relay plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * relay-client.c: client functions for relay plugin
  */
 
 #include <stdlib.h>
@@ -57,9 +55,11 @@ int relay_client_count = 0;            /* number of clients                 */
 
 
 /*
- * relay_client_valid: check if a client pointer exists
- *                     return 1 if client exists
- *                            0 if client is not found
+ * Checks if a client pointer is valid.
+ *
+ * Returns:
+ *   1: client exists
+ *   0: client does not exist
  */
 
 int
@@ -82,7 +82,9 @@ relay_client_valid (struct t_relay_client *client)
 }
 
 /*
- * relay_client_search_by_number: search a client by number (first client is 0)
+ * Searches for a client by number (first client is 0).
+ *
+ * Returns pointer to client found, NULL if not found.
  */
 
 struct t_relay_client *
@@ -105,7 +107,9 @@ relay_client_search_by_number (int number)
 }
 
 /*
- * relay_client_search_by_id: search a client by id
+ * Searches for a client by id.
+ *
+ * Returns pointer to client found, NULL if not found.
  */
 
 struct t_relay_client *
@@ -125,7 +129,7 @@ relay_client_search_by_id (int id)
 }
 
 /*
- * relay_client_set_desc: set description for client
+ * Sets description for a client.
  */
 
 void
@@ -149,8 +153,7 @@ relay_client_set_desc (struct t_relay_client *client)
 }
 
 /*
- * relay_client_handshake_timer_cb: timer called to do the handshake with the
- *                                  client (for SSL connection only)
+ * Timer callback for handshake with client (for SSL connection only).
  */
 
 #ifdef HAVE_GNUTLS
@@ -176,16 +179,16 @@ relay_client_handshake_timer_cb (void *data, int remaining_calls)
     if (gnutls_error_is_fatal (rc))
     {
         /* handshake error, disconnect client */
-        weechat_printf (NULL,
-                        _("%s%s: TLS handshake failed for client %s%s%s: "
-                          "error %d %s"),
-                        weechat_prefix ("error"),
-                        RELAY_PLUGIN_NAME,
-                        RELAY_COLOR_CHAT_CLIENT,
-                        client->desc,
-                        RELAY_COLOR_CHAT,
-                        rc,
-                        gnutls_strerror (rc));
+        weechat_printf_tags (NULL, "relay_client",
+                             _("%s%s: TLS handshake failed for client %s%s%s: "
+                               "error %d %s"),
+                             weechat_prefix ("error"),
+                             RELAY_PLUGIN_NAME,
+                             RELAY_COLOR_CHAT_CLIENT,
+                             client->desc,
+                             RELAY_COLOR_CHAT,
+                             rc,
+                             gnutls_strerror (rc));
         weechat_unhook (client->hook_timer_handshake);
         client->hook_timer_handshake = NULL;
         relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
@@ -195,13 +198,13 @@ relay_client_handshake_timer_cb (void *data, int remaining_calls)
     if (remaining_calls == 0)
     {
         /* handshake timeout, disconnect client */
-        weechat_printf (NULL,
-                        _("%s%s: TLS handshake timeout for client %s%s%s"),
-                        weechat_prefix ("error"),
-                        RELAY_PLUGIN_NAME,
-                        RELAY_COLOR_CHAT_CLIENT,
-                        client->desc,
-                        RELAY_COLOR_CHAT);
+        weechat_printf_tags (NULL, "relay_client",
+                             _("%s%s: TLS handshake timeout for client %s%s%s"),
+                             weechat_prefix ("error"),
+                             RELAY_PLUGIN_NAME,
+                             RELAY_COLOR_CHAT_CLIENT,
+                             client->desc,
+                             RELAY_COLOR_CHAT);
         weechat_unhook (client->hook_timer_handshake);
         client->hook_timer_handshake = NULL;
         relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
@@ -214,7 +217,7 @@ relay_client_handshake_timer_cb (void *data, int remaining_calls)
 #endif
 
 /*
- * relay_client_recv_cb: read data from a client
+ * Reads data from a client.
  */
 
 int
@@ -265,16 +268,16 @@ relay_client_recv_cb (void *arg_client, int fd)
             if ((num_read == 0)
                 || ((num_read != GNUTLS_E_AGAIN) && (num_read != GNUTLS_E_INTERRUPTED)))
             {
-                weechat_printf (NULL,
-                                _("%s%s: reading data on socket for client %s%s%s: "
-                                  "error %d %s"),
-                                weechat_prefix ("error"), RELAY_PLUGIN_NAME,
-                                RELAY_COLOR_CHAT_CLIENT,
-                                client->desc,
-                                RELAY_COLOR_CHAT,
-                                num_read,
-                                (num_read == 0) ? _("(connection closed by peer)") :
-                                gnutls_strerror (num_read));
+                weechat_printf_tags (NULL, "relay_client",
+                                     _("%s%s: reading data on socket for "
+                                       "client %s%s%s: error %d %s"),
+                                     weechat_prefix ("error"), RELAY_PLUGIN_NAME,
+                                     RELAY_COLOR_CHAT_CLIENT,
+                                     client->desc,
+                                     RELAY_COLOR_CHAT,
+                                     num_read,
+                                     (num_read == 0) ? _("(connection closed by peer)") :
+                                     gnutls_strerror (num_read));
                 relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
             }
         }
@@ -284,16 +287,16 @@ relay_client_recv_cb (void *arg_client, int fd)
             if ((num_read == 0)
                 || ((errno != EAGAIN) && (errno != EWOULDBLOCK)))
             {
-                weechat_printf (NULL,
-                                _("%s%s: reading data on socket for client %s%s%s: "
-                                  "error %d %s"),
-                                weechat_prefix ("error"), RELAY_PLUGIN_NAME,
-                                RELAY_COLOR_CHAT_CLIENT,
-                                client->desc,
-                                RELAY_COLOR_CHAT,
-                                errno,
-                                (num_read == 0) ? _("(connection closed by peer)") :
-                                strerror (errno));
+                weechat_printf_tags (NULL, "relay_client",
+                                     _("%s%s: reading data on socket for "
+                                       "client %s%s%s: error %d %s"),
+                                     weechat_prefix ("error"), RELAY_PLUGIN_NAME,
+                                     RELAY_COLOR_CHAT_CLIENT,
+                                     client->desc,
+                                     RELAY_COLOR_CHAT,
+                                     errno,
+                                     (num_read == 0) ? _("(connection closed by peer)") :
+                                     strerror (errno));
                 relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
             }
         }
@@ -303,7 +306,7 @@ relay_client_recv_cb (void *arg_client, int fd)
 }
 
 /*
- * relay_client_outqueue_add: add a message in out queue
+ * Adds a message in out queue.
  */
 
 void
@@ -338,7 +341,7 @@ relay_client_outqueue_add (struct t_relay_client *client, const char *data,
 }
 
 /*
- * relay_client_outqueue_free: free a message in out queue
+ * Frees a message in out queue.
  */
 
 void
@@ -371,7 +374,7 @@ relay_client_outqueue_free (struct t_relay_client *client,
 }
 
 /*
- * relay_client_outqueue_free_all: free all outqueued messages
+ * Frees all messages in out queue.
  */
 
 void
@@ -384,9 +387,9 @@ relay_client_outqueue_free_all (struct t_relay_client *client)
 }
 
 /*
- * relay_client_send: send data to client (add in outqueue if it's impossible
- *                    to send now)
- *                    return number of bytes sent to client
+ * Sends data to client (adds in out queue if it's impossible to send now).
+ *
+ * Returns number of bytes sent to client, -1 if error.
  */
 
 int
@@ -444,16 +447,16 @@ relay_client_send (struct t_relay_client *client, const char *data,
                 }
                 else
                 {
-                    weechat_printf (NULL,
-                                    _("%s%s: sending data to client %s%s%s: "
-                                      "error %d %s"),
-                                    weechat_prefix ("error"),
-                                    RELAY_PLUGIN_NAME,
-                                    RELAY_COLOR_CHAT_CLIENT,
-                                    client->desc,
-                                    RELAY_COLOR_CHAT,
-                                    num_sent,
-                                    gnutls_strerror (num_sent));
+                    weechat_printf_tags (NULL, "relay_client",
+                                         _("%s%s: sending data to client %s%s%s: "
+                                           "error %d %s"),
+                                         weechat_prefix ("error"),
+                                         RELAY_PLUGIN_NAME,
+                                         RELAY_COLOR_CHAT_CLIENT,
+                                         client->desc,
+                                         RELAY_COLOR_CHAT,
+                                         num_sent,
+                                         gnutls_strerror (num_sent));
                     relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
                 }
             }
@@ -467,16 +470,16 @@ relay_client_send (struct t_relay_client *client, const char *data,
                 }
                 else
                 {
-                    weechat_printf (NULL,
-                                    _("%s%s: sending data to client %s%s%s: "
-                                      "error %d %s"),
-                                    weechat_prefix ("error"),
-                                    RELAY_PLUGIN_NAME,
-                                    RELAY_COLOR_CHAT_CLIENT,
-                                    client->desc,
-                                    RELAY_COLOR_CHAT,
-                                    errno,
-                                    strerror (errno));
+                    weechat_printf_tags (NULL, "relay_client",
+                                         _("%s%s: sending data to client %s%s%s: "
+                                           "error %d %s"),
+                                         weechat_prefix ("error"),
+                                         RELAY_PLUGIN_NAME,
+                                         RELAY_COLOR_CHAT_CLIENT,
+                                         client->desc,
+                                         RELAY_COLOR_CHAT,
+                                         errno,
+                                         strerror (errno));
                     relay_client_set_status (client, RELAY_STATUS_DISCONNECTED);
                 }
             }
@@ -487,8 +490,7 @@ relay_client_send (struct t_relay_client *client, const char *data,
 }
 
 /*
- * relay_client_timer_cb: timer called each second to perform some operations
- *                        on clients
+ * Timer callback, called each second.
  */
 
 int
@@ -571,16 +573,16 @@ relay_client_timer_cb (void *data, int remaining_calls)
                         }
                         else
                         {
-                            weechat_printf (NULL,
-                                            _("%s%s: sending data to client %s%s%s: "
-                                              "error %d %s"),
-                                            weechat_prefix ("error"),
-                                            RELAY_PLUGIN_NAME,
-                                            RELAY_COLOR_CHAT_CLIENT,
-                                            ptr_client->desc,
-                                            RELAY_COLOR_CHAT,
-                                            num_sent,
-                                            gnutls_strerror (num_sent));
+                            weechat_printf_tags (NULL, "relay_client",
+                                                 _("%s%s: sending data to client "
+                                                   "%s%s%s: error %d %s"),
+                                                 weechat_prefix ("error"),
+                                                 RELAY_PLUGIN_NAME,
+                                                 RELAY_COLOR_CHAT_CLIENT,
+                                                 ptr_client->desc,
+                                                 RELAY_COLOR_CHAT,
+                                                 num_sent,
+                                                 gnutls_strerror (num_sent));
                             relay_client_set_status (ptr_client,
                                                      RELAY_STATUS_DISCONNECTED);
                         }
@@ -595,16 +597,16 @@ relay_client_timer_cb (void *data, int remaining_calls)
                         }
                         else
                         {
-                            weechat_printf (NULL,
-                                            _("%s%s: sending data to client %s%s%s: "
-                                              "error %d %s"),
-                                            weechat_prefix ("error"),
-                                            RELAY_PLUGIN_NAME,
-                                            RELAY_COLOR_CHAT_CLIENT,
-                                            ptr_client->desc,
-                                            RELAY_COLOR_CHAT,
-                                            errno,
-                                            strerror (errno));
+                            weechat_printf_tags (NULL, "relay_client",
+                                                 _("%s%s: sending data to client "
+                                                   "%s%s%s: error %d %s"),
+                                                 weechat_prefix ("error"),
+                                                 RELAY_PLUGIN_NAME,
+                                                 RELAY_COLOR_CHAT_CLIENT,
+                                                 ptr_client->desc,
+                                                 RELAY_COLOR_CHAT,
+                                                 errno,
+                                                 strerror (errno));
                             relay_client_set_status (ptr_client,
                                                      RELAY_STATUS_DISCONNECTED);
                         }
@@ -618,7 +620,9 @@ relay_client_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * relay_client_new: create a new client
+ * Creates a new client.
+ *
+ * Returns pointer to new client, NULL if error.
  */
 
 struct t_relay_client *
@@ -643,6 +647,7 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
         new_client->address = strdup ((address) ? address : "?");
         new_client->status = RELAY_STATUS_CONNECTED;
         new_client->protocol = server->protocol;
+        new_client->protocol_string = (server->protocol_string) ? strdup (server->protocol_string) : NULL;
         new_client->protocol_args = (server->protocol_args) ? strdup (server->protocol_args) : NULL;
         new_client->listen_start_time = server->start_time;
         new_client->start_time = time (NULL);
@@ -659,10 +664,12 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
         {
             if (!relay_network_init_ssl_cert_key_ok)
             {
-                weechat_printf (NULL,
-                                _("%s%s: warning: no SSL certificate/key found "
-                                  "(option relay.network.ssl_cert_key)"),
-                                weechat_prefix ("error"), RELAY_PLUGIN_NAME);
+                weechat_printf_tags (NULL, "relay_client",
+                                     _("%s%s: warning: no SSL certificate/key "
+                                       "found (option "
+                                       "relay.network.ssl_cert_key)"),
+                                     weechat_prefix ("error"),
+                                     RELAY_PLUGIN_NAME);
             }
             new_client->status = RELAY_STATUS_CONNECTING;
             /*
@@ -694,7 +701,7 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
             gnutls_credentials_set (new_client->gnutls_sess, GNUTLS_CRD_CERTIFICATE, relay_gnutls_x509_cred);
             gnutls_certificate_server_set_request (new_client->gnutls_sess, GNUTLS_CERT_IGNORE);
             gnutls_transport_set_ptr (new_client->gnutls_sess,
-                                      (gnutls_transport_ptr) ((ptrdiff_t) new_client->sock));
+                                      (gnutls_transport_ptr_t) ((ptrdiff_t) new_client->sock));
             ptr_option = weechat_config_get ("weechat.network.gnutls_handshake_timeout");
             new_client->hook_timer_handshake = weechat_hook_timer (1000 / 10,
                                                                    0,
@@ -729,13 +736,13 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
             last_relay_client = new_client;
         relay_clients = new_client;
 
-        weechat_printf (NULL,
-                        _("%s: new client on port %d: %s%s%s"),
-                        RELAY_PLUGIN_NAME,
-                        server->port,
-                        RELAY_COLOR_CHAT_CLIENT,
-                        new_client->desc,
-                        RELAY_COLOR_CHAT);
+        weechat_printf_tags (NULL, "relay_client",
+                             _("%s: new client on port %d: %s%s%s"),
+                             RELAY_PLUGIN_NAME,
+                             server->port,
+                             RELAY_COLOR_CHAT_CLIENT,
+                             new_client->desc,
+                             RELAY_COLOR_CHAT);
 
         new_client->hook_fd = weechat_hook_fd (new_client->sock,
                                                1, 0, 0,
@@ -754,16 +761,18 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
     }
     else
     {
-        weechat_printf (NULL,
-                        _("%s%s: not enough memory for new client"),
-                        weechat_prefix ("error"), RELAY_PLUGIN_NAME);
+        weechat_printf_tags (NULL, "relay_client",
+                             _("%s%s: not enough memory for new client"),
+                             weechat_prefix ("error"), RELAY_PLUGIN_NAME);
     }
 
     return new_client;
 }
 
 /*
- * relay_client_new_with_infolist: create a new client using an infolist
+ * Creates a new client using an infolist.
+ *
+ * This is called to restore clients after /upgrade.
  */
 
 struct t_relay_client *
@@ -778,9 +787,16 @@ relay_client_new_with_infolist (struct t_infolist *infolist)
         new_client->id = weechat_infolist_integer (infolist, "id");
         new_client->desc = NULL;
         new_client->sock = weechat_infolist_integer (infolist, "sock");
+        new_client->ssl = weechat_infolist_integer (infolist, "ssl");
+#ifdef HAVE_GNUTLS
+        new_client->gnutls_sess = NULL;
+        new_client->hook_timer_handshake = NULL;
+#endif
         new_client->address = strdup (weechat_infolist_string (infolist, "address"));
         new_client->status = weechat_infolist_integer (infolist, "status");
         new_client->protocol = weechat_infolist_integer (infolist, "protocol");
+        str = weechat_infolist_string (infolist, "protocol_string");
+        new_client->protocol_string = (str) ? strdup (str) : NULL;
         str = weechat_infolist_string (infolist, "protocol_args");
         new_client->protocol_args = (str) ? strdup (str) : NULL;
         new_client->listen_start_time = weechat_infolist_time (infolist, "listen_start_time");
@@ -839,18 +855,24 @@ relay_client_new_with_infolist (struct t_infolist *infolist)
 }
 
 /*
- * relay_client_set_status: set status for a client
+ * Sets status for a client.
  */
 
 void
 relay_client_set_status (struct t_relay_client *client,
                          enum t_relay_status status)
 {
+    struct t_relay_server *ptr_server;
+
     client->status = status;
 
     if (RELAY_CLIENT_HAS_ENDED(client))
     {
         client->end_time = time (NULL);
+
+        ptr_server = relay_server_search (client->protocol_string);
+        if (ptr_server)
+            ptr_server->last_client_disconnect = client->end_time;
 
         relay_client_outqueue_free_all (client);
 
@@ -873,21 +895,22 @@ relay_client_set_status (struct t_relay_client *client,
         switch (client->status)
         {
             case RELAY_STATUS_AUTH_FAILED:
-                weechat_printf (NULL,
-                                _("%s%s: authentication failed with client %s%s%s"),
-                                weechat_prefix ("error"),
-                                RELAY_PLUGIN_NAME,
-                                RELAY_COLOR_CHAT_CLIENT,
-                                client->desc,
-                                RELAY_COLOR_CHAT);
+                weechat_printf_tags (NULL, "relay_client",
+                                     _("%s%s: authentication failed with "
+                                       "client %s%s%s"),
+                                     weechat_prefix ("error"),
+                                     RELAY_PLUGIN_NAME,
+                                     RELAY_COLOR_CHAT_CLIENT,
+                                     client->desc,
+                                     RELAY_COLOR_CHAT);
                 break;
             case RELAY_STATUS_DISCONNECTED:
-                weechat_printf (NULL,
-                                _("%s: disconnected from client %s%s%s"),
-                                RELAY_PLUGIN_NAME,
-                                RELAY_COLOR_CHAT_CLIENT,
-                                client->desc,
-                                RELAY_COLOR_CHAT);
+                weechat_printf_tags (NULL, "relay_client",
+                                     _("%s: disconnected from client %s%s%s"),
+                                     RELAY_PLUGIN_NAME,
+                                     RELAY_COLOR_CHAT_CLIENT,
+                                     client->desc,
+                                     RELAY_COLOR_CHAT);
                 break;
             default:
                 break;
@@ -912,7 +935,7 @@ relay_client_set_status (struct t_relay_client *client,
 }
 
 /*
- * relay_client_free: remove a client
+ * Removes a client.
  */
 
 void
@@ -937,8 +960,12 @@ relay_client_free (struct t_relay_client *client)
         (client->next_client)->prev_client = client->prev_client;
 
     /* free data */
+    if (client->desc)
+        free (client->desc);
     if (client->address)
         free (client->address);
+    if (client->protocol_string)
+        free (client->protocol_string);
     if (client->protocol_args)
         free (client->protocol_args);
 #ifdef HAVE_GNUTLS
@@ -976,7 +1003,7 @@ relay_client_free (struct t_relay_client *client)
 }
 
 /*
- * relay_client_free_all: remove all clients
+ * Removes all clients.
  */
 
 void
@@ -989,7 +1016,7 @@ relay_client_free_all ()
 }
 
 /*
- * relay_client_disconnect: disconnect one client
+ * Disconnects one client.
  */
 
 void
@@ -1002,7 +1029,7 @@ relay_client_disconnect (struct t_relay_client *client)
 }
 
 /*
- * relay_client_disconnect_all: disconnect from all clients
+ * Disconnects all clients.
  */
 
 void
@@ -1018,8 +1045,11 @@ relay_client_disconnect_all ()
 }
 
 /*
- * relay_client_add_to_infolist: add a client in an infolist
- *                               return 1 if ok, 0 if error
+ * Adds a client in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1058,6 +1088,8 @@ relay_client_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "protocol_string", relay_protocol_string[client->protocol]))
         return 0;
+    if (!weechat_infolist_new_var_string (ptr_item, "protocol_string", client->protocol_string))
+        return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "protocol_args", client->protocol_args))
         return 0;
     if (!weechat_infolist_new_var_time (ptr_item, "listen_start_time", client->listen_start_time))
@@ -1093,7 +1125,7 @@ relay_client_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * relay_client_print_log: print client infos in log (usually for crash dump)
+ * Prints clients in WeeChat log file (usually for crash dump).
  */
 
 void
@@ -1121,6 +1153,7 @@ relay_client_print_log ()
         weechat_log_printf ("  protocol. . . . . . . : %d (%s)",
                             ptr_client->protocol,
                             relay_protocol_string[ptr_client->protocol]);
+        weechat_log_printf ("  protocol_string . . . : '%s'",  ptr_client->protocol_string);
         weechat_log_printf ("  protocol_args . . . . : '%s'",  ptr_client->protocol_args);
         weechat_log_printf ("  listen_start_time . . : %ld",   ptr_client->listen_start_time);
         weechat_log_printf ("  start_time. . . . . . : %ld",   ptr_client->start_time);

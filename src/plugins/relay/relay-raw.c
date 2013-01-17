@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-raw.c - functions for Relay raw data messages
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * relay-raw.c: functions for Relay raw data messages
  */
 
 #include <stdlib.h>
@@ -43,7 +41,7 @@ struct t_relay_raw_message *last_relay_raw_message = NULL;
 
 
 /*
- * relay_raw_message_print: print a relay raw message
+ * Prints a relay raw message.
  */
 
 void
@@ -60,7 +58,7 @@ relay_raw_message_print (struct t_relay_raw_message *raw_message)
 }
 
 /*
- * relay_raw_open: open Relay raw buffer
+ * Opens relay raw buffer.
  */
 
 void
@@ -112,7 +110,7 @@ relay_raw_open (int switch_to_buffer)
 }
 
 /*
- * relay_raw_message_free: free a raw message and remove it from list
+ * Frees a raw message and remove it from list.
  */
 
 void
@@ -148,7 +146,7 @@ relay_raw_message_free (struct t_relay_raw_message *raw_message)
 }
 
 /*
- * relay_raw_message_free_all: free all raw messages
+ * Frees all raw messages.
  */
 
 void
@@ -161,8 +159,7 @@ relay_raw_message_free_all ()
 }
 
 /*
- * relay_raw_message_remove_old: remove old raw messages if limit has been
- *                               reached
+ * Removes old raw messages if limit has been reached.
  */
 
 void
@@ -178,7 +175,9 @@ relay_raw_message_remove_old ()
 }
 
 /*
- * relay_raw_message_add_to_list: add new message to list
+ * Adds a new raw message to list.
+ *
+ * Returns pointer to new raw message, NULL if error.
  */
 
 struct t_relay_raw_message *
@@ -215,7 +214,9 @@ relay_raw_message_add_to_list (time_t date, const char *prefix,
 }
 
 /*
- * relay_raw_message_add: add new message to list
+ * Adds a new raw message to list.
+ *
+ * Returns pointer to new raw message, NULL if error.
  */
 
 struct t_relay_raw_message *
@@ -312,7 +313,7 @@ relay_raw_message_add (struct t_relay_client *client, int flags,
 }
 
 /*
- * relay_raw_print: print a message on Relay raw buffer
+ * Prints a message on relay raw buffer.
  */
 
 void
@@ -342,8 +343,11 @@ relay_raw_print (struct t_relay_client *client, int flags,
 }
 
 /*
- * relay_raw_add_to_infolist: add a raw message in an infolist
- *                            return 1 if ok, 0 if error
+ * Adds a raw message in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int

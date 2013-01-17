@@ -99,9 +99,10 @@ Arguments:
 * 'version': string, script version
 * 'license': string, script license
 * 'description': string, short description of script
-* 'shutdown_function': string, name of function called when script is unloaded (optional)
-* 'charset': string, script charset (optional, if your script is UTF-8, you
-  can use blank value here, because UTF-8 is default charset)
+* 'shutdown_function': string, name of function called when script is unloaded
+  (can be empty string)
+* 'charset': string, script charset (if your script is UTF-8, you can use blank
+  value here, because UTF-8 is default charset)
 
 Example of script, for each language:
 
@@ -385,7 +386,8 @@ List of constants in script API:
   WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND, WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED,
   WEECHAT_HOOK_CONNECT_PROXY_ERROR, WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR,
   WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR, WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR,
-  WEECHAT_HOOK_CONNECT_MEMORY_ERROR, WEECHAT_HOOK_CONNECT_TIMEOUT
+  WEECHAT_HOOK_CONNECT_MEMORY_ERROR, WEECHAT_HOOK_CONNECT_TIMEOUT,
+  WEECHAT_HOOK_CONNECT_SOCKET_ERROR
 | hook signal         |
   WEECHAT_HOOK_SIGNAL_STRING, WEECHAT_HOOK_SIGNAL_INT, WEECHAT_HOOK_SIGNAL_POINTER
 |========================================
@@ -685,7 +687,7 @@ script_options = {
     "option2" : "value2",
     "option3" : "value3",
 }
-for option, default_value in script_options.iteritems():
+for option, default_value in script_options.items():
     if not weechat.config_is_set_plugin(option):
         weechat.config_set_plugin(option, default_value)
 ----------------------------------------
@@ -789,7 +791,7 @@ message received, so that you can modify it.
 ----------------------------------------
 def modifier_cb(data, modifier, modifier_data, string):
     # add server name to all messages received
-    # (ok that's not very useful, but that's just an example!)
+    # (OK that's not very useful, but that's just an example!)
     return "%s %s" % (string, modifier_data)
 
 weechat.hook_modifier("irc_in_privmsg", "modifier_cb", "")

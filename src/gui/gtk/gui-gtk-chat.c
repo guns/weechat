@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-gtk-chat.c - chat display functions for Gtk GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-gtk-chat.c: chat display functions for Gtk GUI
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,8 +40,7 @@
 
 
 /*
- * gui_chat_set_style: set style (bold, underline, ..)
- *                     for a chat window
+ * Sets style (bold, underline, ..) for a chat window.
  */
 
 void
@@ -56,8 +53,7 @@ gui_chat_set_style (struct t_gui_window *window, int style)
 }
 
 /*
- * gui_chat_remove_style: remove style (bold, underline, ..)
- *                        for a chat window
+ * Removes style (bold, underline, ..) for a chat window.
  */
 
 void
@@ -70,8 +66,7 @@ gui_chat_remove_style (struct t_gui_window *window, int style)
 }
 
 /*
- * gui_chat_toggle_style: toggle a style (bold, underline, ..)
- *                        for a chat window
+ * Toggles a style (bold, underline, ..) for a chat window.
  */
 
 void
@@ -85,8 +80,7 @@ gui_chat_toggle_style (struct t_gui_window *window, int style)
 }
 
 /*
- * gui_chat_reset_style: reset style (color and attr)
- *                       for a chat window
+ * Resets style (color and attr) for a chat window.
  */
 
 void
@@ -104,7 +98,7 @@ gui_chat_reset_style (struct t_gui_window *window)
 }
 
 /*
- * gui_chat_set_color_style: set style for color
+ * Sets style for color.
  */
 
 void
@@ -116,7 +110,7 @@ gui_chat_set_color_style (struct t_gui_window *window, int style)
 }
 
 /*
- * gui_chat_remove_color_style: remove style for color
+ * Removes style for color.
  */
 
 void
@@ -128,7 +122,7 @@ gui_chat_remove_color_style (struct t_gui_window *window, int style)
 }
 
 /*
- * gui_chat_reset_color_style: reset style for color
+ * Resets style for color.
  */
 
 void
@@ -140,7 +134,7 @@ gui_chat_reset_color_style (struct t_gui_window *window)
 }
 
 /*
- * gui_chat_set_color: set color for a chat window
+ * Sets color for a chat window.
  */
 
 void
@@ -153,7 +147,7 @@ gui_chat_set_color (struct t_gui_window *window, int fg, int bg)
 }
 
 /*
- * gui_chat_set_weechat_color: set a WeeChat color for a chat window
+ * Sets a WeeChat color for a chat window.
  */
 
 void
@@ -168,9 +162,8 @@ gui_chat_set_weechat_color (struct t_gui_window *window, int weechat_color)
 }
 
 /*
- * gui_chat_string_next_char: returns next char of a word (for display)
- *                            special chars like colors, bold, .. are skipped
- *                            and optionaly applied
+ * Returns next char of a word (for display), special chars like
+ * colors/attributes are skipped and optionally applied.
  */
 
 char *
@@ -190,8 +183,8 @@ gui_chat_string_next_char (struct t_gui_window *window, struct t_gui_line *line,
 }
 
 /*
- * gui_chat_display_word_raw: display word on chat buffer, letter by letter
- *                            special chars like color, bold, .. are interpreted
+ * Display word on chat buffer, letter by letter, special chars like
+ * colors/attributes are interpreted.
  */
 
 void
@@ -205,7 +198,7 @@ gui_chat_display_word_raw (struct t_gui_window *window, const char *string)
 }
 
 /*
- * gui_chat_display_word: display a word on chat buffer
+ * Displays a word on chat buffer.
  */
 
 void
@@ -230,12 +223,14 @@ gui_chat_display_word (struct t_gui_window *window,
 }
 
 /*
- * gui_chat_display_line: display a line in the chat window
- *                        if count == 0, display whole line
- *                        if count > 0, display 'count' lines (beginning from the end)
- *                        if simulate == 1, nothing is displayed (for counting how
- *                                          many lines would have been lines displayed)
- *                        returns: number of lines displayed (or simulated)
+ * Displays a line in the chat window.
+ *
+ * If count == 0, display whole line.
+ * If count > 0, display 'count' lines (beginning from the end).
+ * If simulate == 1, nothing is displayed (for counting how many lines would
+ * have been lines displayed).
+ *
+ * Returns number of lines displayed (or simulated).
  */
 
 int
@@ -251,8 +246,7 @@ gui_chat_display_line (struct t_gui_window *window, struct t_gui_line *line, int
 }
 
 /*
- * gui_chat_calculate_line_diff: returns pointer to line & offset for a difference
- *                               with given line
+ * Returns pointer to line & offset for a difference with given line.
  */
 
 void
@@ -350,7 +344,7 @@ gui_chat_calculate_line_diff (struct t_gui_window *window, struct t_gui_line **l
 }
 
 /*
- * gui_chat_draw: draw chat window for a buffer
+ * Draws chat window for a buffer.
  */
 
 void

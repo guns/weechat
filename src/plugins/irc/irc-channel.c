@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-channel.c - channel and private chat management for IRC plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-channel.c: channel and private chat management for IRC plugin
  */
 
 #include <stdlib.h>
@@ -41,9 +39,11 @@
 
 
 /*
- * irc_channel_valid: check if a channel pointer exists for a server
- *                    return 1 if channel exists
- *                           0 if channel is not found
+ * Checks if a channel pointer is valid for a server.
+ *
+ * Returns:
+ *   1: channel exists for server
+ *   0: channel does not exist for server
  */
 
 int
@@ -66,7 +66,7 @@ irc_channel_valid (struct t_irc_server *server, struct t_irc_channel *channel)
 }
 
 /*
- * irc_channel_move_near_server: move new channel/pv buffer near server
+ * Moves new channel/pv buffer near server.
  */
 
 void
@@ -140,8 +140,9 @@ irc_channel_move_near_server (struct t_irc_server *server, int channel_type,
 }
 
 /*
- * irc_channel_new: allocate a new channel for a server and add it to channels
- *                  list
+ * Creates a new channel in a server.
+ *
+ * Returns pointer to new channel, NULL if error.
  */
 
 struct t_irc_channel *
@@ -152,6 +153,7 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
     struct t_irc_channel *new_channel;
     struct t_gui_buffer *new_buffer;
     int i, buffer_created, current_buffer_number, buffer_position, manual_join;
+    int noswitch;
     char *buffer_name, str_number[32], str_group[32], *channel_name_lower;
     const char *prefix_modes;
 
@@ -265,7 +267,16 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
     new_channel->topic = NULL;
     new_channel->modes = NULL;
     new_channel->limit = 0;
-    new_channel->key = NULL;
+    if (weechat_hashtable_has_key (server->join_channel_key, channel_name))
+    {
+        new_channel->key = strdup (weechat_hashtable_get (server->join_channel_key,
+                                                          channel_name));
+        weechat_hashtable_remove (server->join_channel_key, channel_name);
+    }
+    else
+    {
+        new_channel->key = NULL;
+    }
     new_channel->names_received = 0;
     new_channel->checking_away = 0;
     new_channel->away_message = NULL;
@@ -295,6 +306,7 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
     server->last_channel = new_channel;
 
     manual_join = 0;
+    noswitch = 0;
     channel_name_lower = NULL;
     if (channel_type == IRC_CHANNEL_TYPE_CHANNEL)
     {
@@ -302,8 +314,10 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
         if (channel_name_lower)
         {
             weechat_string_tolower (channel_name_lower);
-            manual_join = weechat_hashtable_has_key (server->manual_joins,
+            manual_join = weechat_hashtable_has_key (server->join_manual,
                                                      channel_name_lower);
+            noswitch = weechat_hashtable_has_key (server->join_noswitch,
+                                                  channel_name_lower);
         }
     }
 
@@ -311,7 +325,8 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
     {
         if (channel_type == IRC_CHANNEL_TYPE_CHANNEL)
         {
-            if ((manual_join && !weechat_config_boolean (irc_config_look_buffer_switch_join))
+            if (noswitch
+                || (manual_join && !weechat_config_boolean (irc_config_look_buffer_switch_join))
                 || (!manual_join && !weechat_config_boolean (irc_config_look_buffer_switch_autojoin)))
                 switch_to_channel = 0;
         }
@@ -323,10 +338,12 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
         }
     }
 
-    if (manual_join)
-        weechat_hashtable_remove (server->manual_joins, channel_name_lower);
     if (channel_name_lower)
+    {
+        weechat_hashtable_remove (server->join_manual, channel_name_lower);
+        weechat_hashtable_remove (server->join_noswitch, channel_name_lower);
         free (channel_name_lower);
+    }
 
     weechat_hook_signal_send ((channel_type == IRC_CHANNEL_TYPE_CHANNEL) ?
                               "irc_channel_opened" : "irc_pv_opened",
@@ -337,7 +354,7 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
 }
 
 /*
- * irc_channel_set_topic: set topic for a channel
+ * Sets topic for a channel.
  */
 
 void
@@ -352,7 +369,7 @@ irc_channel_set_topic (struct t_irc_channel *channel, const char *topic)
 }
 
 /*
- * irc_channel_set_modes: set modes for a channel
+ * Sets modes for a channel.
  */
 
 void
@@ -365,7 +382,9 @@ irc_channel_set_modes (struct t_irc_channel *channel, const char *modes)
 }
 
 /*
- * irc_channel_search: returns pointer on a channel with name
+ * Searches for a channel by name.
+ *
+ * Returns pointer to channel found, NULL if not found.
  */
 
 struct t_irc_channel *
@@ -386,7 +405,11 @@ irc_channel_search (struct t_irc_server *server, const char *channel_name)
 }
 
 /*
- * irc_channel_is_channel: returns 1 if string is a channel for given server
+ * Checks if a string is a valid channel name.
+ *
+ * Returns:
+ *   1: string is a channel name
+ *   0: string is not a channel name
  */
 
 int
@@ -406,7 +429,7 @@ irc_channel_is_channel (struct t_irc_server *server, const char *string)
 }
 
 /*
- * irc_channel_remove_away: remove away for all nicks on a channel
+ * Removes away for all nicks on a channel.
  */
 
 void
@@ -425,7 +448,7 @@ irc_channel_remove_away (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_check_away: check for away on a channel
+ * Checks for away on a channel.
  */
 
 void
@@ -448,7 +471,7 @@ irc_channel_check_away (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_set_away: set/unset away status for a channel
+ * Sets/unsets away status for a channel.
  */
 
 void
@@ -467,7 +490,7 @@ irc_channel_set_away (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_nick_speaking_add_to_list: add a nick speaking on a channel
+ * Adds a nick speaking on a channel.
  */
 
 void
@@ -506,7 +529,7 @@ irc_channel_nick_speaking_add_to_list (struct t_irc_channel *channel,
 }
 
 /*
- * irc_channel_nick_speaking_add: add a nick speaking on a channel
+ * Adds a nick speaking on a channel.
  */
 
 void
@@ -524,7 +547,7 @@ irc_channel_nick_speaking_add (struct t_irc_channel *channel,
 }
 
 /*
- * irc_channel_nick_speaking_rename: rename a nick speaking on a channel
+ * Renames a nick speaking on a channel.
  */
 
 void
@@ -547,8 +570,9 @@ irc_channel_nick_speaking_rename (struct t_irc_channel *channel,
 }
 
 /*
- * irc_channel_nick_speaking_time_search: search a nick speaking time on a
- *                                        channel
+ * Searches for a nick speaking time on a channel.
+ *
+ * Returns pointer to nick speaking time, NULL if not found.
  */
 
 struct t_irc_channel_speaking *
@@ -579,7 +603,7 @@ irc_channel_nick_speaking_time_search (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_nick_speaking_time_free: free a nick speaking on a channel
+ * Frees a nick speaking on a channel.
  */
 
 void
@@ -604,7 +628,7 @@ irc_channel_nick_speaking_time_free (struct t_irc_channel *channel,
 }
 
 /*
- * irc_channel_nick_speaking_time_free_all: free all nick speaking on a channel
+ * Frees all nick speaking on a channel.
  */
 
 void
@@ -618,7 +642,7 @@ irc_channel_nick_speaking_time_free_all (struct t_irc_channel *channel)
 }
 
 /*
- * irc_channel_nick_speaking_time_remove_old: remove old nicks speaking
+ * Removes old nicks speaking.
  */
 
 void
@@ -640,7 +664,7 @@ irc_channel_nick_speaking_time_remove_old (struct t_irc_channel *channel)
 }
 
 /*
- * irc_channel_nick_speaking_time_add: add a nick speaking time on a channel
+ * Adds a nick speaking time on a channel.
  */
 
 void
@@ -674,8 +698,7 @@ irc_channel_nick_speaking_time_add (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_nick_speaking_time_rename: rename a nick speaking time on a
- *                                        channel
+ * Renames a nick speaking time on a channel.
  */
 
 void
@@ -698,7 +721,7 @@ irc_channel_nick_speaking_time_rename (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_rejoin: rejoin a channel (for example after kick)
+ * Rejoins a channel (for example after kick).
  */
 
 void
@@ -711,11 +734,11 @@ irc_channel_rejoin (struct t_irc_server *server, struct t_irc_channel *channel)
               (channel->key) ? " " : "",
               (channel->key) ? channel->key : "");
 
-    irc_command_join_server (server, join_args, 0);
+    irc_command_join_server (server, join_args, 0, 1);
 }
 
 /*
- * irc_channel_autorejoin_cb: callback for autorejoin on a channel
+ * Callback for autorejoin on a channel.
  */
 
 int
@@ -754,9 +777,8 @@ irc_channel_autorejoin_cb (void *data, int remaining_calls)
 }
 
 /*
- * irc_channel_display_nick_back_in_pv: display a message in pv buffer if nick
- *                                      is back and if private has flag
- *                                      "has_quit_server"
+ * Displays a message in pv buffer if nick is back and if private has flag
+ * "has_quit_server".
  */
 
 void
@@ -797,7 +819,7 @@ irc_channel_display_nick_back_in_pv (struct t_irc_server *server,
 }
 
 /*
- * irc_channel_free: free a channel and remove it from channels list
+ * Frees a channel and remove it from channels list.
  */
 
 void
@@ -822,7 +844,10 @@ irc_channel_free (struct t_irc_server *server, struct t_irc_channel *channel)
     if (channel->next_channel)
         (channel->next_channel)->prev_channel = channel->prev_channel;
 
-    /* free data */
+    /* free linked lists */
+    irc_nick_free_all (server, channel);
+
+    /* free channel data */
     if (channel->name)
         free (channel->name);
     if (channel->topic)
@@ -831,7 +856,6 @@ irc_channel_free (struct t_irc_server *server, struct t_irc_channel *channel)
         free (channel->modes);
     if (channel->key)
         free (channel->key);
-    irc_nick_free_all (server, channel);
     if (channel->away_message)
         free (channel->away_message);
     if (channel->pv_remote_nick_color)
@@ -852,7 +876,7 @@ irc_channel_free (struct t_irc_server *server, struct t_irc_channel *channel)
 }
 
 /*
- * irc_channel_free_all: free all allocated channels for a server
+ * Frees all channels for a server.
  */
 
 void
@@ -865,7 +889,7 @@ irc_channel_free_all (struct t_irc_server *server)
 }
 
 /*
- * irc_channel_hdata_channel_cb: return hdata for channel
+ * Returns hdata for channel.
  */
 
 struct t_hdata *
@@ -876,40 +900,41 @@ irc_channel_hdata_channel_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = weechat_hdata_new (hdata_name, "prev_channel", "next_channel");
+    hdata = weechat_hdata_new (hdata_name, "prev_channel", "next_channel",
+                               0, 0, NULL, NULL);
     if (hdata)
     {
-        WEECHAT_HDATA_VAR(struct t_irc_channel, type, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, name, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, topic, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, modes, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, limit, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, key, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, names_received, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, checking_away, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, away_message, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, has_quit_server, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, cycle, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, part, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, nick_completion_reset, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, pv_remote_nick_color, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, hook_autorejoin, POINTER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks_count, INTEGER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks, POINTER, NULL, "irc_nick");
-        WEECHAT_HDATA_VAR(struct t_irc_channel, last_nick, POINTER, NULL, "irc_nick");
-        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks_speaking, POINTER, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks_speaking_time, POINTER, NULL, "irc_channel_speaking");
-        WEECHAT_HDATA_VAR(struct t_irc_channel, last_nick_speaking_time, POINTER, NULL, "irc_channel_speaking");
-        WEECHAT_HDATA_VAR(struct t_irc_channel, buffer, POINTER, NULL, "buffer");
-        WEECHAT_HDATA_VAR(struct t_irc_channel, buffer_as_string, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, prev_channel, POINTER, NULL, hdata_name);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, next_channel, POINTER, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, type, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, name, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, topic, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, modes, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, limit, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, key, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, names_received, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, checking_away, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, away_message, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, has_quit_server, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, cycle, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, part, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, nick_completion_reset, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, pv_remote_nick_color, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, hook_autorejoin, POINTER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks_count, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks, POINTER, 0, NULL, "irc_nick");
+        WEECHAT_HDATA_VAR(struct t_irc_channel, last_nick, POINTER, 0, NULL, "irc_nick");
+        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks_speaking, POINTER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, nicks_speaking_time, POINTER, 0, NULL, "irc_channel_speaking");
+        WEECHAT_HDATA_VAR(struct t_irc_channel, last_nick_speaking_time, POINTER, 0, NULL, "irc_channel_speaking");
+        WEECHAT_HDATA_VAR(struct t_irc_channel, buffer, POINTER, 0, NULL, "buffer");
+        WEECHAT_HDATA_VAR(struct t_irc_channel, buffer_as_string, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, prev_channel, POINTER, 0, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, next_channel, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * irc_channel_hdata_channel_speaking_cb: return hdata for channel_speaking
+ * Returns hdata for channel_speaking.
  */
 
 struct t_hdata *
@@ -920,20 +945,24 @@ irc_channel_hdata_channel_speaking_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = weechat_hdata_new (hdata_name, "prev_nick", "next_nick");
+    hdata = weechat_hdata_new (hdata_name, "prev_nick", "next_nick",
+                               0, 0, NULL, NULL);
     if (hdata)
     {
-        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, nick, STRING, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, time_last_message, TIME, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, prev_nick, POINTER, NULL, hdata_name);
-        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, next_nick, POINTER, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, nick, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, time_last_message, TIME, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, prev_nick, POINTER, 0, NULL, hdata_name);
+        WEECHAT_HDATA_VAR(struct t_irc_channel_speaking, next_nick, POINTER, 0, NULL, hdata_name);
     }
     return hdata;
 }
 
 /*
- * irc_channel_add_to_infolist: add a channel in an infolist
- *                              return 1 if ok, 0 if error
+ * Adds a channel in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1035,7 +1064,7 @@ irc_channel_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * irc_channel_print_log: print channel infos in log (usually for crash dump)
+ * Prints channel infos in WeeChat log file (usually for crash dump).
  */
 
 void

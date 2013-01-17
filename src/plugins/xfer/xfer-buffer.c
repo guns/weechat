@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-buffer.c - display xfer list on xfer buffer
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * xfer-buffer.c: display xfer list on xfer buffer
  */
 
 #include <stdlib.h>
@@ -38,7 +36,7 @@ int xfer_buffer_selected_line = 0;
 
 
 /*
- * xfer_buffer_refresh: update a xfer in buffer and update hotlist for xfer buffer
+ * Updates a xfer in buffer and updates hotlist for xfer buffer.
  */
 
 void
@@ -46,9 +44,10 @@ xfer_buffer_refresh (const char *hotlist)
 {
     struct t_xfer *ptr_xfer, *xfer_selected;
     char str_color[256], suffix[32], status[64], date[128], eta[128];
+    char str_ip[32];
     char *progress_bar, *str_pos, *str_total, *str_bytes_per_sec;
     int i, length, line, progress_bar_size, num_bars;
-    unsigned long long pct_complete;
+    unsigned long long pos, pct_complete;
     struct tm *date_tmp;
 
     if (xfer_buffer)
@@ -93,9 +92,20 @@ xfer_buffer_refresh (const char *hotlist)
                       weechat_config_string (xfer_config_color_text),
                       weechat_config_string (xfer_config_color_text_bg));
 
+            str_ip[0] = '\0';
+            if (ptr_xfer->remote_address != 0)
+            {
+                snprintf (str_ip, sizeof (str_ip),
+                          " (%ld.%ld.%ld.%ld)",
+                          ptr_xfer->remote_address >> 24,
+                          (ptr_xfer->remote_address >> 16) & 0xff,
+                          (ptr_xfer->remote_address >> 8) & 0xff,
+                          ptr_xfer->remote_address & 0xff);
+            }
+
             /* display first line with remote nick, filename and plugin name/id */
             weechat_printf_y (xfer_buffer, (line * 2) + 2,
-                              "%s%s%-24s %s%s%s%s (%s.%s)",
+                              "%s%s%-24s %s%s%s%s (%s.%s)%s",
                               weechat_color(str_color),
                               (line == xfer_buffer_selected_line) ?
                               "*** " : "    ",
@@ -106,7 +116,8 @@ xfer_buffer_refresh (const char *hotlist)
                               (XFER_IS_FILE(ptr_xfer->type)) ? "\"" : "",
                               suffix,
                               ptr_xfer->plugin_name,
-                              ptr_xfer->plugin_id);
+                              ptr_xfer->plugin_id,
+                              str_ip);
 
             snprintf (status, sizeof (status),
                       "%s", _(xfer_status_string[ptr_xfer->status]));
@@ -145,6 +156,7 @@ xfer_buffer_refresh (const char *hotlist)
             else
             {
                 /* build progress bar */
+                pos = (ptr_xfer->pos <= ptr_xfer->size) ? ptr_xfer->pos : ptr_xfer->size;
                 progress_bar = NULL;
                 progress_bar_size = weechat_config_integer (xfer_config_look_progress_bar_size);
                 if (progress_bar_size > 0)
@@ -159,7 +171,7 @@ xfer_buffer_refresh (const char *hotlist)
                             num_bars = 0;
                     }
                     else
-                        num_bars = (int)(((float)(ptr_xfer->pos)/(float)(ptr_xfer->size)) * (float)progress_bar_size);
+                        num_bars = (int)(((float)(pos)/(float)(ptr_xfer->size)) * (float)progress_bar_size);
                     for (i = 0; i < num_bars - 1; i++)
                     {
                         strcat (progress_bar, "=");
@@ -182,10 +194,10 @@ xfer_buffer_refresh (const char *hotlist)
                         pct_complete = 0;
                 }
                 else
-                    pct_complete = (unsigned long long)(((float)(ptr_xfer->pos)/(float)(ptr_xfer->size)) * 100);
+                    pct_complete = (unsigned long long)(((float)(pos)/(float)(ptr_xfer->size)) * 100);
 
                 /* position, total and bytes per second */
-                str_pos = weechat_string_format_size (ptr_xfer->pos);
+                str_pos = weechat_string_format_size (pos);
                 str_total = weechat_string_format_size (ptr_xfer->size);
                 str_bytes_per_sec = weechat_string_format_size (ptr_xfer->bytes_per_sec);
 
@@ -216,6 +228,8 @@ xfer_buffer_refresh (const char *hotlist)
                                   (str_total) ? str_total : "?",
                                   eta,
                                   str_bytes_per_sec);
+                if (progress_bar)
+                    free (progress_bar);
                 if (str_pos)
                     free (str_pos);
                 if (str_total)
@@ -230,8 +244,7 @@ xfer_buffer_refresh (const char *hotlist)
 }
 
 /*
- * xfer_buffer_input_cb: callback called when user send data to xfer list
- *                       buffer
+ * Callback called when user send data to xfer list buffer.
  */
 
 int
@@ -295,7 +308,7 @@ xfer_buffer_input_cb (void *data, struct t_gui_buffer *buffer,
 }
 
 /*
- * xfer_buffer_close_cb: callback called when xfer buffer is closed
+ * Callback called when xfer buffer is closed.
  */
 
 int
@@ -311,7 +324,7 @@ xfer_buffer_close_cb (void *data, struct t_gui_buffer *buffer)
 }
 
 /*
- * xfer_buffer_open: open xfer buffer (to display list of xfer)
+ * Opens xfer buffer (to display list of xfer).
  */
 
 void

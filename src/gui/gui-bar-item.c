@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-bar-item.c - bar item functions (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-bar-item.c: bar item functions (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -85,9 +83,11 @@ struct t_hdata *gui_bar_item_hdata_bar_item = NULL;
 
 
 /*
- * gui_bar_item_valid: check if a bar item pointer exists
- *                     return 1 if bar item exists
- *                            0 if bar item is not found
+ * Checks if a bar item pointer is valid.
+ *
+ * Returns:
+ *   1: bar item exists
+ *   0: bar item does not exist
  */
 
 int
@@ -110,7 +110,7 @@ gui_bar_item_valid (struct t_gui_bar_item *bar_item)
 }
 
 /*
- * gui_bar_item_search: search a bar item
+ * Searches for a bar item by name.
  */
 
 struct t_gui_bar_item *
@@ -132,11 +132,12 @@ gui_bar_item_search (const char *item_name)
 }
 
 /*
- * gui_bar_item_search_with_plugin: search a bar item for a plugin
- *                                  if exact_plugin == 1, then search only for
- *                                  this plugin, otherwise, if plugin is not
- *                                  found, function may return item for core
- *                                  (plugin == NULL)
+ * Searches for a bar item in a plugin.
+ *
+ * If exact_plugin == 1, then searches only for this plugin, otherwise, if
+ * plugin is not found, function may return item for core (plugin == NULL).
+ *
+ * Returns pointer to bar item found, NULL if not found.
  */
 
 struct t_gui_bar_item *
@@ -176,13 +177,60 @@ gui_bar_item_search_with_plugin (struct t_weechat_plugin *plugin,
 }
 
 /*
- * gui_bar_item_used_in_a_bar: return 1 if an item is used in at least one bar
- *                             if partial_name == 1, then search a bar that
- *                             contains item beginning with "item_name"
+ * Check if an item is used in a bar.
+ *
+ * If partial_name == 1, then searches if an item begins with "item_name".
+ *
+ * Returns:
+ *   1: bar item is used in the bar
+ *   0: bar item is not used in the bar
  */
 
 int
-gui_bar_item_used_in_a_bar (const char *item_name, int partial_name)
+gui_bar_item_used_in_bar (struct t_gui_bar *bar, const char *item_name,
+                          int partial_name)
+{
+    int i, j, length;
+
+    length = strlen (item_name);
+
+    for (i = 0; i < bar->items_count; i++)
+    {
+        for (j = 0; j < bar->items_subcount[i]; j++)
+        {
+            if (bar->items_name[i][j])
+            {
+                if ((partial_name
+                     && strncmp (bar->items_name[i][j],
+                                 item_name, length) == 0)
+                    || (!partial_name
+                        && strcmp (bar->items_name[i][j],
+                                   item_name) == 0))
+                {
+                    return 1;
+                }
+            }
+        }
+    }
+
+    /* item not used in the bar */
+    return 0;
+}
+
+/*
+ * Checks if a bar item is used in at least one bar.
+ *
+ * If partial_name == 1, then searches a bar that contains item beginning with
+ * "item_name".
+ *
+ * Returns:
+ *   1: bar item is used in at least one bar
+ *   0: bar item is not used in a bar
+ */
+
+int
+gui_bar_item_used_in_at_least_one_bar (const char *item_name, int partial_name,
+                                       int ignore_hidden_bars)
 {
     struct t_gui_bar *ptr_bar;
     int i, j, length;
@@ -191,6 +239,13 @@ gui_bar_item_used_in_a_bar (const char *item_name, int partial_name)
 
     for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
     {
+        /* if bar is hidden and that hidden bars are ignored, just skip it */
+        if (ignore_hidden_bars
+            && CONFIG_BOOLEAN(ptr_bar->options[GUI_BAR_OPTION_HIDDEN]))
+        {
+            continue;
+        }
+
         for (i = 0; i < ptr_bar->items_count; i++)
         {
             for (j = 0; j < ptr_bar->items_subcount[i]; j++)
@@ -211,17 +266,17 @@ gui_bar_item_used_in_a_bar (const char *item_name, int partial_name)
         }
     }
 
-    /* item not used by any bar */
+    /* item not used in any bar */
     return 0;
 }
 
 /*
- * gui_bar_item_set_prefix_name_suffix: get prefix, name and suffix for an item
- *                                      for example, item name "[time]"
- *                                      will return:
- *                                        prefix: "["
- *                                        name  : "time"
- *                                        suffix: "]"
+ * Gets prefix, name and suffix for an item.
+ *
+ * For example, item name "[time]", returns:
+ *   prefix: "["
+ *   name  : "time"
+ *   suffix: "]"
  */
 
 void
@@ -272,13 +327,14 @@ gui_bar_item_set_prefix_name_suffix (const char *item_name,
 }
 
 /*
- * gui_bar_item_get_value: return value of a bar item
- *                         run callback if a name exists, then concatenate
- *                         prefix + return of callback + suffix
- *                         for example:  if item == "[time]"
- *                         return: color(delimiter) + "[" +
- *                                 (value of item "time") + color(delimiter) +
- *                                 "]"
+ * Returns value of a bar item.
+ *
+ * Run callbacks if a name exists, then concatenates:
+ * prefix + return of callback + suffix
+ *
+ * For example:  if item == "[time]"
+ *               returns: color(delimiter) + "[" +
+ *                        (value of item "time") + color(delimiter) + "]"
  */
 
 char *
@@ -401,7 +457,7 @@ gui_bar_item_get_value (struct t_gui_bar *bar, struct t_gui_window *window,
 }
 
 /*
- * gui_bar_item_count_lines: count number of lines in item
+ * Counts number of lines in item.
  */
 
 int
@@ -425,7 +481,9 @@ gui_bar_item_count_lines (char *string)
 }
 
 /*
- * gui_bar_item_new: create a new bar item
+ * Creates a new bar item.
+ *
+ * Returns pointer to new bar item, NULL if not found.
  */
 
 struct t_gui_bar_item *
@@ -470,7 +528,7 @@ gui_bar_item_new (struct t_weechat_plugin *plugin, const char *name,
 }
 
 /*
- * gui_bar_item_update: update an item on all bars displayed on screen
+ * Updates an item on all bars displayed on screen.
  */
 
 void
@@ -518,7 +576,7 @@ gui_bar_item_update (const char *item_name)
 }
 
 /*
- * gui_bar_item_free: delete a bar item
+ * Deletes a bar item.
  */
 
 void
@@ -545,7 +603,7 @@ gui_bar_item_free (struct t_gui_bar_item *item)
 }
 
 /*
- * gui_bar_item_free_all: delete all bar items
+ * Deletes all bar items.
  */
 
 void
@@ -558,7 +616,7 @@ gui_bar_item_free_all ()
 }
 
 /*
- * gui_bar_item_free_all_plugin: delete all bar items for a plugin
+ * Deletes all bar items for a plugin.
  */
 
 void
@@ -579,7 +637,7 @@ gui_bar_item_free_all_plugin (struct t_weechat_plugin *plugin)
 }
 
 /*
- * gui_bar_item_default_input_paste: default item for input paste question
+ * Default item for input paste question.
  */
 
 char *
@@ -610,7 +668,7 @@ gui_bar_item_default_input_paste (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_input_prompt: default item for input prompt
+ * Default item for input prompt.
  */
 
 char *
@@ -635,7 +693,7 @@ gui_bar_item_default_input_prompt (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_input_search: default item for input search status
+ * Default item for input search status.
  */
 
 char *
@@ -676,7 +734,7 @@ gui_bar_item_default_input_search (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_input_text: default item for input text
+ * Default item for input text.
  */
 
 char *
@@ -799,7 +857,7 @@ gui_bar_item_default_input_text (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_time: default item for time
+ * Default item for time.
  */
 
 char *
@@ -830,7 +888,7 @@ gui_bar_item_default_time (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_count: default item for number of buffers
+ * Default item for number of buffers.
  */
 
 char *
@@ -851,7 +909,7 @@ gui_bar_item_default_buffer_count (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_plugin: default item for name of buffer plugin
+ * Default item for name of buffer plugin.
  */
 
 char *
@@ -872,7 +930,7 @@ gui_bar_item_default_buffer_plugin (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_number: default item for number of buffer
+ * Default item for number of buffer.
  */
 
 char *
@@ -896,7 +954,7 @@ gui_bar_item_default_buffer_number (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_name: default item for name of buffer
+ * Default item for name of buffer.
  */
 
 char *
@@ -920,10 +978,10 @@ gui_bar_item_default_buffer_name (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_modes: default item for modes of buffer
- *                                    Note: this bar item is empty for WeeChat
- *                                    cote, this is used only by plugins like
- *                                    irc to display channel modes
+ * Default item for modes of buffer.
+ *
+ * Note: this bar item is empty for WeeChat core, this is used only by plugins
+ * like irc to display channel modes.
  */
 
 char *
@@ -939,7 +997,7 @@ gui_bar_item_default_buffer_modes (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_filter: default item for buffer filter
+ * Default item for buffer filter.
  */
 
 char *
@@ -967,8 +1025,7 @@ gui_bar_item_default_buffer_filter (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_nicklist_count: default item for number of nicks
- *                                             in buffer nicklist
+ * Default item for number of nicks in buffer nicklist.
  */
 
 char *
@@ -995,7 +1052,7 @@ gui_bar_item_default_buffer_nicklist_count (void *data,
 }
 
 /*
- * gui_bar_item_default_scroll: default item for scrolling indicator
+ * Default item for scrolling indicator.
  */
 
 char *
@@ -1022,7 +1079,7 @@ gui_bar_item_default_scroll (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_hotlist: default item for hotlist
+ * Default item for hotlist.
  */
 
 char *
@@ -1230,7 +1287,7 @@ gui_bar_item_default_hotlist (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_completion: default item for (partial) completion
+ * Default item for (partial) completion.
  */
 
 char *
@@ -1286,7 +1343,7 @@ gui_bar_item_default_completion (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_title: default item for buffer title
+ * Default item for buffer title.
  */
 
 char *
@@ -1305,7 +1362,7 @@ gui_bar_item_default_buffer_title (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_buffer_nicklist: default item for nicklist
+ * Default item for nicklist.
  */
 
 char *
@@ -1442,7 +1499,7 @@ gui_bar_item_default_buffer_nicklist (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_default_window_number: default item for number of window
+ * Default item for number of window.
  */
 
 char *
@@ -1464,7 +1521,7 @@ gui_bar_item_default_window_number (void *data, struct t_gui_bar_item *item,
 }
 
 /*
- * gui_bar_item_focus_buffer_nicklist: focus on nicklist
+ * Focus on nicklist.
  */
 
 struct t_hashtable *
@@ -1482,18 +1539,23 @@ gui_bar_item_focus_buffer_nicklist (void *data,
     /* make C compiler happy */
     (void) data;
 
-    str_window = hashtable_get (info, "_window");
     str_bar_item_line = hashtable_get (info, "_bar_item_line");
-
-    if (!str_window || !str_window[0]
-        || !str_bar_item_line || !str_bar_item_line[0])
+    if (!str_bar_item_line || !str_bar_item_line[0])
         return NULL;
 
-    rc = sscanf (str_window, "%lx", &value);
-    if ((rc == EOF) || (rc == 0))
-        return NULL;
-
-    window = (struct t_gui_window *)value;
+    str_window = hashtable_get (info, "_window");
+    if (str_window && str_window[0])
+    {
+        rc = sscanf (str_window, "%lx", &value);
+        if ((rc == EOF) || (rc == 0))
+            return NULL;
+        window = (struct t_gui_window *)value;
+    }
+    else
+    {
+        /* no window, is it a root bar? then use current window */
+        window = gui_current_window;
+    }
     if (!window)
         return NULL;
 
@@ -1538,7 +1600,7 @@ gui_bar_item_focus_buffer_nicklist (void *data,
 }
 
 /*
- * gui_bar_item_timer_cb: timer callback
+ * Timer callback for updating time.
  */
 
 int
@@ -1575,8 +1637,7 @@ gui_bar_item_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * gui_bar_item_signal_cb: callback when a signal is received, for rebuilding
- *                         an item
+ * Callback when a signal is received: rebuilds an item.
  */
 
 int
@@ -1594,7 +1655,7 @@ gui_bar_item_signal_cb (void *data, const char *signal,
 }
 
 /*
- * gui_bar_item_hook_signal: hook a signal to update bar items
+ * Hooks a signal to update bar items.
  */
 
 void
@@ -1614,7 +1675,7 @@ gui_bar_item_hook_signal (const char *signal, const char *item)
 }
 
 /*
- * gui_bar_item_init: init default items in WeeChat
+ * Initializes default items in WeeChat.
  */
 
 void
@@ -1817,7 +1878,7 @@ gui_bar_item_init ()
 }
 
 /*
- * gui_bar_item_end: remove bar items and hooks
+ * Removes bar items and hooks.
  */
 
 void
@@ -1841,7 +1902,7 @@ gui_bar_item_end ()
 }
 
 /*
- * gui_bar_item_hdata_bar_item_cb: return hdata for bar item
+ * Return hdata for bar item.
  */
 
 struct t_hdata *
@@ -1852,15 +1913,16 @@ gui_bar_item_hdata_bar_item_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_item", "next_item");
+    hdata = hdata_new (NULL, hdata_name, "prev_item", "next_item",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_bar_item, plugin, POINTER, NULL, "plugin");
-        HDATA_VAR(struct t_gui_bar_item, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_bar_item, build_callback, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_gui_bar_item, build_callback_data, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_gui_bar_item, prev_item, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_bar_item, next_item, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_bar_item, plugin, POINTER, 0, NULL, "plugin");
+        HDATA_VAR(struct t_gui_bar_item, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_item, build_callback, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_item, build_callback_data, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar_item, prev_item, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_bar_item, next_item, POINTER, 0, NULL, hdata_name);
         HDATA_LIST(gui_bar_items);
         HDATA_LIST(last_gui_bar_item);
     }
@@ -1868,8 +1930,11 @@ gui_bar_item_hdata_bar_item_cb (void *data, const char *hdata_name)
 }
 
 /*
- * gui_bar_item_add_to_infolist: add a bar item in an infolist
- *                               return 1 if ok, 0 if error
+ * Adds a bar item in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1898,7 +1963,7 @@ gui_bar_item_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_bar_item_print_log: print bar items infos in log (usually for crash dump)
+ * Prints bar items infos in WeeChat log file (usually for crash dump).
  */
 
 void

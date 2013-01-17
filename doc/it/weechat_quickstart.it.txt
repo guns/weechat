@@ -94,7 +94,7 @@ Per ogni opzione del server, WeeChat usa il proprio valore se definito
 Per esempio ci sono dei nick predefiniti (basati sul proprio login un*x), ed
 è possibile sovrascriverli per il server oftc con il seguente comando:
 
-  /set irc.server.oftc.nicks "mynick1,mynick2,mynick3,mynick4,mynick5"
+  /set irc.server.oftc.nicks "mynick,mynick2,mynick3,mynick4,mynick5"
 
 Per impostare il nome utente ed il nome reale:
 
@@ -105,12 +105,22 @@ Per impostare la connessione automatica al server all'avvio:
 
   /set irc.server.oftc.autoconnect on
 
-Per eseguire un comando dopo la connessione al server, ad esempio
-per identificarsi con nickserv:
+// TRANSLATION MISSING
+If SASL is available on server, you can use it for authentication (you will be
+identified before you join channels):
 
-  /set irc.server.oftc.command "/msg nickserv identify xxxxxx"
+  /set irc.server_default.sasl_mechanism dh-blowfish
+  /set irc.server.oftc.sasl_username "mynick"
+  /set irc.server.oftc.sasl_password "xxxxxxx"
 
-Nota: più comandi possono essere separati da ';' (punto e virgola)
+// TRANSLATION MISSING
+To run a command after connection to server, for example to authenticate
+with nickserv (only if you don't use SASL for authentication):
+
+  /set irc.server.oftc.command "/msg nickserv identify xxxxxxx"
+
+[NOTE]
+Più comandi possono essere separati da ';' (punto e virgola).
 
 Per entrare automaticamente in alcuni canali quando ci si connette
 al server:
@@ -160,7 +170,7 @@ Entrare/uscire dai canali IRC
 `/part [messaggio di uscita]`::
     esce da un canale (mantenendo il buffer aperto)
 
-`/close [messaggio di uscita]`::
+`/close`::
     chiude il buffer del server o del canale (`/close è un alias per `/buffer
     close`)
 
@@ -236,21 +246,12 @@ I plugin vengono caricati automaticamente quando trovati
 (per favore consultare la documentazione per caricare/scaricare plugin
 o script).
 
-Alcuni plugin consentono di usare gli script in WeeChat (in molti linguaggi
-come Perl, Python, Ruby, Lua e Tcl). Questi plugin devono essere
-caricati con il comando `/plugin` e forniscono comandi come `/perl`,
-utilizzati per caricare gli script.
+Sono disponibili molti script esterni (dai contributori) per WeeChat:
+http://www.weechat.org/scripts
 
-Sono disponibili molti plugin/script esterni (dai contributori) per
-WeeChat: http://www.weechat.org/scripts
-
-Il modo più facile per installare gli script è utilizzare 'weeget.py':
-
-. `mkdir -p ~/.weechat/python/autoload`
-. `cd ~/.weechat/python/autoload`
-. `wget http://weechat.org/files/scripts/weeget.py`
-. caricare lo script: `/python autoload`
-. elenco degli script: `/weeget list` (per aiuto: `/help weeget`)
+// TRANSLATION MISSING
+You can manage scripts in WeeChat with command `/script` (see `/help script`
+for more info).
 
 
 [[more_doc]]

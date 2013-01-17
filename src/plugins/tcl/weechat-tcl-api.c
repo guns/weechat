@@ -1,7 +1,10 @@
 /*
+ * weechat-tcl-api.c - tcl API functions
+ *
  * Copyright (C) 2008-2010 Dmitry Kobylin <fnfal@academ.tsc.ru>
  * Copyright (C) 2008 Julien Louis <ptitlouis@sysif.net>
- * Copyright (C) 2008-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2008-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +20,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat-tcl-api.c: tcl API functions
  */
 
 #undef _
@@ -208,7 +207,7 @@
 
 
 /*
- * weechat_tcl_api_register: startup function for all WeeChat Tcl scripts
+ * Registers a tcl script.
  */
 
 static int
@@ -284,8 +283,10 @@ weechat_tcl_api_register (ClientData clientData, Tcl_Interp *interp, int objc,
 }
 
 /*
- * weechat_tcl_api_plugin_get_name: get name of plugin (return "core" for
- *                                  WeeChat core)
+ * Wrappers for functions in scripting API.
+ *
+ * For more info about these functions, look at their implementation in WeeChat
+ * core.
  */
 
 static int
@@ -308,10 +309,6 @@ weechat_tcl_api_plugin_get_name (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_charset_set: set script charset
- */
-
 static int
 weechat_tcl_api_charset_set (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -328,11 +325,6 @@ weechat_tcl_api_charset_set (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_iconv_to_internal: convert string to internal WeeChat
- *                                    charset
- */
 
 static int
 weechat_tcl_api_iconv_to_internal (ClientData clientData, Tcl_Interp *interp,
@@ -354,11 +346,6 @@ weechat_tcl_api_iconv_to_internal (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_iconv_from_internal: convert string from WeeChat inernal
- *                                      charset to another one
- */
-
 static int
 weechat_tcl_api_iconv_from_internal (ClientData clientData, Tcl_Interp *interp,
                                      int objc, Tcl_Obj *CONST objv[])
@@ -379,10 +366,6 @@ weechat_tcl_api_iconv_from_internal (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_gettext: get translated string
- */
-
 static int
 weechat_tcl_api_gettext (ClientData clientData, Tcl_Interp *interp,
                          int objc, Tcl_Obj *CONST objv[])
@@ -399,10 +382,6 @@ weechat_tcl_api_gettext (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_ngettext: get translated string with plural form
- */
 
 static int
 weechat_tcl_api_ngettext (ClientData clientData, Tcl_Interp *interp,
@@ -428,12 +407,6 @@ weechat_tcl_api_ngettext (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_string_match: return 1 if string matches a mask
- *                               mask can begin or end with "*", no other "*"
- *                               are allowed inside mask
- */
-
 static int
 weechat_tcl_api_string_match (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -457,14 +430,6 @@ weechat_tcl_api_string_match (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_string_has_highlight: return 1 if string contains a
- *                                       highlight (using list of words to
- *                                       highlight)
- *                                       return 0 if no highlight is found in
- *                                       string
- */
-
 static int
 weechat_tcl_api_string_has_highlight (ClientData clientData,
                                       Tcl_Interp *interp,
@@ -485,14 +450,6 @@ weechat_tcl_api_string_has_highlight (ClientData clientData,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_string_has_highlight_regex: return 1 if string contains a
- *                                             highlight (using a regular
- *                                             expression)
- *                                             return 0 if no highlight is
- *                                             found in string
- */
 
 static int
 weechat_tcl_api_string_has_highlight_regex (ClientData clientData,
@@ -515,13 +472,6 @@ weechat_tcl_api_string_has_highlight_regex (ClientData clientData,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_string_mask_to_regex: convert a mask (string with only
- *                                       "*" as wildcard) to a regex, paying
- *                                       attention to special chars in a
- *                                       regex
- */
-
 static int
 weechat_tcl_api_string_mask_to_regex (ClientData clientData,
                                       Tcl_Interp *interp,
@@ -541,10 +491,6 @@ weechat_tcl_api_string_mask_to_regex (ClientData clientData,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_string_remove_color: remove WeeChat color codes from string
- */
 
 static int
 weechat_tcl_api_string_remove_color (ClientData clientData, Tcl_Interp *interp,
@@ -566,11 +512,6 @@ weechat_tcl_api_string_remove_color (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_string_is_command_char: check if first char of string is a
- *                                         command char
- */
-
 static int
 weechat_tcl_api_string_is_command_char (ClientData clientData, Tcl_Interp *interp,
                                         int objc, Tcl_Obj *CONST objv[])
@@ -586,12 +527,6 @@ weechat_tcl_api_string_is_command_char (ClientData clientData, Tcl_Interp *inter
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_string_input_for_buffer: return string with input text
- *                                          for buffer or empty string if
- *                                          it's a command
- */
 
 static int
 weechat_tcl_api_string_input_for_buffer (ClientData clientData, Tcl_Interp *interp,
@@ -610,9 +545,39 @@ weechat_tcl_api_string_input_for_buffer (ClientData clientData, Tcl_Interp *inte
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_mkdir_home: create a directory in WeeChat home
- */
+static int
+weechat_tcl_api_string_eval_expression (ClientData clientData,
+                                        Tcl_Interp *interp,
+                                        int objc, Tcl_Obj *CONST objv[])
+{
+    Tcl_Obj *objp;
+    char *expr, *result;
+    struct t_hashtable *pointers, *extra_vars;
+    int i;
+
+    API_FUNC(1, "string_eval_expression", API_RETURN_EMPTY);
+    if (objc < 4)
+        API_WRONG_ARGS(API_RETURN_EMPTY);
+
+    expr = Tcl_GetStringFromObj (objv[1], &i);
+    pointers = weechat_tcl_dict_to_hashtable (interp, objv[2],
+                                              WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                              WEECHAT_HASHTABLE_STRING,
+                                              WEECHAT_HASHTABLE_POINTER);
+    extra_vars = weechat_tcl_dict_to_hashtable (interp, objv[3],
+                                                WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                                WEECHAT_HASHTABLE_STRING,
+                                                WEECHAT_HASHTABLE_STRING);
+
+    result = weechat_string_eval_expression (expr, pointers, extra_vars);
+
+    if (pointers)
+        weechat_hashtable_free (pointers);
+    if (extra_vars)
+        weechat_hashtable_free (extra_vars);
+
+    API_RETURN_STRING_FREE(result);
+}
 
 static int
 weechat_tcl_api_mkdir_home (ClientData clientData, Tcl_Interp *interp,
@@ -635,10 +600,6 @@ weechat_tcl_api_mkdir_home (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_ERROR;
 }
 
-/*
- * weechat_tcl_api_mkdir: create a directory
- */
-
 static int
 weechat_tcl_api_mkdir (ClientData clientData, Tcl_Interp *interp,
                        int objc, Tcl_Obj *CONST objv[])
@@ -659,11 +620,6 @@ weechat_tcl_api_mkdir (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_ERROR;
 }
-
-/*
- * weechat_tcl_api_mkdir_parents: create a directory and make parent
- *                                directories as needed
- */
 
 static int
 weechat_tcl_api_mkdir_parents (ClientData clientData, Tcl_Interp *interp,
@@ -686,10 +642,6 @@ weechat_tcl_api_mkdir_parents (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_ERROR;
 }
 
-/*
- * weechat_tcl_api_list_new: create a new list
- */
-
 static int
 weechat_tcl_api_list_new (ClientData clientData, Tcl_Interp *interp,
                           int objc, Tcl_Obj *CONST objv[])
@@ -708,10 +660,6 @@ weechat_tcl_api_list_new (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_list_add: add a string to list
- */
 
 static int
 weechat_tcl_api_list_add (ClientData clientData, Tcl_Interp *interp,
@@ -739,10 +687,6 @@ weechat_tcl_api_list_add (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_list_search: search a string in list
- */
-
 static int
 weechat_tcl_api_list_search (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -764,10 +708,6 @@ weechat_tcl_api_list_search (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_list_search_pos: search position of a string in list
- */
-
 static int
 weechat_tcl_api_list_search_pos (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -787,10 +727,6 @@ weechat_tcl_api_list_search_pos (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(pos);
 }
-
-/*
- * weechat_tcl_api_list_casesearch: search a string in list (ignore case)
- */
 
 static int
 weechat_tcl_api_list_casesearch (ClientData clientData, Tcl_Interp *interp,
@@ -813,11 +749,6 @@ weechat_tcl_api_list_casesearch (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_list_casesearch_pos: search position of a string in list
- *                                      (ignore case)
- */
-
 static int
 weechat_tcl_api_list_casesearch_pos (ClientData clientData, Tcl_Interp *interp,
                                      int objc, Tcl_Obj *CONST objv[])
@@ -837,10 +768,6 @@ weechat_tcl_api_list_casesearch_pos (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(pos);
 }
-
-/*
- * weechat_tcl_api_list_get: get item by position
- */
 
 static int
 weechat_tcl_api_list_get (ClientData clientData, Tcl_Interp *interp,
@@ -863,10 +790,6 @@ weechat_tcl_api_list_get (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_list_set: set new value for item
- */
-
 static int
 weechat_tcl_api_list_set (ClientData clientData, Tcl_Interp *interp,
                           int objc, Tcl_Obj *CONST objv[])
@@ -887,10 +810,6 @@ weechat_tcl_api_list_set (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_list_next: get next item
- */
-
 static int
 weechat_tcl_api_list_next (ClientData clientData, Tcl_Interp *interp,
                            int objc, Tcl_Obj *CONST objv[])
@@ -907,10 +826,6 @@ weechat_tcl_api_list_next (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_list_prev: get previous item
- */
 
 static int
 weechat_tcl_api_list_prev (ClientData clientData, Tcl_Interp *interp,
@@ -929,10 +844,6 @@ weechat_tcl_api_list_prev (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_list_string: get string value of item
- */
-
 static int
 weechat_tcl_api_list_string (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -950,10 +861,6 @@ weechat_tcl_api_list_string (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_list_size: get number of elements in list
- */
-
 static int
 weechat_tcl_api_list_size (ClientData clientData, Tcl_Interp *interp,
                            int objc, Tcl_Obj *CONST objv[])
@@ -970,10 +877,6 @@ weechat_tcl_api_list_size (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(size);
 }
-
-/*
- * weechat_tcl_api_list_remove: remove item from list
- */
 
 static int
 weechat_tcl_api_list_remove (ClientData clientData, Tcl_Interp *interp,
@@ -996,10 +899,6 @@ weechat_tcl_api_list_remove (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_list_remove_all: remove all items from list
- */
-
 static int
 weechat_tcl_api_list_remove_all (ClientData clientData, Tcl_Interp *interp,
                                  int objc, Tcl_Obj *CONST objv[])
@@ -1018,10 +917,6 @@ weechat_tcl_api_list_remove_all (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_list_free: free list
- */
-
 static int
 weechat_tcl_api_list_free (ClientData clientData, Tcl_Interp *interp,
                            int objc, Tcl_Obj *CONST objv[])
@@ -1037,10 +932,6 @@ weechat_tcl_api_list_free (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_config_reload_cb: callback for config reload
- */
 
 int
 weechat_tcl_api_config_reload_cb (void *data,
@@ -1080,10 +971,6 @@ weechat_tcl_api_config_reload_cb (void *data,
     return WEECHAT_CONFIG_READ_FILE_NOT_FOUND;
 }
 
-/*
- * weechat_tcl_api_config_new: create a new configuration file
- */
-
 static int
 weechat_tcl_api_config_new (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -1109,11 +996,6 @@ weechat_tcl_api_config_new (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_config_section_read_cb: callback for reading option in
- *                                         section
- */
 
 int
 weechat_tcl_api_config_section_read_cb (void *data,
@@ -1159,10 +1041,6 @@ weechat_tcl_api_config_section_read_cb (void *data,
     return WEECHAT_CONFIG_OPTION_SET_ERROR;
 }
 
-/*
- * weechat_tcl_api_config_section_write_cb: callback for writing section
- */
-
 int
 weechat_tcl_api_config_section_write_cb (void *data,
                                           struct t_config_file *config_file,
@@ -1202,11 +1080,6 @@ weechat_tcl_api_config_section_write_cb (void *data,
     return WEECHAT_CONFIG_WRITE_ERROR;
 }
 
-/*
- * weechat_tcl_api_config_section_write_default_cb: callback for writing
- *                                                   default values for section
- */
-
 int
 weechat_tcl_api_config_section_write_default_cb (void *data,
                                                   struct t_config_file *config_file,
@@ -1245,11 +1118,6 @@ weechat_tcl_api_config_section_write_default_cb (void *data,
 
     return WEECHAT_CONFIG_WRITE_ERROR;
 }
-
-/*
- * weechat_tcl_api_config_section_create_option_cb: callback to create an
- *                                                  option
- */
 
 int
 weechat_tcl_api_config_section_create_option_cb (void *data,
@@ -1296,11 +1164,6 @@ weechat_tcl_api_config_section_create_option_cb (void *data,
     return WEECHAT_CONFIG_OPTION_SET_ERROR;
 }
 
-/*
- * weechat_tcl_api_config_section_delete_option_cb: callback to delete an
- *                                                  option
- */
-
 int
 weechat_tcl_api_config_section_delete_option_cb (void *data,
                                                  struct t_config_file *config_file,
@@ -1345,11 +1208,6 @@ weechat_tcl_api_config_section_delete_option_cb (void *data,
 
     return WEECHAT_CONFIG_OPTION_UNSET_ERROR;
 }
-
-/*
- * weechat_tcl_api_config_new_section: create a new section in configuration
- *                                     file
- */
 
 static int
 weechat_tcl_api_config_new_section (ClientData clientData, Tcl_Interp *interp,
@@ -1411,10 +1269,6 @@ weechat_tcl_api_config_new_section (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_config_search_section: search section in configuration file
- */
-
 static int
 weechat_tcl_api_config_search_section (ClientData clientData, Tcl_Interp *interp,
                                        int objc, Tcl_Obj *CONST objv[])
@@ -1436,11 +1290,6 @@ weechat_tcl_api_config_search_section (ClientData clientData, Tcl_Interp *interp
     API_RETURN_STRING_FREE(result);
 }
 
-
-/*
- * weechat_tcl_api_config_option_check_value_cb: callback for checking new
- *                                               value for option
- */
 
 int
 weechat_tcl_api_config_option_check_value_cb (void *data,
@@ -1481,10 +1330,6 @@ weechat_tcl_api_config_option_check_value_cb (void *data,
     return 0;
 }
 
-/*
- * weechat_tcl_api_config_option_change_cb: callback for option changed
- */
-
 void
 weechat_tcl_api_config_option_change_cb (void *data,
                                           struct t_config_option *option)
@@ -1514,10 +1359,6 @@ weechat_tcl_api_config_option_change_cb (void *data,
     }
 }
 
-/*
- * weechat_tcl_api_config_option_delete_cb: callback when option is deleted
- */
-
 void
 weechat_tcl_api_config_option_delete_cb (void *data,
                                           struct t_config_option *option)
@@ -1546,10 +1387,6 @@ weechat_tcl_api_config_option_delete_cb (void *data,
             free (rc);
     }
 }
-
-/*
- * weechat_tcl_api_config_new_option: create a new option in section
- */
 
 static int
 weechat_tcl_api_config_new_option (ClientData clientData, Tcl_Interp *interp,
@@ -1612,11 +1449,6 @@ weechat_tcl_api_config_new_option (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_config_search_option: search option in configuration file or
- *                                       section
- */
-
 static int
 weechat_tcl_api_config_search_option (ClientData clientData, Tcl_Interp *interp,
                                       int objc, Tcl_Obj *CONST objv[])
@@ -1640,10 +1472,6 @@ weechat_tcl_api_config_search_option (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_config_string_to_boolean: return boolean value of a string
- */
-
 static int
 weechat_tcl_api_config_string_to_boolean (ClientData clientData, Tcl_Interp *interp,
                                           int objc, Tcl_Obj *CONST objv[])
@@ -1659,10 +1487,6 @@ weechat_tcl_api_config_string_to_boolean (ClientData clientData, Tcl_Interp *int
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_config_option_reset: reset an option with default value
- */
 
 static int
 weechat_tcl_api_config_option_reset (ClientData clientData, Tcl_Interp *interp,
@@ -1687,10 +1511,6 @@ weechat_tcl_api_config_option_reset (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(rc);
 }
-
-/*
- * weechat_tcl_api_config_option_set: set new value for option
- */
 
 static int
 weechat_tcl_api_config_option_set (ClientData clientData, Tcl_Interp *interp,
@@ -1718,10 +1538,6 @@ weechat_tcl_api_config_option_set (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(rc);
 }
 
-/*
- * weechat_tcl_api_config_option_set_null: set null (undefined)value for option
- */
-
 static int
 weechat_tcl_api_config_option_set_null (ClientData clientData, Tcl_Interp *interp,
                                         int objc, Tcl_Obj *CONST objv[])
@@ -1746,10 +1562,6 @@ weechat_tcl_api_config_option_set_null (ClientData clientData, Tcl_Interp *inter
     API_RETURN_INT(rc);
 }
 
-/*
- * weechat_tcl_api_config_option_unset: unset an option
- */
-
 static int
 weechat_tcl_api_config_option_unset (ClientData clientData, Tcl_Interp *interp,
                                      int objc, Tcl_Obj *CONST objv[])
@@ -1769,10 +1581,6 @@ weechat_tcl_api_config_option_unset (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(rc);
 }
-
-/*
- * weechat_tcl_api_config_option_rename: rename an option
- */
 
 static int
 weechat_tcl_api_config_option_rename (ClientData clientData, Tcl_Interp *interp,
@@ -1795,10 +1603,6 @@ weechat_tcl_api_config_option_rename (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_config_option_is_null: return 1 if value of option is null
- */
-
 static int
 weechat_tcl_api_config_option_is_null (ClientData clientData, Tcl_Interp *interp,
                                        int objc, Tcl_Obj *CONST objv[])
@@ -1814,11 +1618,6 @@ weechat_tcl_api_config_option_is_null (ClientData clientData, Tcl_Interp *interp
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_config_option_default_is_null: return 1 if default value of
- *                                                option is null
- */
 
 static int
 weechat_tcl_api_config_option_default_is_null (ClientData clientData,
@@ -1837,10 +1636,6 @@ weechat_tcl_api_config_option_default_is_null (ClientData clientData,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_config_boolean: return boolean value of option
- */
-
 static int
 weechat_tcl_api_config_boolean (ClientData clientData, Tcl_Interp *interp,
                                 int objc, Tcl_Obj *CONST objv[])
@@ -1856,10 +1651,6 @@ weechat_tcl_api_config_boolean (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_config_boolean_default: return default boolean value of option
- */
 
 static int
 weechat_tcl_api_config_boolean_default (ClientData clientData, Tcl_Interp *interp,
@@ -1877,10 +1668,6 @@ weechat_tcl_api_config_boolean_default (ClientData clientData, Tcl_Interp *inter
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_config_integer: return integer value of option
- */
-
 static int
 weechat_tcl_api_config_integer (ClientData clientData, Tcl_Interp *interp,
                                 int objc, Tcl_Obj *CONST objv[])
@@ -1897,10 +1684,6 @@ weechat_tcl_api_config_integer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_config_integer_default: return default integer value of option
- */
-
 static int
 weechat_tcl_api_config_integer_default (ClientData clientData, Tcl_Interp *interp,
                                         int objc, Tcl_Obj *CONST objv[])
@@ -1916,10 +1699,6 @@ weechat_tcl_api_config_integer_default (ClientData clientData, Tcl_Interp *inter
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_config_string: return string value of option
- */
 
 static int
 weechat_tcl_api_config_string (ClientData clientData, Tcl_Interp *interp,
@@ -1938,10 +1717,6 @@ weechat_tcl_api_config_string (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_config_string_default: return default string value of option
- */
-
 static int
 weechat_tcl_api_config_string_default (ClientData clientData, Tcl_Interp *interp,
                                        int objc, Tcl_Obj *CONST objv[])
@@ -1958,10 +1733,6 @@ weechat_tcl_api_config_string_default (ClientData clientData, Tcl_Interp *interp
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_config_color: return color value of option
- */
 
 static int
 weechat_tcl_api_config_color (ClientData clientData, Tcl_Interp *interp,
@@ -1980,10 +1751,6 @@ weechat_tcl_api_config_color (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_config_color_default: return default color value of option
- */
-
 static int
 weechat_tcl_api_config_color_default (ClientData clientData, Tcl_Interp *interp,
                                       int objc, Tcl_Obj *CONST objv[])
@@ -2000,10 +1767,6 @@ weechat_tcl_api_config_color_default (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_config_write_option: write an option in configuration file
- */
 
 static int
 weechat_tcl_api_config_write_option (ClientData clientData, Tcl_Interp *interp,
@@ -2025,10 +1788,6 @@ weechat_tcl_api_config_write_option (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_config_write_line: write a line in configuration file
- */
 
 static int
 weechat_tcl_api_config_write_line (ClientData clientData, Tcl_Interp *interp,
@@ -2052,10 +1811,6 @@ weechat_tcl_api_config_write_line (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_config_write: write configuration file
- */
-
 static int
 weechat_tcl_api_config_write (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -2072,10 +1827,6 @@ weechat_tcl_api_config_write (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(rc);
 }
-
-/*
- * weechat_tcl_api_config_read: read configuration file
- */
 
 static int
 weechat_tcl_api_config_read (ClientData clientData, Tcl_Interp *interp,
@@ -2094,10 +1845,6 @@ weechat_tcl_api_config_read (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(rc);
 }
 
-/*
- * weechat_tcl_api_config_reload: reload configuration file
- */
-
 static int
 weechat_tcl_api_config_reload (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -2114,10 +1861,6 @@ weechat_tcl_api_config_reload (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(rc);
 }
-
-/*
- * weechat_tcl_api_config_option_free: free an option in configuration file
- */
 
 static int
 weechat_tcl_api_config_option_free (ClientData clientData, Tcl_Interp *interp,
@@ -2137,11 +1880,6 @@ weechat_tcl_api_config_option_free (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_config_section_free_options: free all options of a section
- *                                              in configuration file
- */
-
 static int
 weechat_tcl_api_config_section_free_options (ClientData clientData, Tcl_Interp *interp,
                                              int objc, Tcl_Obj *CONST objv[])
@@ -2159,10 +1897,6 @@ weechat_tcl_api_config_section_free_options (ClientData clientData, Tcl_Interp *
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_config_section_free: free section in configuration file
- */
 
 static int
 weechat_tcl_api_config_section_free (ClientData clientData, Tcl_Interp *interp,
@@ -2182,10 +1916,6 @@ weechat_tcl_api_config_section_free (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_config_free: free configuration file
- */
-
 static int
 weechat_tcl_api_config_free (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -2204,10 +1934,6 @@ weechat_tcl_api_config_free (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_config_get: get config option
- */
-
 static int
 weechat_tcl_api_config_get (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -2224,10 +1950,6 @@ weechat_tcl_api_config_get (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_config_get_plugin: get value of a plugin option
- */
 
 static int
 weechat_tcl_api_config_get_plugin (ClientData clientData, Tcl_Interp *interp,
@@ -2247,10 +1969,6 @@ weechat_tcl_api_config_get_plugin (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_config_is_set_plugin: check if a plugin option is set
- */
 
 static int
 weechat_tcl_api_config_is_set_plugin (ClientData clientData, Tcl_Interp *interp,
@@ -2272,10 +1990,6 @@ weechat_tcl_api_config_is_set_plugin (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(rc);
 }
-
-/*
- * weechat_tcl_api_config_set_plugin: set value of a plugin option
- */
 
 static int
 weechat_tcl_api_config_set_plugin (ClientData clientData, Tcl_Interp *interp,
@@ -2300,10 +2014,6 @@ weechat_tcl_api_config_set_plugin (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(rc);
 }
 
-/*
- * weechat_tcl_api_config_set_desc_plugin: set description of a plugin option
- */
-
 static int
 weechat_tcl_api_config_set_desc_plugin (ClientData clientData, Tcl_Interp *interp,
                                         int objc, Tcl_Obj *CONST objv[])
@@ -2327,10 +2037,6 @@ weechat_tcl_api_config_set_desc_plugin (ClientData clientData, Tcl_Interp *inter
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_config_set_plugin: unset plugin option
- */
-
 static int
 weechat_tcl_api_config_unset_plugin (ClientData clientData, Tcl_Interp *interp,
                                      int objc, Tcl_Obj *CONST objv[])
@@ -2352,10 +2058,6 @@ weechat_tcl_api_config_unset_plugin (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(rc);
 }
 
-/*
- * weechat_tcl_api_key_bind: bind key(s)
- */
-
 static int
 weechat_tcl_api_key_bind (ClientData clientData, Tcl_Interp *interp,
                           int objc, Tcl_Obj *CONST objv[])
@@ -2371,7 +2073,9 @@ weechat_tcl_api_key_bind (ClientData clientData, Tcl_Interp *interp,
 
     context = Tcl_GetStringFromObj (objv[1], &i);
     hashtable = weechat_tcl_dict_to_hashtable (interp, objv[2],
-                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                               WEECHAT_HASHTABLE_STRING,
+                                               WEECHAT_HASHTABLE_STRING);
 
     num_keys = weechat_key_bind (context, hashtable);
 
@@ -2380,10 +2084,6 @@ weechat_tcl_api_key_bind (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(num_keys);
 }
-
-/*
- * weechat_tcl_api_key_unbind: unbind key(s)
- */
 
 static int
 weechat_tcl_api_key_unbind (ClientData clientData, Tcl_Interp *interp,
@@ -2405,10 +2105,6 @@ weechat_tcl_api_key_unbind (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(num_keys);
 }
 
-/*
- * weechat_tcl_api_prefix: get a prefix, used for display
- */
-
 static int
 weechat_tcl_api_prefix (ClientData clientData, Tcl_Interp *interp,
                         int objc, Tcl_Obj *CONST objv[])
@@ -2426,10 +2122,6 @@ weechat_tcl_api_prefix (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_color: get a color code, used for display
- */
-
 static int
 weechat_tcl_api_color (ClientData clientData, Tcl_Interp *interp,
                        int objc, Tcl_Obj *CONST objv[])
@@ -2446,10 +2138,6 @@ weechat_tcl_api_color (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_print: print message in a buffer
- */
 
 static int
 weechat_tcl_api_print (ClientData clientData, Tcl_Interp *interp,
@@ -2473,11 +2161,6 @@ weechat_tcl_api_print (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_print_date_tags: print message in a buffer with optional
- *                                  date and tags
- */
 
 static int
 weechat_tcl_api_print_date_tags (ClientData clientData, Tcl_Interp *interp,
@@ -2508,10 +2191,6 @@ weechat_tcl_api_print_date_tags (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_print_y: print message in a buffer with free content
- */
-
 static int
 weechat_tcl_api_print_y (ClientData clientData, Tcl_Interp *interp,
                          int objc, Tcl_Obj *CONST objv[])
@@ -2539,10 +2218,6 @@ weechat_tcl_api_print_y (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_log_print: print message in WeeChat log file
- */
-
 static int
 weechat_tcl_api_log_print (ClientData clientData, Tcl_Interp *interp,
                            int objc, Tcl_Obj *CONST objv[])
@@ -2564,10 +2239,6 @@ weechat_tcl_api_log_print (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_hook_command_cb: callback for command hooked
- */
 
 int
 weechat_tcl_api_hook_command_cb (void *data, struct t_gui_buffer *buffer,
@@ -2610,10 +2281,6 @@ weechat_tcl_api_hook_command_cb (void *data, struct t_gui_buffer *buffer,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_command: hook a command
- */
-
 static int
 weechat_tcl_api_hook_command (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -2648,10 +2315,6 @@ weechat_tcl_api_hook_command (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_command_run_cb: callback for command_run hooked
- */
 
 int
 weechat_tcl_api_hook_command_run_cb (void *data, struct t_gui_buffer *buffer,
@@ -2691,10 +2354,6 @@ weechat_tcl_api_hook_command_run_cb (void *data, struct t_gui_buffer *buffer,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_command_run: hook a command_run
- */
-
 static int
 weechat_tcl_api_hook_command_run (ClientData clientData, Tcl_Interp *interp,
                                   int objc, Tcl_Obj *CONST objv[])
@@ -2720,10 +2379,6 @@ weechat_tcl_api_hook_command_run (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_timer_cb: callback for timer hooked
- */
 
 int
 weechat_tcl_api_hook_timer_cb (void *data, int remaining_calls)
@@ -2762,10 +2417,6 @@ weechat_tcl_api_hook_timer_cb (void *data, int remaining_calls)
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_timer: hook a timer
- */
-
 static int
 weechat_tcl_api_hook_timer (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -2795,10 +2446,6 @@ weechat_tcl_api_hook_timer (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_fd_cb: callback for fd hooked
- */
 
 int
 weechat_tcl_api_hook_fd_cb (void *data, int fd)
@@ -2836,10 +2483,6 @@ weechat_tcl_api_hook_fd_cb (void *data, int fd)
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_fd: hook a fd
- */
-
 static int
 weechat_tcl_api_hook_fd (ClientData clientData, Tcl_Interp *interp,
                          int objc, Tcl_Obj *CONST objv[])
@@ -2870,10 +2513,6 @@ weechat_tcl_api_hook_fd (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_process_cb: callback for process hooked
- */
 
 int
 weechat_tcl_api_hook_process_cb (void *data,
@@ -2914,10 +2553,6 @@ weechat_tcl_api_hook_process_cb (void *data,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_process: hook a process
- */
-
 static int
 weechat_tcl_api_hook_process (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -2948,11 +2583,6 @@ weechat_tcl_api_hook_process (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_process_hashtable: hook a process with options in
- *                                         a hashtable
- */
-
 static int
 weechat_tcl_api_hook_process_hashtable (ClientData clientData,
                                         Tcl_Interp *interp,
@@ -2972,7 +2602,9 @@ weechat_tcl_api_hook_process_hashtable (ClientData clientData,
 
     command = Tcl_GetStringFromObj (objv[1], &i);
     options = weechat_tcl_dict_to_hashtable (interp, objv[2],
-                                             WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                             WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                             WEECHAT_HASHTABLE_STRING,
+                                             WEECHAT_HASHTABLE_STRING);
     function = Tcl_GetStringFromObj (objv[4], &i);
     data = Tcl_GetStringFromObj (objv[5], &i);
 
@@ -2991,17 +2623,14 @@ weechat_tcl_api_hook_process_hashtable (ClientData clientData,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_connect_cb: callback for connect hooked
- */
-
 int
 weechat_tcl_api_hook_connect_cb (void *data, int status, int gnutls_rc,
-                                 const char *error, const char *ip_address)
+                                 int sock, const char *error,
+                                 const char *ip_address)
 {
     struct t_plugin_script_cb *script_callback;
-    void *func_argv[5];
-    char str_status[32], str_gnutls_rc[32];
+    void *func_argv[6];
+    char str_status[32], str_gnutls_rc[32], str_sock[32];
     char empty_arg[1] = { '\0' };
     int *rc, ret;
 
@@ -3011,17 +2640,19 @@ weechat_tcl_api_hook_connect_cb (void *data, int status, int gnutls_rc,
     {
         snprintf (str_status, sizeof (str_status), "%d", status);
         snprintf (str_gnutls_rc, sizeof (str_gnutls_rc), "%d", gnutls_rc);
+        snprintf (str_sock, sizeof (str_sock), "%d", sock);
 
         func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
         func_argv[1] = str_status;
         func_argv[2] = str_gnutls_rc;
-        func_argv[3] = (ip_address) ? (char *)ip_address : empty_arg;
-        func_argv[4] = (error) ? (char *)error : empty_arg;
+        func_argv[3] = str_sock;
+        func_argv[4] = (ip_address) ? (char *)ip_address : empty_arg;
+        func_argv[5] = (error) ? (char *)error : empty_arg;
 
         rc = (int *) weechat_tcl_exec (script_callback->script,
                                        WEECHAT_SCRIPT_EXEC_INT,
                                        script_callback->function,
-                                       "sssss", func_argv);
+                                       "ssssss", func_argv);
 
         if (!rc)
             ret = WEECHAT_RC_ERROR;
@@ -3037,25 +2668,21 @@ weechat_tcl_api_hook_connect_cb (void *data, int status, int gnutls_rc,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_connect: hook a connection
- */
-
 static int
 weechat_tcl_api_hook_connect (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
 {
     Tcl_Obj *objp;
     char *proxy, *address, *local_hostname, *function, *data, *result;
-    int i, port, sock, ipv6;
+    int i, port, ipv6, retry;
 
     API_FUNC(1, "hook_connect", API_RETURN_EMPTY);
     if (objc < 9)
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
     if ((Tcl_GetIntFromObj (interp, objv[3], &port) != TCL_OK)
-        || (Tcl_GetIntFromObj (interp, objv[4], &sock) != TCL_OK)
-        || (Tcl_GetIntFromObj (interp, objv[5], &ipv6) != TCL_OK))
+        || (Tcl_GetIntFromObj (interp, objv[4], &ipv6) != TCL_OK)
+        || (Tcl_GetIntFromObj (interp, objv[5], &retry) != TCL_OK))
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
     proxy = Tcl_GetStringFromObj (objv[1], &i);
@@ -3069,8 +2696,8 @@ weechat_tcl_api_hook_connect (ClientData clientData, Tcl_Interp *interp,
                                                          proxy,
                                                          address,
                                                          port,
-                                                         sock,
                                                          ipv6,
+                                                         retry,
                                                          NULL, /* gnutls session */
                                                          NULL, /* gnutls callback */
                                                          0,    /* gnutls DH key size */
@@ -3082,10 +2709,6 @@ weechat_tcl_api_hook_connect (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_print_cb: callback for print hooked
- */
 
 int
 weechat_tcl_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
@@ -3147,10 +2770,6 @@ weechat_tcl_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_print: hook a print
- */
-
 static int
 weechat_tcl_api_hook_print (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -3184,10 +2803,6 @@ weechat_tcl_api_hook_print (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_signal_cb: callback for signal hooked
- */
 
 int
 weechat_tcl_api_hook_signal_cb (void *data, const char *signal, const char *type_data,
@@ -3245,10 +2860,6 @@ weechat_tcl_api_hook_signal_cb (void *data, const char *signal, const char *type
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_signal: hook a signal
- */
-
 static int
 weechat_tcl_api_hook_signal (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -3274,10 +2885,6 @@ weechat_tcl_api_hook_signal (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_signal_send: send a signal
- */
 
 static int
 weechat_tcl_api_hook_signal_send (ClientData clientData, Tcl_Interp *interp,
@@ -3323,10 +2930,6 @@ weechat_tcl_api_hook_signal_send (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_hsignal_cb: callback for hsignal hooked
- */
-
 int
 weechat_tcl_api_hook_hsignal_cb (void *data, const char *signal,
                                  struct t_hashtable *hashtable)
@@ -3363,10 +2966,6 @@ weechat_tcl_api_hook_hsignal_cb (void *data, const char *signal,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_hsignal: hook a hsignal
- */
-
 static int
 weechat_tcl_api_hook_hsignal (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -3393,10 +2992,6 @@ weechat_tcl_api_hook_hsignal (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_hsignal_send: send a hsignal
- */
-
 static int
 weechat_tcl_api_hook_hsignal_send (ClientData clientData, Tcl_Interp *interp,
                                    int objc, Tcl_Obj *CONST objv[])
@@ -3412,7 +3007,9 @@ weechat_tcl_api_hook_hsignal_send (ClientData clientData, Tcl_Interp *interp,
 
     signal = Tcl_GetStringFromObj (objv[1], &i);
     hashtable = weechat_tcl_dict_to_hashtable (interp, objv[2],
-                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                               WEECHAT_HASHTABLE_STRING,
+                                               WEECHAT_HASHTABLE_STRING);
 
     weechat_hook_hsignal_send (signal, hashtable);
 
@@ -3421,10 +3018,6 @@ weechat_tcl_api_hook_hsignal_send (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_hook_config_cb: callback for config option hooked
- */
 
 int
 weechat_tcl_api_hook_config_cb (void *data, const char *option, const char *value)
@@ -3461,10 +3054,6 @@ weechat_tcl_api_hook_config_cb (void *data, const char *option, const char *valu
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_config: hook a config option
- */
-
 static int
 weechat_tcl_api_hook_config (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -3490,10 +3079,6 @@ weechat_tcl_api_hook_config (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_completion_cb: callback for completion hooked
- */
 
 int
 weechat_tcl_api_hook_completion_cb (void *data, const char *completion_item,
@@ -3537,10 +3122,6 @@ weechat_tcl_api_hook_completion_cb (void *data, const char *completion_item,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_hook_completion: hook a completion
- */
-
 static int
 weechat_tcl_api_hook_completion (ClientData clientData, Tcl_Interp *interp,
                                  int objc, Tcl_Obj *CONST objv[])
@@ -3569,10 +3150,6 @@ weechat_tcl_api_hook_completion (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_completion_list_add: add a word to list for a completion
- */
-
 static int
 weechat_tcl_api_hook_completion_list_add (ClientData clientData, Tcl_Interp *interp,
                                           int objc, Tcl_Obj *CONST objv[])
@@ -3600,10 +3177,6 @@ weechat_tcl_api_hook_completion_list_add (ClientData clientData, Tcl_Interp *int
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_hook_modifier_cb: callback for modifier hooked
- */
-
 char *
 weechat_tcl_api_hook_modifier_cb (void *data, const char *modifier,
                                    const char *modifier_data, const char *string)
@@ -3629,10 +3202,6 @@ weechat_tcl_api_hook_modifier_cb (void *data, const char *modifier,
 
     return NULL;
 }
-
-/*
- * weechat_tcl_api_hook_modifier: hook a modifier
- */
 
 static int
 weechat_tcl_api_hook_modifier (ClientData clientData, Tcl_Interp *interp,
@@ -3660,10 +3229,6 @@ weechat_tcl_api_hook_modifier (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_modifier_exec: execute a modifier hook
- */
-
 static int
 weechat_tcl_api_hook_modifier_exec (ClientData clientData, Tcl_Interp *interp,
                                     int objc, Tcl_Obj *CONST objv[])
@@ -3684,10 +3249,6 @@ weechat_tcl_api_hook_modifier_exec (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hook_info_cb: callback for info hooked
- */
 
 const char *
 weechat_tcl_api_hook_info_cb (void *data, const char *info_name,
@@ -3713,10 +3274,6 @@ weechat_tcl_api_hook_info_cb (void *data, const char *info_name,
 
     return NULL;
 }
-
-/*
- * weechat_tcl_api_hook_info: hook an info
- */
 
 static int
 weechat_tcl_api_hook_info (ClientData clientData, Tcl_Interp *interp,
@@ -3748,10 +3305,6 @@ weechat_tcl_api_hook_info (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_info_hashtable_cb: callback for info_hashtable hooked
- */
-
 struct t_hashtable *
 weechat_tcl_api_hook_info_hashtable_cb (void *data, const char *info_name,
                                         struct t_hashtable *hashtable)
@@ -3776,10 +3329,6 @@ weechat_tcl_api_hook_info_hashtable_cb (void *data, const char *info_name,
 
     return NULL;
 }
-
-/*
- * weechat_tcl_api_hook_info_hashtable: hook an info_hashtable
- */
 
 static int
 weechat_tcl_api_hook_info_hashtable (ClientData clientData, Tcl_Interp *interp,
@@ -3814,10 +3363,6 @@ weechat_tcl_api_hook_info_hashtable (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_infolist_cb: callback for infolist hooked
- */
-
 struct t_infolist *
 weechat_tcl_api_hook_infolist_cb (void *data, const char *infolist_name,
                                    void *pointer, const char *arguments)
@@ -3849,10 +3394,6 @@ weechat_tcl_api_hook_infolist_cb (void *data, const char *infolist_name,
 
     return NULL;
 }
-
-/*
- * weechat_tcl_api_hook_infolist: hook an infolist
- */
 
 static int
 weechat_tcl_api_hook_infolist (ClientData clientData, Tcl_Interp *interp,
@@ -3887,10 +3428,6 @@ weechat_tcl_api_hook_infolist (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hook_focus_cb: callback for focus hooked
- */
-
 struct t_hashtable *
 weechat_tcl_api_hook_focus_cb (void *data,
                                struct t_hashtable *info)
@@ -3914,10 +3451,6 @@ weechat_tcl_api_hook_focus_cb (void *data,
 
     return NULL;
 }
-
-/*
- * weechat_tcl_api_hook_focus: hook a focus
- */
 
 static int
 weechat_tcl_api_hook_focus (ClientData clientData, Tcl_Interp *interp,
@@ -3945,10 +3478,6 @@ weechat_tcl_api_hook_focus (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_unhook: unhook something
- */
-
 static int
 weechat_tcl_api_unhook (ClientData clientData, Tcl_Interp *interp,
                         int objc, Tcl_Obj *CONST objv[])
@@ -3967,10 +3496,6 @@ weechat_tcl_api_unhook (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_unhook_all: unhook all for script
- */
-
 static int
 weechat_tcl_api_unhook_all (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -3988,10 +3513,6 @@ weechat_tcl_api_unhook_all (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_buffer_input_data_cb: callback for input data in a buffer
- */
 
 int
 weechat_tcl_api_buffer_input_data_cb (void *data, struct t_gui_buffer *buffer,
@@ -4030,10 +3551,6 @@ weechat_tcl_api_buffer_input_data_cb (void *data, struct t_gui_buffer *buffer,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_buffer_close_cb: callback for buffer closed
- */
-
 int
 weechat_tcl_api_buffer_close_cb (void *data, struct t_gui_buffer *buffer)
 {
@@ -4069,10 +3586,6 @@ weechat_tcl_api_buffer_close_cb (void *data, struct t_gui_buffer *buffer)
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_buffer_new: create a new buffer
- */
-
 static int
 weechat_tcl_api_buffer_new (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -4105,10 +3618,6 @@ weechat_tcl_api_buffer_new (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_buffer_search: search a buffer
- */
-
 static int
 weechat_tcl_api_buffer_search (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -4129,10 +3638,6 @@ weechat_tcl_api_buffer_search (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_buffer_search_main: search main buffer (WeeChat core buffer)
- */
-
 static int
 weechat_tcl_api_buffer_search_main (ClientData clientData, Tcl_Interp *interp,
                                     int objc, Tcl_Obj *CONST objv[])
@@ -4151,10 +3656,6 @@ weechat_tcl_api_buffer_search_main (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_current_buffer: get current buffer
- */
 
 static int
 weechat_tcl_api_current_buffer (ClientData clientData, Tcl_Interp *interp,
@@ -4175,10 +3676,6 @@ weechat_tcl_api_current_buffer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_buffer_clear: clear a buffer
- */
-
 static int
 weechat_tcl_api_buffer_clear (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -4194,10 +3691,6 @@ weechat_tcl_api_buffer_clear (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_buffer_close: close a buffer
- */
 
 static int
 weechat_tcl_api_buffer_close (ClientData clientData, Tcl_Interp *interp,
@@ -4217,10 +3710,6 @@ weechat_tcl_api_buffer_close (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_buffer_merge: merge a buffer to another buffer
- */
-
 static int
 weechat_tcl_api_buffer_merge (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -4237,11 +3726,6 @@ weechat_tcl_api_buffer_merge (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_buffer_unmerge: unmerge a buffer from a group of merged
- *                                 buffers
- */
 
 static int
 weechat_tcl_api_buffer_unmerge (ClientData clientData, Tcl_Interp *interp,
@@ -4262,10 +3746,6 @@ weechat_tcl_api_buffer_unmerge (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_buffer_get_integer: get a buffer property as integer
- */
 
 static int
 weechat_tcl_api_buffer_get_integer (ClientData clientData, Tcl_Interp *interp,
@@ -4288,10 +3768,6 @@ weechat_tcl_api_buffer_get_integer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_buffer_get_string: get a buffer property as string
- */
-
 static int
 weechat_tcl_api_buffer_get_string (ClientData clientData, Tcl_Interp *interp,
                                    int objc, Tcl_Obj *CONST objv[])
@@ -4312,10 +3788,6 @@ weechat_tcl_api_buffer_get_string (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_buffer_get_pointer: get a buffer property as pointer
- */
 
 static int
 weechat_tcl_api_buffer_get_pointer (ClientData clientData, Tcl_Interp *interp,
@@ -4338,10 +3810,6 @@ weechat_tcl_api_buffer_get_pointer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_buffer_set: set a buffer property
- */
-
 static int
 weechat_tcl_api_buffer_set (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -4363,11 +3831,6 @@ weechat_tcl_api_buffer_set (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_buffer_string_replace_local_var: replace local variables ($var) in a string,
- *                                                  using value of local variables
- */
-
 static int
 weechat_tcl_api_buffer_string_replace_local_var (ClientData clientData, Tcl_Interp *interp,
                                                  int objc, Tcl_Obj *CONST objv[])
@@ -4387,10 +3850,6 @@ weechat_tcl_api_buffer_string_replace_local_var (ClientData clientData, Tcl_Inte
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_buffer_match_list: return 1 if buffers matches list of buffers
- */
 
 static int
 weechat_tcl_api_buffer_match_list (ClientData clientData, Tcl_Interp *interp,
@@ -4413,10 +3872,6 @@ weechat_tcl_api_buffer_match_list (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_current_window: get current window
- */
-
 static int
 weechat_tcl_api_current_window (ClientData clientData, Tcl_Interp *interp,
                                 int objc, Tcl_Obj *CONST objv[])
@@ -4436,11 +3891,6 @@ weechat_tcl_api_current_window (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_window_search_with_buffer: search a window with buffer
- *                                            pointer
- */
-
 static int
 weechat_tcl_api_window_search_with_buffer (ClientData clientData, Tcl_Interp *interp,
                                            int objc, Tcl_Obj *CONST objv[])
@@ -4459,10 +3909,6 @@ weechat_tcl_api_window_search_with_buffer (ClientData clientData, Tcl_Interp *in
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_window_get_integer: get a window property as integer
- */
 
 static int
 weechat_tcl_api_window_get_integer (ClientData clientData, Tcl_Interp *interp,
@@ -4485,10 +3931,6 @@ weechat_tcl_api_window_get_integer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_window_get_string: get a window property as string
- */
-
 static int
 weechat_tcl_api_window_get_string (ClientData clientData, Tcl_Interp *interp,
                                    int objc, Tcl_Obj *CONST objv[])
@@ -4509,10 +3951,6 @@ weechat_tcl_api_window_get_string (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_window_get_pointer: get a window property as pointer
- */
 
 static int
 weechat_tcl_api_window_get_pointer (ClientData clientData, Tcl_Interp *interp,
@@ -4535,10 +3973,6 @@ weechat_tcl_api_window_get_pointer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_window_set_title: set window title
- */
-
 static int
 weechat_tcl_api_window_set_title (ClientData clientData, Tcl_Interp *interp,
                                   int objc, Tcl_Obj *CONST objv[])
@@ -4557,10 +3991,6 @@ weechat_tcl_api_window_set_title (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_nicklist_add_group: add a group in nicklist
- */
 
 static int
 weechat_tcl_api_nicklist_add_group (ClientData clientData, Tcl_Interp *interp,
@@ -4591,10 +4021,6 @@ weechat_tcl_api_nicklist_add_group (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_nicklist_search_group: search a group in nicklist
- */
-
 static int
 weechat_tcl_api_nicklist_search_group (ClientData clientData, Tcl_Interp *interp,
                                        int objc, Tcl_Obj *CONST objv[])
@@ -4617,10 +4043,6 @@ weechat_tcl_api_nicklist_search_group (ClientData clientData, Tcl_Interp *interp
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_nicklist_add_nick: add a nick in nicklist
- */
 
 static int
 weechat_tcl_api_nicklist_add_nick (ClientData clientData, Tcl_Interp *interp,
@@ -4655,10 +4077,6 @@ weechat_tcl_api_nicklist_add_nick (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_nicklist_search_nick: search a nick in nicklist
- */
-
 static int
 weechat_tcl_api_nicklist_search_nick (ClientData clientData, Tcl_Interp *interp,
                                       int objc, Tcl_Obj *CONST objv[])
@@ -4682,10 +4100,6 @@ weechat_tcl_api_nicklist_search_nick (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_nicklist_remove_group: remove a group from nicklist
- */
-
 static int
 weechat_tcl_api_nicklist_remove_group (ClientData clientData, Tcl_Interp *interp,
                                        int objc, Tcl_Obj *CONST objv[])
@@ -4706,10 +4120,6 @@ weechat_tcl_api_nicklist_remove_group (ClientData clientData, Tcl_Interp *interp
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_nicklist_remove_nick: remove a nick from nicklist
- */
 
 static int
 weechat_tcl_api_nicklist_remove_nick (ClientData clientData, Tcl_Interp *interp,
@@ -4732,10 +4142,6 @@ weechat_tcl_api_nicklist_remove_nick (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_nicklist_remove_all: remove all groups/nicks from nicklist
- */
-
 static int
 weechat_tcl_api_nicklist_remove_all (ClientData clientData, Tcl_Interp *interp,
                                      int objc, Tcl_Obj *CONST objv[])
@@ -4751,10 +4157,6 @@ weechat_tcl_api_nicklist_remove_all (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_nicklist_group_get_integer: get a group property as integer
- */
 
 static int
 weechat_tcl_api_nicklist_group_get_integer (ClientData clientData,
@@ -4781,10 +4183,6 @@ weechat_tcl_api_nicklist_group_get_integer (ClientData clientData,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_nicklist_group_get_string: get a group property as string
- */
-
 static int
 weechat_tcl_api_nicklist_group_get_string (ClientData clientData,
                                            Tcl_Interp *interp,
@@ -4810,10 +4208,6 @@ weechat_tcl_api_nicklist_group_get_string (ClientData clientData,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_nicklist_group_get_pointer: get a group property as pointer
- */
-
 static int
 weechat_tcl_api_nicklist_group_get_pointer (ClientData clientData,
                                             Tcl_Interp *interp,
@@ -4837,10 +4231,6 @@ weechat_tcl_api_nicklist_group_get_pointer (ClientData clientData,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_nicklist_group_set: set a group property
- */
 
 static int
 weechat_tcl_api_nicklist_group_set (ClientData clientData, Tcl_Interp *interp,
@@ -4867,10 +4257,6 @@ weechat_tcl_api_nicklist_group_set (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_nicklist_nick_get_integer: get a nick property as integer
- */
-
 static int
 weechat_tcl_api_nicklist_nick_get_integer (ClientData clientData,
                                            Tcl_Interp *interp,
@@ -4895,10 +4281,6 @@ weechat_tcl_api_nicklist_nick_get_integer (ClientData clientData,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_nicklist_nick_get_string: get a nick property as string
- */
 
 static int
 weechat_tcl_api_nicklist_nick_get_string (ClientData clientData,
@@ -4925,10 +4307,6 @@ weechat_tcl_api_nicklist_nick_get_string (ClientData clientData,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_nicklist_nick_get_pointer: get a nick property as pointer
- */
-
 static int
 weechat_tcl_api_nicklist_nick_get_pointer (ClientData clientData,
                                            Tcl_Interp *interp,
@@ -4952,10 +4330,6 @@ weechat_tcl_api_nicklist_nick_get_pointer (ClientData clientData,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_nicklist_nick_set: set a nick property
- */
 
 static int
 weechat_tcl_api_nicklist_nick_set (ClientData clientData, Tcl_Interp *interp,
@@ -4982,10 +4356,6 @@ weechat_tcl_api_nicklist_nick_set (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_bar_item_search: search a bar item
- */
-
 static int
 weechat_tcl_api_bar_item_search (ClientData clientData, Tcl_Interp *interp,
                                  int objc, Tcl_Obj *CONST objv[])
@@ -5002,10 +4372,6 @@ weechat_tcl_api_bar_item_search (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_bar_item_build_cb: callback for building bar item
- */
 
 char *
 weechat_tcl_api_bar_item_build_cb (void *data, struct t_gui_bar_item *item,
@@ -5039,10 +4405,6 @@ weechat_tcl_api_bar_item_build_cb (void *data, struct t_gui_bar_item *item,
     return NULL;
 }
 
-/*
- * weechat_tcl_api_bar_item_new: add a new bar item
- */
-
 static int
 weechat_tcl_api_bar_item_new (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -5069,10 +4431,6 @@ weechat_tcl_api_bar_item_new (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_bar_item_update: update a bar item on screen
- */
-
 static int
 weechat_tcl_api_bar_item_update (ClientData clientData, Tcl_Interp *interp,
                                  int objc, Tcl_Obj *CONST objv[])
@@ -5088,10 +4446,6 @@ weechat_tcl_api_bar_item_update (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_bar_item_remove: remove a bar item
- */
 
 static int
 weechat_tcl_api_bar_item_remove (ClientData clientData, Tcl_Interp *interp,
@@ -5111,10 +4465,6 @@ weechat_tcl_api_bar_item_remove (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_bar_search: search a bar
- */
-
 static int
 weechat_tcl_api_bar_search (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -5131,10 +4481,6 @@ weechat_tcl_api_bar_search (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_bar_new: add a new bar
- */
 
 static int
 weechat_tcl_api_bar_new (ClientData clientData, Tcl_Interp *interp,
@@ -5185,10 +4531,6 @@ weechat_tcl_api_bar_new (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_bar_set: set a bar property
- */
-
 static int
 weechat_tcl_api_bar_set (ClientData clientData, Tcl_Interp *interp,
                          int objc, Tcl_Obj *CONST objv[])
@@ -5210,10 +4552,6 @@ weechat_tcl_api_bar_set (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_bar_update: update a bar on screen
- */
-
 static int
 weechat_tcl_api_bar_update (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -5230,10 +4568,6 @@ weechat_tcl_api_bar_update (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_bar_remove: remove a bar
- */
-
 static int
 weechat_tcl_api_bar_remove (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -5249,10 +4583,6 @@ weechat_tcl_api_bar_remove (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_command: execute a command on a buffer
- */
 
 static int
 weechat_tcl_api_command (ClientData clientData, Tcl_Interp *interp,
@@ -5277,10 +4607,6 @@ weechat_tcl_api_command (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_info_get: get info (as string)
- */
-
 static int
 weechat_tcl_api_info_get (ClientData clientData, Tcl_Interp *interp,
                           int objc, Tcl_Obj *CONST objv[])
@@ -5299,10 +4625,6 @@ weechat_tcl_api_info_get (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_info_get_hashtable: get info (as hashtable)
- */
-
 static int
 weechat_tcl_api_info_get_hashtable (ClientData clientData, Tcl_Interp *interp,
                                     int objc, Tcl_Obj *CONST objv[])
@@ -5316,7 +4638,9 @@ weechat_tcl_api_info_get_hashtable (ClientData clientData, Tcl_Interp *interp,
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
     hashtable = weechat_tcl_dict_to_hashtable (interp, objv[2],
-                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                               WEECHAT_HASHTABLE_STRING,
+                                               WEECHAT_HASHTABLE_STRING);
 
     result_hashtable = weechat_info_get_hashtable (Tcl_GetStringFromObj (objv[1], &i),
                                                    hashtable);
@@ -5329,10 +4653,6 @@ weechat_tcl_api_info_get_hashtable (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OBJ(result_dict);
 }
-
-/*
- * weechat_tcl_api_infolist_new: create a new infolist
- */
 
 static int
 weechat_tcl_api_infolist_new (ClientData clientData, Tcl_Interp *interp,
@@ -5353,10 +4673,6 @@ weechat_tcl_api_infolist_new (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_infolist_new_item: create new item in infolist
- */
-
 static int
 weechat_tcl_api_infolist_new_item (ClientData clientData, Tcl_Interp *interp,
                                    int objc, Tcl_Obj *CONST objv[])
@@ -5373,11 +4689,6 @@ weechat_tcl_api_infolist_new_item (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_infolist_new_var_integer: create new integer variable in
- *                                           infolist
- */
 
 static int
 weechat_tcl_api_infolist_new_var_integer (ClientData clientData, Tcl_Interp *interp,
@@ -5401,11 +4712,6 @@ weechat_tcl_api_infolist_new_var_integer (ClientData clientData, Tcl_Interp *int
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_infolist_new_var_string: create new string variable in
- *                                          infolist
- */
-
 static int
 weechat_tcl_api_infolist_new_var_string (ClientData clientData, Tcl_Interp *interp,
                                          int objc, Tcl_Obj *CONST objv[])
@@ -5425,10 +4731,6 @@ weechat_tcl_api_infolist_new_var_string (ClientData clientData, Tcl_Interp *inte
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_infolist_new_var_pointer: create new pointer variable in infolist
- */
-
 static int
 weechat_tcl_api_infolist_new_var_pointer (ClientData clientData, Tcl_Interp *interp,
                                           int objc, Tcl_Obj *CONST objv[])
@@ -5447,10 +4749,6 @@ weechat_tcl_api_infolist_new_var_pointer (ClientData clientData, Tcl_Interp *int
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_infolist_new_var_time: create new time variable in infolist
- */
 
 static int
 weechat_tcl_api_infolist_new_var_time (ClientData clientData, Tcl_Interp *interp,
@@ -5473,10 +4771,6 @@ weechat_tcl_api_infolist_new_var_time (ClientData clientData, Tcl_Interp *interp
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_infolist_get: get list with infos
- */
 
 static int
 weechat_tcl_api_infolist_get (ClientData clientData, Tcl_Interp *interp,
@@ -5501,10 +4795,6 @@ weechat_tcl_api_infolist_get (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_infolist_next: move item pointer to next item in infolist
- */
-
 static int
 weechat_tcl_api_infolist_next (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -5521,11 +4811,6 @@ weechat_tcl_api_infolist_next (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_infolist_prev: move item pointer to previous item in
- *                                infolist
- */
-
 static int
 weechat_tcl_api_infolist_prev (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -5541,11 +4826,6 @@ weechat_tcl_api_infolist_prev (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_infolist_reset_item_cursor: reset pointer to current item in
- *                                             infolist
- */
 
 static int
 weechat_tcl_api_infolist_reset_item_cursor (ClientData clientData,
@@ -5564,11 +4844,6 @@ weechat_tcl_api_infolist_reset_item_cursor (ClientData clientData,
     API_RETURN_OK;
 }
 
-/*
- * weechat_tcl_api_infolist_fields: get list of fields for current item of
- *                                  infolist
- */
-
 static int
 weechat_tcl_api_infolist_fields (ClientData clientData, Tcl_Interp *interp,
                                  int objc, Tcl_Obj *CONST objv[])
@@ -5585,11 +4860,6 @@ weechat_tcl_api_infolist_fields (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_infolist_integer: get integer value of a variable in
- *                                   infolist
- */
 
 static int
 weechat_tcl_api_infolist_integer (ClientData clientData, Tcl_Interp *interp,
@@ -5610,10 +4880,6 @@ weechat_tcl_api_infolist_integer (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_infolist_string: get string value of a variable in infolist
- */
 
 static int
 weechat_tcl_api_infolist_string (ClientData clientData, Tcl_Interp *interp,
@@ -5636,11 +4902,6 @@ weechat_tcl_api_infolist_string (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_infolist_pointer: get pointer value of a variable in
- *                                   infolist
- */
-
 static int
 weechat_tcl_api_infolist_pointer (ClientData clientData, Tcl_Interp *interp,
                                   int objc, Tcl_Obj *CONST objv[])
@@ -5660,10 +4921,6 @@ weechat_tcl_api_infolist_pointer (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_infolist_time: get time value of a variable in infolist
- */
 
 static int
 weechat_tcl_api_infolist_time (ClientData clientData, Tcl_Interp *interp,
@@ -5692,10 +4949,6 @@ weechat_tcl_api_infolist_time (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_infolist_free: free infolist
- */
-
 static int
 weechat_tcl_api_infolist_free (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -5711,10 +4964,6 @@ weechat_tcl_api_infolist_free (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_OK;
 }
-
-/*
- * weechat_tcl_api_hdata_get: get hdata
- */
 
 static int
 weechat_tcl_api_hdata_get (ClientData clientData, Tcl_Interp *interp,
@@ -5735,10 +4984,6 @@ weechat_tcl_api_hdata_get (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hdata_get_var_offset: get offset of variable in hdata
- */
-
 static int
 weechat_tcl_api_hdata_get_var_offset (ClientData clientData, Tcl_Interp *interp,
                                       int objc, Tcl_Obj *CONST objv[])
@@ -5758,11 +5003,6 @@ weechat_tcl_api_hdata_get_var_offset (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_hdata_get_var_type_string: get type of variable as string in
- *                                            hdata
- */
 
 static int
 weechat_tcl_api_hdata_get_var_type_string (ClientData clientData,
@@ -5785,11 +5025,6 @@ weechat_tcl_api_hdata_get_var_type_string (ClientData clientData,
 
     API_RETURN_STRING(result);
 }
-
-/*
- * weechat_tcl_api_hdata_get_var_array_size: get array_size for variable in
- *                                           hdata
- */
 
 static int
 weechat_tcl_api_hdata_get_var_array_size (ClientData clientData,
@@ -5814,11 +5049,6 @@ weechat_tcl_api_hdata_get_var_array_size (ClientData clientData,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_hdata_get_var_array_size_string: get array size for variable
- *                                                  in hdata (as string)
- */
 
 static int
 weechat_tcl_api_hdata_get_var_array_size_string (ClientData clientData,
@@ -5845,10 +5075,6 @@ weechat_tcl_api_hdata_get_var_array_size_string (ClientData clientData,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_hdata_get_var_hdata: get hdata for variable in hdata
- */
-
 static int
 weechat_tcl_api_hdata_get_var_hdata (ClientData clientData, Tcl_Interp *interp,
                                      int objc, Tcl_Obj *CONST objv[])
@@ -5870,10 +5096,6 @@ weechat_tcl_api_hdata_get_var_hdata (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_hdata_get_list: get list pointer in hdata
- */
-
 static int
 weechat_tcl_api_hdata_get_list (ClientData clientData, Tcl_Interp *interp,
                                 int objc, Tcl_Obj *CONST objv[])
@@ -5894,10 +5116,6 @@ weechat_tcl_api_hdata_get_list (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hdata_check_pointer: check pointer with hdata/list
- */
 
 static int
 weechat_tcl_api_hdata_check_pointer (ClientData clientData, Tcl_Interp *interp,
@@ -5921,10 +5139,6 @@ weechat_tcl_api_hdata_check_pointer (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_hdata_move: move pointer to another element in list
- */
 
 static int
 weechat_tcl_api_hdata_move (ClientData clientData, Tcl_Interp *interp,
@@ -5951,11 +5165,6 @@ weechat_tcl_api_hdata_move (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hdata_char: get char value of a variable in structure
- *                             using hdata
- */
-
 static int
 weechat_tcl_api_hdata_char (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -5978,11 +5187,6 @@ weechat_tcl_api_hdata_char (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(result);
 }
-
-/*
- * weechat_tcl_api_hdata_integer: get integer value of a variable in structure
- *                                using hdata
- */
 
 static int
 weechat_tcl_api_hdata_integer (ClientData clientData, Tcl_Interp *interp,
@@ -6007,11 +5211,6 @@ weechat_tcl_api_hdata_integer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(result);
 }
 
-/*
- * weechat_tcl_api_hdata_long: get long value of a variable in structure using
- *                             hdata
- */
-
 static int
 weechat_tcl_api_hdata_long (ClientData clientData, Tcl_Interp *interp,
                             int objc, Tcl_Obj *CONST objv[])
@@ -6034,11 +5233,6 @@ weechat_tcl_api_hdata_long (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_LONG(result);
 }
-
-/*
- * weechat_tcl_api_hdata_string: get string value of a variable in structure
- *                               using hdata
- */
 
 static int
 weechat_tcl_api_hdata_string (ClientData clientData, Tcl_Interp *interp,
@@ -6064,11 +5258,6 @@ weechat_tcl_api_hdata_string (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_hdata_pointer: get pointer value of a variable in structure
- *                                using hdata
- */
-
 static int
 weechat_tcl_api_hdata_pointer (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -6092,18 +5281,12 @@ weechat_tcl_api_hdata_pointer (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING_FREE(result);
 }
 
-/*
- * weechat_tcl_api_hdata_time: get time value of a variable in structure using
- *                             hdata
- */
-
 static int
 weechat_tcl_api_hdata_time (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
 {
     Tcl_Obj *objp;
     time_t time;
-    struct tm *date_tmp;
     char timebuffer[64], *result, *hdata, *pointer, *name;
     int i;
 
@@ -6119,18 +5302,11 @@ weechat_tcl_api_hdata_time (ClientData clientData, Tcl_Interp *interp,
     time = weechat_hdata_time (API_STR2PTR(hdata),
                                API_STR2PTR(pointer),
                                name);
-    date_tmp = localtime (&time);
-    if (date_tmp)
-        strftime (timebuffer, sizeof (timebuffer), "%F %T", date_tmp);
+    snprintf (timebuffer, sizeof (timebuffer), "%ld", (long int)time);
     result = strdup (timebuffer);
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_hdata_hashtable: get hashtable value of a variable in
- *                                  structure using hdata
- */
 
 static int
 weechat_tcl_api_hdata_hashtable (ClientData clientData, Tcl_Interp *interp,
@@ -6157,9 +5333,35 @@ weechat_tcl_api_hdata_hashtable (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_OBJ(result_dict);
 }
 
-/*
- * weechat_tcl_api_hdata_get_string: get hdata property as string
- */
+static int
+weechat_tcl_api_hdata_update (ClientData clientData, Tcl_Interp *interp,
+                              int objc, Tcl_Obj *CONST objv[])
+{
+    Tcl_Obj *objp;
+    char *hdata, *pointer;
+    struct t_hashtable *hashtable;
+    int i, value;
+
+    API_FUNC(1, "hdata_update", API_RETURN_INT(0));
+    if (objc < 4)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    hdata = Tcl_GetStringFromObj (objv[1], &i);
+    pointer = Tcl_GetStringFromObj (objv[2], &i);
+    hashtable = weechat_tcl_dict_to_hashtable (interp, objv[3],
+                                               WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                               WEECHAT_HASHTABLE_STRING,
+                                               WEECHAT_HASHTABLE_STRING);
+
+    value = weechat_hdata_update (API_STR2PTR(hdata),
+                                  API_STR2PTR(pointer),
+                                  hashtable);
+
+    if (hashtable)
+        weechat_hashtable_free (hashtable);
+
+    API_RETURN_INT(value);
+}
 
 static int
 weechat_tcl_api_hdata_get_string (ClientData clientData, Tcl_Interp *interp,
@@ -6182,10 +5384,6 @@ weechat_tcl_api_hdata_get_string (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_STRING(result);
 }
 
-/*
- * weechat_tcl_api_upgrade_new: create an upgrade file
- */
-
 static int
 weechat_tcl_api_upgrade_new (ClientData clientData, Tcl_Interp *interp,
                              int objc, Tcl_Obj *CONST objv[])
@@ -6207,10 +5405,6 @@ weechat_tcl_api_upgrade_new (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_STRING_FREE(result);
 }
-
-/*
- * weechat_tcl_api_upgrade_write_object: write object in upgrade file
- */
 
 static int
 weechat_tcl_api_upgrade_write_object (ClientData clientData, Tcl_Interp *interp,
@@ -6236,10 +5430,6 @@ weechat_tcl_api_upgrade_write_object (ClientData clientData, Tcl_Interp *interp,
 
     API_RETURN_INT(rc);
 }
-
-/*
- * weechat_tcl_api_upgrade_read_cb: callback for reading an object in upgrade file
- */
 
 int
 weechat_tcl_api_upgrade_read_cb (void *data,
@@ -6286,10 +5476,6 @@ weechat_tcl_api_upgrade_read_cb (void *data,
     return WEECHAT_RC_ERROR;
 }
 
-/*
- * weechat_tcl_api_upgrade_read: read upgrade file
- */
-
 static int
 weechat_tcl_api_upgrade_read (ClientData clientData, Tcl_Interp *interp,
                               int objc, Tcl_Obj *CONST objv[])
@@ -6316,10 +5502,6 @@ weechat_tcl_api_upgrade_read (ClientData clientData, Tcl_Interp *interp,
     API_RETURN_INT(rc);
 }
 
-/*
- * weechat_tcl_api_upgrade_close: close upgrade file
- */
-
 static int
 weechat_tcl_api_upgrade_close (ClientData clientData, Tcl_Interp *interp,
                                int objc, Tcl_Obj *CONST objv[])
@@ -6340,7 +5522,7 @@ weechat_tcl_api_upgrade_close (ClientData clientData, Tcl_Interp *interp,
 }
 
 /*
- * weechat_tcl_api_init: initialize subroutines
+ * Initializes tcl functions and constants.
  */
 
 void weechat_tcl_api_init (Tcl_Interp *interp)
@@ -6435,6 +5617,8 @@ void weechat_tcl_api_init (Tcl_Interp *interp)
     Tcl_SetVar (interp, "weechat::WEECHAT_HOOK_CONNECT_MEMORY_ERROR", Tcl_GetStringFromObj (objp, &i), 0);
     Tcl_SetIntObj (objp, WEECHAT_HOOK_CONNECT_TIMEOUT);
     Tcl_SetVar (interp, "weechat::WEECHAT_HOOK_CONNECT_TIMEOUT", Tcl_GetStringFromObj (objp, &i), 0);
+    Tcl_SetIntObj (objp, WEECHAT_HOOK_CONNECT_SOCKET_ERROR);
+    Tcl_SetVar (interp, "weechat::WEECHAT_HOOK_CONNECT_SOCKET_ERROR", Tcl_GetStringFromObj (objp, &i), 0);
 
     Tcl_SetStringObj (objp, WEECHAT_HOOK_SIGNAL_STRING, -1);
     Tcl_SetVar (interp, "weechat::WEECHAT_HOOK_SIGNAL_STRING", Tcl_GetStringFromObj (objp, &i), 0);
@@ -6460,6 +5644,7 @@ void weechat_tcl_api_init (Tcl_Interp *interp)
     API_DEF_FUNC(string_remove_color);
     API_DEF_FUNC(string_is_command_char);
     API_DEF_FUNC(string_input_for_buffer);
+    API_DEF_FUNC(string_eval_expression);
     API_DEF_FUNC(mkdir_home);
     API_DEF_FUNC(mkdir);
     API_DEF_FUNC(mkdir_parents);
@@ -6624,6 +5809,7 @@ void weechat_tcl_api_init (Tcl_Interp *interp)
     API_DEF_FUNC(hdata_pointer);
     API_DEF_FUNC(hdata_time);
     API_DEF_FUNC(hdata_hashtable);
+    API_DEF_FUNC(hdata_update);
     API_DEF_FUNC(hdata_get_string);
     API_DEF_FUNC(upgrade_new);
     API_DEF_FUNC(upgrade_write_object);

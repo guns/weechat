@@ -204,7 +204,7 @@
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `blue`)
 
 * [[option_weechat.color.separator]] *weechat.color.separator*
-** descrizione: `colore di sfondo per i separatori delle finestre (quando divise)`
+** descrizione: `color for window separators (when split) and separators beside bars (like nicklist)`
 ** tipo: colore
 ** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `blue`)
 
@@ -593,16 +593,6 @@
 ** tipo: intero
 ** valori: 1 .. 10000 (valore predefinito: `100`)
 
-* [[option_weechat.look.nickmode]] *weechat.look.nickmode*
-** descrizione: `mostra modalità nick ((half)op/voice) prima di ogni nick`
-** tipo: bool
-** valori: on, off (valore predefinito: `on`)
-
-* [[option_weechat.look.nickmode_empty]] *weechat.look.nickmode_empty*
-** descrizione: `mostra spazio se il nick non è in modalità (half)op/voice`
-** tipo: bool
-** valori: on, off (valore predefinito: `off`)
-
 * [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
 ** descrizione: `abilita la modalità "bracketed paste" per il terminale (non supportata da tutti i terminali/multiplexer): in questa modalità, il testo incollato viene racchiuso da sequenze di controllo in modo che WeeChat possa differenziare il testo incollato dal testo digitato ("ESC[200~", seguito dal testo incollato, seguito da "ESC[201~")`
 ** tipo: bool
@@ -619,7 +609,7 @@
 ** valori: -1 .. 2147483647 (valore predefinito: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
-** descrizione: `prefisso per i messaggi di azione`
+** descrizione: `prefix for action messages, colors are allowed with format "${color}"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `" *"`)
 
@@ -659,22 +649,22 @@
 ** valori: qualsiasi stringa (valore predefinito: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
-** descrizione: `prefisso per i messaggi di errore`
+** descrizione: `prefix for error messages, colors are allowed with format "${color}"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"=!="`)
 
 * [[option_weechat.look.prefix_join]] *weechat.look.prefix_join*
-** descrizione: `prefisso per i messaggi di entrata`
+** descrizione: `prefix for join messages, colors are allowed with format "${color}"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"-->"`)
 
 * [[option_weechat.look.prefix_network]] *weechat.look.prefix_network*
-** descrizione: `prefisso per i messaggi di rete`
+** descrizione: `prefix for network messages, colors are allowed with format "${color}"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"--"`)
 
 * [[option_weechat.look.prefix_quit]] *weechat.look.prefix_quit*
-** descrizione: `prefisso per i messaggi di uscita`
+** descrizione: `prefix for quit messages, colors are allowed with format "${color}"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"<--"`)
 

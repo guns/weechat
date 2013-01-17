@@ -38,7 +38,11 @@
 
 | weechat | inactivity | キーボード未使用時間 (秒) | -
 
+| weechat | locale | 翻訳メッセージに利用するロケール | -
+
 | weechat | version | WeeChat のバージョン | -
+
+| weechat | version_git | WeeChat の git バージョン (開発バージョンではコマンド "git describe" の出力。安定版リリースでは空文字が出力されます。) | -
 
 | weechat | version_number | WeeChat のバージョン (数字) | -
 

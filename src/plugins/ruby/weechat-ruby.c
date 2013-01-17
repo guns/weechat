@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * weechat-ruby.c - ruby plugin for WeeChat
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat-ruby.c: ruby plugin for WeeChat
  */
 
 #undef _
@@ -103,8 +101,7 @@ typedef struct protect_call_arg {
 
 
 /*
- * weechat_ruby_hashtable_map_cb: callback called for each key/value in a
- *                                hashtable
+ * Callback called for each key/value in a hashtable.
  */
 
 void
@@ -124,7 +121,7 @@ weechat_ruby_hashtable_map_cb (void *data,
 }
 
 /*
- * weechat_ruby_hashtable_to_hash: get ruby hash with a WeeChat hashtable
+ * Gets ruby hash with a WeeChat hashtable.
  */
 
 VALUE
@@ -143,36 +140,51 @@ weechat_ruby_hashtable_to_hash (struct t_hashtable *hashtable)
     return hash;
 }
 
+/*
+ * Callback called for each key/value in a hashtable.
+ */
+
 int
 weechat_ruby_hash_foreach_cb (VALUE key, VALUE value, void *arg)
 {
     struct t_hashtable *hashtable;
+    const char *type_values;
 
     hashtable = (struct t_hashtable *)arg;
     if ((TYPE(key) == T_STRING) && (TYPE(value) == T_STRING))
     {
-        weechat_hashtable_set (hashtable, StringValuePtr(key),
-                               StringValuePtr(value));
+        type_values = weechat_hashtable_get_string (hashtable, "type_values");
+        if (strcmp (type_values, WEECHAT_HASHTABLE_STRING) == 0)
+        {
+            weechat_hashtable_set (hashtable, StringValuePtr(key),
+                                   StringValuePtr(value));
+        }
+        else if (strcmp (type_values, WEECHAT_HASHTABLE_POINTER) == 0)
+        {
+            weechat_hashtable_set (hashtable, StringValuePtr(key),
+                                   plugin_script_str2ptr (weechat_ruby_plugin,
+                                                          NULL, NULL,
+                                                          StringValuePtr(value)));
+        }
     }
     return 0;
 }
 
 /*
- * weechat_ruby_hash_to_hashtable: get WeeChat hashtable with ruby hashtable
- *                                 Hashtable returned has type string for
- *                                 both keys and values
- *                                 Note: hashtable has to be released after use
- *                                 with call to weechat_hashtable_free()
+ * Gets WeeChat hashtable with ruby hashtable.
+ *
+ * Note: hashtable must be freed after use.
  */
 
 struct t_hashtable *
-weechat_ruby_hash_to_hashtable (VALUE hash, int hashtable_size)
+weechat_ruby_hash_to_hashtable (VALUE hash, int size, const char *type_keys,
+                                const char *type_values)
 {
     struct t_hashtable *hashtable;
 
-    hashtable = weechat_hashtable_new (hashtable_size,
-                                       WEECHAT_HASHTABLE_STRING,
-                                       WEECHAT_HASHTABLE_STRING,
+    hashtable = weechat_hashtable_new (size,
+                                       type_keys,
+                                       type_values,
                                        NULL,
                                        NULL);
     if (!hashtable)
@@ -185,7 +197,7 @@ weechat_ruby_hash_to_hashtable (VALUE hash, int hashtable_size)
 }
 
 /*
- * protect_funcall0 : used to protect a function call
+ * Used to protect a function call.
  */
 
 static VALUE
@@ -198,7 +210,7 @@ protect_funcall0 (VALUE arg)
 }
 
 /*
- * rb_protect_funcall: function call in protect mode
+ * Calls function in protected mode.
  */
 
 VALUE
@@ -214,7 +226,7 @@ rb_protect_funcall (VALUE recv, ID mid, int *state, int argc, VALUE *argv)
 }
 
 /*
- *  weechat_ruby_print_exception: display ruby exception
+ * Displays ruby exception.
  */
 
 int
@@ -295,7 +307,7 @@ weechat_ruby_print_exception (VALUE err)
 }
 
 /*
- * weechat_ruby_exec: execute a ruby function
+ * Executes a ruby function.
  */
 
 void *
@@ -375,7 +387,9 @@ weechat_ruby_exec (struct t_plugin_script *script,
     else if (ret_type == WEECHAT_SCRIPT_EXEC_HASHTABLE)
     {
         ret_value = weechat_ruby_hash_to_hashtable (rc,
-                                                    WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE);
+                                                    WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                                    WEECHAT_HASHTABLE_STRING,
+                                                    WEECHAT_HASHTABLE_STRING);
     }
     else
     {
@@ -403,7 +417,7 @@ weechat_ruby_exec (struct t_plugin_script *script,
 }
 
 /*
- * weechat_ruby_output: redirection for stdout and stderr
+ * Redirection for stdout and stderr.
  */
 
 static VALUE
@@ -453,7 +467,7 @@ weechat_ruby_output (VALUE self, VALUE str)
 }
 
 /*
- * weechat_ruby_output_flush: just for compatibility
+ * Function used for compatibility.
  */
 
 static VALUE
@@ -466,7 +480,11 @@ weechat_ruby_output_flush (VALUE self)
 }
 
 /*
- * weechat_ruby_load: load a Ruby script
+ * Loads a ruby script.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -602,7 +620,7 @@ weechat_ruby_load (const char *filename)
 }
 
 /*
- * weechat_ruby_load_cb: callback for weechat_script_auto_load() function
+ * Callback for weechat_script_auto_load() function.
  */
 
 void
@@ -615,7 +633,7 @@ weechat_ruby_load_cb (void *data, const char *filename)
 }
 
 /*
- * weechat_ruby_unload: unload a Ruby script
+ * Unloads a ruby script.
  */
 
 void
@@ -662,7 +680,7 @@ weechat_ruby_unload (struct t_plugin_script *script)
 }
 
 /*
- * weechat_ruby_unload_name: unload a Ruby script by name
+ * Unloads a ruby script by name.
  */
 
 void
@@ -674,9 +692,12 @@ weechat_ruby_unload_name (const char *name)
     if (ptr_script)
     {
         weechat_ruby_unload (ptr_script);
-        weechat_printf (NULL,
-                        weechat_gettext ("%s: script \"%s\" unloaded"),
-                        RUBY_PLUGIN_NAME, name);
+        if (!ruby_quiet)
+        {
+            weechat_printf (NULL,
+                            weechat_gettext ("%s: script \"%s\" unloaded"),
+                            RUBY_PLUGIN_NAME, name);
+        }
     }
     else
     {
@@ -687,7 +708,7 @@ weechat_ruby_unload_name (const char *name)
 }
 
 /*
- * weechat_ruby_reload_name: reload a Ruby script by name
+ * Reloads a ruby script by name.
  */
 
 void
@@ -703,9 +724,12 @@ weechat_ruby_reload_name (const char *name)
         if (filename)
         {
             weechat_ruby_unload (ptr_script);
-            weechat_printf (NULL,
-                            weechat_gettext ("%s: script \"%s\" unloaded"),
-                            RUBY_PLUGIN_NAME, name);
+            if (!ruby_quiet)
+            {
+                weechat_printf (NULL,
+                                weechat_gettext ("%s: script \"%s\" unloaded"),
+                                RUBY_PLUGIN_NAME, name);
+            }
             weechat_ruby_load (filename);
             free (filename);
         }
@@ -719,7 +743,7 @@ weechat_ruby_reload_name (const char *name)
 }
 
 /*
- * weechat_ruby_unload_all: unload all Ruby scripts
+ * Unloads all ruby scripts.
  */
 
 void
@@ -732,14 +756,14 @@ weechat_ruby_unload_all ()
 }
 
 /*
- * weechat_ruby_command_cb: callback for "/ruby" command
+ * Callback for command "/ruby".
  */
 
 int
 weechat_ruby_command_cb (void *data, struct t_gui_buffer *buffer,
                          int argc, char **argv, char **argv_eol)
 {
-    char *path_script;
+    char *ptr_name, *path_script;
 
     /* make C compiler happy */
     (void) data;
@@ -788,24 +812,40 @@ weechat_ruby_command_cb (void *data, struct t_gui_buffer *buffer,
             plugin_script_display_list (weechat_ruby_plugin, ruby_scripts,
                                         argv_eol[2], 1);
         }
-        else if (weechat_strcasecmp (argv[1], "load") == 0)
+        else if ((weechat_strcasecmp (argv[1], "load") == 0)
+                 || (weechat_strcasecmp (argv[1], "reload") == 0)
+                 || (weechat_strcasecmp (argv[1], "unload") == 0))
         {
-            /* load Ruby script */
-            path_script = plugin_script_search_path (weechat_ruby_plugin,
-                                                     argv_eol[2]);
-            weechat_ruby_load ((path_script) ? path_script : argv_eol[2]);
-            if (path_script)
-                free (path_script);
-        }
-        else if (weechat_strcasecmp (argv[1], "reload") == 0)
-        {
-            /* reload one Ruby script */
-            weechat_ruby_reload_name (argv_eol[2]);
-        }
-        else if (weechat_strcasecmp (argv[1], "unload") == 0)
-        {
-            /* unload Ruby script */
-            weechat_ruby_unload_name (argv_eol[2]);
+            ptr_name = argv_eol[2];
+            if (strncmp (ptr_name, "-q ", 3) == 0)
+            {
+                ruby_quiet = 1;
+                ptr_name += 3;
+                while (ptr_name[0] == ' ')
+                {
+                    ptr_name++;
+                }
+            }
+            if (weechat_strcasecmp (argv[1], "load") == 0)
+            {
+                /* load ruby script */
+                path_script = plugin_script_search_path (weechat_ruby_plugin,
+                                                         ptr_name);
+                weechat_ruby_load ((path_script) ? path_script : ptr_name);
+                if (path_script)
+                    free (path_script);
+            }
+            else if (weechat_strcasecmp (argv[1], "reload") == 0)
+            {
+                /* reload one ruby script */
+                weechat_ruby_reload_name (ptr_name);
+            }
+            else if (weechat_strcasecmp (argv[1], "unload") == 0)
+            {
+                /* unload ruby script */
+                weechat_ruby_unload_name (ptr_name);
+            }
+            ruby_quiet = 0;
         }
         else
         {
@@ -820,7 +860,7 @@ weechat_ruby_command_cb (void *data, struct t_gui_buffer *buffer,
 }
 
 /*
- * weechat_ruby_completion_cb: callback for script completion
+ * Adds ruby scripts to completion list.
  */
 
 int
@@ -839,7 +879,7 @@ weechat_ruby_completion_cb (void *data, const char *completion_item,
 }
 
 /*
- * weechat_ruby_hdata_cb: callback for hdata
+ * Returns hdata for ruby scripts.
  */
 
 struct t_hdata *
@@ -854,7 +894,7 @@ weechat_ruby_hdata_cb (void *data, const char *hdata_name)
 }
 
 /*
- * weechat_ruby_infolist_cb: callback for infolist
+ * Returns infolist with ruby scripts.
  */
 
 struct t_infolist *
@@ -878,7 +918,7 @@ weechat_ruby_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * weechat_ruby_signal_debug_dump_cb: dump Ruby plugin data in WeeChat log file
+ * Dumps ruby plugin data in WeeChat log file.
  */
 
 int
@@ -900,7 +940,7 @@ weechat_ruby_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_ruby_signal_buffer_closed_cb: callback called when a buffer is closed
+ * Callback called when a buffer is closed.
  */
 
 int
@@ -919,7 +959,7 @@ weechat_ruby_signal_buffer_closed_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_ruby_timer_action_cb: timer for executing actions
+ * Timer for executing actions.
  */
 
 int
@@ -936,6 +976,7 @@ weechat_ruby_timer_action_cb (void *data, int remaining_calls)
                                           ruby_scripts,
                                           &weechat_ruby_unload,
                                           &weechat_ruby_load,
+                                          &ruby_quiet,
                                           &ruby_action_install_list);
         }
         else if (data == &ruby_action_remove_list)
@@ -943,6 +984,7 @@ weechat_ruby_timer_action_cb (void *data, int remaining_calls)
             plugin_script_action_remove (weechat_ruby_plugin,
                                          ruby_scripts,
                                          &weechat_ruby_unload,
+                                         &ruby_quiet,
                                          &ruby_action_remove_list);
         }
     }
@@ -951,8 +993,7 @@ weechat_ruby_timer_action_cb (void *data, int remaining_calls)
 }
 
 /*
- * weechat_ruby_signal_script_action_cb: callback called when a script action
- *                                       is asked (install/remove a script)
+ * Callback called when a script action is asked (install/remove a script).
  */
 
 int
@@ -987,7 +1028,7 @@ weechat_ruby_signal_script_action_cb (void *data, const char *signal,
 }
 
 /*
- * weechat_plugin_init: initialize Ruby plugin
+ * Initializes ruby plugin.
  */
 
 int
@@ -1116,7 +1157,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: shutdown Ruby interface
+ * Ends ruby plugin.
  */
 
 int
@@ -1128,7 +1169,7 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     ruby_quiet = 0;
 
     /*
-     * Do not cleanup Ruby because this causes a crash when plugin is reloaded
+     * Do not cleanup ruby because this causes a crash when plugin is reloaded
      * again. This causes a memory leak, but I don't know better solution to
      * this problem :(
      */

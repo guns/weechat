@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-config.c - WeeChat configuration options (file weechat.conf)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-config.c: WeeChat configuration options (file weechat.conf)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -47,6 +45,7 @@
 #include "wee-list.h"
 #include "wee-proxy.h"
 #include "wee-string.h"
+#include "wee-version.h"
 #include "../gui/gui-bar.h"
 #include "../gui/gui-buffer.h"
 #include "../gui/gui-chat.h"
@@ -127,8 +126,6 @@ struct t_config_option *config_look_jump_previous_buffer_when_closing;
 struct t_config_option *config_look_jump_smart_back_to_buffer;
 struct t_config_option *config_look_mouse;
 struct t_config_option *config_look_mouse_timer_delay;
-struct t_config_option *config_look_nickmode;
-struct t_config_option *config_look_nickmode_empty;
 struct t_config_option *config_look_paste_bracketed;
 struct t_config_option *config_look_paste_bracketed_timer_delay;
 struct t_config_option *config_look_paste_max_lines;
@@ -262,7 +259,7 @@ int config_num_plugin_extensions = 0;
 
 
 /*
- * config_change_sys_rlimit: called when the system resource limits is changed
+ * Callback for changes on option "weechat.startup.sys_rlimit".
  */
 
 void
@@ -277,7 +274,7 @@ config_change_sys_rlimit (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_save_config_on_exit: called when "save_config_on_exit" flag is changed
+ * Callback for changes on option "weechat.look.save_config_on_exit".
  */
 
 void
@@ -297,7 +294,7 @@ config_change_save_config_on_exit (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_title: called when title is changed
+ * Callback for changes on option "weechat.look.set_title".
  */
 
 void
@@ -308,11 +305,11 @@ config_change_title (void *data, struct t_config_option *option)
     (void) option;
 
     if (CONFIG_BOOLEAN(config_look_set_title))
-        gui_window_set_title (PACKAGE_NAME " " PACKAGE_VERSION);
+        gui_window_set_title (version_get_name_version ());
 }
 
 /*
- * config_change_buffers: called when buffers change (for example nicklist)
+ * Callback for changes on options that require a refresh of buffers.
  */
 
 void
@@ -326,7 +323,7 @@ config_change_buffers (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_buffer_content: called when content of a buffer changes
+ * Callback for changes on options that require a refresh of content of buffer.
  */
 
 void
@@ -341,7 +338,7 @@ config_change_buffer_content (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_mouse: called when mouse state is changed
+ * Callback for changes on option "weechat.look.mouse".
  */
 
 void
@@ -361,7 +358,7 @@ config_change_mouse (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_buffer_notify_default: called when buffer default notify changes
+ * Callback for changes on option "weechat.look.buffer_notify_default".
  */
 
 void
@@ -375,7 +372,7 @@ config_change_buffer_notify_default (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_buffer_time_format: called when buffer time format changes
+ * Callback for changes on option "weechat.look.buffer_time_format".
  */
 
 void
@@ -392,8 +389,7 @@ config_change_buffer_time_format (void *data, struct t_config_option *option)
 }
 
 /*
- * config_compute_prefix_max_length_all_buffers: compute the "prefix_max_length"
- *                                               on all buffers
+ * Computes the "prefix_max_length" on all buffers.
  */
 
 void
@@ -412,7 +408,7 @@ config_compute_prefix_max_length_all_buffers ()
 }
 
 /*
- * config_change_prefix_same_nick: called when "prefix for same nick" changes
+ * Callback for changes on option "weechat.look.prefix_same_nick".
  */
 
 void
@@ -430,7 +426,7 @@ config_change_prefix_same_nick (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_eat_newline_glitch: called when eat_newline_glitch changes
+ * Callback for changes on option "weechat.look.eat_newline_glitch".
  */
 
 void
@@ -456,7 +452,7 @@ config_change_eat_newline_glitch (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_highlight_regex: called when highlight_regex changes
+ * Callback for changes on option "weechat.look.highlight_regex".
  */
 
 void
@@ -491,7 +487,7 @@ config_change_highlight_regex (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_highlight_tags: called when highlight_tags changes
+ * Callback for changes on option "weechat.look.highlight_tags".
  */
 
 void
@@ -517,11 +513,11 @@ config_change_highlight_tags (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_hotlist: called when hotlist changes
+ * Callback for changes on option "weechat.look.hotlist_sort".
  */
 
 void
-config_change_hotlist (void *data, struct t_config_option *option)
+config_change_hotlist_sort (void *data, struct t_config_option *option)
 {
     /* make C compiler happy */
     (void) data;
@@ -531,7 +527,7 @@ config_change_hotlist (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_paste_bracketed: called when bracketed paste mode is changed
+ * Callback for changes on option "weechat.look.paste_bracketed".
  */
 
 void
@@ -546,7 +542,7 @@ config_change_paste_bracketed (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_read_marker: called when read marker is changed
+ * Callback for changes on option "weechat.look.read_marker".
  */
 
 void
@@ -560,7 +556,7 @@ config_change_read_marker (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_prefix: called when a prefix is changed
+ * Callback for changes on a prefix option.
  */
 
 void
@@ -574,7 +570,7 @@ config_change_prefix (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_prefix_align_min: called when prefix_align_min is changed
+ * Callback for changes on option "weechat.look.prefix_align_min".
  */
 
 void
@@ -589,8 +585,7 @@ config_change_prefix_align_min (void *data, struct t_config_option *option)
 }
 
 /*
- * config_check_prefix_align_more: check string "prefix align more" (must be
- *                                 max one char wide on screen)
+ * Callback for changes on option "weechat.look.prefix_align_more".
  */
 
 int
@@ -605,8 +600,7 @@ config_check_prefix_align_more (void *data, struct t_config_option *option,
 }
 
 /*
- * config_check_prefix_buffer_align_more: check string "prefix buffer align more"
- *                                        (must be max one char wide on screen)
+ * Callback for changes on option "weechat.look.prefix_buffer_align_more".
  */
 
 int
@@ -622,7 +616,7 @@ config_check_prefix_buffer_align_more (void *data,
 }
 
 /*
- * config_change_color: called when a color is changed by /set command
+ * Callback for changes on a color option.
  */
 
 void
@@ -640,7 +634,7 @@ config_change_color (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_nick_colors: called when nick colors are changed
+ * Callback for changes on option "weechat.color.chat_nick_colors".
  */
 
 void
@@ -654,7 +648,7 @@ config_change_nick_colors (void *data, struct t_config_option *option)
 }
 
 /*
- * config_change_network_gnutls_ca_file: called when gnutls_ca_file is changed
+ * Callback for changes on option "weechat.network.gnutls_ca_file".
  */
 
 void
@@ -670,7 +664,7 @@ config_change_network_gnutls_ca_file (void *data,
 }
 
 /*
- * config_change_plugin_extension: called when plugin extension is changed
+ * Callback for changes on option "weechat.plugin.extension".
  */
 
 void
@@ -696,8 +690,7 @@ config_change_plugin_extension (void *data, struct t_config_option *option)
 }
 
 /*
- * config_day_change_timer_cb: timer callback for displaying
- *                             "Day changed to xxx" message
+ * Displays message "Day changed to xxx".
  */
 
 int
@@ -754,8 +747,7 @@ config_day_change_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * config_weechat_init_after_read: initialize some things after reading (or
- *                                 reloading) configuration file
+ * Initializes some things after reading/reloading WeeChat configuration file.
  */
 
 void
@@ -784,7 +776,7 @@ config_weechat_init_after_read ()
         gui_bar_create_default ();
     }
 
-    /* if no key was found config file, then we use default bindings */
+    /* if no key was found configuration file, then we use default bindings */
     for (i = 0; i < GUI_KEY_NUM_CONTEXTS; i++)
     {
         if (!gui_keys[i])
@@ -796,11 +788,12 @@ config_weechat_init_after_read ()
 }
 
 /*
- * config_weechat_reload_cb: reload WeeChat configuration file
- *                           return one of these values:
- *                             WEECHAT_CONFIG_READ_OK
- *                             WEECHAT_CONFIG_READ_MEMORY_ERROR
- *                             WEECHAT_CONFIG_READ_FILE_NOT_FOUND
+ * Reloads WeeChat configuration file.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_READ_OK: OK
+ *   WEECHAT_CONFIG_READ_MEMORY_ERROR: not enough memory
+ *   WEECHAT_CONFIG_READ_FILE_NOT_FOUND: file not found
  */
 
 int
@@ -842,7 +835,7 @@ config_weechat_reload_cb (void *data, struct t_config_file *config_file)
 }
 
 /*
- * config_weechat_debug_get: get debug level for a plugin (or "core")
+ * Gets debug level for a plugin (or "core").
  */
 
 struct t_config_option *
@@ -854,8 +847,8 @@ config_weechat_debug_get (const char *plugin_name)
 }
 
 /*
- * config_weechat_debug_set_all: set debug for "core" and all plugins, using
- *                               values from [debug] section
+ * Sets debug level for "core" and all plugins, using values from section
+ * "debug".
  */
 
 void
@@ -878,7 +871,7 @@ config_weechat_debug_set_all ()
 }
 
 /*
- * config_weechat_debug_change_cb: called when a debug option is changed
+ * Callback for changes on a debug option.
  */
 
 void
@@ -893,7 +886,7 @@ config_weechat_debug_change_cb (void *data,
 }
 
 /*
- * config_weechat_debug_create_option_cb: create option in "debug" section
+ * Callback called when an option is created in section "debug".
  */
 
 int
@@ -951,7 +944,7 @@ config_weechat_debug_create_option_cb (void *data,
 }
 
 /*
- * config_weechat_debug_delete_option_cb: delete option in "debug" section
+ * Callback called when an option is deleted in section "debug".
  */
 
 int
@@ -973,7 +966,7 @@ config_weechat_debug_delete_option_cb (void *data,
 }
 
 /*
- * config_weechat_debug_set: set debug level for a plugin (or "core")
+ * Sets debug level for a plugin (or "core").
  */
 
 int
@@ -987,7 +980,7 @@ config_weechat_debug_set (const char *plugin_name, const char *value)
 }
 
 /*
- * config_weechat_palette_change_cb: called when a palette option is changed
+ * Callback for changes on a palette option.
  */
 
 void
@@ -1010,7 +1003,7 @@ config_weechat_palette_change_cb (void *data,
 }
 
 /*
- * config_weechat_palette_create_option_cb: create option in "palette" section
+ * Callback called when an option is created in section "palette".
  */
 
 int
@@ -1079,7 +1072,7 @@ config_weechat_palette_create_option_cb (void *data,
 }
 
 /*
- * config_weechat_palette_delete_option_cb: delete option in "palette" section
+ * Callback called when an option is deleted in section "palette".
  */
 
 int
@@ -1107,7 +1100,7 @@ config_weechat_palette_delete_option_cb (void *data,
 }
 
 /*
- * config_weechat_proxy_read_cb: read proxy option in config file
+ * Reads a proxy option in WeeChat configuration file.
  */
 
 int
@@ -1165,6 +1158,16 @@ config_weechat_proxy_read_cb (void *data, struct t_config_file *config_file,
                         proxy_create_option_temp (ptr_temp_proxy, index_option,
                                                   value);
                     }
+                    else
+                    {
+                        gui_chat_printf (NULL,
+                                         _("%sWarning: unknown option for "
+                                           "section \"%s\": %s (value: \"%s\")"),
+                                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                         section->name,
+                                         option_name,
+                                         value);
+                    }
                 }
 
                 free (proxy_name);
@@ -1176,7 +1179,7 @@ config_weechat_proxy_read_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_bar_read_cb: read bar option in config file
+ * Reads a bar option in WeeChat configuration file.
  */
 
 int
@@ -1234,6 +1237,16 @@ config_weechat_bar_read_cb (void *data, struct t_config_file *config_file,
                         gui_bar_create_option_temp (ptr_temp_bar, index_option,
                                                     value);
                     }
+                    else
+                    {
+                        gui_chat_printf (NULL,
+                                         _("%sWarning: unknown option for "
+                                           "section \"%s\": %s (value: \"%s\")"),
+                                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                         section->name,
+                                         option_name,
+                                         value);
+                    }
                 }
 
                 free (bar_name);
@@ -1245,7 +1258,7 @@ config_weechat_bar_read_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_layout_read_cb: read layout option in config file
+ * Reads a layout option in WeeChat configuration file.
  */
 
 int
@@ -1324,7 +1337,7 @@ config_weechat_layout_read_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_layout_write: write windows layout in configuration file
+ * Writes layout of windows in WeeChat configuration file.
  */
 
 int
@@ -1361,7 +1374,7 @@ config_weechat_layout_write_tree (struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_layout_write_cb: write layout section in configuration file
+ * Writes section "layout" in WeeChat configuration file.
  */
 
 int
@@ -1397,7 +1410,7 @@ config_weechat_layout_write_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_notify_change_cb: callback when notify option is changed
+ * Callback for changes on a notify option.
  */
 
 void
@@ -1411,8 +1424,7 @@ config_weechat_notify_change_cb (void *data, struct t_config_option *option)
 }
 
 /*
- * config_weechat_notify_create_option_cb: callback to create option in "notify"
- *                                         section
+ * Callback called when an option is created in section "notify".
  */
 
 int
@@ -1470,8 +1482,7 @@ config_weechat_notify_create_option_cb (void *data,
 }
 
 /*
- * config_weechat_notify_delete_option_cb: called when a notify option is
- *                                         deleted
+ * Callback called when an option is deleted in section "notify".
  */
 
 int
@@ -1493,10 +1504,14 @@ config_weechat_notify_delete_option_cb (void *data,
 }
 
 /*
- * config_weechat_notify_set: set a notify level for a buffer
- *                            negative value will reset notify for buffer to
- *                            default value (and remove buffer from config file)
- *                            return 1 if ok, 0 if error
+ * Sets a notify level for a buffer.
+ *
+ * A negative value resets notify for buffer to its default value (and
+ * removes buffer from config file).
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1530,7 +1545,7 @@ config_weechat_notify_set (struct t_gui_buffer *buffer, const char *notify)
 }
 
 /*
- * config_weechat_filter_read_cb: read filter option from config file
+ * Reads a filter option in WeeChat configuration file.
  */
 
 int
@@ -1566,7 +1581,7 @@ config_weechat_filter_read_cb (void *data,
 }
 
 /*
- * config_weechat_filter_write_cb: write filter section in configuration file
+ * Writes a filter option in WeeChat configuration file.
  */
 
 int
@@ -1598,7 +1613,7 @@ config_weechat_filter_write_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_key_read_cb: read key option in config file
+ * Reads a key option in WeeChat configuration file.
  */
 
 int
@@ -1640,7 +1655,7 @@ config_weechat_key_read_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_key_write_cb: write key section in configuration file
+ * Writes section "key" in WeeChat configuration file.
  */
 
 int
@@ -1685,8 +1700,11 @@ config_weechat_key_write_cb (void *data, struct t_config_file *config_file,
 }
 
 /*
- * config_weechat_init_options: init WeeChat config structure (all core options)
- *                              return: 1 if ok, 0 if error
+ * Creates options in WeeChat configuration.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -2001,7 +2019,7 @@ config_weechat_init_options ()
            "number_asc, number_desc)"),
         "group_time_asc|group_time_desc|group_number_asc|"
         "group_number_desc|number_asc|number_desc",
-        0, 0, "group_time_asc", NULL, 0, NULL, NULL, &config_change_hotlist, NULL, NULL, NULL);
+        0, 0, "group_time_asc", NULL, 0, NULL, NULL, &config_change_hotlist_sort, NULL, NULL, NULL);
     config_look_hotlist_unique_numbers = config_file_new_option (
         weechat_config_file, ptr_section,
         "hotlist_unique_numbers", "boolean",
@@ -2074,16 +2092,6 @@ config_weechat_init_options ()
         N_("delay (in milliseconds) to grab a mouse event: WeeChat will "
            "wait this delay before processing event"),
         NULL, 1, 10000, "100", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    config_look_nickmode = config_file_new_option (
-        weechat_config_file, ptr_section,
-        "nickmode", "boolean",
-        N_("display nick mode ((half)op/voice) before each nick"),
-        NULL, 0, 0, "on", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
-    config_look_nickmode_empty = config_file_new_option (
-        weechat_config_file, ptr_section,
-        "nickmode_empty", "boolean",
-        N_("display space if nick mode is not (half)op/voice"),
-        NULL, 0, 0, "off", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
     config_look_paste_bracketed = config_file_new_option (
         weechat_config_file, ptr_section,
         "paste_bracketed", "boolean",
@@ -2109,27 +2117,32 @@ config_weechat_init_options ()
     config_look_prefix[GUI_CHAT_PREFIX_ERROR] = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_error", "string",
-        N_("prefix for error messages"),
+        N_("prefix for error messages, colors are allowed with format "
+           "\"${color}\""),
         NULL, 0, 0, "=!=", NULL, 0, NULL, NULL, &config_change_prefix, NULL, NULL, NULL);
     config_look_prefix[GUI_CHAT_PREFIX_NETWORK] = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_network", "string",
-        N_("prefix for network messages"),
+        N_("prefix for network messages, colors are allowed with format "
+           "\"${color}\""),
         NULL, 0, 0, "--", NULL, 0, NULL, NULL, &config_change_prefix, NULL, NULL, NULL);
     config_look_prefix[GUI_CHAT_PREFIX_ACTION] = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_action", "string",
-        N_("prefix for action messages"),
+        N_("prefix for action messages, colors are allowed with format "
+           "\"${color}\""),
         NULL, 0, 0, " *", NULL, 0, NULL, NULL, &config_change_prefix, NULL, NULL, NULL);
     config_look_prefix[GUI_CHAT_PREFIX_JOIN] = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_join", "string",
-        N_("prefix for join messages"),
+        N_("prefix for join messages, colors are allowed with format "
+           "\"${color}\""),
         NULL, 0, 0, "-->", NULL, 0, NULL, NULL, &config_change_prefix, NULL, NULL, NULL);
     config_look_prefix[GUI_CHAT_PREFIX_QUIT] = config_file_new_option (
         weechat_config_file, ptr_section,
         "prefix_quit", "string",
-        N_("prefix for quit messages"),
+        N_("prefix for quit messages, colors are allowed with format "
+           "\"${color}\""),
         NULL, 0, 0, "<--", NULL, 0, NULL, NULL, &config_change_prefix, NULL, NULL, NULL);
     config_look_prefix_align = config_file_new_option (
         weechat_config_file, ptr_section,
@@ -2304,7 +2317,8 @@ config_weechat_init_options ()
     config_color_separator = config_file_new_option (
         weechat_config_file, ptr_section,
         "separator", "color",
-        N_("background color for window separators (when split)"),
+        N_("color for window separators (when split) and separators beside bars "
+           "(like nicklist)"),
         NULL, GUI_COLOR_SEPARATOR, 0, "blue", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
     /* bar colors */
@@ -2314,7 +2328,7 @@ config_weechat_init_options ()
         N_("text color for '+' when scrolling bars"),
         NULL, -1, 0, "lightmagenta", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
-    /* chat window */
+    /* chat area */
     config_color_chat = config_file_new_option (
         weechat_config_file, ptr_section,
         "chat", "color",
@@ -2535,7 +2549,7 @@ config_weechat_init_options ()
         N_("text color for values"),
         NULL, GUI_COLOR_CHAT_VALUE, 0, "cyan", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
-    /* status window */
+    /* status bar */
     config_color_status_number = config_file_new_option (
         weechat_config_file, ptr_section,
         "status_number", "color",
@@ -2622,7 +2636,7 @@ config_weechat_init_options ()
         N_("text color for time (status bar)"),
         NULL, -1, 0, "default", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
-    /* input window */
+    /* input bar */
     config_color_input_text_not_found = config_file_new_option (
         weechat_config_file, ptr_section,
         "input_text_not_found", "color",
@@ -2635,7 +2649,7 @@ config_weechat_init_options ()
         N_("text color for actions in input line"),
         NULL, -1, 0, "lightgreen", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
-    /* nicklist window */
+    /* nicklist bar */
     config_color_nicklist_group = config_file_new_option (
         weechat_config_file, ptr_section,
         "nicklist_group", "color",
@@ -2939,8 +2953,11 @@ config_weechat_init_options ()
 }
 
 /*
- * config_weechat_init: init WeeChat config structure
- *                      return: 1 if ok, 0 if error
+ * Initializes WeeChat configuration.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -2982,11 +2999,12 @@ config_weechat_init ()
 }
 
 /*
- * config_weechat_read: read WeeChat configuration file
- *                      return one of these values:
- *                        WEECHAT_CONFIG_READ_OK
- *                        WEECHAT_CONFIG_READ_MEMORY_ERROR
- *                        WEECHAT_CONFIG_READ_FILE_NOT_FOUND
+ * Reads WeeChat configuration file.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_READ_OK: OK
+ *   WEECHAT_CONFIG_READ_MEMORY_ERROR: not enough memory
+ *   WEECHAT_CONFIG_READ_FILE_NOT_FOUND: file not found
  */
 
 int
@@ -3009,15 +3027,47 @@ config_weechat_read ()
 }
 
 /*
- * config_weechat_write: write WeeChat configuration file
- *                       return one of these values:
- *                         WEECHAT_CONFIG_WRITE_OK
- *                         WEECHAT_CONFIG_WRITE_ERROR
- *                         WEECHAT_CONFIG_WRITE_MEMORY_ERROR
+ * Writes WeeChat configuration file.
+ *
+ * Returns:
+ *   WEECHAT_CONFIG_WRITE_OK: OK
+ *   WEECHAT_CONFIG_WRITE_ERROR: error
+ *   WEECHAT_CONFIG_WRITE_MEMORY_ERROR: not enough memory
  */
 
 int
 config_weechat_write ()
 {
     return config_file_write (weechat_config_file);
+}
+
+/*
+ * Frees WeeChat configuration file and variables.
+ */
+
+void
+config_weechat_free ()
+{
+    config_file_free (weechat_config_file);
+
+    if (config_highlight_regex)
+    {
+        regfree (config_highlight_regex);
+        free (config_highlight_regex);
+        config_highlight_regex = NULL;
+    }
+
+    if (config_highlight_tags)
+    {
+        string_free_split (config_highlight_tags);
+        config_highlight_tags = NULL;
+        config_num_highlight_tags = 0;
+    }
+
+    if (config_plugin_extensions)
+    {
+        string_free_split (config_plugin_extensions);
+        config_plugin_extensions = NULL;
+        config_num_plugin_extensions = 0;
+    }
 }

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-chat.c - chat functions (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-chat.c: chat functions (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -60,8 +58,8 @@ char *gui_chat_lines_waiting_buffer = NULL;     /* lines waiting for core   */
 
 
 /*
- * gui_chat_init: init some variables for chat area
- *                (called before reading WeeChat config file)
+ * Initializes some variables for chat area (called before reading WeeChat
+ * configuration file).
  */
 
 void
@@ -84,14 +82,18 @@ gui_chat_init ()
 }
 
 /*
- * gui_chat_prefix_build: build prefix with colors
- *                        (called after reading WeeChat config file)
+ * Builds prefix with colors (called after reading WeeChat configuration file).
  */
 
 void
 gui_chat_prefix_build ()
 {
-    char prefix[128];
+    const char *ptr_prefix;
+    char prefix[512], *pos_color;
+    int prefix_color[GUI_CHAT_NUM_PREFIXES] =
+        { GUI_COLOR_CHAT_PREFIX_ERROR, GUI_COLOR_CHAT_PREFIX_NETWORK,
+          GUI_COLOR_CHAT_PREFIX_ACTION, GUI_COLOR_CHAT_PREFIX_JOIN,
+          GUI_COLOR_CHAT_PREFIX_QUIT };
     int i;
 
     for (i = 0; i < GUI_CHAT_NUM_PREFIXES; i++)
@@ -101,37 +103,27 @@ gui_chat_prefix_build ()
             free (gui_chat_prefix[i]);
             gui_chat_prefix[i] = NULL;
         }
+
+        ptr_prefix = CONFIG_STRING(config_look_prefix[i]);
+        pos_color = strstr (ptr_prefix, "${");
+
+        snprintf(prefix, sizeof (prefix), "%s%s\t",
+                 (!pos_color || (pos_color > ptr_prefix)) ? GUI_COLOR(prefix_color[i]) : "",
+                 ptr_prefix);
+
+        if (pos_color)
+            gui_chat_prefix[i] = gui_color_string_replace_colors (prefix);
+        else
+            gui_chat_prefix[i] = strdup (prefix);
     }
-
-    snprintf (prefix, sizeof (prefix), "%s%s\t",
-              GUI_COLOR(GUI_COLOR_CHAT_PREFIX_ERROR),
-              CONFIG_STRING(config_look_prefix[GUI_CHAT_PREFIX_ERROR]));
-    gui_chat_prefix[GUI_CHAT_PREFIX_ERROR] = strdup (prefix);
-
-    snprintf (prefix, sizeof (prefix), "%s%s\t",
-              GUI_COLOR(GUI_COLOR_CHAT_PREFIX_NETWORK),
-              CONFIG_STRING(config_look_prefix[GUI_CHAT_PREFIX_NETWORK]));
-    gui_chat_prefix[GUI_CHAT_PREFIX_NETWORK] = strdup (prefix);
-
-    snprintf (prefix, sizeof (prefix), "%s%s\t",
-              GUI_COLOR(GUI_COLOR_CHAT_PREFIX_ACTION),
-              CONFIG_STRING(config_look_prefix[GUI_CHAT_PREFIX_ACTION]));
-    gui_chat_prefix[GUI_CHAT_PREFIX_ACTION] = strdup (prefix);
-
-    snprintf (prefix, sizeof (prefix), "%s%s\t",
-              GUI_COLOR(GUI_COLOR_CHAT_PREFIX_JOIN),
-              CONFIG_STRING(config_look_prefix[GUI_CHAT_PREFIX_JOIN]));
-    gui_chat_prefix[GUI_CHAT_PREFIX_JOIN] = strdup (prefix);
-
-    snprintf (prefix, sizeof (prefix), "%s%s\t",
-              GUI_COLOR(GUI_COLOR_CHAT_PREFIX_QUIT),
-              CONFIG_STRING(config_look_prefix[GUI_CHAT_PREFIX_QUIT]));
-    gui_chat_prefix[GUI_CHAT_PREFIX_QUIT] = strdup (prefix);
 }
 
 /*
- * gui_chat_utf_char_valid: return 1 if utf char is valid for screen
- *                          otherwise return 0
+ * Checks if an UTF-8 char is valid for screen.
+ *
+ * Returns:
+ *   1: char is valid
+ *   0: char is not valid
  */
 
 int
@@ -152,8 +144,22 @@ gui_chat_utf_char_valid (const char *utf_char)
 }
 
 /*
- * gui_chat_strlen_screen: returns number of char needed on sreen to display a
- *                         word special chars like color, bold, .. are ignored
+ * Returns number of char needed on screen to display a char.
+ */
+
+int
+gui_chat_char_size_screen (const char *utf_char)
+{
+    /* if char is invalid, it will be displayed as one space on screen */
+    if (!gui_chat_utf_char_valid (utf_char))
+        return 1;
+
+    return utf8_char_size_screen (utf_char);
+}
+
+/*
+ * Returns number of char needed on screen to display a word (special chars like
+ * colors/attributes are ignored).
  */
 
 int
@@ -168,7 +174,7 @@ gui_chat_strlen_screen (const char *string)
                                             (unsigned char *)string, 0, 0, 0);
         if (string)
         {
-            size_on_screen = (gui_chat_utf_char_valid (string)) ? utf8_char_size_screen (string) : 1;
+            size_on_screen = gui_chat_char_size_screen (string);
             if (size_on_screen > 0)
                 length += size_on_screen;
             string = utf8_next_char (string);
@@ -178,8 +184,8 @@ gui_chat_strlen_screen (const char *string)
 }
 
 /*
- * gui_chat_string_add_offset: move forward N chars in a string, skipping all
- *                             formatting chars (like colors,..)
+ * Moves forward N chars in a string, skipping all formatting chars (like
+ * colors/attributes).
  */
 
 char *
@@ -200,9 +206,8 @@ gui_chat_string_add_offset (const char *string, int offset)
 }
 
 /*
- * gui_chat_string_add_offset_screen: move forward N chars (using size on screen)
- *                                    in a string, skipping all formatting chars
- *                                    (like colors,..)
+ * Moves forward N chars (using size on screen) in a string, skipping all
+ * formatting chars (like colors/attributes).
  */
 
 char *
@@ -217,7 +222,7 @@ gui_chat_string_add_offset_screen (const char *string, int offset_screen)
                                             0, 0, 0);
         if (string)
         {
-            size_on_screen = (gui_chat_utf_char_valid (string)) ? utf8_char_size_screen (string) : 1;
+            size_on_screen = gui_chat_char_size_screen (string);
             offset_screen -= size_on_screen;
             string = utf8_next_char (string);
         }
@@ -226,8 +231,8 @@ gui_chat_string_add_offset_screen (const char *string, int offset_screen)
 }
 
 /*
- * gui_chat_string_real_pos: get real position in string
- *                           (ignoring color/bold/.. chars)
+ * Gets real position in string (ignoring formatting chars like
+ * colors/attributes).
  */
 
 int
@@ -242,14 +247,14 @@ gui_chat_string_real_pos (const char *string, int pos)
     real_pos = string;
     real_pos_prev = string;
     ptr_string = string;
-    while (ptr_string && ptr_string[0] && (pos > 0))
+    while (ptr_string && ptr_string[0] && (pos >= 0))
     {
         ptr_string = gui_chat_string_next_char (NULL, NULL,
                                                 (unsigned char *)ptr_string,
                                                 0, 0, 0);
         if (ptr_string)
         {
-            size_on_screen = (((unsigned char)ptr_string[0]) < 32) ? 1 : utf8_char_size_screen (ptr_string);
+            size_on_screen = gui_chat_char_size_screen (ptr_string);
             if (size_on_screen > 0)
                 pos -= size_on_screen;
             ptr_string = utf8_next_char (ptr_string);
@@ -263,7 +268,10 @@ gui_chat_string_real_pos (const char *string, int pos)
 }
 
 /*
- * gui_chat_get_word_info: returns info about next word: beginning, end, length
+ * Returns info about next word: beginning, end, length.
+ *
+ * Note: the word_{start|end}_offset are in bytes, but word_length(_with_spaces)
+ * are in number of chars on screen.
  */
 
 void
@@ -274,7 +282,7 @@ gui_chat_get_word_info (struct t_gui_window *window,
 {
     const char *start_data;
     char *next_char, *next_char2;
-    int leading_spaces, char_size;
+    int leading_spaces, char_size_screen;
 
     *word_start_offset = 0;
     *word_end_offset = 0;
@@ -298,15 +306,18 @@ gui_chat_get_word_info (struct t_gui_window *window,
                     if (leading_spaces)
                         *word_start_offset = next_char - start_data;
                     leading_spaces = 0;
-                    char_size = next_char2 - next_char;
                     *word_end_offset = next_char2 - start_data - 1;
-                    (*word_length_with_spaces) += char_size;
-                    (*word_length) += char_size;
+                    char_size_screen = gui_chat_char_size_screen (next_char);
+                    (*word_length_with_spaces) += char_size_screen;
+                    (*word_length) += char_size_screen;
                 }
                 else
                 {
                     if (leading_spaces)
+                    {
                         (*word_length_with_spaces)++;
+                        *word_end_offset = next_char2 - start_data - 1;
+                    }
                     else
                     {
                         *word_end_offset = next_char - start_data - 1;
@@ -325,7 +336,9 @@ gui_chat_get_word_info (struct t_gui_window *window,
 }
 
 /*
- * gu_chat_get_time_string: get time string, for display (with colors)
+ * Gets time string, for display (with colors).
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -335,6 +348,9 @@ gui_chat_get_time_string (time_t date)
     char *text_with_color;
     int i, time_first_digit, time_last_digit, last_color;
     struct tm *local_time;
+
+    if (date == 0)
+        return NULL;
 
     if (!CONFIG_STRING(config_look_buffer_time_format)
         || !CONFIG_STRING(config_look_buffer_time_format)[0])
@@ -430,8 +446,8 @@ gui_chat_get_time_string (time_t date)
 }
 
 /*
- * gui_chat_get_time_length: calculates time length with a time format
- *                           (format can include color codes with format ${name})
+ * Calculates time length with a time format (format can include color codes
+ * with format ${name}).
  */
 
 int
@@ -459,7 +475,7 @@ gui_chat_get_time_length ()
 }
 
 /*
- * gui_chat_change_time_format: change time format for all lines of all buffers
+ * Changes time format for all lines of all buffers.
  */
 
 void
@@ -485,7 +501,7 @@ gui_chat_change_time_format ()
 }
 
 /*
- * gui_chat_build_string_prefix_message: build a string with prefix and message
+ * Builds a string with prefix and message.
  */
 
 char *
@@ -527,7 +543,7 @@ gui_chat_build_string_prefix_message (struct t_gui_line *line)
 }
 
 /*
- * gui_chat_build_string_prefix_message: build a string with message and tags
+ * Builds a string with message and tags.
  */
 
 
@@ -566,10 +582,10 @@ gui_chat_build_string_message_tags (struct t_gui_line *line)
 }
 
 /*
- * gui_chat_printf_date_tags: display a message in a buffer with optional
- *                            date and tags
- *                            Info: this function works only with formatted
- *                            buffers (not buffers with free content)
+ * Displays a message in a buffer with optional date and tags.
+ *
+ * Note: this function works only with formatted buffers (not buffers with free
+ * content).
  */
 
 void
@@ -769,9 +785,10 @@ end:
 }
 
 /*
- * gui_chat_printf_y: display a message on a line in a buffer with free content
- *                    Info: this function works only with free content
- *                    buffers (not formatted buffers)
+ * Displays a message on a line in a buffer with free content.
+ *
+ * Note: this function works only with free content buffers (not formatted
+ * buffers).
  */
 
 void
@@ -851,7 +868,7 @@ gui_chat_printf_y (struct t_gui_buffer *buffer, int y, const char *message, ...)
 }
 
 /*
- * gui_chat_print_lines_waiting_buffer: print lines waiting for buffer
+ * Prints lines that are waiting for buffer.
  */
 
 void
@@ -885,7 +902,7 @@ gui_chat_print_lines_waiting_buffer ()
 }
 
 /*
- * gui_chat_hsignal_chat_quote_line_cb: quote a line
+ * Quotes a line.
  */
 
 int
@@ -939,7 +956,7 @@ gui_chat_hsignal_quote_line_cb (void *data, const char *signal,
 }
 
 /*
- * gui_chat_end: free some variables allocated for chat area
+ * Frees some variables allocated for chat area.
  */
 
 void

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-gtk-keyboard.c - keyboard functions for Gtk GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-gtk-keyboard.c: keyboard functions for Gtk GUI
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,7 +35,7 @@
 
 
 /*
- * gui_key_default_bindings: create default key bindings
+ * Creates default key bindings.
  */
 
 void
@@ -48,7 +46,7 @@ gui_key_default_bindings (int context)
 }
 
 /*
- * gui_key_read: read keyboard chars
+ * Reads keyboard chars.
  */
 
 void

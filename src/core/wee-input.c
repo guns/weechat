@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-input.c - default input callback for buffers
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-input.c: default callback function to read user input
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,7 +38,7 @@
 
 
 /*
- * input_exec_data: send data to buffer input callback
+ * Sends data to buffer input callback.
  */
 
 void
@@ -60,7 +58,7 @@ input_exec_data (struct t_gui_buffer *buffer, const char *data)
 }
 
 /*
- * input_exec_command: execute a command (WeeChat internal or a plugin command)
+ * Executes a command.
  */
 
 void
@@ -114,9 +112,9 @@ input_exec_command (struct t_gui_buffer *buffer,
             break;
         case 1: /* command hooked, OK (executed) */
             break;
-        case -2: /* command is ambigous (exists for other plugins) */
+        case -2: /* command is ambiguous (exists for other plugins) */
             gui_chat_printf (NULL,
-                             _("%sError: ambigous command \"%s\": it exists "
+                             _("%sError: ambiguous command \"%s\": it exists "
                                "in many plugins and not in \"%s\" plugin"),
                              gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
                              command + 1,
@@ -152,7 +150,7 @@ input_exec_command (struct t_gui_buffer *buffer,
 }
 
 /*
- * input_data: read user input and send data to buffer callback
+ * Reads user input and sends data to buffer's callback.
  */
 
 void

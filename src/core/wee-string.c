@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-string.c - string functions
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-string.c: string functions for WeeChat
  */
 
 #ifdef HAVE_CONFIG_H
@@ -49,15 +47,14 @@
 #include "weechat.h"
 #include "wee-string.h"
 #include "wee-config.h"
-#include "wee-hashtable.h"
 #include "wee-utf8.h"
 #include "../gui/gui-color.h"
 #include "../plugins/plugin.h"
 
 
 /*
- * string_strndup: define strndup function for systems where this function does
- *                 not exist (FreeBSD and maybe other)
+ * Defines a "strndup" function for systems where this function does not exist
+ * (FreeBSD and maybe others).
  */
 
 char *
@@ -79,7 +76,7 @@ string_strndup (const char *string, int length)
 }
 
 /*
- * string_tolower: locale independant string conversion to lower case
+ * Converts string to lower case (locale independent).
  */
 
 void
@@ -94,7 +91,7 @@ string_tolower (char *string)
 }
 
 /*
- * string_toupper: locale independant string conversion to upper case
+ * Converts string to upper case (locale independent).
  */
 
 void
@@ -109,7 +106,12 @@ string_toupper (char *string)
 }
 
 /*
- * string_strcasecmp: locale and case independent string comparison
+ * Compares two strings (locale and case independent).
+ *
+ * Returns:
+ *   < 0: string1 < string2
+ *     0: string1 == string2
+ *   > 0: string1 > string2
  */
 
 int
@@ -134,13 +136,21 @@ string_strcasecmp (const char *string1, const char *string2)
 }
 
 /*
- * string_strcasecmp_range: locale and case independent string comparison
- *                          using range to compare case:
- *                          - range = 26: A-Z         ==> a-z
- *                          - range = 29: A-Z [ \ ]   ==> a-z { | }
- *                          - range = 30: A-Z [ \ ] ^ ==> a-z { | } ~
- *                          (ranges 29 and 30 are used by some protocols like
- *                          IRC)
+ * Compares two strings (locale and case independent) using a range.
+ *
+ * The range is the number of chars which can be converted from upper to lower
+ * case. For example 26 = all letters of alphabet, 29 = all letters + 3 chars.
+ *
+ * Examples:
+ *   - range = 26: A-Z         ==> a-z
+ *   - range = 29: A-Z [ \ ]   ==> a-z { | }
+ *   - range = 30: A-Z [ \ ] ^ ==> a-z { | } ~
+ *   (ranges 29 and 30 are used by some protocols like IRC)
+ *
+ * Returns:
+ *   < 0: string1 < string2
+ *     0: string1 == string2
+ *   > 0: string1 > string2
  */
 
 int
@@ -165,8 +175,12 @@ string_strcasecmp_range (const char *string1, const char *string2, int range)
 }
 
 /*
- * string_strncasecmp: locale and case independent string comparison
- *                     with max length
+ * Compares two strings with max length (locale and case independent).
+ *
+ * Returns:
+ *   < 0: string1 < string2
+ *     0: string1 == string2
+ *   > 0: string1 > string2
  */
 
 int
@@ -196,13 +210,22 @@ string_strncasecmp (const char *string1, const char *string2, int max)
 }
 
 /*
- * string_strncasecmp_range: locale and case independent string comparison
- *                           with max length, using range to compare case:
- *                           - range = 26: A-Z         ==> a-z
- *                           - range = 29: A-Z [ \ ]   ==> a-z { | }
- *                           - range = 30: A-Z [ \ ] ^ ==> a-z { | } ~
- *                           (ranges 29 and 30 are used by some protocols like
- *                           IRC)
+ * Compares two strings with max length (locale and case independent) using a
+ * range.
+ *
+ * The range is the number of chars which can be converted from upper to lower
+ * case. For example 26 = all letters of alphabet, 29 = all letters + 3 chars.
+ *
+ * Examples:
+ *   - range = 26: A-Z         ==> a-z
+ *   - range = 29: A-Z [ \ ]   ==> a-z { | }
+ *   - range = 30: A-Z [ \ ] ^ ==> a-z { | } ~
+ *   (ranges 29 and 30 are used by some protocols like IRC)
+ *
+ * Returns:
+ *   < 0: string1 < string2
+ *     0: string1 == string2
+ *   > 0: string1 > string2
  */
 
 int
@@ -233,7 +256,12 @@ string_strncasecmp_range (const char *string1, const char *string2, int max,
 }
 
 /*
- * string_strcmp_ignore_chars: compare 2 strings, ignoring ignore some chars
+ * Compares two strings, ignoring some chars.
+ *
+ * Returns:
+ *   < 0: string1 < string2
+ *     0: string1 == string2
+ *   > 0: string1 > string2
  */
 
 int
@@ -296,7 +324,7 @@ string_strcmp_ignore_chars (const char *string1, const char *string2,
 }
 
 /*
- * string_strcasestr: locale and case independent string search
+ * Searches for a string in another string (locale and case independent).
  */
 
 char *
@@ -321,9 +349,13 @@ string_strcasestr (const char *string, const char *search)
 }
 
 /*
- * string_match: return 1 if string matches a mask
- *               mask can begin or end with "*", no other "*" are allowed
- *               inside mask
+ * Checks if a string matches a mask.
+ *
+ * Mask can begin or end with "*", no other "*" are allowed inside mask.
+ *
+ * Returns:
+ *   1: string matches mask
+ *   0: string does not match mask
  */
 
 int
@@ -405,8 +437,9 @@ string_match (const char *string, const char *mask, int case_sensitive)
 }
 
 /*
- * string_replace: replace a string by new one in a string
- *                 note: returned value has to be free() after use
+ * Replaces a string by new one in a string.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -462,9 +495,11 @@ string_replace (const char *string, const char *search, const char *replace)
 }
 
 /*
- * string_expand_home: expand home in a PATH
- *                     (for example: "~/file.txt" => "/home/xxx/file.txt")
- *                     note: returned value has to be free() after use
+ * Expands home in a path.
+ *
+ * Example: "~/file.txt" => "/home/xxx/file.txt"
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -495,10 +530,10 @@ string_expand_home (const char *path)
 }
 
 /*
- * string_remove_quotes: remove quotes at beginning/end of string
- *                       (ignore spaces if there are before first quote or
- *                        after last quote)
- *                       note: returned value has to be free() after use
+ * Removes quotes at beginning/end of string (ignores spaces if there are before
+ * first quote or after last quote).
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -538,8 +573,9 @@ string_remove_quotes (const char *string, const char *quotes)
 }
 
 /*
- * string_strip: strip chars at beginning and/or end of string
- *               note: returned value has to be free() after use
+ * Strips chars at beginning/end of string.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -580,8 +616,9 @@ string_strip (const char *string, int left, int right, const char *chars)
 }
 
 /*
- * string_convert_hex_chars: convert hex chars (\x??) to value
- *                           note: returned value has to be free() after use
+ * Converts hex chars (\x??) to value.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -652,7 +689,11 @@ string_convert_hex_chars (const char *string)
 }
 
 /*
- * string_is_word_char: return 1 if given character is a "word character"
+ * Checks if first char of string is a "word char".
+ *
+ * Returns:
+ *   1: first char is a word char
+ *   0: first char is not a word char
  */
 
 int
@@ -679,8 +720,8 @@ string_is_word_char (const char *string)
 }
 
 /*
- * string_mask_to_regex: convert a mask (string with only "*" as wildcard) to a
- *                       regex, paying attention to special chars in a regex
+ * Converts a mask (string with only "*" as wildcard) to a regex, paying
+ * attention to special chars in a regex.
  */
 
 char *
@@ -729,19 +770,19 @@ string_mask_to_regex (const char *mask)
 }
 
 /*
- * string_regex_flags: get pointer on string after flags and return mask with
- *                     flags to compile regex
- *                     format of flags is:
- *                       (?eins-eins)string
- *                     flags:
- *                       e: POSIX extended regex (REG_EXTENDED)
- *                       i: case insensitive (REG_ICASE)
- *                       n: match-any-character operators don't match a newline (REG_NEWLINE)
- *                       s: support for substring addressing of matches is not required (REG_NOSUB)
- *                     examples (with default_flags = REG_EXTENDED):
- *                       "(?i)toto"  : regex "toto", flags = REG_EXTENDED | REG_ICASE
- *                       "(?i)toto"  : regex "toto", flags = REG_EXTENDED | REG_ICASE
- *                       "(?i-e)toto": regex "toto", flags = REG_ICASE
+ * Extracts flags and regex from a string.
+ *
+ * Format of flags is: (?eins-eins)string
+ * Flags are:
+ *   e: POSIX extended regex (REG_EXTENDED)
+ *   i: case insensitive (REG_ICASE)
+ *   n: match-any-character operators don't match a newline (REG_NEWLINE)
+ *   s: support for substring addressing of matches is not required (REG_NOSUB)
+ *
+ * Examples (with default_flags = REG_EXTENDED):
+ *   "(?i)toto"  : regex "toto", flags = REG_EXTENDED | REG_ICASE
+ *   "(?i)toto"  : regex "toto", flags = REG_EXTENDED | REG_ICASE
+ *   "(?i-e)toto": regex "toto", flags = REG_ICASE
  */
 
 const char *
@@ -802,8 +843,8 @@ string_regex_flags (const char *regex, int default_flags, int *flags)
 }
 
 /*
- * string_regcomp: compile a regex using optional flags at beginning of string
- *                 (for format of flags in regex, see string_regex_flags())
+ * Compiles a regex using optional flags at beginning of string (for format of
+ * flags in regex, see string_regex_flags()).
  */
 
 int
@@ -817,9 +858,11 @@ string_regcomp (void *preg, const char *regex, int default_flags)
 }
 
 /*
- * string_has_highlight: return 1 if string contains a highlight (using list of
- *                       words to highlight)
- *                       return 0 if no highlight is found in string
+ * Checks if a string has a highlight (using list of words to highlight).
+ *
+ * Returns:
+ *   1: string has a highlight
+ *   0: string has no highlight
  */
 
 int
@@ -930,10 +973,8 @@ string_has_highlight (const char *string, const char *highlight_words)
 }
 
 /*
- * string_has_highlight_regex_compiled: return 1 if string contains a highlight
- *                                      using a regular expression (any match
- *                                      in string must be surrounded by word
- *                                      chars)
+ * Checks if a string has a highlight using a compiled regular expression (any
+ * match in string must be surrounded by word chars).
  */
 
 int
@@ -975,9 +1016,8 @@ string_has_highlight_regex_compiled (const char *string, regex_t *regex)
 }
 
 /*
- * string_has_highlight_regex: return 1 if string contains a highlight
- *                             using a regular expression (any match in string
- *                             must be surrounded by word chars)
+ * Checks if a string has a highlight using a regular expression (any match in
+ * string must be surrounded by word chars).
  */
 
 int
@@ -1000,18 +1040,19 @@ string_has_highlight_regex (const char *string, const char *regex)
 }
 
 /*
- * string_split: split a string according to separators
- *               examples:
- *                 string_split ("abc de  fghi", " ", 0, 0, NULL)
- *                   ==> array[0] = "abc"
- *                       array[1] = "de"
- *                       array[2] = "fghi"
- *                       array[3] = NULL
- *                 string_split ("abc de  fghi", " ", 1, 0, NULL)
- *                   ==> array[0] = "abc de  fghi"
- *                       array[1] = "de  fghi"
- *                       array[2] = "fghi"
- *                       array[3] = NULL
+ * Splits a string according to separators.
+ *
+ * Examples:
+ *   string_split ("abc de  fghi", " ", 0, 0, NULL)
+ *     ==> array[0] = "abc"
+ *         array[1] = "de"
+ *         array[2] = "fghi"
+ *         array[3] = NULL
+ *         string_split ("abc de  fghi", " ", 1, 0, NULL)
+ *     ==> array[0] = "abc de  fghi"
+ *         array[1] = "de  fghi"
+ *         array[2] = "fghi"
+ *         array[3] = NULL
  */
 
 char **
@@ -1139,7 +1180,199 @@ string_split (const char *string, const char *separators, int keep_eol,
 }
 
 /*
- * string_free_split: free a split string
+ * Splits a string like the shell does for a command with arguments.
+ *
+ * This function is a C conversion of python class "shlex"
+ * (file: Lib/shlex.py in python repository)
+ * Doc: http://docs.python.org/3/library/shlex.html
+ *
+ * Copyrights in shlex.py:
+ *   Module and documentation by Eric S. Raymond, 21 Dec 1998
+ *   Input stacking and error message cleanup added by ESR, March 2000
+ *   push_source() and pop_source() made explicit by ESR, January 2001.
+ *   Posix compliance, split(), string arguments, and
+ *   iterator interface by Gustavo Niemeyer, April 2003.
+ *
+ * Note: result must be freed with string_free_split.
+ */
+
+char **
+string_split_shell (const char *string)
+{
+    int temp_len, num_args, add_char_to_temp, add_temp_to_args, quoted;
+    char *string2, *temp, **args, **args2, state, escapedstate;
+    char *ptr_string, *ptr_next, saved_char;
+
+    if (!string)
+        return NULL;
+
+    string2 = strdup (string);
+    if (!string2)
+        return NULL;
+
+    /*
+     * prepare "args" with one pointer to NULL, the "args" will be reallocated
+     * later, each time a new argument is added
+     */
+    num_args = 0;
+    args = malloc ((num_args + 1) * sizeof (args[0]));
+    if (!args)
+    {
+        free (string2);
+        return NULL;
+    }
+    args[0] = NULL;
+
+    /* prepare a temp string for working (adding chars one by one) */
+    temp = malloc ((2 * strlen (string)) + 1);
+    if (!temp)
+    {
+        free (string2);
+        free (args);
+        return NULL;
+    }
+    temp[0] = '\0';
+    temp_len = 0;
+
+    state = ' ';
+    escapedstate = ' ';
+    quoted = 0;
+    ptr_string = string2;
+    while (ptr_string[0])
+    {
+        add_char_to_temp = 0;
+        add_temp_to_args = 0;
+        ptr_next = utf8_next_char (ptr_string);
+        saved_char = ptr_next[0];
+        ptr_next[0] = '\0';
+        if (state == ' ')
+        {
+            if ((ptr_string[0] == ' ') || (ptr_string[0] == '\t')
+                || (ptr_string[0] == '\r') || (ptr_string[0] == '\n'))
+            {
+                if (temp[0] || quoted)
+                    add_temp_to_args = 1;
+            }
+            else if (ptr_string[0] == '\\')
+            {
+                escapedstate = 'a';
+                state = ptr_string[0];
+            }
+            else if ((ptr_string[0] == '\'') || (ptr_string[0] == '"'))
+            {
+                state = ptr_string[0];
+            }
+            else
+            {
+                add_char_to_temp = 1;
+                state = 'a';
+            }
+        }
+        else if ((state == '\'') || (state == '"'))
+        {
+            quoted = 1;
+            if (ptr_string[0] == state)
+            {
+                state = 'a';
+            }
+            else if ((state == '"') && (ptr_string[0] == '\\'))
+            {
+                escapedstate = state;
+                state = ptr_string[0];
+            }
+            else
+            {
+                add_char_to_temp = 1;
+            }
+        }
+        else if (state == '\\')
+        {
+            if (((escapedstate == '\'') || (escapedstate == '"'))
+                && (ptr_string[0] != state) && (ptr_string[0] != escapedstate))
+            {
+                temp[temp_len] = state;
+                temp_len++;
+                temp[temp_len] = '\0';
+            }
+            add_char_to_temp = 1;
+            state = escapedstate;
+        }
+        else if (state == 'a')
+        {
+            if ((ptr_string[0] == ' ') || (ptr_string[0] == '\t')
+                || (ptr_string[0] == '\r') || (ptr_string[0] == '\n'))
+            {
+                state = ' ';
+                if (temp[0] || quoted)
+                    add_temp_to_args = 1;
+            }
+            else if (ptr_string[0] == '\\')
+            {
+                escapedstate = 'a';
+                state = ptr_string[0];
+            }
+            else if ((ptr_string[0] == '\'') || (ptr_string[0] == '"'))
+            {
+                state = ptr_string[0];
+            }
+            else
+            {
+                add_char_to_temp = 1;
+            }
+        }
+        if (add_char_to_temp)
+        {
+            memcpy (temp + temp_len, ptr_string, ptr_next - ptr_string);
+            temp_len += (ptr_next - ptr_string);
+            temp[temp_len] = '\0';
+        }
+        if (add_temp_to_args)
+        {
+            num_args++;
+            args2 = realloc (args, (num_args + 1) * sizeof (args[0]));
+            if (!args2)
+            {
+                free (string2);
+                free (temp);
+                return args;
+            }
+            args = args2;
+            args[num_args - 1] = strdup (temp);
+            args[num_args] = NULL;
+            temp[0] = '\0';
+            temp_len = 0;
+            escapedstate = ' ';
+            quoted = 0;
+        }
+        ptr_next[0] = saved_char;
+        ptr_string = ptr_next;
+    }
+
+    if (temp[0] || (state != ' '))
+    {
+        num_args++;
+        args2 = realloc (args, (num_args + 1) * sizeof (args[0]));
+        if (!args2)
+        {
+            free (string2);
+            free (temp);
+            return args;
+        }
+        args = args2;
+        args[num_args - 1] = strdup (temp);
+        args[num_args] = NULL;
+        temp[0] = '\0';
+        temp_len = 0;
+    }
+
+    free (string2);
+    free (temp);
+
+    return args;
+}
+
+/*
+ * Frees a split string.
  */
 
 void
@@ -1156,9 +1389,9 @@ string_free_split (char **split_string)
 }
 
 /*
- * string_build_with_split_string: build a string with a split string
- *                                 note: returned value has to be free() after
- *                                 use
+ * Builds a string with a split string.
+ *
+ * Note: result must be free after use.
  */
 
 char *
@@ -1196,11 +1429,10 @@ string_build_with_split_string (const char **split_string,
 }
 
 /*
- * string_split_command: split a list of commands separated by 'separator'
- *                       and ecscaped with '\'
- *                       - empty commands are removed
- *                       - spaces on the left of each commands are stripped
- *                       Result must be freed with free_multi_command
+ * Splits a list of commands separated by 'separator' and escaped with '\'.
+ * Empty commands are removed, spaces on the left of each commands are stripped.
+ *
+ * Note: result must be freed with free_multi_command.
  */
 
 char **
@@ -1288,8 +1520,7 @@ string_split_command (const char *command, char separator)
 }
 
 /*
- * string_free_split_command : free a list of commands split
- *                             with string_split_command
+ * Frees a command split.
  */
 
 void
@@ -1306,8 +1537,9 @@ string_free_split_command (char **split_command)
 }
 
 /*
- * string_iconv: convert string to another charset
- *               note: returned value has to be free() after use
+ * Converts a string to another charset.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -1416,9 +1648,9 @@ string_iconv (int from_utf8, const char *from_code, const char *to_code,
 }
 
 /*
- * string_iconv_to_internal: convert user string (input, script, ..) to
- *                           WeeChat internal storage charset
- *                           note: returned value has to be free() after use
+ * Converts a string to WeeChat internal storage charset (UTF-8).
+ *
+ * Note: result has to be freed after use.
  */
 
 char *
@@ -1456,9 +1688,9 @@ string_iconv_to_internal (const char *charset, const char *string)
 }
 
 /*
- * string_iconv_from_internal: convert internal string to terminal charset,
- *                             for display
- *                             note: returned value has to be free() after use
+ * Converts internal string to terminal charset, for display.
+ *
+ * Note: result has to be freed after use.
  */
 
 char *
@@ -1493,8 +1725,11 @@ string_iconv_from_internal (const char *charset, const char *string)
 }
 
 /*
- * string_iconv_fprintf: encode to terminal charset, then call fprintf on a file
- *                       return 1 if ok, 0 if error
+ * Encodes a string to terminal charset and calls fprintf.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1519,8 +1754,9 @@ string_iconv_fprintf (FILE *file, const char *data, ...)
 }
 
 /*
- * string_format_size: format a string with size and unit name (bytes, KB, MB, GB)
- *                     note: returned value has to be free() after use
+ * Formats a string with size and unit name (bytes, KB, MB, GB).
+ *
+ * Note: result has to be freed after use.
  */
 
 char *
@@ -1555,7 +1791,7 @@ string_format_size (unsigned long long size)
 }
 
 /*
- * string_convbase64_8x3_to_6x4 : convert 3 bytes of 8 bits in 4 bytes of 6 bits
+ * Converts 3 bytes of 8 bits in 4 bytes of 6 bits.
  */
 
 void
@@ -1571,9 +1807,10 @@ string_convbase64_8x3_to_6x4 (const char *from, char *to)
 }
 
 /*
- * string_encode_base64: encode a string in base64
- *                       length is number of bytes in "from" to convert
- *                       (commonly strlen(from))
+ * Encodes a string in base64.
+ *
+ * Argument "length" is number of bytes in "from" to convert (commonly
+ * strlen(from)).
  */
 
 void
@@ -1617,7 +1854,7 @@ string_encode_base64 (const char *from, int length, char *to)
 }
 
 /*
- * string_convbase64_6x4_to_8x3 : convert 4 bytes of 6 bits to 3 bytes of 8 bits
+ * Converts 4 bytes of 6 bits to 3 bytes of 8 bits.
  */
 
 void
@@ -1629,9 +1866,9 @@ string_convbase64_6x4_to_8x3 (const unsigned char *from, unsigned char *to)
 }
 
 /*
- * string_decode_base64: decode a base64 string
- *                       return length of string in *to
- *                       (does not count final \0)
+ * Decodes a base64 string.
+ *
+ * Returns length of string in "*to" (it does not count final \0).
  */
 
 int
@@ -1694,8 +1931,11 @@ string_decode_base64 (const char *from, char *to)
 }
 
 /*
- * string_is_command_char: return 1 if first char of string is a command char,
- *                         otherwise 0
+ * Checks if a string is a command.
+ *
+ * Returns:
+ *   1: first char of string is a command char
+ *   0: string is not a command
  */
 
 int
@@ -1724,10 +1964,10 @@ string_is_command_char (const char *string)
 }
 
 /*
- * string_input_for_buffer: return pointer to input text for buffer (pointer
- *                          inside "string" argument)
- *                          or return NULL if it's a command
- *                          (by default, a command starts with a single '/')
+ * Gets pointer to input text for buffer.
+ *
+ * Returns pointer inside "string" argument or NULL if it's a command (by
+ * default a command starts with a single '/').
  */
 
 const char *
@@ -1749,7 +1989,7 @@ string_input_for_buffer (const char *string)
         pos_space = strchr (string + 1, ' ');
 
         /*
-         * if there's no other '/' of if '/' is after first space,
+         * if there's no other '/' or if '/' is after first space,
          * then it is a command, and return NULL
          */
         if (!pos_slash || (pos_space && pos_slash > pos_space))
@@ -1762,10 +2002,13 @@ string_input_for_buffer (const char *string)
     if (!string_is_command_char (string))
         return string;
 
-    /* check if first char is doubled: if yes, then it's not a command */
     next_char = utf8_next_char (string);
+
+    /* there's no next char, then it's a command */
     if (!next_char || !next_char[0])
-        return string;
+        return NULL;
+
+    /* check if first char is doubled: if yes, then it's not a command */
     if (utf8_charcmp (string, next_char) == 0)
         return next_char;
 
@@ -1774,27 +2017,26 @@ string_input_for_buffer (const char *string)
 }
 
 /*
- * string_replace_with_hashtable: replace ${codes} with value from hashtable
- *                                "errors" is set with number of keys not found
- *                                in hashtable
+ * Replaces ${codes} using a callback that returns replacement value (this value
+ * must be newly allocated because it will be freed in this function).
+ *
+ * Argument "errors" is set with number of keys not found by callback.
  */
 
 char *
-string_replace_with_hashtable (const char *string,
-                               struct t_hashtable *hashtable,
-                               int *errors)
+string_replace_with_callback (const char *string,
+                              char *(*callback)(void *data, const char *text),
+                              void *callback_data,
+                              int *errors)
 {
     int length, length_value, index_string, index_result;
-    char *result, *result2, *key;
-    const char *pos_end_name, *ptr_value;
+    char *result, *result2, *key, *value;
+    const char *pos_end_name;
 
     *errors = 0;
 
     if (!string)
         return NULL;
-
-    if (!hashtable)
-        return strdup (string);
 
     length = strlen (string) + 1;
     result = malloc (length);
@@ -1820,10 +2062,10 @@ string_replace_with_hashtable (const char *string,
                                           pos_end_name - (string + index_string + 2));
                     if (key)
                     {
-                        ptr_value = (const char *)hashtable_get (hashtable, key);
-                        if (ptr_value)
+                        value = (*callback) (callback_data, key);
+                        if (value)
                         {
-                            length_value = strlen (ptr_value);
+                            length_value = strlen (value);
                             length += length_value;
                             result2 = realloc (result, length);
                             if (!result2)
@@ -1831,13 +2073,15 @@ string_replace_with_hashtable (const char *string,
                                 if (result)
                                     free (result);
                                 free (key);
+                                free (value);
                                 return NULL;
                             }
                             result = result2;
-                            strcpy (result + index_result, ptr_value);
+                            strcpy (result + index_result, value);
                             index_result += length_value;
                             index_string += pos_end_name - string -
                                 index_string + 1;
+                            free (value);
                         }
                         else
                         {

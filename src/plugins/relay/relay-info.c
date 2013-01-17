@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-info.c - info and infolist hooks for relay plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * relay-info.c: info and infolist hooks for relay plugin
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -30,7 +28,7 @@
 
 
 /*
- * relay_info_get_infolist_cb: callback called when relay infolist is asked
+ * Returns infolist with relay info.
  */
 
 struct t_infolist *
@@ -86,13 +84,12 @@ relay_info_get_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * relay_info_init: initialize info and infolist hooks for relay plugin
+ * Hooks infolist for relay plugin.
  */
 
 void
 relay_info_init ()
 {
-    /* relay infolist hooks */
     weechat_hook_infolist ("relay", N_("list of relay clients"),
                            N_("relay pointer (optional)"),
                            NULL,

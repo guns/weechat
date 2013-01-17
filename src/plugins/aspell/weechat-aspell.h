@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
- * Copyright (C) 2006-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2006-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -36,5 +36,6 @@ extern struct t_weechat_plugin *weechat_aspell_plugin;
 extern int aspell_enabled;
 
 extern void weechat_aspell_create_spellers (struct t_gui_buffer *buffer);
+extern const char *weechat_aspell_get_dict (struct t_gui_buffer *buffer);
 
 #endif /* __WEECHAT_ASPELL_H */

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-curses-mouse.c - mouse functions for Curses GUI
+ *
+ * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * gui-curses-mouse.c: mouse functions for Curses GUI
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -32,6 +30,7 @@
 #include "../../core/weechat.h"
 #include "../../core/wee-config.h"
 #include "../../core/wee-hook.h"
+#include "../../core/wee-string.h"
 #include "../../core/wee-utf8.h"
 #include "../../plugins/plugin.h"
 #include "../gui-bar.h"
@@ -82,7 +81,7 @@ char *gui_mouse_button_codes[][2] =
 
 
 /*
- * gui_mouse_enable: enable mouse
+ * Enables mouse.
  */
 
 void
@@ -93,7 +92,7 @@ gui_mouse_enable ()
 }
 
 /*
- * gui_mouse_disable: disable mouse
+ * Disables mouse.
  */
 
 void
@@ -104,7 +103,7 @@ gui_mouse_disable ()
 }
 
 /*
- * gui_mouse_display_state: display state of mouse
+ * Displays state of mouse.
  */
 
 void
@@ -116,7 +115,7 @@ gui_mouse_display_state ()
 }
 
 /*
- * gui_mouse_grab_init: init "grab mode"
+ * Initializes "grab mode".
  */
 
 void
@@ -126,12 +125,12 @@ gui_mouse_grab_init (int area)
 }
 
 /*
- * gui_mouse_grab_event2input: get area for input, according to (x,y) of mouse
- *                             event
- *                             for example: @item(buffer_nicklist)
- *                                          @bar(title)
- *                                          @chat
- *                                          @*
+ * Gets area for input, according to (x,y) of mouse event.
+ *
+ * For example: @item(buffer_nicklist)
+ *              @bar(title)
+ *              @chat
+ *              @*
  */
 
 char *
@@ -171,7 +170,7 @@ gui_mouse_grab_event2input ()
 }
 
 /*
- * gui_mouse_grab_end: end "grab mode"
+ * Ends "grab mode".
  */
 
 void
@@ -207,7 +206,7 @@ gui_mouse_grab_end (const char *mouse_key)
 }
 
 /*
- * gui_mouse_event_timer_cb: timer for grabbing mouse code
+ * Timer for grabbing mouse code.
  */
 
 int
@@ -223,7 +222,7 @@ gui_mouse_event_timer_cb (void *data, int remaining_calls)
 }
 
 /*
- * gui_mouse_event_init: init mouse event
+ * Initializes mouse event.
  */
 
 void
@@ -241,7 +240,7 @@ gui_mouse_event_init ()
 }
 
 /*
- * gui_mouse_event_code2key: get key name with a mouse code
+ * Gets key name with a mouse code.
  */
 
 const char *
@@ -314,9 +313,6 @@ gui_mouse_event_code2key (const char *code)
         }
     }
 
-    if (!MOUSE_CODE_END(code[0]))
-        return NULL;
-
     /* add name of button event */
     for (i = 0; gui_mouse_button_codes[i][0]; i++)
     {
@@ -325,6 +321,28 @@ gui_mouse_event_code2key (const char *code)
             strcat (key, gui_mouse_button_codes[i][1]);
             break;
         }
+    }
+
+    /* nothing found, reset now or mouse will be stuck */
+    if (!key[0])
+    {
+        gui_mouse_event_reset ();
+        return NULL;
+    }
+
+    if (!MOUSE_CODE_END(code[0]))
+    {
+        strcat (key, "-event-");
+        if (MOUSE_CODE_MOTION(code[0])) {
+            strcat (key, "drag");
+        }
+        else
+        {
+            gui_mouse_event_x[1] = gui_mouse_event_x[0];
+            gui_mouse_event_y[1] = gui_mouse_event_y[0];
+            strcat (key, "down");
+        }
+        return key;
     }
 
     /*
@@ -405,13 +423,14 @@ gui_mouse_event_code2key (const char *code)
 }
 
 /*
- * gui_mouse_event_end: end mouse event
+ * Ends mouse event.
  */
 
 void
 gui_mouse_event_end ()
 {
     const char *mouse_key;
+    int bare_event;
 
     gui_mouse_event_pending = 0;
 
@@ -426,9 +445,11 @@ gui_mouse_event_end ()
     mouse_key = gui_mouse_event_code2key (gui_key_combo_buffer);
     if (mouse_key && mouse_key[0])
     {
+        bare_event = string_match (mouse_key, "*-event-*", 1);
         if (gui_mouse_grab)
         {
-            gui_mouse_grab_end (mouse_key);
+            if (!bare_event)
+                gui_mouse_grab_end (mouse_key);
         }
         else
         {
@@ -436,7 +457,8 @@ gui_mouse_event_end ()
             (void) gui_key_focus (mouse_key,
                                   GUI_KEY_CONTEXT_MOUSE);
         }
-        gui_mouse_event_reset ();
+        if (!bare_event)
+            gui_mouse_event_reset ();
     }
 
     gui_key_combo_buffer[0] = '\0';

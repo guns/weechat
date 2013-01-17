@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2006-2009 Emmanuel Bouthenot <kolter@openics.org>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -75,6 +75,10 @@ if PLUGIN_RMODIFIER
 rmodifier_dir = rmodifier
 endif
 
+if PLUGIN_SCRIPT
+script_dir = script
+endif
+
 if PLUGIN_XFER
 xfer_dir = xfer
 endif
@@ -104,7 +108,7 @@ guile_dir = guile
 endif
 
 SUBDIRS = . $(alias_dir) $(aspell_dir) $(charset_dir) $(demo_dir) $(fifo_dir) \
-            $(irc_dir) $(logger_dir) $(relay_dir) $(rmodifier_dir) \
+            $(irc_dir) $(logger_dir) $(relay_dir) $(rmodifier_dir) $(script_dir) \
             $(xfer_dir) $(perl_dir) $(python_dir) $(ruby_dir) $(lua_dir) \
             $(tcl_dir) $(guile_dir)
 

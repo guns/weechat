@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-color.c - IRC color decoding/encoding in messages
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-color.c: IRC color decoding/encoding in messages
  */
 
 #include <stdlib.h>
@@ -53,26 +51,35 @@ char *irc_color_to_weechat[IRC_NUM_COLORS] =
 
 
 /*
- * irc_color_decode: replace IRC colors by WeeChat colors
- *                   if keep_colors == 0: remove any color/style in message
- *                   otherwise: keep colors
- *                   Note: after use, string returned has to be free()
+ * Replaces IRC colors by WeeChat colors.
+ *
+ * If keep_colors == 0: removes any color/style in message otherwise keeps
+ * colors.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
 irc_color_decode (const char *string, int keep_colors)
 {
-    unsigned char *out, *ptr_string;
-    int out_length, length, out_pos;
-    char str_fg[3], str_bg[3], str_color[128], str_key[128];
+    unsigned char *out, *out2, *ptr_string;
+    int out_length, length, out_pos, length_to_add;
+    char str_fg[3], str_bg[3], str_color[128], str_key[128], str_to_add[128];
     const char *remapped_color;
     int fg, bg, bold, reverse, italic, underline, rc;
 
+    /*
+     * create output string with size of length*2 (with min 128 bytes),
+     * this string will be realloc() later with a larger size if needed
+     */
     out_length = (strlen (string) * 2) + 1;
+    if (out_length < 128)
+        out_length = 128;
     out = malloc (out_length);
     if (!out)
         return NULL;
 
+    /* initialize attributes */
     bold = 0;
     reverse = 0;
     italic = 0;
@@ -80,20 +87,27 @@ irc_color_decode (const char *string, int keep_colors)
 
     ptr_string = (unsigned char *)string;
     out[0] = '\0';
+    out_pos = 0;
     while (ptr_string && ptr_string[0])
     {
+        str_to_add[0] = '\0';
         switch (ptr_string[0])
         {
             case IRC_COLOR_BOLD_CHAR:
                 if (keep_colors)
-                    strcat ((char *)out,
-                            weechat_color((bold) ? "-bold" : "bold"));
+                {
+                    snprintf (str_to_add, sizeof (str_to_add), "%s",
+                              weechat_color ((bold) ? "-bold" : "bold"));
+                }
                 bold ^= 1;
                 ptr_string++;
                 break;
             case IRC_COLOR_RESET_CHAR:
                 if (keep_colors)
-                    strcat ((char *)out, weechat_color("reset"));
+                {
+                    snprintf (str_to_add, sizeof (str_to_add), "%s",
+                              weechat_color ("reset"));
+                }
                 bold = 0;
                 reverse = 0;
                 italic = 0;
@@ -106,22 +120,28 @@ irc_color_decode (const char *string, int keep_colors)
             case IRC_COLOR_REVERSE_CHAR:
             case IRC_COLOR_REVERSE2_CHAR:
                 if (keep_colors)
-                    strcat ((char *)out,
-                            weechat_color((reverse) ? "-reverse" : "reverse"));
+                {
+                    snprintf (str_to_add, sizeof (str_to_add), "%s",
+                              weechat_color ((reverse) ? "-reverse" : "reverse"));
+                }
                 reverse ^= 1;
                 ptr_string++;
                 break;
             case IRC_COLOR_ITALIC_CHAR:
                 if (keep_colors)
-                    strcat ((char *)out,
-                            weechat_color((italic) ? "-italic" : "italic"));
+                {
+                    snprintf (str_to_add, sizeof (str_to_add), "%s",
+                              weechat_color ((italic) ? "-italic" : "italic"));
+                }
                 italic ^= 1;
                 ptr_string++;
                 break;
             case IRC_COLOR_UNDERLINE_CHAR:
                 if (keep_colors)
-                    strcat ((char *)out,
-                            weechat_color((underline) ? "-underline" : "underline"));
+                {
+                    snprintf (str_to_add, sizeof (str_to_add), "%s",
+                              weechat_color ((underline) ? "-underline" : "underline"));
+                }
                 underline ^= 1;
                 ptr_string++;
                 break;
@@ -194,21 +214,46 @@ irc_color_decode (const char *string, int keep_colors)
                                       (bg >= 0) ? "," : "",
                                       (bg >= 0) ? irc_color_to_weechat[bg] : "");
                         }
-                        strcat ((char *)out, weechat_color(str_color));
+                        snprintf (str_to_add, sizeof (str_to_add), "%s",
+                                  weechat_color (str_color));
                     }
                     else
-                        strcat ((char *)out, weechat_color("resetcolor"));
+                    {
+                        snprintf (str_to_add, sizeof (str_to_add), "%s",
+                                  weechat_color ("resetcolor"));
+                    }
                 }
                 break;
             default:
+                /*
+                 * we are not on an IRC color code, just copy the UTF-8 char
+                 * into "str_to_add"
+                 */
                 length = weechat_utf8_char_size ((char *)ptr_string);
                 if (length == 0)
                     length = 1;
-                out_pos = strlen ((char *)out);
-                memcpy (out + out_pos, ptr_string, length);
-                out[out_pos + length] = '\0';
+                memcpy (str_to_add, ptr_string, length);
+                str_to_add[length] = '\0';
                 ptr_string += length;
                 break;
+        }
+        /* add "str_to_add" (if not empty) to "out" */
+        if (str_to_add[0])
+        {
+            /* if "out" is too small for adding "str_to_add", do a realloc() */
+            length_to_add = strlen (str_to_add);
+            if (out_pos + length_to_add + 1 > out_length)
+            {
+                /* try to double the size of "out" */
+                out_length *= 2;
+                out2 = realloc (out, out_length);
+                if (!out2)
+                    return (char *)out;
+                out = out2;
+            }
+            /* add "str_to_add" to "out" */
+            memcpy (out + out_pos, str_to_add, length_to_add + 1);
+            out_pos += length_to_add;
         }
     }
 
@@ -216,9 +261,9 @@ irc_color_decode (const char *string, int keep_colors)
 }
 
 /*
- * irc_color_decode_for_user_entry: parses a message (coming from IRC server),
- *                                  and replaces colors/bold/.. by ^C, ^B, ..
- *                                  Note: after use, string returned has to be free()
+ * Replaces IRC color codes by codes for command line.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -282,11 +327,12 @@ irc_color_decode_for_user_entry (const char *string)
 }
 
 /*
- * irc_color_encode: parses a message (entered by user), and
- *                   encode special chars (^Cb, ^Cc, ..) in IRC colors
- *                   if keep_colors == 0: remove any color/style in message
- *                   otherwise: keep colors
- *                   Note: after use, string returned has to be free()
+ * Replaces color codes in command line by IRC color codes.
+ *
+ * If keep_colors == 0, remove any color/style in message, otherwise keeps
+ * colors.
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -377,10 +423,10 @@ irc_color_encode (const char *string, int keep_colors)
 }
 
 /*
- * irc_color_modifier_cb: callback for modifiers "irc_color_decode" and
- *                        "irc_color_encode"
- *                        This modifier can be used by other plugins to
- *                        decode/encode IRC colors in messages
+ * Callback for modifiers "irc_color_decode" and "irc_color_encode".
+ *
+ * This modifier can be used by other plugins to decode/encode IRC colors in
+ * messages.
  */
 
 char *
@@ -405,8 +451,9 @@ irc_color_modifier_cb (void *data, const char *modifier,
 }
 
 /*
- * irc_color_for_tags: return color name for tags (replace "," by ":")
- *                     Note: result must be freed after use
+ * Returns color name for tags (replace "," by ":").
+ *
+ * Note: result must be freed after use.
  */
 
 char *

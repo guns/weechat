@@ -89,7 +89,7 @@ WeeChat использует стандартные значения для вс
 На пример: есть ники по умолчанию (базируются на логине un*x системы), и
 вы можете переназначить их для сервера oftc используя команду:
 
-  /set irc.server.oftc.nicks "mynick1,mynick2,mynick3,mynick4,mynick5"
+  /set irc.server.oftc.nicks "mynick,mynick2,mynick3,mynick4,mynick5"
 
 Что бы установить имя, и реальное Имя:
 
@@ -100,12 +100,22 @@ WeeChat использует стандартные значения для вс
 
   /set irc.server.oftc.autoconnect on
 
-Для выполнения команды после подключения, на пример для идентификации
-с помошью NickServ:
+// TRANSLATION MISSING
+If SASL is available on server, you can use it for authentication (you will be
+identified before you join channels):
 
-  /set irc.server.oftc.command "/msg nickserv identify xxxxxx"
+  /set irc.server_default.sasl_mechanism dh-blowfish
+  /set irc.server.oftc.sasl_username "mynick"
+  /set irc.server.oftc.sasl_password "xxxxxxx"
 
-На заметку: команды могут быть разделены используя ';' (двоеточия)
+// TRANSLATION MISSING
+To run a command after connection to server, for example to authenticate
+with nickserv (only if you don't use SASL for authentication):
+
+  /set irc.server.oftc.command "/msg nickserv identify xxxxxxx"
+
+[NOTE]
+команды могут быть разделены используя ';' (двоеточия).
 
 Для автовхода на каналы при подключении используйте:
 
@@ -152,7 +162,7 @@ WeeChat использует стандартные значения для вс
 `/part [quit message]`::
     разделить канал(оставить буфер открытым)
 
-`/close [quit message]`::
+`/close`::
     закрыть буфер сервера, или канала (`/close` это алиас `/buffer close`)
 
 
@@ -221,20 +231,12 @@ WeeChat использует стандартные значения для вс
 Плагины автоматические загружаются если они найдены (пожалуйста,
 посмотрите документацию о load/unload плагинов или скиптов)
 
-Некоторые плагины, позволяют использовать скрипты на других языках
-(Perl, Python, Lua, Ruby, Tcl). Эти плагины должны быть загружены командой
-`/plugin`. Они добавляют такие команды как `/perl` для загрузки скриптов.
+Много пользовательских плагинов доступно для WeeChat:
+http://www.weechat.org/scripts
 
-Много пользовательских скриптов/плагинов доступно для
-WeeChat: http://www.weechat.org/scripts
-
-Простейший путь для установки скриптов - исползовать скрипт 'weeget.py':
-
-. `mkdir -p ~/.weechat/python/autoload`
-. `cd ~/.weechat/python/autoload`
-. `wget http://weechat.org/files/scripts/weeget.py`
-. подгрузить скрипт в Weechat: `/python autoload`
-. скачайте список скриптов: `/weeget list` (for help: `/help weeget`)
+// TRANSLATION MISSING
+You can manage scripts in WeeChat with command `/script` (see `/help script`
+for more info).
 
 
 [[more_doc]]

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-debug.c - debug functions for IRC plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * irc-debug.c: debug functions for IRC plugin
- */
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,7 +31,7 @@
 
 
 /*
- * irc_debug_signal_debug_dump_cb: dump IRC data in WeeChat log file
+ * Dumps IRC data in WeeChat log file.
  */
 
 int
@@ -65,7 +63,7 @@ irc_debug_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
- * irc_debug_init: initialize debug for IRC plugin
+ * Initializes debug for IRC plugin.
  */
 
 void

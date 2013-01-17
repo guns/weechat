@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-weechat-msg.c - build binary messages for WeeChat protocol
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * relay-weechat-msg.c: build binary messages for WeeChat protocol
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,10 +28,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <arpa/inet.h>
-
-#ifdef HAVE_ZLIB
 #include <zlib.h>
-#endif
 
 #include "../../weechat-plugin.h"
 #include "../relay.h"
@@ -46,7 +41,9 @@
 
 
 /*
- * relay_weechat_msg_new: build a new message (for sending to client)
+ * Builds a new message (for sending to client).
+ *
+ * Returns pointer to new message, NULL if error.
  */
 
 struct t_relay_weechat_msg *
@@ -79,7 +76,7 @@ relay_weechat_msg_new (const char *id)
 }
 
 /*
- * relay_weechat_msg_add_bytes: add some bytes to a message
+ * Adds some bytes to a message.
  */
 
 void
@@ -111,7 +108,7 @@ relay_weechat_msg_add_bytes (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_set_bytes: set some bytes in a message
+ * Sets some bytes in a message.
  */
 
 void
@@ -125,7 +122,7 @@ relay_weechat_msg_set_bytes (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_type: add type to a message
+ * Adds type to a message.
  */
 
 void
@@ -136,7 +133,7 @@ relay_weechat_msg_add_type (struct t_relay_weechat_msg *msg, const char *string)
 }
 
 /*
- * relay_weechat_msg_add_char: add a char to a message
+ * Adds a char to a message.
  */
 
 void
@@ -146,7 +143,7 @@ relay_weechat_msg_add_char (struct t_relay_weechat_msg *msg, char c)
 }
 
 /*
- * relay_weechat_msg_add_int: add an integer to a message
+ * Adds an integer to a message.
  */
 
 void
@@ -159,7 +156,7 @@ relay_weechat_msg_add_int (struct t_relay_weechat_msg *msg, int value)
 }
 
 /*
- * relay_weechat_msg_add_long: add a long integer to a message
+ * Adds a long integer to a message.
  */
 
 void
@@ -175,7 +172,7 @@ relay_weechat_msg_add_long (struct t_relay_weechat_msg *msg, long value)
 }
 
 /*
- * relay_weechat_msg_add_string: add length + string to a message
+ * Adds length + string to a message.
  */
 
 void
@@ -198,7 +195,7 @@ relay_weechat_msg_add_string (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_buffer: add buffer (length + data) to a message
+ * Adds buffer (length + data) to a message.
  */
 
 void
@@ -218,7 +215,7 @@ relay_weechat_msg_add_buffer (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_pointer: add a pointer to a message
+ * Adds a pointer to a message.
  */
 
 void
@@ -235,7 +232,7 @@ relay_weechat_msg_add_pointer (struct t_relay_weechat_msg *msg, void *pointer)
 }
 
 /*
- * relay_weechat_msg_add_time: add a time to a message
+ * Adds a time to a message.
  */
 
 void
@@ -244,15 +241,14 @@ relay_weechat_msg_add_time (struct t_relay_weechat_msg *msg, time_t time)
     char str_time[128];
     unsigned char length;
 
-    snprintf (str_time, sizeof (str_time), "%ld", time);
+    snprintf (str_time, sizeof (str_time), "%ld", (long)time);
     length = strlen (str_time);
     relay_weechat_msg_add_bytes (msg, &length, 1);
     relay_weechat_msg_add_bytes (msg, str_time, length);
 }
 
 /*
- * relay_weechat_msg_hashtable_map_cb: callback used to add hashtable items in
- *                                     message
+ * Adds items of hashtable to a message.
  */
 
 void
@@ -286,7 +282,7 @@ relay_weechat_msg_hashtable_map_cb (void *data, struct t_hashtable *hashtable,
 }
 
 /*
- * relay_weechat_msg_add_hashtable: add a hashtable to a message
+ * Adds a hashtable to a message.
  */
 
 void
@@ -322,9 +318,9 @@ relay_weechat_msg_add_hashtable (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_hdata_path: recursively add hdata for a path
- *                                   return number of hdata objects added in
- *                                   message
+ * Adds recursively hdata for a path to a message.
+ *
+ * Returns the number of hdata objects added to message.
  */
 
 int
@@ -534,14 +530,14 @@ relay_weechat_msg_add_hdata_path (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_hdata: add a hdata to a message
- *                              path has format:
- *                                  hdata_head:ptr->var->var->...->var
- *                                where ptr can be a list name or a
- *                                pointer (0x12345)
- *                              keys is optional: if not NULL,
- *                              comma-separated list of keys to return
- *                              for hdata
+ * Adds a hdata to a message.
+ *
+ * Argument path has format:
+ *   hdata_head:ptr->var->var->...->var
+ * where ptr can be a list name or a pointer (0x12345)
+ *
+ * Argument keys is optional: if not NULL, comma-separated list of keys to
+ * return for hdata.
  */
 
 void
@@ -704,6 +700,7 @@ relay_weechat_msg_add_hdata (struct t_relay_weechat_msg *msg,
                                                   ptr_hdata_head,
                                                   pointer,
                                                   list_keys);
+        free (path_pointers);
     }
     count32 = htonl ((uint32_t)count);
     relay_weechat_msg_set_bytes (msg, pos_count, &count32, 4);
@@ -722,7 +719,7 @@ end:
 }
 
 /*
- * relay_weechat_msg_add_infolist: add an infolist to a message
+ * Adds an infolist to a message.
  */
 
 void
@@ -824,10 +821,9 @@ relay_weechat_msg_add_infolist (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_nicklist_buffer: add nicklist for a buffer, as hdata
- *                                        object
- *                                        return number of nicks+groups added
- *                                        in message
+ * Adds nicklist for a buffer, as hdata object.
+ *
+ * Returns the number of nicks+groups added to message.
  */
 
 int
@@ -912,8 +908,7 @@ relay_weechat_msg_add_nicklist_buffer (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_add_nicklist: add nicklist for one or all buffers, as
- *                                 hdata object
+ * Adds nicklist for one or all buffers, as hdata object.
  */
 
 void
@@ -955,7 +950,7 @@ relay_weechat_msg_add_nicklist (struct t_relay_weechat_msg *msg,
 }
 
 /*
- * relay_weechat_msg_send: send a message
+ * Sends a message.
  */
 
 void
@@ -964,7 +959,6 @@ relay_weechat_msg_send (struct t_relay_client *client,
 {
     uint32_t size32;
     char compression;
-#ifdef HAVE_ZLIB
     int rc;
     Bytef *dest;
     uLongf dest_size;
@@ -1009,7 +1003,8 @@ relay_weechat_msg_send (struct t_relay_client *client,
             free (dest);
         }
     }
-#endif
+
+    /* compression with zlib failed (or not asked), send uncompressed message */
 
     /* set size and compression flag */
     size32 = htonl ((uint32_t)msg->data_size);
@@ -1026,7 +1021,7 @@ relay_weechat_msg_send (struct t_relay_client *client,
 }
 
 /*
- * relay_weechat_msg_free: free a message
+ * Frees a message.
  */
 
 void

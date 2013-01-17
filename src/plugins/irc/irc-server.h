@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -140,17 +141,21 @@ struct t_irc_server
     int addresses_count;            /* number of addresses                   */
     char **addresses_array;         /* addresses (after split)               */
     int *ports_array;               /* ports for addresses                   */
+    int *retry_array;               /* retry count per address               */
     int index_current_address;      /* current address index in array        */
     char *current_address;          /* current address                       */
     char *current_ip;               /* current IP address                    */
     int current_port;               /* current port                          */
-    int sock;                       /* socket for server (IPv4 or IPv6)      */
+    int current_retry;              /* current retry count (increment if a   */
+                                    /* connected server fails in any way)    */
+    int sock;                       /* socket for server                     */
     struct t_hook *hook_connect;    /* connection hook                       */
     struct t_hook *hook_fd;         /* hook for server socket                */
     struct t_hook *hook_timer_connection; /* timer for connection            */
     struct t_hook *hook_timer_sasl; /* timer for SASL authentication         */
     int is_connected;               /* 1 if WeeChat is connected to server   */
     int ssl_connected;              /* = 1 if connected with SSL             */
+    int disconnected;               /* 1 if server has been disconnected     */
 #ifdef HAVE_GNUTLS
     gnutls_session_t gnutls_sess;   /* gnutls session (only if SSL is used)  */
     gnutls_x509_crt_t tls_cert;     /* certificate used if ssl_cert is set   */
@@ -161,6 +166,8 @@ struct t_irc_server
     char **nicks_array;             /* nicknames (after split)               */
     int nick_first_tried;           /* first nick tried in list of nicks     */
                                     /* when (re-)connecting to server        */
+    int nick_alternate_number;      /* number used to build alternate nicks  */
+                                    /* (nick____1, nick____2, ...)           */
     char *nick;                     /* current nickname                      */
     char *nick_modes;               /* nick modes                            */
     char *isupport;                 /* copy of message 005 (ISUPPORT)        */
@@ -194,7 +201,9 @@ struct t_irc_server
     struct t_irc_redirect *last_redirect;    /* last command redirection     */
     struct t_irc_notify *notify_list;        /* list of notify               */
     struct t_irc_notify *last_notify;        /* last notify                  */
-    struct t_hashtable *manual_joins;        /* manual joins pending         */
+    struct t_hashtable *join_manual;         /* manual joins pending         */
+    struct t_hashtable *join_channel_key;    /* keys pending for joins       */
+    struct t_hashtable *join_noswitch;       /* joins w/o switch to buffer   */
     struct t_gui_buffer *buffer;          /* GUI buffer allocated for server */
     char *buffer_as_string;               /* used to return buffer info      */
     struct t_irc_channel *channels;       /* opened channels on server       */
@@ -237,7 +246,7 @@ extern void irc_server_set_addresses (struct t_irc_server *server,
                                       const char *addresses);
 extern void irc_server_set_nicks (struct t_irc_server *server, const char *nicks);
 extern void irc_server_set_nick (struct t_irc_server *server, const char *nick);
-extern int irc_server_get_nick_index (struct t_irc_server *server);
+extern const char *irc_server_get_alternate_nick (struct t_irc_server *server);
 extern const char *irc_server_get_isupport_value (struct t_irc_server *server,
                                                   const char *feature);
 extern void irc_server_set_prefix_modes_chars (struct t_irc_server *server,

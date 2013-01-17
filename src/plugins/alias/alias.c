@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * alias.c - alias plugin for WeeChat: command aliases
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,11 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * alias.c: alias plugin for WeeChat: create "alias" commands to run other
- *          commands
  */
 
 #include <stdlib.h>
@@ -47,9 +44,11 @@ struct t_alias *last_alias = NULL;
 
 
 /*
- * alias_valid: check if an alias pointer exists
- *              return 1 if alias exists
- *                     0 if alias is not found
+ * Checks if an alias pointer is valid.
+ *
+ * Returns:
+ *   1: alias exists
+ *   0; alias does not exist
  */
 
 int
@@ -72,7 +71,9 @@ alias_valid (struct t_alias *alias)
 }
 
 /*
- * alias_search: search an alias
+ * Searches for an alias by name.
+ *
+ * Returns pointer to alias found, NULL if not found.
  */
 
 struct t_alias *
@@ -90,7 +91,7 @@ alias_search (const char *alias_name)
 }
 
 /*
- * alias_string_add_word: add word to string and increment length
+ * Adds a word to string and increments length.
  */
 
 void
@@ -130,8 +131,7 @@ alias_string_add_word (char **alias, int *length, const char *word)
 }
 
 /*
- * alias_string_add_word_range: add word (in range) to string and increment
- *                              length
+ * Adds word (in range) to string and increments length.
  */
 
 void
@@ -149,8 +149,7 @@ alias_string_add_word_range (char **alias, int *length, const char *start,
 }
 
 /*
- * alias_string_add_arguments: add some arguments to string and increment
- *                             length
+ * Adds some arguments to string and increments length.
  */
 
 void
@@ -168,15 +167,15 @@ alias_string_add_arguments (char **alias, int *length, char **argv, int start,
 }
 
 /*
- * alias_replace_args: replace arguments in alias
- *                     arguments are:
- *                       $n   argument n
- *                       $-m  arguments from 1 to m
- *                       $n-  arguments from n to last
- *                       $n-m arguments from n to m
- *                       $*   all arguments
- *                       $~   last argument
- *                     with n and m in 1..9
+ * Replaces arguments in alias.
+ *
+ * Arguments replaced are (n and m in 1..9):
+ *   $n   argument n
+ *   $-m  arguments from 1 to m
+ *   $n-  arguments from n to last
+ *   $n-m arguments from n to m
+ *   $*   all arguments
+ *   $~   last argument
  */
 
 char *
@@ -298,8 +297,7 @@ alias_replace_args (const char *alias_args, const char *user_args)
 }
 
 /*
- * alias_run_command: replace local buffer variables in string, then run
- *                    command on buffer
+ * Replaces local buffer variables in string, then runs command on buffer.
  */
 
 void
@@ -330,7 +328,7 @@ alias_run_command (struct t_gui_buffer **buffer, const char *command)
 }
 
 /*
- * alias_cb: callback for alias (called when user uses an alias)
+ * Callback for alias: called when user uses an alias.
  */
 
 int
@@ -433,7 +431,7 @@ alias_cb (void *data, struct t_gui_buffer *buffer, int argc, char **argv,
 }
 
 /*
- * alias_free: free an alias and remove it from list
+ * Frees an alias and remove it from list.
  */
 
 void
@@ -469,7 +467,7 @@ alias_free (struct t_alias *alias)
 }
 
 /*
- * alias_free_all: free all alias
+ * Frees all aliases.
  */
 
 void
@@ -482,7 +480,7 @@ alias_free_all ()
 }
 
 /*
- * alias_find_pos: find position for an alias (for sorting aliases)
+ * Searches for position of alias (to keep aliases sorted by name).
  */
 
 struct t_alias *
@@ -501,25 +499,33 @@ alias_find_pos (const char *name)
 }
 
 /*
- * alias_hook_command: call weehat_hook_command() for an alias and store result
- *                     in variable "hook" of alias
+ * Hooks command for an alias.
  */
 
 void
 alias_hook_command (struct t_alias *alias)
 {
-    char *str_completion;
+    char *str_priority_name, *str_completion;
     int length;
 
-    str_completion = NULL;
+    /*
+     * build string with priority and name: the alias priority is 2000, which
+     * is higher than default one (1000), so the alias is executed before a
+     * command (if a command with same name exists in core or in another plugin)
+     */
+    length = strlen (alias->name) + 16 + 1;
+    str_priority_name = malloc (length);
+    if (str_priority_name)
+        snprintf (str_priority_name, length, "2000|%s", alias->name);
 
+    /*
+     * if alias has no custom completion, then default is to complete with
+     * completion template of target command, for example if alias is
+     * "/alias test /buffer", then str_completion will be "%%buffer"
+     */
+    str_completion = NULL;
     if (!alias->completion)
     {
-        /*
-         * if alias has no custom completion, then default is to complete with
-         * completion template of target command, for example if alias is
-         * "/alias test /buffer", then str_completion will be "%%buffer"
-         */
         length = 2 + strlen (alias->command) + 1;
         str_completion = malloc (length);
         if (str_completion)
@@ -530,17 +536,20 @@ alias_hook_command (struct t_alias *alias)
         }
     }
 
-    alias->hook = weechat_hook_command (alias->name, alias->command,
+    alias->hook = weechat_hook_command ((str_priority_name) ? str_priority_name : alias->name,
+                                        alias->command,
                                         NULL, NULL,
                                         (str_completion) ? str_completion : alias->completion,
                                         &alias_cb, alias);
 
+    if (str_priority_name)
+        free (str_priority_name);
     if (str_completion)
         free (str_completion);
 }
 
 /*
- * alias_update_completion: update completion for an alias
+ * Updates completion for an alias.
  */
 
 void
@@ -558,7 +567,9 @@ alias_update_completion (struct t_alias *alias, const char *completion)
 }
 
 /*
- * alias_new: create new alias and add it to alias list
+ * Creates a new alias and adds it to alias list.
+ *
+ * Returns pointer to new alias, NULL if error.
  */
 
 struct t_alias *
@@ -625,7 +636,7 @@ alias_new (const char *name, const char *command, const char *completion)
 }
 
 /*
- * alias_get_final_command: get final command pointed by an alias
+ * Gets final command pointer by an alias.
  */
 
 char *
@@ -658,7 +669,7 @@ alias_get_final_command (struct t_alias *alias)
 }
 
 /*
- * alias_command_cb: display or create alias
+ * Callback for command "/alias": displays or creates alias.
  */
 
 int
@@ -707,7 +718,7 @@ alias_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
                 return WEECHAT_RC_OK;
             }
 
-            /* create config option for command */
+            /* create configuration option for command */
             ptr_option = weechat_config_search_option (alias_config_file,
                                                        alias_config_section_cmd,
                                                        ptr_alias_name);
@@ -715,7 +726,7 @@ alias_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
                 weechat_config_option_free (ptr_option);
             alias_config_cmd_new_option (ptr_alias_name, ptr_command);
 
-            /* create config option for completion */
+            /* create configuration option for completion */
             ptr_option = weechat_config_search_option (alias_config_file,
                                                        alias_config_section_completion,
                                                        ptr_alias_name);
@@ -788,7 +799,7 @@ alias_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * unalias_command_cb: remove an alias
+ * Callback for command "/unalias": removes an alias.
  */
 
 int
@@ -846,7 +857,7 @@ unalias_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * alias_completion_cb: callback for completion with list of aliases
+ * Adds list of aliases to completion list.
  */
 
 int
@@ -872,7 +883,7 @@ alias_completion_cb (void *data, const char *completion_item,
 }
 
 /*
- * alias_value_completion_cb: callback for completion with value of an alias
+ * Adds value of an alias to completion list.
  */
 
 int
@@ -881,7 +892,8 @@ alias_value_completion_cb (void *data, const char *completion_item,
                            struct t_gui_completion *completion)
 {
     const char *args;
-    char *pos, *alias_name;
+    char **argv, *alias_name;
+    int argc;
     struct t_alias *ptr_alias;
 
     /* make C compiler happy */
@@ -892,23 +904,27 @@ alias_value_completion_cb (void *data, const char *completion_item,
     args = weechat_hook_completion_get_string (completion, "args");
     if (args)
     {
-        pos = strchr (args, ' ');
-        if (pos)
-            alias_name = weechat_strndup (args, pos - args);
-        else
-            alias_name = strdup (args);
-
-        if (alias_name)
+        argv = weechat_string_split (args, " ", 0, 0, &argc);
+        if (argv)
         {
-            ptr_alias = alias_search (alias_name);
-            if (ptr_alias)
+            if (argc > 0)
+                alias_name = strdup (argv[argc - 1]);
+            else
+                alias_name = strdup (args);
+
+            if (alias_name)
             {
-                weechat_hook_completion_list_add (completion,
-                                                  ptr_alias->command,
-                                                  0,
-                                                  WEECHAT_LIST_POS_BEGINNING);
+                ptr_alias = alias_search (alias_name);
+                if (ptr_alias)
+                {
+                    weechat_hook_completion_list_add (completion,
+                                                      ptr_alias->command,
+                                                      0,
+                                                      WEECHAT_LIST_POS_BEGINNING);
+                }
+                free (alias_name);
             }
-            free (alias_name);
+            weechat_string_free_split (argv);
         }
     }
 
@@ -916,8 +932,11 @@ alias_value_completion_cb (void *data, const char *completion_item,
 }
 
 /*
- * alias_add_to_infolist: add an alias in an infolist
- *                        return 1 if ok, 0 if error
+ * Adds an alias in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -947,7 +966,7 @@ alias_add_to_infolist (struct t_infolist *infolist, struct t_alias *alias)
 }
 
 /*
- * weechat_plugin_init: initialize alias plugin
+ * Initializes alias plugin.
  */
 
 int
@@ -1005,7 +1024,8 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
                              "  alias /forcejoin to send IRC command "
                              "\"forcejoin\" with completion of /sajoin:\n"
                              "    /alias -completion %%sajoin forcejoin /quote forcejoin"),
-                          "%(alias)|-completion %(commands)|%(alias_value)",
+                          "-completion %- %(alias) %(commands)|%(alias_value)"
+                          " || %(alias) %(commands)|%(alias_value)",
                           &alias_command_cb, NULL);
 
     weechat_hook_command ("unalias", N_("remove aliases"),
@@ -1025,7 +1045,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: end alias plugin
+ * Ends alias plugin.
  */
 
 int

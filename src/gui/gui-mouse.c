@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2011-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-mouse.c - functions for mouse (used by all GUI)
+ *
+ * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-mouse.c: functions for mouse (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -49,7 +47,7 @@ char gui_mouse_event_button = '#';     /* button pressed (or wheel)         */
 
 
 /*
- * gui_mouse_debug_set: set debug for mouse events
+ * Sets debug for mouse events.
  */
 
 void
@@ -67,7 +65,7 @@ gui_mouse_debug_set (int debug)
 }
 
 /*
- * gui_mouse_event_reset: reset event values
+ * Resets event values.
  */
 
 void

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-utf8.c - UTF-8 string functions
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -18,10 +20,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * wee-utf8.c: UTF-8 string functions for WeeChat
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -38,8 +36,9 @@
 
 int local_utf8 = 0;
 
+
 /*
- * utf8_init: initializes UTF-8 in WeeChat
+ * Initializes UTF-8 in WeeChat.
  */
 
 void
@@ -49,7 +48,11 @@ utf8_init ()
 }
 
 /*
- * utf8_has_8bits: return 1 if string has 8-bits chars, 0 if only 7-bits chars
+ * Checks if a string has some 8-bit chars.
+ *
+ * Returns:
+ *   1: string has 8-bit chars
+ *   0: string has only 7-bit chars
  */
 
 int
@@ -65,9 +68,12 @@ utf8_has_8bits (const char *string)
 }
 
 /*
- * utf8_is_valid: return 1 if UTF-8 string is valid, 0 otherwise
- *                if error is not NULL, it is set with first non valid UTF-8
- *                char in string, if any
+ * Checks if a string is UTF-8 valid.
+ *
+ * Returns:
+ *   1: string is UTF-8 valid
+ *   0: string it not UTF-8 valid, and then if error is not NULL, it is set with
+ *      first non valid UTF-8 char in string
  */
 
 int
@@ -129,8 +135,8 @@ utf8_is_valid (const char *string, char **error)
 }
 
 /*
- * utf8_normalize: normalize UTF-8 string: remove non UTF-8 chars and
- *                 replace them by a char
+ * Normalizes an string: removes non UTF-8 chars and replaces them by a
+ * "replacement" char.
  */
 
 void
@@ -148,7 +154,7 @@ utf8_normalize (char *string, char replacement)
 }
 
 /*
- * utf8_prev_char: return previous UTF-8 char in a string
+ * Returns pointer to previous UTF-8 char in a string.
  */
 
 char *
@@ -189,7 +195,7 @@ utf8_prev_char (const char *string_start, const char *string)
 }
 
 /*
- * utf8_next_char: return next UTF-8 char in a string
+ * Returns pointer to next UTF-8 char in a string.
  */
 
 char *
@@ -230,7 +236,7 @@ utf8_next_char (const char *string)
 }
 
 /*
- * utf8_char_int: return UTF-8 char as integer
+ * Returns UTF-8 char as an integer.
  */
 
 int
@@ -285,7 +291,7 @@ utf8_char_int (const char *string)
 }
 
 /*
- * utf8_wide_char: get wide char from string (first char)
+ * Gets wide char from string (first char).
  */
 
 wint_t
@@ -325,7 +331,9 @@ utf8_wide_char (const char *string)
 }
 
 /*
- * utf8_char_size: return UTF-8 char size (in bytes)
+ * Gets size of UTF-8 char (in bytes).
+ *
+ * Returns an integer between 0 and 4.
  */
 
 int
@@ -338,7 +346,8 @@ utf8_char_size (const char *string)
 }
 
 /*
- * utf8_strlen: return length of an UTF-8 string (<= strlen(string))
+ * Returns length of an UTF-8 string in number of chars (not bytes).
+ * Result is <= strlen(string).
  */
 
 int
@@ -359,7 +368,7 @@ utf8_strlen (const char *string)
 }
 
 /*
- * utf8_strnlen: return length of an UTF-8 string, for N bytes max in string
+ * Returns length of an UTF-8 string for N bytes max in string.
  */
 
 int
@@ -382,8 +391,7 @@ utf8_strnlen (const char *string, int bytes)
 }
 
 /*
- * utf8_strlen_screen: return number of chars needed on screen to display
- *                     UTF-8 string
+ * Returns number of chars needed on screen to display the UTF-8 string.
  */
 
 int
@@ -427,7 +435,7 @@ utf8_strlen_screen (const char *string)
 }
 
 /*
- * utf8_charcmp: compare two utf8 chars (case sensitive)
+ * Compares two UTF-8 chars (case sensitive).
  */
 
 int
@@ -460,7 +468,7 @@ utf8_charcmp (const char *string1, const char *string2)
 }
 
 /*
- * utf8_charcasecmp: compare two utf8 chars (case is ignored)
+ * Compares two UTF-8 chars (case is ignored).
  */
 
 int
@@ -483,13 +491,21 @@ utf8_charcasecmp (const char *string1, const char *string2)
 }
 
 /*
- * utf8_charcasecmp_range: compare two utf8 chars, case is ignored
- *                         using a range, examples:
- *                         - range = 26: A-Z         ==> a-z
- *                         - range = 29: A-Z [ \ ]   ==> a-z { | }
- *                         - range = 30: A-Z [ \ ] ^ ==> a-z { | } ~
- *                         (ranges 29 and 30 are used by some protocols like
- *                         IRC)
+ * Compares two UTF-8 chars (case is ignored) using a range.
+ *
+ * The range is the number of chars which can be converted from upper to lower
+ * case. For example 26 = all letters of alphabet, 29 = all letters + 3 chars.
+ *
+ * Examples:
+ *   - range = 26: A-Z         ==> a-z
+ *   - range = 29: A-Z [ \ ]   ==> a-z { | }
+ *   - range = 30: A-Z [ \ ] ^ ==> a-z { | } ~
+ *   (ranges 29 and 30 are used by some protocols like IRC)
+ *
+ * Returns:
+ *   < 0: char1 < char2
+ *     0: char1 == char2
+ *   > 0: char1 > char2
  */
 
 int
@@ -512,8 +528,7 @@ utf8_charcasecmp_range (const char *string1, const char *string2, int range)
 }
 
 /*
- * utf8_char_size_screen: return number of chars needed on screen to display
- *                        UTF-8 char
+ * Returns number of chars needed on screen to display the UTF-8 char.
  */
 
 int
@@ -536,7 +551,7 @@ utf8_char_size_screen (const char *string)
 }
 
 /*
- * utf8_add_offset: move forward N chars in an UTF-8 string
+ * Moves forward N chars in an UTF-8 string.
  */
 
 char *
@@ -554,8 +569,11 @@ utf8_add_offset (const char *string, int offset)
 }
 
 /*
- * utf8_real_pos: get real position in UTF-8 string
- *                for example: ("aébc", 2) returns 3
+ * Returns real position in UTF-8 string, in bytes.
+ *
+ * Argument "pos" is a number of chars (not bytes).
+ *
+ * Example: ("dÃ©ca", 2) returns 3.
  */
 
 int
@@ -580,8 +598,11 @@ utf8_real_pos (const char *string, int pos)
 }
 
 /*
- * utf8_pos: get position in UTF-8
- *           for example: ("aébc", 3) returns 2
+ * Returns position in UTF-8 string, in chars.
+ *
+ * Argument "real_pos" is a number of bytes (not chars).
+ *
+ * Example: ("dÃ©ca", 3) returns 2.
  */
 
 int
@@ -604,7 +625,7 @@ utf8_pos (const char *string, int real_pos)
 }
 
 /*
- * utf8_strndup: return duplicate string, with max N UTF-8 chars
+ * Duplicates an UTF-8 string, with max N chars.
  */
 
 char *

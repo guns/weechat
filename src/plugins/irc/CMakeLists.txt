@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -52,9 +52,7 @@ IF(GNUTLS_FOUND)
   LIST(APPEND LINK_LIBS ${GNUTLS_LIBRARY})
 ENDIF(GNUTLS_FOUND)
 
-IF(GCRYPT_FOUND)
-  LIST(APPEND LINK_LIBS gcrypt)
-ENDIF(GCRYPT_FOUND)
+LIST(APPEND LINK_LIBS ${GCRYPT_LDFLAGS})
 
 TARGET_LINK_LIBRARIES(irc ${LINK_LIBS})
 

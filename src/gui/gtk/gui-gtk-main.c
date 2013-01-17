@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-gtk-main.c - main loop for Gtk GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * gui-gtk-main.c: main loop for Gtk GUI
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,6 +32,7 @@
 #include "../../core/weechat.h"
 #include "../../core/wee-config.h"
 #include "../../core/wee-utf8.h"
+#include "../../core/wee-version.h"
 #include "../../plugins/plugin.h"
 #include "../gui-bar.h"
 #include "../gui-bar-item.h"
@@ -63,7 +62,7 @@ GtkWidget *gui_gtk_label1;
 
 
 /*
- * gui_main_pre_init: pre-initialize GUI (called before gui_init)
+ * Pre-initializes GUI (called before gui_init).
  */
 
 void
@@ -80,7 +79,7 @@ gui_main_pre_init (int *argc, char **argv[])
 }
 
 /*
- * gui_main_init: init GUI
+ * Initializes GUI.
  */
 
 void
@@ -93,7 +92,7 @@ gui_main_init ()
 
     gui_color_init ();
 
-    /* build prefixes according to config */
+    /* build prefixes according to configuration */
     gui_chat_prefix_build ();
 
     /* init clipboard buffer */
@@ -105,7 +104,8 @@ gui_main_init ()
     gdk_color_parse ("black", &color_bg);
 
     gui_gtk_main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title (GTK_WINDOW (gui_gtk_main_window), PACKAGE_STRING);
+    gtk_window_set_title (GTK_WINDOW (gui_gtk_main_window),
+                          version_get_name_version ());
 
     g_signal_connect (G_OBJECT (gui_gtk_main_window), "destroy", gtk_main_quit, NULL);
 
@@ -192,7 +192,7 @@ gui_main_init ()
             gui_current_window = gui_windows;
 
             if (CONFIG_BOOLEAN(config_look_set_title))
-                gui_window_set_title (PACKAGE_NAME " " PACKAGE_VERSION);
+                gui_window_set_title (version_get_name_version ());
         }
 
         /*
@@ -217,7 +217,7 @@ gui_main_init ()
 }
 
 /*
- * gui_main_loop: main loop for WeeChat with Gtk GUI
+ * Main loop for WeeChat with Gtk GUI.
  */
 
 void
@@ -228,9 +228,10 @@ gui_main_loop ()
 }
 
 /*
- * gui_main_end: GUI end
- *               clean_exit is 0 when WeeChat is crashing (we don't clean
- *               objects because WeeChat can crash again during this cleanup...)
+ * Ends GUI.
+ *
+ * Argument "clean_exit" is 0 when WeeChat is crashing (we don't clean objects
+ * because WeeChat can crash again during this cleanup...).
  */
 
 void

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-command.c - IRC commands
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -16,10 +18,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-command.c: IRC commands
  */
 
 #include <stdlib.h>
@@ -51,7 +49,7 @@
 
 
 /*
- * irc_command_mode_nicks: send mode change for many nicks on a channel
+ * Sends mode change for many nicks on a channel.
  */
 
 void
@@ -83,7 +81,8 @@ irc_command_mode_nicks (struct t_irc_server *server, const char *channel,
 }
 
 /*
- * irc_command_admin: find information about the administrator of the server
+ * Callback for command "/admin": finds information about the administrator of
+ * the server.
  */
 
 int
@@ -112,9 +111,9 @@ irc_command_admin (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_exec_all_channels: execute a command on all channels
- *                                if server is NULL, command is executed on all
- *                                channels of all connected servers
+ * Executes a command on all channels.
+ *
+ * If server is NULL, executes command on all channels of all connected servers.
  */
 
 void
@@ -186,8 +185,8 @@ irc_command_exec_all_channels (struct t_irc_server *server,
 }
 
 /*
- * irc_command_allchan: execute a command on all channels of all connected
- *                      servers
+ * Callback for command "/allchan": executes a command on all channels of all
+ * connected servers.
  */
 
 int
@@ -236,7 +235,7 @@ irc_command_allchan (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_exec_all_servers: execute a command on all connected channels
+ * Executes a command on all connected channels.
  */
 
 void
@@ -295,7 +294,7 @@ irc_command_exec_all_servers (const char *exclude_servers, const char *command)
 }
 
 /*
- * irc_command_allserv: execute a command on all connected servers
+ * Callback for command "/allserv": executes a command on all connected servers.
  */
 
 int
@@ -335,7 +334,7 @@ irc_command_allserv (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_me_channel_display: display a ctcp action on channel
+ * Displays a ctcp action on a channel.
  */
 
 void
@@ -344,26 +343,30 @@ irc_command_me_channel_display (struct t_irc_server *server,
                                 const char *arguments)
 {
     char *string;
+    struct t_irc_nick *ptr_nick;
 
     string = (arguments && arguments[0]) ?
         irc_color_decode (arguments,
                           weechat_config_boolean (irc_config_network_colors_receive)) : NULL;
+    ptr_nick = irc_nick_search (server, channel, server->nick);
     weechat_printf_tags (channel->buffer,
                          irc_protocol_tags ("privmsg",
                                             "irc_action,notify_none,no_highlight",
                                             server->nick),
-                         "%s%s%s%s %s",
+                         "%s%s%s%s%s%s%s",
                          weechat_prefix ("action"),
+                         irc_nick_mode_for_display (server, ptr_nick, 0),
                          IRC_COLOR_CHAT_NICK_SELF,
                          server->nick,
-                         IRC_COLOR_RESET,
+                         (string) ? IRC_COLOR_RESET : "",
+                         (string) ? " " : "",
                          (string) ? string : "");
     if (string)
         free (string);
 }
 
 /*
- * irc_command_me_channel: send a ctcp action to a channel
+ * Sends a ctcp action to a channel.
  */
 
 void
@@ -399,7 +402,7 @@ irc_command_me_channel (struct t_irc_server *server,
 }
 
 /*
- * irc_command_me_all_channels: send a ctcp action to all channels of a server
+ * Sends a ctcp action to all channels of a server.
  */
 
 void
@@ -416,7 +419,7 @@ irc_command_me_all_channels (struct t_irc_server *server, const char *arguments)
 }
 
 /*
- * irc_command_away_server: toggle away status for one server
+ * Toggles away status for one server.
  */
 
 void
@@ -536,9 +539,6 @@ irc_command_away_server (struct t_irc_server *server, const char *arguments,
                 }
             }
             irc_server_set_away (server, server->nick, 0);
-
-            /* ask refresh for "away" item */
-            weechat_bar_item_update ("away");
         }
         else
         {
@@ -550,11 +550,14 @@ irc_command_away_server (struct t_irc_server *server, const char *arguments,
                             _("%s: future away removed"),
                             IRC_PLUGIN_NAME);
         }
+
+        /* ask refresh for "away" item */
+        weechat_bar_item_update ("away");
     }
 }
 
 /*
- * irc_command_away: toggle away status
+ * Callback for command "/away": toggles away status.
  */
 
 int
@@ -595,7 +598,7 @@ irc_command_away (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_run_away: catch command /away when it is run
+ * Callback for command /away when it's run ("command_run" hooked).
  */
 
 int
@@ -622,7 +625,7 @@ irc_command_run_away (void *data, struct t_gui_buffer *buffer,
 }
 
 /*
- * irc_command_ban: bans nicks or hosts
+ * Callback for command "/ban": bans nicks or hosts.
  */
 
 int
@@ -704,8 +707,11 @@ irc_command_ban (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_connect_one_server: connect to one server
- *                                 return 0 if error, 1 if ok
+ * Connects to one server.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -751,7 +757,7 @@ irc_command_connect_one_server (struct t_irc_server *server,
 }
 
 /*
- * irc_command_connect: connect to server(s)
+ * Callback for command "/connect": connects to server(s).
  */
 
 int
@@ -759,7 +765,7 @@ irc_command_connect (void *data, struct t_gui_buffer *buffer, int argc,
                      char **argv, char **argv_eol)
 {
     int i, nb_connect, connect_ok, all_servers, all_opened, switch_address;
-    int no_join;
+    int no_join, autoconnect;
     char *name;
 
     IRC_BUFFER_GET_SERVER(buffer);
@@ -774,6 +780,7 @@ irc_command_connect (void *data, struct t_gui_buffer *buffer, int argc,
     all_opened = 0;
     switch_address = 0;
     no_join = 0;
+    autoconnect = 0;
     for (i = 1; i < argc; i++)
     {
         if (weechat_strcasecmp (argv[i], "-all") == 0)
@@ -784,6 +791,8 @@ irc_command_connect (void *data, struct t_gui_buffer *buffer, int argc,
             switch_address = 1;
         else if (weechat_strcasecmp (argv[i], "-nojoin") == 0)
             no_join = 1;
+        else if (weechat_strcasecmp (argv[i], "-auto") == 0)
+            autoconnect = 1;
     }
 
     if (all_opened)
@@ -809,6 +818,23 @@ irc_command_connect (void *data, struct t_gui_buffer *buffer, int argc,
              ptr_server = ptr_server->next_server)
         {
             if (!ptr_server->is_connected && (!ptr_server->hook_connect))
+            {
+                if (!irc_command_connect_one_server (ptr_server,
+                                                     switch_address, no_join))
+                {
+                    connect_ok = 0;
+                }
+            }
+        }
+        return (connect_ok) ? WEECHAT_RC_OK : WEECHAT_RC_ERROR;
+    }
+    else if (autoconnect)
+    {
+        for (ptr_server = irc_servers; ptr_server;
+             ptr_server = ptr_server->next_server)
+        {
+            if (!ptr_server->is_connected && (!ptr_server->hook_connect)
+                && (IRC_SERVER_OPTION_BOOLEAN(ptr_server, IRC_SERVER_OPTION_AUTOCONNECT)))
             {
                 if (!irc_command_connect_one_server (ptr_server,
                                                      switch_address, no_join))
@@ -910,7 +936,7 @@ irc_command_connect (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_ctcp: send a ctcp message
+ * Callback for command "/ctcp": sends a ctcp message.
  */
 
 int
@@ -990,7 +1016,7 @@ irc_command_ctcp (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_cycle: leave and rejoin a channel
+ * Callback for command "/cycle": leaves and rejoins a channel.
  */
 
 int
@@ -1094,7 +1120,7 @@ irc_command_cycle (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_dcc: DCC control (file or chat)
+ * Callback for command "/dcc": DCC control (file or chat).
  */
 
 int
@@ -1145,7 +1171,7 @@ irc_command_dcc (void *data, struct t_gui_buffer *buffer, int argc,
                     weechat_infolist_new_var_string (item, "filename", argv_eol[3]);
                     snprintf (str_address, sizeof (str_address),
                               "%lu", address);
-                    weechat_infolist_new_var_string (item, "address", str_address);
+                    weechat_infolist_new_var_string (item, "local_address", str_address);
                     weechat_infolist_new_var_integer (item, "socket", ptr_server->sock);
                     weechat_hook_signal_send ("xfer_add",
                                               WEECHAT_HOOK_SIGNAL_POINTER,
@@ -1177,7 +1203,7 @@ irc_command_dcc (void *data, struct t_gui_buffer *buffer, int argc,
                     weechat_infolist_new_var_string (item, "charset_modifier", charset_modifier);
                     snprintf (str_address, sizeof (str_address),
                               "%lu", address);
-                    weechat_infolist_new_var_string (item, "address", str_address);
+                    weechat_infolist_new_var_string (item, "local_address", str_address);
                     weechat_hook_signal_send ("xfer_add",
                                               WEECHAT_HOOK_SIGNAL_POINTER,
                                               infolist);
@@ -1203,7 +1229,8 @@ irc_command_dcc (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_dehalfop: remove half operator privileges from nickname(s)
+ * Callback for command "/dehalfop": removes half operator privileges from
+ * nickname(s).
  */
 
 int
@@ -1244,7 +1271,7 @@ irc_command_dehalfop (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_deop: remove operator privileges from nickname(s)
+ * Callback for command "/deop": removes operator privileges from nickname(s).
  */
 
 int
@@ -1285,7 +1312,7 @@ irc_command_deop (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_devoice: remove voice from nickname(s)
+ * Callback for command "/devoice": removes voice from nickname(s).
  */
 
 int
@@ -1326,7 +1353,7 @@ irc_command_devoice (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_die: shutdown the server
+ * Callback for command "/die": shutdowns the server.
  */
 
 int
@@ -1355,7 +1382,7 @@ irc_command_die (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_quit_server: send QUIT to a server
+ * Sends QUIT to a server.
  */
 
 void
@@ -1390,8 +1417,11 @@ irc_command_quit_server (struct t_irc_server *server, const char *arguments)
 }
 
 /*
- * irc_command_disconnect_one_server: disconnect from a server
- *                                    return 0 if error, 1 if ok
+ * Disconnects from a server.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -1419,12 +1449,15 @@ irc_command_disconnect_one_server (struct t_irc_server *server,
     irc_command_quit_server (server, reason);
     irc_server_disconnect (server, 0, 0);
 
+    /* ask refresh for "away" item */
+    weechat_bar_item_update ("away");
+
     /* disconnect ok */
     return 1;
 }
 
 /*
- * irc_command_disconnect: disconnect from server(s)
+ * Callback for command "/disconnect": disconnects from server(s).
  */
 
 int
@@ -1500,7 +1533,8 @@ irc_command_disconnect (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_halfop: give half operator privileges to nickname(s)
+ * Callback for command "/halfop": gives half operator privileges to
+ * nickname(s).
  */
 
 int
@@ -1541,7 +1575,7 @@ irc_command_halfop (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_ignore_display: display an ignore
+ * Displays an ignore.
  */
 
 void
@@ -1567,7 +1601,7 @@ irc_command_ignore_display (struct t_irc_ignore *ignore)
 }
 
 /*
- * irc_command_ignore: add or remove ignore
+ * Callback for command "/ignore": adds or removes ignore.
  */
 
 int
@@ -1727,7 +1761,7 @@ irc_command_ignore (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_info: get information describing the server
+ * Callback for command "/info": gets information describing the server.
  */
 
 int
@@ -1756,7 +1790,7 @@ irc_command_info (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_invite: invite a nick on a channel
+ * Callback for command "/invite": invites a nick on a channel.
  */
 
 int
@@ -1819,7 +1853,7 @@ error:
 }
 
 /*
- * irc_command_ison: check if a nickname is currently on IRC
+ * Callback for command "/ison": checks if a nickname is currently on IRC.
  */
 
 int
@@ -1847,15 +1881,15 @@ irc_command_ison (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_join_server: send JOIN command on a server
+ * Sends JOIN command to a server.
  */
 
 void
 irc_command_join_server (struct t_irc_server *server, const char *arguments,
-                         int manual_join)
+                         int manual_join, int noswitch)
 {
-    char *new_args, **channels, *pos_space;
-    int i, num_channels, length;
+    char *new_args, **channels, **keys, *pos_space, *pos_keys, *pos_channel;
+    int i, num_channels, num_keys, length;
     int time_now;
     struct t_irc_channel *ptr_channel;
 
@@ -1869,13 +1903,27 @@ irc_command_join_server (struct t_irc_server *server, const char *arguments,
         return;
     }
 
-    /* split channels */
+    /* split channels and keys */
     channels = NULL;
+    num_channels = 0;
+    keys = NULL;
+    num_keys = 0;
     pos_space = strchr (arguments, ' ');
+    pos_keys = NULL;
     if (pos_space)
+    {
         new_args = weechat_strndup (arguments, pos_space - arguments);
+        pos_keys = pos_space + 1;
+        while (pos_keys[0] == ' ')
+        {
+            pos_keys++;
+        }
+        if (pos_keys[0])
+            keys = weechat_string_split (pos_keys, ",", 0, 0, &num_keys);
+    }
     else
         new_args = strdup (arguments);
+
     if (new_args)
     {
         channels = weechat_string_split (new_args, ",", 0, 0,
@@ -1902,8 +1950,11 @@ irc_command_join_server (struct t_irc_server *server, const char *arguments,
                 ptr_channel = irc_channel_search (server, new_args);
                 if (ptr_channel)
                 {
-                    weechat_buffer_set (ptr_channel->buffer,
-                                        "display", "1");
+                    if (!noswitch)
+                    {
+                        weechat_buffer_set (ptr_channel->buffer,
+                                            "display", "1");
+                    }
                 }
             }
             new_args[0] = '\0';
@@ -1912,18 +1963,43 @@ irc_command_join_server (struct t_irc_server *server, const char *arguments,
             {
                 if (i > 0)
                     strcat (new_args, ",");
+                pos_channel = new_args + strlen (new_args);
                 if (((num_channels > 1) || (strcmp (channels[i], "0") != 0))
                     && !irc_channel_is_channel (server, channels[i]))
                 {
                     strcat (new_args, "#");
                 }
                 strcat (new_args, channels[i]);
-                if (manual_join)
+                if (manual_join || noswitch)
                 {
                     weechat_string_tolower (channels[i]);
-                    weechat_hashtable_set (server->manual_joins,
-                                           channels[i],
-                                           &time_now);
+                    if (manual_join)
+                    {
+                        weechat_hashtable_set (server->join_manual,
+                                               channels[i],
+                                               &time_now);
+                    }
+                    if (noswitch)
+                    {
+                        weechat_hashtable_set (server->join_noswitch,
+                                               channels[i],
+                                               &time_now);
+                    }
+                }
+                if (keys && (i < num_keys))
+                {
+                    ptr_channel = irc_channel_search (server, pos_channel);
+                    if (ptr_channel)
+                    {
+                        if (ptr_channel->key)
+                            free (ptr_channel->key);
+                        ptr_channel->key = strdup (keys[i]);
+                    }
+                    else
+                    {
+                        weechat_hashtable_set (server->join_channel_key,
+                                               pos_channel, keys[i]);
+                    }
                 }
             }
             if (pos_space)
@@ -1939,40 +2015,64 @@ irc_command_join_server (struct t_irc_server *server, const char *arguments,
 }
 
 /*
- * irc_command_join: join a new channel
+ * Callback for command "/join": joins a new channel.
  */
 
 int
 irc_command_join (void *data, struct t_gui_buffer *buffer, int argc,
                   char **argv, char **argv_eol)
 {
+    int i, arg_channels, noswitch;
+
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
 
     /* make C compiler happy */
     (void) data;
 
-    if (argc > 1)
+    noswitch = 0;
+    arg_channels = 1;
+
+    for (i = 1; i < argc; i++)
     {
-        if ((argc >= 4) && (weechat_strcasecmp (argv[1], "-server") == 0))
+        if (weechat_strcasecmp (argv[i], "-server") == 0)
         {
-            ptr_server = irc_server_search (argv[2]);
+            if (argc <= i + 1)
+            {
+                IRC_COMMAND_TOO_FEW_ARGUMENTS((ptr_server) ? ptr_server->buffer : NULL,
+                                              "join");
+            }
+            ptr_server = irc_server_search (argv[i + 1]);
             if (!ptr_server)
                 return WEECHAT_RC_ERROR;
-            irc_command_join_server (ptr_server, argv_eol[3], 1);
+            arg_channels = i + 2;
+            i++;
+        }
+        else if (weechat_strcasecmp (argv[i], "-noswitch") == 0)
+        {
+            noswitch = 1;
+            arg_channels = i + 1;
         }
         else
         {
-            IRC_COMMAND_CHECK_SERVER("join", 1);
-            irc_command_join_server (ptr_server, argv_eol[1], 1);
+            arg_channels = i;
+            break;
         }
+    }
+
+    IRC_COMMAND_CHECK_SERVER("join", 1);
+
+    if (arg_channels < argc)
+    {
+        irc_command_join_server (ptr_server, argv_eol[arg_channels],
+                                 1, noswitch);
     }
     else
     {
-        IRC_COMMAND_CHECK_SERVER("join", 1);
         if (ptr_channel && (ptr_channel->type == IRC_CHANNEL_TYPE_CHANNEL)
             && !ptr_channel->nicks)
         {
-            irc_command_join_server (ptr_server, ptr_channel->name, 1);
+            irc_command_join_server (ptr_server, ptr_channel->name,
+                                     1, noswitch);
         }
         else
         {
@@ -1984,7 +2084,7 @@ irc_command_join (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_kick: forcibly remove a user from a channel
+ * Callback for command "/kick": forcibly removes a user from a channel.
  */
 
 int
@@ -2057,7 +2157,8 @@ irc_command_kick (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_kickban: forcibly remove a user from a channel and ban it
+ * Callback for command "/kickban": forcibly removes a user from a channel and
+ * bans it.
  */
 
 int
@@ -2172,7 +2273,7 @@ irc_command_kickban (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_kill: close client-server connection
+ * Callback for command "/kill": closes client-server connection.
  */
 
 int
@@ -2199,8 +2300,8 @@ irc_command_kill (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_links: list all servernames which are known by the server
- *                    answering the query
+ * Callback for command "/links": lists all server names which are known by the
+ * server answering the query.
  */
 
 int
@@ -2229,7 +2330,7 @@ irc_command_links (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_list: close client-server connection
+ * Callback for command "/list": lists channels and their topic.
  */
 
 int
@@ -2327,7 +2428,8 @@ irc_command_list (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_lusers: get statistics about ths size of the IRC network
+ * Callback for command "/lusers": gets statistics about the size of the IRC
+ * network.
  */
 
 int
@@ -2356,7 +2458,7 @@ irc_command_lusers (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_map: show a graphical map of the IRC network
+ * Callback for command "/map": shows a graphical map of the IRC network.
  */
 
 int
@@ -2385,7 +2487,7 @@ irc_command_map (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_me: send a ctcp action to the current channel
+ * Callback for command "/me": sends a ctcp action to the current channel.
  */
 
 int
@@ -2414,7 +2516,7 @@ irc_command_me (void *data, struct t_gui_buffer *buffer, int argc, char **argv,
 }
 
 /*
- * irc_command_mode_server: send MODE command on a server
+ * Sends MODE command on a server.
  */
 
 void
@@ -2440,7 +2542,7 @@ irc_command_mode_server (struct t_irc_server *server,
 }
 
 /*
- * irc_command_mode: change mode for channel/nickname
+ * Callback for command "/mode": changes mode for channel/nickname.
  */
 
 int
@@ -2495,7 +2597,7 @@ irc_command_mode (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_motd: get the "Message Of The Day"
+ * Callback for command "/motd": gets the "Message Of The Day".
  */
 
 int
@@ -2524,7 +2626,7 @@ irc_command_motd (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_msg: send a message to a nick or channel
+ * Callback for command "/msg": sends a message to a nick or channel.
  */
 
 int
@@ -2582,7 +2684,7 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
                 }
                 string = irc_color_decode (argv_eol[arg_text],
                                            weechat_config_boolean (irc_config_network_colors_receive));
-                irc_input_user_message_display (ptr_channel->buffer,
+                irc_input_user_message_display (ptr_channel->buffer, 0,
                                                 (string) ? string : argv_eol[arg_text]);
                 if (string)
                     free (string);
@@ -2637,6 +2739,7 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
                         {
                             /* standard message (to "#channel") */
                             irc_input_user_message_display (ptr_channel->buffer,
+                                                            0,
                                                             (string) ? string : argv_eol[arg_text]);
                         }
                         if (string)
@@ -2686,6 +2789,7 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
                         if (ptr_channel)
                         {
                             irc_input_user_message_display (ptr_channel->buffer,
+                                                            0,
                                                             (string) ? string : argv_eol[arg_text]);
                         }
                         else
@@ -2722,7 +2826,7 @@ irc_command_msg (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_names: list nicknames on channels
+ * Callback for command "/names": lists nicknames on channels.
  */
 
 int
@@ -2763,7 +2867,7 @@ irc_command_names (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_send_nick_server: change nickname on a server
+ * Changes nickname on a server.
  */
 
 void
@@ -2782,7 +2886,7 @@ irc_send_nick_server (struct t_irc_server *server, const char *nickname)
 }
 
 /*
- * irc_command_nick: change nickname
+ * Callback for command "/nick": changes nickname.
  */
 
 int
@@ -2825,7 +2929,7 @@ irc_command_nick (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_notice: send notice message
+ * Callback for command "/notice": sends notice message.
  */
 
 int
@@ -2916,7 +3020,7 @@ irc_command_notice (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_notify: add or remove notify
+ * Callback for command "/notify": adds or removes notify.
  */
 
 int
@@ -3097,7 +3201,7 @@ irc_command_notify (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_op: give operator privileges to nickname(s)
+ * Callback for command "/op": gives operator privileges to nickname(s).
  */
 
 int
@@ -3138,7 +3242,7 @@ irc_command_op (void *data, struct t_gui_buffer *buffer, int argc, char **argv,
 }
 
 /*
- * irc_command_oper: get oper privileges
+ * Callback for command "/oper": gets oper privileges.
  */
 
 int
@@ -3166,7 +3270,7 @@ irc_command_oper (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_part_channel: send a part message for a channel
+ * Sends a part message for a channel.
  */
 
 void
@@ -3200,7 +3304,7 @@ irc_command_part_channel (struct t_irc_server *server, const char *channel_name,
 }
 
 /*
- * irc_command_part: leave a channel or close a private window
+ * Callback for command "/part": leaves a channel or close a private window.
  */
 
 int
@@ -3264,7 +3368,7 @@ irc_command_part (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_ping: ping a server
+ * Callback for command "/ping": pings a server.
  */
 
 int
@@ -3292,7 +3396,7 @@ irc_command_ping (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_pong: send pong answer to a daemon
+ * Callback for command "/pong": sends pong answer to a daemon.
  */
 
 int
@@ -3320,7 +3424,7 @@ irc_command_pong (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_query: start private conversation with a nick
+ * Callback for command "/query": starts private conversation with a nick.
  */
 
 int
@@ -3372,7 +3476,7 @@ irc_command_query (void *data, struct t_gui_buffer *buffer, int argc,
         {
             string = irc_color_decode (argv_eol[arg_text],
                                        weechat_config_boolean (irc_config_network_colors_receive));
-            irc_input_user_message_display (ptr_channel->buffer,
+            irc_input_user_message_display (ptr_channel->buffer, 0,
                                             (string) ? string : argv_eol[arg_text]);
             if (string)
                 free (string);
@@ -3391,7 +3495,89 @@ irc_command_query (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_quote: send raw data to server
+ * Callback for command "/quiet": quiets nicks or hosts.
+ */
+
+int
+irc_command_quiet (void *data, struct t_gui_buffer *buffer, int argc,
+                   char **argv, char **argv_eol)
+{
+    char *pos_channel;
+    int pos_args;
+
+    IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
+    IRC_COMMAND_CHECK_SERVER("quiet", 1);
+
+    /* make C compiler happy */
+    (void) data;
+    (void) argv_eol;
+
+    if (argc > 1)
+    {
+        if (irc_channel_is_channel (ptr_server, argv[1]))
+        {
+            pos_channel = argv[1];
+            pos_args = 2;
+        }
+        else
+        {
+            pos_channel = NULL;
+            pos_args = 1;
+        }
+
+        /* channel not given, use default buffer */
+        if (!pos_channel)
+        {
+            if (ptr_channel && (ptr_channel->type == IRC_CHANNEL_TYPE_CHANNEL))
+                pos_channel = ptr_channel->name;
+            else
+            {
+                weechat_printf (ptr_server->buffer,
+                                _("%s%s: \"%s\" command can only be "
+                                  "executed in a channel buffer"),
+                                weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                                "quiet");
+                return WEECHAT_RC_OK;
+            }
+        }
+
+        if (argv[pos_args])
+        {
+            /* loop on users */
+            while (argv[pos_args])
+            {
+                irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+                                  "MODE %s +q %s",
+                                  pos_channel, argv[pos_args]);
+                pos_args++;
+            }
+        }
+        else
+        {
+            irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+                              "MODE %s +q",
+                              pos_channel);
+        }
+    }
+    else
+    {
+        if (!ptr_channel)
+        {
+            weechat_printf (ptr_server->buffer,
+                            _("%s%s: \"%s\" command can only be "
+                              "executed in a channel buffer"),
+                            weechat_prefix ("error"), IRC_PLUGIN_NAME, "quiet");
+            return WEECHAT_RC_OK;
+        }
+        irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+                          "MODE %s +q", ptr_channel->name);
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * Callback for command "/quote": sends raw data to server.
  */
 
 int
@@ -3431,8 +3617,11 @@ irc_command_quote (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_reconnect_one_server: reconnect to a server
- *                                   return 0 if error, 1 if ok
+ * Reconnects to a server.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -3471,7 +3660,7 @@ irc_command_reconnect_one_server (struct t_irc_server *server,
 }
 
 /*
- * irc_command_reconnect: reconnect to server(s)
+ * Callback for command "/reconnect": reconnects to server(s).
  */
 
 int
@@ -3563,7 +3752,7 @@ irc_command_reconnect (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_rehash: tell the server to reload its config file
+ * Callback for command "/rehash": tells the server to reload its config file.
  */
 
 int
@@ -3592,7 +3781,7 @@ irc_command_rehash (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_restart: tell the server to restart itself
+ * Callback for command "/restart": tells the server to restart itself.
  */
 
 int
@@ -3621,7 +3810,7 @@ irc_command_restart (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_sajoin: forces a user to join channel(s)
+ * Callback for command "/sajoin": forces a user to join channel(s).
  */
 
 int
@@ -3648,7 +3837,8 @@ irc_command_sajoin (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_samode: change mode on channel, without having operator status
+ * Callback for command "/samode": changes mode on channel, without having
+ * operator status.
  */
 
 int
@@ -3675,7 +3865,7 @@ irc_command_samode (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_sanick: forces a user to use another nick
+ * Callback for command "/sanick": forces a user to use another nick.
  */
 
 int
@@ -3702,7 +3892,7 @@ irc_command_sanick (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_sapart: forces a user to leave channel(s)
+ * Callback for command "/sapart": forces a user to leave channel(s).
  */
 
 int
@@ -3729,7 +3919,7 @@ irc_command_sapart (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_saquit: forces a user to quit server with a reason
+ * Callback for command "/saquit": forces a user to quit server with a reason.
  */
 
 int
@@ -3756,7 +3946,7 @@ irc_command_saquit (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_server: manage IRC servers
+ * Callback for command "/server": manages IRC servers.
  */
 
 int
@@ -4131,7 +4321,7 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_service: register a new service
+ * Callback for command "/service": registers a new service.
  */
 
 int
@@ -4159,7 +4349,8 @@ irc_command_service (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_servlist: list services currently connected to the network
+ * Callback for command "/servlist": lists services currently connected to the
+ * network.
  */
 
 int
@@ -4188,7 +4379,7 @@ irc_command_servlist (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_squery: deliver a message to a service
+ * Callback for command "/squery": delivers a message to a service.
  */
 
 int
@@ -4223,7 +4414,7 @@ irc_command_squery (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_squit: disconnect server links
+ * Callback for command "/squit": disconnects server links.
  */
 
 int
@@ -4248,7 +4439,7 @@ irc_command_squit (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_stats: query statistics about server
+ * Callback for command "/stats": queries statistics about server.
  */
 
 int
@@ -4277,8 +4468,8 @@ irc_command_stats (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_summon: give users who are on a host running an IRC server
- *                     a message asking them to please join IRC
+ * Callback for command "/summon": gives users who are on a host running an IRC
+ * server a message asking them to please join IRC.
  */
 
 int
@@ -4306,7 +4497,7 @@ irc_command_summon (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_time: query local time from server
+ * Callback for command "/time": queries local time from server.
  */
 
 int
@@ -4335,7 +4526,7 @@ irc_command_time (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_topic: get/set topic for a channel
+ * Callback for command "/topic": gets/sets topic for a channel.
  */
 
 int
@@ -4406,7 +4597,7 @@ irc_command_topic (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_trace: find the route to specific server
+ * Callback for command "/trace": finds the route to specific server.
  */
 
 int
@@ -4435,7 +4626,7 @@ irc_command_trace (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_unban: unbans nicks or hosts
+ * Callback for command "/unban": unbans nicks or hosts.
  */
 
 int
@@ -4502,7 +4693,8 @@ irc_command_unban (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_userhost: return a list of information about nicknames
+ * Callback for command "/userhost": returns a list of information about
+ * nicknames.
  */
 
 int
@@ -4530,7 +4722,7 @@ irc_command_userhost (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_users: list of users logged into the server
+ * Callback for command "/users": list of users logged into the server.
  */
 
 int
@@ -4559,8 +4751,8 @@ irc_command_users (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_version: gives the version info of nick or server (current or
- *                      specified)
+ * Callback for command "/version": gives the version info of nick or server
+ * (current or specified).
  */
 
 int
@@ -4598,7 +4790,7 @@ irc_command_version (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_voice: give voice to nickname(s)
+ * Callback for command "/voice": gives voice to nickname(s).
  */
 
 int
@@ -4638,7 +4830,7 @@ irc_command_voice (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_wallchops: send a notice to channel ops
+ * Callback for command "/wallchops": sends a notice to channel ops.
  */
 
 int
@@ -4753,8 +4945,8 @@ irc_command_wallchops (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_wallops: send a message to all currently connected users who
- *                      have set the 'w' user mode for themselves
+ * Callback for command "/wallops": sends a message to all currently connected
+ * users who have set the 'w' user mode for themselves.
  */
 
 int
@@ -4782,7 +4974,8 @@ irc_command_wallops (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_who: generate a query which returns a list of information
+ * Callback for command "/who": generates a query which returns a list of
+ * information.
  */
 
 int
@@ -4811,44 +5004,61 @@ irc_command_who (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_whois: query information about user(s)
+ * Callback for command "/whois": queries information about user(s).
  */
 
 int
 irc_command_whois (void *data, struct t_gui_buffer *buffer, int argc,
                    char **argv, char **argv_eol)
 {
+    int double_nick;
+    const char *ptr_nick;
+
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
     IRC_COMMAND_CHECK_SERVER("whois", 1);
 
     /* make C compiler happy */
     (void) data;
-    (void) argv;
+
+    double_nick = weechat_config_boolean (irc_config_network_whois_double_nick);
+    ptr_nick = NULL;
 
     if (argc > 1)
     {
-        irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
-                          "WHOIS %s", argv_eol[1]);
+        if ((argc > 2) || strchr (argv_eol[1], ','))
+        {
+            /* do not double nick if we have more than one argument or a comma */
+            double_nick = 0;
+            ptr_nick = argv_eol[1];
+        }
+        else
+            ptr_nick = argv[1];
     }
     else
     {
-        if (ptr_channel
-            && (ptr_channel->type == IRC_CHANNEL_TYPE_PRIVATE))
-        {
-            irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
-                              "WHOIS %s", ptr_channel->name);
-        }
-        else
-        {
-            IRC_COMMAND_TOO_FEW_ARGUMENTS(ptr_server->buffer, "whois");
-        }
+        if (ptr_channel && (ptr_channel->type == IRC_CHANNEL_TYPE_PRIVATE))
+            ptr_nick = ptr_channel->name;
+        else if (ptr_server->nick)
+            ptr_nick = ptr_server->nick;
     }
+
+    if (!ptr_nick)
+    {
+        IRC_COMMAND_TOO_FEW_ARGUMENTS(ptr_server->buffer, "whois");
+    }
+
+    irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
+                      "WHOIS %s%s%s",
+                      ptr_nick,
+                      (double_nick) ? " " : "",
+                      (double_nick) ? ptr_nick : "");
 
     return WEECHAT_RC_OK;
 }
 
 /*
- * irc_command_whowas: ask for information about a nickname which no longer exists
+ * Callback for command "/whowas": asks for information about a nickname which
+ * no longer exists.
  */
 
 int
@@ -4876,7 +5086,7 @@ irc_command_whowas (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * irc_command_init: init IRC commands (create hooks)
+ * Hooks IRC commands.
  */
 
 void
@@ -4937,7 +5147,7 @@ irc_command_init ()
                           N_("connect to IRC server(s)"),
                           N_("<server> [<server>...] [-<option>[=<value>]] "
                              "[-no<option>] [-nojoin] [-switch]"
-                             " || -all|-open [-nojoin] [-switch]"),
+                             " || -all|-auto|-open [-nojoin] [-switch]"),
                           N_("    server: server name, which can be:\n"
                              "            - internal server name (created by "
                              "/server add, recommended usage)\n"
@@ -4953,6 +5163,8 @@ irc_command_init ()
                              "example: -nossl)\n"
                              "      -all: connect to all servers defined in "
                              "configuration\n"
+                             "     -auto: connect to servers with autoconnect "
+                             "enabled\n"
                              "     -open: connect to all opened servers that "
                              "are not currently connected\n"
                              "   -nojoin: do not join any channel (even if "
@@ -4966,7 +5178,7 @@ irc_command_init ()
                              "  /connect my.server.org/6697 -ssl -password=test\n"
                              "  /connect irc://nick@irc.oftc.net/#channel\n"
                              "  /connect -switch"),
-                          "%(irc_servers)|-all|-open|-nojoin|-switch|%*",
+                          "%(irc_servers)|-all|-auto|-open|-nojoin|-switch|%*",
                           &irc_command_connect, NULL);
     weechat_hook_command ("ctcp",
                           N_("send a CTCP message (Client-To-Client Protocol)"),
@@ -5087,18 +5299,20 @@ irc_command_init ()
                           "%(nicks)|%*", &irc_command_ison, NULL);
     weechat_hook_command ("join",
                           N_("join a channel"),
-                          N_("[-server <server>] [<channel1>[,<channel2>...]] "
-                             "[<key1>[,<key2>...]]"),
-                          N_(" server: send to this server (internal name)\n"
-                             "channel: channel name to join\n"
-                             "    key: key to join the channel (channels with "
+                          N_("[-noswitch] [-server <server>] "
+                             "[<channel1>[,<channel2>...]] [<key1>[,<key2>...]]"),
+                          N_("-noswitch: do not switch to new buffer\n"
+                             "   server: send to this server (internal name)\n"
+                             "  channel: channel name to join\n"
+                             "      key: key to join the channel (channels with "
                              "a key must be the first in list)\n\n"
                              "Examples:\n"
                              "  /join #weechat\n"
                              "  /join #protectedchan,#weechat key\n"
-                             "  /join -server freenode #weechat"),
-                          "-server %(irc_servers)"
-                          " || %(irc_channels)", &irc_command_join, NULL);
+                             "  /join -server freenode #weechat\n"
+                             "  /join -noswitch #weechat"),
+                          "%(irc_channels)|-noswitch|-server|%(irc_servers)|%*",
+                          &irc_command_join, NULL);
     weechat_hook_command ("kick",
                           N_("forcibly remove a user from a channel"),
                           N_("[<channel>] <nick> [<reason>]"),
@@ -5311,6 +5525,14 @@ irc_command_init ()
                              "  nick: nick for private conversation\n"
                              "  text: text to send"),
                           "%(nicks)|-server %(irc_servers) %-", &irc_command_query, NULL);
+    weechat_hook_command ("quiet",
+                          N_("quiet nicks or hosts"),
+                          N_("[<channel>] [<nick> [<nick>...]]"),
+                          N_("channel: channel for quiet\n"
+                             "   nick: user or host to quiet\n\n"
+                             "Without argument, this command display quiet list "
+                             "for current channel."),
+                          "%(irc_channel_nicks_hosts)", &irc_command_quiet, NULL);
     weechat_hook_command ("quote",
                           N_("send raw data to server without parsing"),
                           N_("[-server <server>] <data>"),
@@ -5532,9 +5754,12 @@ irc_command_init ()
                           "%(irc_channels)", &irc_command_who, NULL);
     weechat_hook_command ("whois",
                           N_("query information about user(s)"),
-                          N_("[<server>] <nick>[,<nick>...]"),
+                          N_("[<server>] [<nick>[,<nick>...]]"),
                           N_("server: server name\n"
-                             "  nick: nick (may be a mask)"),
+                             "  nick: nick (may be a mask)\n\n"
+                             "Without argument, this command will do a whois on:\n"
+                             "- your own nick if buffer is a server/channel\n"
+                             "- remote nick if buffer is a private."),
                           "%(nicks)", &irc_command_whois, NULL);
     weechat_hook_command ("whowas",
                           N_("ask for information about a nick which no "

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-display.c - display functions for IRC plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-display.c: display functions for IRC plugin
  */
 
 #include <stdlib.h>
@@ -38,7 +36,7 @@
 
 
 /*
- * irc_display_hide_password: hide IRC password(s) in a string
+ * Hides IRC password(s) in a string.
  */
 
 void
@@ -102,7 +100,7 @@ irc_display_hide_password (char *string, int look_for_nickserv)
 }
 
 /*
- * irc_display_away: display away on all channels of all servers
+ * Displays away on all channels of all servers.
  */
 
 void
@@ -131,7 +129,7 @@ irc_display_away (struct t_irc_server *server, const char *string1,
 }
 
 /*
- * irc_display_server: display server infos
+ * Displays server options.
  */
 
 void

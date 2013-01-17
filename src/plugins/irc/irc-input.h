@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -23,7 +23,7 @@
 struct t_gui_buffer;
 
 extern void irc_input_user_message_display (struct t_gui_buffer *buffer,
-                                            const char *text);
+                                            int action, const char *text);
 extern int irc_input_data_cb (void *data, struct t_gui_buffer *buffer,
                               const char *input_data);
 extern int irc_input_send_cb (void *data, const char *signal,

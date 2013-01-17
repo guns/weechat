@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * rmodifier-info.c - info and infolist hooks for rmodifier plugin
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * rmodifier-info.c: info and infolist hooks for rmodifier plugin
- */
-
 #include <stdlib.h>
 
 #include "../weechat-plugin.h"
@@ -29,8 +27,7 @@
 
 
 /*
- * rmodifier_info_get_infolist_cb: callback called when rmodifier infolist is
- *                                 asked
+ * Returns infolist with rmodifier info.
  */
 
 struct t_infolist *
@@ -90,13 +87,12 @@ rmodifier_info_get_infolist_cb (void *data, const char *infolist_name,
 }
 
 /*
- * rmodifier_info_init: initialize info and infolist hooks for rmodifier plugin
+ * Hooks infolist.
  */
 
 void
 rmodifier_info_init ()
 {
-    /* rmodifier infolist hooks */
     weechat_hook_infolist ("rmodifier", N_("list of rmodifiers"),
                            N_("rmodifier pointer (optional)"),
                            N_("rmodifier name (can start or end with \"*\" as "

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * rmodifier.c - alter modifier strings with regular expressions
+ *
+ * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,11 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * rmodifier.c: alter modifier strings with regular expressions
- *              (useful for hiding passwords in input or command history)
  */
 
 #include <stdlib.h>
@@ -51,9 +48,11 @@ struct t_weelist *rmodifier_hook_list = NULL;
 
 
 /*
- * rmodifier_valid: check if a rmodifier pointer exists
- *                  return 1 if rmodifier exists
- *                         0 if rmodifier is not found
+ * Checks if a rmodifier pointer is valid.
+ *
+ * Returns:
+ *   1: rmodifier exists
+ *   0: rmodifier does not exist
  */
 
 int
@@ -76,7 +75,9 @@ rmodifier_valid (struct t_rmodifier *rmodifier)
 }
 
 /*
- * rmodifier_search: search a rmodifier
+ * Searches for a rmodifier by name.
+ *
+ * Returns pointer to rmodifier found, NULL if not found.
  */
 
 struct t_rmodifier *
@@ -94,8 +95,9 @@ rmodifier_search (const char *name)
 }
 
 /*
- * rmodifier_hide_string: hide a string (using char defined in option
- *                        "rmodifier.look.hide_char")
+ * Hides a string (using char defined in option "rmodifier.look.hide_char").
+ *
+ * Note: result must be freed after use.
  */
 
 char *
@@ -122,8 +124,7 @@ rmodifier_hide_string (const char *string)
 }
 
 /*
- * rmodifier_replace_groups: replace groups in a string, using regex_match
- *                           found by call to regexec()
+ * Replaces groups in a string, using regex_match found by call to regexec().
  */
 
 char *
@@ -183,7 +184,7 @@ rmodifier_replace_groups (const char *string, regmatch_t regex_match[],
 }
 
 /*
- * rmodifier_modifier_cb: callback for a modifier
+ * Callback for a modifier.
  */
 
 char *
@@ -218,7 +219,7 @@ rmodifier_modifier_cb (void *data, const char *modifier,
 }
 
 /*
- * rmodifier_hook_modifiers: hook modifiers for a rmodifier
+ * Hooks modifiers for a rmodifier.
  */
 
 void
@@ -253,7 +254,9 @@ rmodifier_hook_modifiers (struct t_rmodifier *rmodifier)
 }
 
 /*
- * rmodifier_new: create new rmodifier and add it to rmodifier list
+ * Creates a new rmodifier and adds it to rmodifier list.
+ *
+ * Returns pointer to new rmodifier, NULL if error.
  */
 
 struct t_rmodifier *
@@ -324,8 +327,10 @@ rmodifier_new (const char *name, const char *modifiers, const char *str_regex,
 }
 
 /*
- * rmodifier_new_with_string: create a rmodifier with a single string, which
- *                            contains: "modifiers;regex;groups"
+ * Creates a rmodifier with a single string, which contains:
+ * "modifiers;regex;groups".
+ *
+ * Returns pointer to new rmodifier, NULL if error.
  */
 
 struct t_rmodifier *
@@ -357,7 +362,7 @@ rmodifier_new_with_string (const char *name, const char *value)
 }
 
 /*
- * rmodifer_create_default: create default rmodifiers
+ * Creates default rmodifiers.
  */
 
 void
@@ -381,7 +386,7 @@ rmodifier_create_default ()
 }
 
 /*
- * rmodifier_free: free a rmodifier and remove it from list
+ * Frees a rmodifier and removes it from list.
  */
 
 void
@@ -433,7 +438,7 @@ rmodifier_free (struct t_rmodifier *rmodifier)
 }
 
 /*
- * rmodifier_free_all: free all rmodifier
+ * Frees all rmodifiers.
  */
 
 void
@@ -446,8 +451,11 @@ rmodifier_free_all ()
 }
 
 /*
- * rmodifier_add_to_infolist: add a rmodifier in an infolist
- *                            return 1 if ok, 0 if error
+ * Adds a rmodifier in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -489,7 +497,7 @@ rmodifier_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * rmodifier_print_log: print rmodifiers in log (usually for crash dump)
+ * Prints rmodifiers in WeeChat log file (usually for crash dump).
  */
 
 void
@@ -519,7 +527,7 @@ rmodifier_print_log ()
 }
 
 /*
- * weechat_plugin_init: initialize rmodifier plugin
+ * Initializes rmodifier plugin.
  */
 
 int
@@ -555,7 +563,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: end rmodifier plugin
+ * Ends rmodifier plugin.
  */
 
 int

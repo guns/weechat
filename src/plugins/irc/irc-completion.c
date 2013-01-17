@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * irc-completion.c - completion for IRC commands
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * irc-completion.c: completion for IRC commands
  */
 
 #include <stdlib.h>
@@ -39,7 +37,7 @@
 
 
 /*
- * irc_completion_server_cb: callback for completion with current server
+ * Adds current server to completion list.
  */
 
 int
@@ -63,8 +61,7 @@ irc_completion_server_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_server_nick_cb: callback for completion with self nick
- *                                of current server
+ * Adds self nick of current server to completion list.
  */
 
 int
@@ -88,8 +85,7 @@ irc_completion_server_nick_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_server_channels_cb: callback for completion with channels
- *                                    of current server
+ * Adds channels of current server to completion list.
  */
 
 int
@@ -123,8 +119,7 @@ irc_completion_server_channels_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_server_privates_cb: callback for completion with privates
- *                                    of current server
+ * Adds privates of current server to completion list.
  */
 
 int
@@ -158,8 +153,7 @@ irc_completion_server_privates_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_server_nicks_cb: callback for completion with nicks
- *                                 of current server
+ * Adds nicks of current server to completion list.
  */
 
 int
@@ -201,7 +195,7 @@ irc_completion_server_nicks_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_servers_cb: callback for completion with servers
+ * Adds servers to completion list.
  */
 
 int
@@ -227,7 +221,7 @@ irc_completion_servers_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_channel_cb: callback for completion with current channel
+ * Adds current channel to completion list.
  */
 
 int
@@ -251,8 +245,7 @@ irc_completion_channel_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_channel_nicks_add_speakers: add recent speakers to completion
- *                                            list
+ * Adds recent speakers to completion list.
  */
 
 void
@@ -282,8 +275,7 @@ irc_completion_channel_nicks_add_speakers (struct t_gui_completion *completion,
 }
 
 /*
- * irc_completion_channel_nicks_cb: callback for completion with nicks
- *                                  of current channel
+ * Adds nicks of current channel to completion list.
  */
 
 int
@@ -348,8 +340,7 @@ irc_completion_channel_nicks_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_channel_nicks_hosts_cb: callback for completion with nicks
- *                                        and hosts of current channel
+ * Adds nicks and hosts of current channel to completion list.
  */
 
 int
@@ -410,8 +401,7 @@ irc_completion_channel_nicks_hosts_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_channel_topic_cb: callback for completion with topic of
- *                                  current channel
+ * Adds topic of current channel to completion list.
  */
 
 int
@@ -466,8 +456,7 @@ irc_completion_channel_topic_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_channels_cb: callback for completion with channels
- *                             of all servers
+ * Adds channels of all servers to completion list.
  */
 
 int
@@ -501,8 +490,7 @@ irc_completion_channels_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_privates_cb: callback for completion with privates
- *                             of all servers
+ * Adds privates of all servers to completion list.
  */
 
 int
@@ -536,7 +524,7 @@ irc_completion_privates_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_msg_part_cb: callback for completion with default part message
+ * Adds default part message to completion list.
  */
 
 int
@@ -567,8 +555,7 @@ irc_completion_msg_part_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_ignores_numbers_cb: callback for completion with ignores
- *                                    numbers
+ * Adds ignore numbers to completion list.
  */
 
 int
@@ -596,8 +583,7 @@ irc_completion_ignores_numbers_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_notify_nicks_cb: callback for completion with nicks in notify
- *                                 list
+ * Adds nicks in notify list to completion list.
  */
 
 int
@@ -640,7 +626,7 @@ irc_completion_notify_nicks_cb (void *data, const char *completion_item,
 }
 
 /*
- * irc_completion_init: init completion for IRC plugin
+ * Hooks completions.
  */
 
 void

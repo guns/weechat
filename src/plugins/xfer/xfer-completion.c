@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * xfer-completion.c - nick completion for xfer chats
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,10 +19,6 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * xfer-completion.c: nick completion for xfer chats
- */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +29,7 @@
 
 
 /*
- * xfer_completion_nick_cb: callback for completion with nick
+ * Adds nicks to completion list.
  */
 
 int
@@ -64,7 +62,7 @@ xfer_completion_nick_cb (void *data, const char *completion_item,
 }
 
 /*
- * xfer_completion_init: init completion for xfer plugin
+ * Hooks completion.
  */
 
 void

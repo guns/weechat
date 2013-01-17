@@ -1677,6 +1677,61 @@ str2 = weechat.string_input_for_buffer("/test")  # ""
 str3 = weechat.string_input_for_buffer("//test") # "/test"
 ----------------------------------------
 
+weechat_string_eval_expression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.4.0._
+
+Evalue l'expression et retourne le résultat sous forme de chaîne.
+Les variables spéciales avec le format `${variable}` sont étendues (voir la
+commande `/eval` dans le 'Guide utilisateur WeeChat').
+
+Prototype :
+
+[source,C]
+----------------------------------------
+char *weechat_string_eval_expression (const char *expr,
+                                      struct t_hashtable *pointers,
+                                      struct t_hashtable *extra_vars);
+----------------------------------------
+
+Paramètres :
+
+* 'expr' : l'expression à évaluer
+* 'pointers' : hashtable avec les pointeurs (les clés doivent être des chaînes,
+  les valeurs doivent être des pointeurs); les pointeurs "window" et "buffer"
+  sont automatiquement ajoutés s'ils ne sont pas dans la hashtable (avec le
+  pointer vers fenêtre/tampon courants) (peut être NULL)
+* 'extra_vars' : variables additionnelles qui seront étendues (peut être NULL)
+
+Valeur de retour :
+
+* expression évaluée (doit être libérée après un appel à "free" après
+  utilisation), ou NULL si problème (expression invalide ou pas assez de
+  mémoire)
+
+Exemples en C :
+
+[source,C]
+----------------------------------------
+char *str1 = weechat_string_eval_expression ("${buffer.full_name}", NULL, NULL);       /* "core.weechat" */
+char *str2 = weechat_string_eval_expression ("${window.win_width} > 100", NULL, NULL); /* "1" */
+char *str3 = weechat_string_eval_expression ("abc =~ def", NULL, NULL);                /* "0" */
+----------------------------------------
+
+Script (Python) :
+
+[source,python]
+----------------------------------------
+# prototype
+str = weechat.string_eval_expression(expr, pointers, extra_vars)
+
+# exemples
+str1 = weechat.string_input_for_buffer("${buffer.full_name}", {}, {})       # "core.weechat"
+str2 = weechat.string_input_for_buffer("${window.win_width} > 100", {}, {}) # "1"
+str3 = weechat.string_input_for_buffer("abc =~ def", {}, {})                # "0"
+----------------------------------------
+
 [[utf-8]]
 UTF-8
 ~~~~~
@@ -5001,6 +5056,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 if (weechat_config_boolean (option))
 {
     /* la valeur est "vrai" */
@@ -5019,6 +5075,7 @@ Script (Python) :
 value = weechat.config_boolean(option)
 
 # exemple
+option = weechat.config_get("plugin.section.option")
 if weechat.config_boolean(option):
     # ...
 ----------------------------------------
@@ -5047,6 +5104,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 if (weechat_config_boolean_default (option))
 {
     /* la valeur est "vrai" */
@@ -5065,6 +5123,7 @@ Script (Python) :
 value = weechat.config_boolean_default(option)
 
 # exemple
+option = weechat.config_get("plugin.section.option")
 if weechat.config_boolean_default(option):
     # ...
 ----------------------------------------
@@ -5093,6 +5152,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 int value = weechat_config_integer (option);
 ----------------------------------------
 
@@ -5104,8 +5164,8 @@ Script (Python) :
 value = weechat.config_integer(option)
 
 # exemple
-if weechat.config_integer(option):
-    # ...
+option = weechat.config_get("plugin.section.option")
+value = weechat.config_integer(option)
 ----------------------------------------
 
 weechat_config_integer_default
@@ -5132,6 +5192,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 int value = weechat_config_integer_default (option);
 ----------------------------------------
 
@@ -5143,8 +5204,8 @@ Script (Python) :
 value = weechat.config_integer_default(option)
 
 # exemple
-if weechat.config_integer_default(option):
-    # ...
+option = weechat.config_get("plugin.section.option")
+value = weechat.config_integer_default(option)
 ----------------------------------------
 
 weechat_config_string
@@ -5171,6 +5232,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 const char *value = weechat_config_string (option);
 ----------------------------------------
 
@@ -5182,6 +5244,7 @@ Script (Python) :
 value = weechat.config_string(option)
 
 # exemple
+option = weechat.config_get("plugin.section.option")
 value = weechat.config_string(option)
 ----------------------------------------
 
@@ -5209,6 +5272,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 const char *value = weechat_config_string_default (option);
 ----------------------------------------
 
@@ -5220,6 +5284,7 @@ Script (Python) :
 value = weechat.config_string_default(option)
 
 # exemple
+option = weechat.config_get("plugin.section.option")
 value = weechat.config_string_default(option)
 ----------------------------------------
 
@@ -5247,6 +5312,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 const char *color = weechat_config_color (option);
 ----------------------------------------
 
@@ -5258,6 +5324,7 @@ Script (Python) :
 value = weechat.config_color(option)
 
 # exemple
+option = weechat.config_get("plugin.section.option")
 value = weechat.config_color(option)
 ----------------------------------------
 
@@ -5286,6 +5353,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
+struct t_config_option *option = weechat_config_get ("plugin.section.option");
 const char *color = weechat_config_color_default (option);
 ----------------------------------------
 
@@ -5297,6 +5365,7 @@ Script (Python) :
 value = weechat.config_color_default(option)
 
 # exemple
+option = weechat.config_get("plugin.section.option")
 value = weechat.config_color_default(option)
 ----------------------------------------
 
@@ -6171,14 +6240,14 @@ Paramètres :
 
 * 'prefix' : nom du préfixe :
 
-[width="70%",cols="^2e,^1l,^3,5",options="header"]
+[width="70%",cols="^2e,^1,^3,5",options="header"]
 |========================================
 | Préfixe | Valeur | Couleur                   | Description
-| error   | =!=    | jaune ("yellow")          | message d'erreur
-| network | --     | violet ("magenta")        | message du réseau
-| action  | *      | blanc ("white")           | action personnelle
-| join    | -->    | vert clair ("lightgreen") | quelqu'un a rejoint la discussion
-| quit    | <--    | rouge clair ("lightred")  | quelqu'un a quitté la discussion
+| error   | `=!=`  | jaune ("yellow")          | message d'erreur
+| network | `--`   | violet ("magenta")        | message du réseau
+| action  | `*`    | blanc ("white")           | action personnelle
+| join    | `-->`  | vert clair ("lightgreen") | quelqu'un a rejoint la discussion
+| quit    | `<--`  | rouge clair ("lightred")  | quelqu'un a quitté la discussion
 |========================================
 
 [NOTE]
@@ -6311,6 +6380,10 @@ Si votre message contient des tabulations et si vous ne voulez pas de préfixe,
 utilisez un espace, une tabulation, puis le message : cela désactivera le
 préfixe (l'espace avant la tabulation ne sera pas affiché).
 
+[NOTE]
+Avec deux tabulations ("\t") au début du message, l'heure ne sera pas affichée
+et le message n'aura pas d'alignement (comme le message "Jour changé").
+
 Exemple en C :
 
 [source,C]
@@ -6319,6 +6392,8 @@ weechat_printf (NULL, "Bonjour sur le tampon WeeChat");
 weechat_printf (buffer, "Bonjour sur ce tampon");
 weechat_printf (buffer, "%sCeci est une erreur !", weechat_prefix ("error"));
 weechat_printf (buffer, " \tMessage sans préfixe mais avec \t quelques \t tabulations");
+weechat_printf (buffer, "\t\tMessage sans heure/alignement");
+weechat_printf (buffer, "\t\t"); /* ligne vide (sans heure) */
 ----------------------------------------
 
 Script (Python) :
@@ -6333,6 +6408,8 @@ weechat.prnt("", "Bonjour sur le tampon WeeChat")
 weechat.prnt(buffer, "Bonjour sur ce tampon")
 weechat.prnt(buffer, "%sCeci est une erreur !" % weechat.prefix("error"))
 weechat.prnt(buffer, " \tMessage sans préfixe mais avec \t quelques \t tabulations")
+weechat.prnt(buffer, "\t\tMessage sans heure/alignement")
+weechat.prnt(buffer, "\t\t") # ligne vide (sans heure)
 ----------------------------------------
 
 [NOTE]
@@ -6945,6 +7022,15 @@ weechat_hook_process
 
 Accroche un processus (lancé par un fork), et intercepter sa sortie.
 
+[NOTE]
+Depuis la version 0.3.9.2, le shell n'est plus utilisé pour exécuter la
+commande. WeeChat effectue un découpage automatique de la commande et de ses
+paramètres (comme le fait le shell). +
+Si le découpage n'est pas correct (selon les guillemets utilisés dans votre
+commande), ou si vous souhaitez utiliser le shell, vous pouvez utiliser la
+fonction <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>> avec
+les paramètres dans la hashtable 'options' (_nouveau dans la version 0.4.0_).
+
 Prototype :
 
 [source,C]
@@ -7100,9 +7186,14 @@ Les paramètres sont les mêmes que ceux de la fonction
 <<_weechat_hook_process,weechat_hook_process>>, avec un paramètre
 supplémentaire :
 
-* 'options' : options pour la commande exécutée (voir le tableau ci-dessous);
-  la hashtable est dupliquée dans la fonction, donc il est possible de la
-  supprimer après cet appel
+* 'options' : options pour la commande exécutée; la hashtable est dupliquée dans
+  la fonction, donc il est possible de la supprimer après cet appel
+
+Pour une commande standard (ne commençant pas par "url:"), la hashtable
+'options' peut contenir les paramètres pour la commande (et donc 'command' doit
+être seulement la commande sans les paramètres)
+(_nouveau dans la version 0.4.0_). +
+Les clés dans la hashtable doivent être: 'arg1', 'arg2', ...
 
 Pour la commande "url:...", les options suivantes sont disponibles (voir
 `man curl_easy_setopt` pour une description de chaque option) :
@@ -7157,6 +7248,7 @@ my_process_cb (void *data, const char *command, int return_code,
     return WEECHAT_RC_OK;
 }
 
+/* exemple 1: téléchargement d'une URL */
 struct t_hashtable *options = weechat_hashtable_new (8,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      WEECHAT_HASHTABLE_STRING,
@@ -7170,6 +7262,42 @@ if (options)
                                                                      20000,
                                                                      &my_process_cb, NULL);
     weechat_hashtable_free (options);
+}
+
+/* exemple 2: exécution d'un programme de notification avec le message de quelqu'un */
+struct t_hashtable *options_cmd1 = weechat_hashtable_new (8,
+                                                          WEECHAT_HASHTABLE_STRING,
+                                                          WEECHAT_HASHTABLE_STRING,
+                                                          NULL,
+                                                          NULL);
+if (options_cmd1)
+{
+    weechat_hashtable_set (options_cmd1, "arg1", "-from");
+    weechat_hashtable_set (options_cmd1, "arg2", nick);
+    weechat_hashtable_set (options_cmd1, "arg3", "-msg");
+    weechat_hashtable_set (options_cmd1, "arg4", message); /* paramètre non sûr */
+    struct t_hook *my_process_hook = weechat_hook_process_hashtable ("my-notify-command",
+                                                                     options_cmd1,
+                                                                     20000,
+                                                                     &my_process_cb, NULL);
+    weechat_hashtable_free (options_cmd1);
+}
+
+/* exemple 3: appeler le shell pour exécuter la commande (la commande doit être SURE) */
+struct t_hashtable *options_cmd2 = weechat_hashtable_new (8,
+                                                          WEECHAT_HASHTABLE_STRING,
+                                                          WEECHAT_HASHTABLE_STRING,
+                                                          NULL,
+                                                          NULL);
+if (options_cmd2)
+{
+    weechat_hashtable_set (options_cmd2, "arg1", "-c");
+    weechat_hashtable_set (options_cmd2, "arg2", "ls -l /tmp | grep something");
+    struct t_hook *my_process_hook = weechat_hook_process_hashtable ("sh",
+                                                                     options_cmd2,
+                                                                     20000,
+                                                                     &my_process_cb, NULL);
+    weechat_hashtable_free (options_cmd2);
 }
 ----------------------------------------
 
@@ -7193,9 +7321,24 @@ def my_process_cb(data, command, return_code, out, err):
         weechat.prnt("", "stderr: %s" % err)
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_process_hashtable("url:http://www.weechat.org/",
-                                      { "file_out": "/tmp/weechat.org.html" },
-                                      20000, "my_process_cb", "")
+# exemple 1: téléchargement d'une URL
+hook1 = weechat.hook_process_hashtable("url:http://www.weechat.org/",
+                                       { "file_out": "/tmp/weechat.org.html" },
+                                       20000, "my_process_cb", "")
+
+# exemple 2: exécution d'un programme de notification avec le message de quelqu'un
+hook2 = weechat.hook_process_hashtable("my-notify-command",
+                                       { "arg1": "-from",
+                                         "arg2": nick,
+                                         "arg3": "-msg",
+                                         "arg4": message }, # paramètre non sûr
+                                       20000, "my_process_cb", "")
+
+# exemple 3: appeler le shell pour exécuter la commande (la commande doit être SURE)
+hook3 = weechat.hook_process_hashtable("sh",
+                                       { "arg1": "-c",
+                                         "arg2": "ls -l /tmp | grep something" },
+                                       20000, "my_process_cb", "")
 ----------------------------------------
 
 weechat_hook_connect
@@ -7210,8 +7353,8 @@ Prototype :
 struct t_hook *weechat_hook_connect (const char *proxy,
                                      const char *address,
                                      int port,
-                                     int sock,
                                      int ipv6,
+                                     int retry,
                                      void *gnutls_sess,
                                      void *gnutls_cb,
                                      int gnutls_dhkey_size,
@@ -7220,6 +7363,7 @@ struct t_hook *weechat_hook_connect (const char *proxy,
                                      int (*callback)(void *data,
                                                      int status,
                                                      int gnutls_rc,
+                                                     int sock,
                                                      const char *error,
                                                      const char *ip_address),
                                      void *callback_data);
@@ -7231,8 +7375,10 @@ Paramètres :
   une connexion sans proxy)
 * 'address' : nom ou adresse IP de la machine à laquelle se connecter
 * 'port' : numéro de port
-* 'sock' : socket utilisée pour la connexion
-* 'ipv6' : 1 pour utiliser IPv6, 0 pour utiliser IPv4
+* 'ipv6' : 1 pour utiliser IPv6 (avec repli sur IPv4), 0 pour utiliser seulement
+  IPv4
+* 'retry' : numéro de nouvelle tentative, utilisé pour se rabattre sur les
+  adresses IPv4 si la connexion IPv6 échoue
 * 'gnutls_sess' : GnuTLS session (optionnel)
 * 'gnutls_cb' : callback pour GnuTLS (optionnel)
 * 'gnutls_dhkey_size' : taille de clé utilisée pour l'échange de clé
@@ -7263,7 +7409,9 @@ Paramètres :
     "poignée de main" GnuTLS
 *** 'WEECHAT_HOOK_CONNECT_MEMORY_ERROR' : mémoire insuffisante
 *** 'WEECHAT_HOOK_CONNECT_TIMEOUT' : temps maximum dépassé
+*** 'WEECHAT_HOOK_CONNECT_SOCKET_ERROR' : erreur de création socket
 ** 'gnutls_rc' : valeur retour de 'gnutls_handshake()'
+** 'sock' : socket utilisée pour la connexion
 ** 'const char *error' : valeur retour de 'gnutls_strerror(gnutls_rc)'
 ** 'const char *ip_address' : adresse IP trouvée
 ** valeur de retour :
@@ -7316,6 +7464,9 @@ my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
         case WEECHAT_HOOK_CONNECT_TIMEOUT:
             /* ... */
             break;
+        case WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
+            /* ... */
+            break;
     }
     return WEECHAT_RC_OK;
 }
@@ -7357,6 +7508,8 @@ def my_connect_cb(data, status, gnutls_rc, error, ip_address):
     elif status == WEECHAT_HOOK_CONNECT_MEMORY_ERROR:
         # ...
     elif status == WEECHAT_HOOK_CONNECT_TIMEOUT:
+        # ...
+    elif status == WEECHAT_HOOK_CONNECT_SOCKET_ERROR:
         # ...
     return weechat.WEECHAT_RC_OK
 
@@ -7480,6 +7633,11 @@ Paramètres :
 [width="100%",cols="^1,^3,^4,5",options="header"]
 |========================================
 | Extension | Signal | Paramètres | Description
+
+| aspell | aspell_suggest +
+  (_nouveau dans la version 0.4.0_) |
+  pointeur : tampon |
+  nouvelles suggestions pour un mot mal orthographié
 
 | guile | guile_script_loaded +
   (_nouveau dans la version 0.3.9_) |
@@ -7810,15 +7968,15 @@ Paramètres :
   coller de lignes en cours
 
 | weechat | input_search |
-  - |
+  pointeur : tampon |
   recherche de texte dans le tampon
 
 | weechat | input_text_changed |
-  - |
+  pointeur : tampon |
   texte modifié dans la barre "input"
 
 | weechat | input_text_cursor_moved |
-  - |
+  pointeur : tampon |
   curseur déplacé dans la barre "input"
 
 | weechat | key_pressed |
@@ -7849,12 +8007,22 @@ Paramètres :
   - |
   une complétion partielle a été faite
 
+| weechat | plugin_loaded +
+  (_nouveau dans la version 0.3.9_) |
+  chaîne : chemin vers l'extension chargée (exemple: "/usr/lib/weechat/plugins/irc.so") |
+  extension chargée
+
+| weechat | plugin_unloaded +
+  (_nouveau dans la version 0.3.9_) |
+  chaîne : nom de l'extension déchargée (exemple: "irc") |
+  extension déchargée
+
 | weechat | quit |
   chaîne : paramètres pour le /quit |
   la commande `/quit` a été exécutée par l'utilisateur
 
 | weechat | upgrade |
-  - |
+  chaîne : "quit" si le paramètre "-quit" a été donné pour /upgrade, sinon NULL |
   la commande `/upgrade` a été exécutée par l'utilisateur
 
 | weechat | upgrade_ended +
@@ -7939,6 +8107,8 @@ Paramètres :
 ** 'void *signal_data' : données envoyées avec le signal
 ** valeur de retour :
 *** 'WEECHAT_RC_OK'
+*** 'WEECHAT_RC_OK_EAT' (arrêter l'envoi du signal immédiatement)
+    (_nouveau dans la version 0.4.0_)
 *** 'WEECHAT_RC_ERROR'
 * 'callback_data' : pointeur donné au "callback" lorsqu'il est appelé par
   WeeChat
@@ -8216,6 +8386,8 @@ modèle de redirection ("pattern").
 ** 'struct t_hashtable *hashtable' : hashtable
 ** valeur de retour :
 *** 'WEECHAT_RC_OK'
+*** 'WEECHAT_RC_OK_EAT' (arrêter l'envoi du signal immédiatement)
+    (_nouveau dans la version 0.4.0_)
 *** 'WEECHAT_RC_ERROR'
 * 'callback_data' : pointeur donné au "callback" lorsqu'il est appelé par
   WeeChat
@@ -11924,7 +12096,7 @@ void weechat_command (struct t_gui_buffer *buffer, const char *command);
 Paramètres :
 
 * 'buffer' : pointeur vers le tampon (la commande est exécutée sur ce tampon,
-  NULL pour le tampon "core")
+  NULL pour le tampon courant)
 * 'command' : commande à exécuter (si elle commence par "/"), ou texte à
   envoyer au tampon
 
@@ -12975,7 +13147,7 @@ les variables du hdata.
 weechat_hdata_new
 ^^^^^^^^^^^^^^^^^
 
-_Nouveau dans la version 0.3.6._
+_Nouveau dans la version 0.3.6, mis à jour dans la 0.3.9 et 0.4.0._
 
 Créé un "hdata".
 
@@ -12996,7 +13168,13 @@ Prototype :
 
 [source,C]
 ----------------------------------------
-struct t_hdata *weechat_hdata_new (const char *hdata_name, const char *var_prev, const char *var_next);
+struct t_hdata *weechat_hdata_new (const char *hdata_name, const char *var_prev, const char *var_next,
+                                   int create_allowed, int delete_allowed,
+                                   int (*callback_update)(void *data,
+                                                          struct t_hdata *hdata,
+                                                          void *pointer,
+                                                          struct t_hashtable *hashtable),
+                                   void *callback_update_data);
 ----------------------------------------
 
 Paramètres :
@@ -13008,6 +13186,20 @@ Paramètres :
 * 'var_next' : nom de la variable dans la structure qui est un pointeur vers
   l'élément suivant dans la liste (peut être NULL si une telle variable
   n'existe pas)
+* 'create_allowed' : 1 si la création de structure est autorisée, sinon 0
+  (_nouveau dans la version 0.4.0_)
+* 'delete_allowed' : 1 si la suppression de structure est autorisée, sinon 0
+  (_nouveau dans la version 0.3.9_)
+* 'callback_update' : fonction appelée pour mettre à jour des données dans le
+  hdata, peut être NULL si aucune mise à jour n'est autorisée
+  (_nouveau dans la version 0.3.9_), paramètres et valeur de retour :
+** 'void *data' : pointeur
+** 'struct t_hdata *hdata' : pointeur vers le hdata
+** 'struct t_hashtable *hashtable' : hashtable avec les variables à mettre à
+   jour (voir <<_weechat_hdata_update,weechat_hdata_update>>)
+** valeur de retour : nombre de variables mises à jour
+* 'callback_update_data' : pointeur donné au "callback" lorsqu'il est appelé par
+  WeeChat (_nouveau dans la version 0.3.9_)
 
 Valeur de retour :
 
@@ -13017,7 +13209,7 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
-struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next");
+struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next", 0, 0, &callback_update, NULL);
 ----------------------------------------
 
 [NOTE]
@@ -13035,7 +13227,7 @@ Prototype :
 [source,C]
 ----------------------------------------
 void weechat_hdata_new_var (struct t_hdata *hdata, const char *name, int offset, int type,
-                            const char *array_size, const char *hdata_name);
+                            int update_allowed, const char *array_size, const char *hdata_name);
 ----------------------------------------
 
 Paramètres :
@@ -13052,6 +13244,8 @@ Paramètres :
 ** WEECHAT_HDATA_TIME
 ** WEECHAT_HDATA_HASHTABLE
 ** WEECHAT_HDATA_OTHER
+* 'update_allowed' : 1 si la mise à jour de la variable est autorisée, sinon 0
+  (_nouveau dans la version 0.3.9_)
 * 'array_size' : non NULL seulement si la variable est un tableau, et peut être :
   (_nouveau dans la version 0.3.9_)
 ** nom d'une variable du hdata : cette variable sera utilisée comme taille de
@@ -13081,26 +13275,26 @@ struct t_myplugin_list
 /* ... */
 
 struct t_hdata *hdata = weechat_hdata_new ("myplugin_list", "prev", "next");
-weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, NULL, NULL);
-weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, NULL, NULL);
-weechat_hdata_new_var (hdata, "tags_count", offsetof (struct t_myplugin_list, tags_count), WEECHAT_HDATA_INTEGER, NULL, NULL);
-weechat_hdata_new_var (hdata, "tags_array", offsetof (struct t_myplugin_list, tags_array), WEECHAT_HDATA_STRING, "tags_count", NULL);
-weechat_hdata_new_var (hdata, "string_split", offsetof (struct t_myplugin_list, string_split), WEECHAT_HDATA_STRING, "*", NULL);
-weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
-weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, NULL, "myplugin_list");
+weechat_hdata_new_var (hdata, "name", offsetof (struct t_myplugin_list, name), WEECHAT_HDATA_STRING, 0, NULL, NULL);
+weechat_hdata_new_var (hdata, "buffer", offsetof (struct t_myplugin_list, buffer), WEECHAT_HDATA_POINTER, 0, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_count", offsetof (struct t_myplugin_list, tags_count), WEECHAT_HDATA_INTEGER, 0, NULL, NULL);
+weechat_hdata_new_var (hdata, "tags_array", offsetof (struct t_myplugin_list, tags_array), WEECHAT_HDATA_STRING, 0, "tags_count", NULL);
+weechat_hdata_new_var (hdata, "string_split", offsetof (struct t_myplugin_list, string_split), WEECHAT_HDATA_STRING, 0, "*", NULL);
+weechat_hdata_new_var (hdata, "prev", offsetof (struct t_myplugin_list, prev), WEECHAT_HDATA_POINTER, 0, NULL, "myplugin_list");
+weechat_hdata_new_var (hdata, "next", offsetof (struct t_myplugin_list, next), WEECHAT_HDATA_POINTER, 0, NULL, "myplugin_list");
 ----------------------------------------
 
 La macro "WEECHAT_HDATA_VAR" peut être utilisée pour raccourcir le code :
 
 [source,C]
 ----------------------------------------
-WEECHAT_HDATA_VAR(struct t_myplugin_list, name, STRING, NULL, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, buffer, POINTER, NULL, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_count, INTEGER, NULL, NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_array, STRING, "tags_count", NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, string_split, STRING, "*", NULL);
-WEECHAT_HDATA_VAR(struct t_myplugin_list, prev, POINTER, NULL, "myplugin_list");
-WEECHAT_HDATA_VAR(struct t_myplugin_list, next, POINTER, NULL, "myplugin_list");
+WEECHAT_HDATA_VAR(struct t_myplugin_list, name, STRING, 0, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, buffer, POINTER, 0, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_count, INTEGER, 0, NULL, NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, tags_array, STRING, 0, "tags_count", NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, string_split, STRING, 0, "*", NULL);
+WEECHAT_HDATA_VAR(struct t_myplugin_list, prev, POINTER, 0, NULL, "myplugin_list");
+WEECHAT_HDATA_VAR(struct t_myplugin_list, next, POINTER, 0, NULL, "myplugin_list");
 ----------------------------------------
 
 [NOTE]
@@ -14020,18 +14214,15 @@ Script (Python) :
 value = weechat.hdata_time(hdata, pointer, name)
 
 # exemple
-hdata = weechat.hdata_get("buffer")
-ptr = weechat.buffer_search_main()
-ptr = weechat.hdata_pointer(hdata, ptr, "lines")
+buf = weechat.buffer_search_main()
+ptr = weechat.hdata_pointer(weechat.hdata_get("buffer"), buf, "lines")
 if ptr:
-    hdata = weechat.hdata_get("lines")
-    ptr = weechat.hdata_pointer(hdata, ptr, "first_line")
+    ptr = weechat.hdata_pointer(weechat.hdata_get("lines"), ptr, "first_line")
     if ptr:
-        hdata = weechat.hdata_get("line")
-        ptr = weechat.hdata_pointer(hdata, ptr, "data")
+        ptr = weechat.hdata_pointer(weechat.hdata_get("line"), ptr, "data")
         if ptr:
-            hdata = weechat.hdata_get("line_data")
-            weechat.prnt("", "heure de la première ligne affichée = %s" % weechat.hdata_time(hdata, ptr, "date"))
+            date = weechat.hdata_time(weechat.hdata_get("line_data"), ptr, "date")
+            weechat.prnt("", "heure de la première ligne affichée = %s" % time.strftime("%F %T", time.localtime(int(date))))
 ----------------------------------------
 
 weechat_hdata_hashtable
@@ -14088,6 +14279,138 @@ for key in hash:
     weechat.prnt("", "  %s == %s" % (key, hash[key]))
 ----------------------------------------
 
+weechat_hdata_set
+^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.9._
+
+Définit une nouvelle valeur pour une variable dans un hdata.
+
+[NOTE]
+Cette fonction ne peut être appelée que dans un "callback" de mise à jour
+(voir <<_weechat_hdata_new,weechat_hdata_new>> et
+<<_weechat_hdata_update,weechat_hdata_update>>), si la variable peut être mise à
+jour.
+
+Prototype :
+
+[source,C]
+----------------------------------------
+int weechat_hdata_set (struct t_hdata *hdata, void *pointer, const char *name, const char *value);
+----------------------------------------
+
+Paramètres :
+
+* 'hdata' : pointeur vers le hdata
+* 'pointer' : pointeur vers un objet WeeChat ou d'une extension
+* 'name' : nom de la variable (types autorisés : char, integer, long, string,
+  pointer, time)
+* 'value' : nouvelle valeur pour la variable
+
+Valeur de retour :
+
+* 1 si ok, 0 en cas d'erreur
+
+Exemple en C :
+
+[source,C]
+----------------------------------------
+weechat_hdata_set (hdata, pointer, "message", "test");
+----------------------------------------
+
+[NOTE]
+Cette fonction n'est pas disponible dans l'API script.
+
+weechat_hdata_update
+^^^^^^^^^^^^^^^^^^^^
+
+_Nouveau dans la version 0.3.9._
+
+Met à jour des données dans le hdata.
+
+Prototype :
+
+[source,C]
+----------------------------------------
+int weechat_hdata_update (struct t_hdata *hdata, void *pointer, struct t_hashtable *hashtable);
+----------------------------------------
+
+Paramètres :
+
+* 'hdata' : pointeur vers le hdata
+* 'pointer' : pointeur vers un objet WeeChat ou d'une extension
+* 'hashtable' : variables à mettre à jour : les clés sont les noms des
+  variables, les valeurs sont les nouvelles valeurs pour les variables (clés et
+  valeurs sont des chaînes de caractères), quelqes clés spéciales sont
+  acceptées :
+** clé `__create_allowed` (avec n'importe quelle valeur) : retourne 1 si la
+   création est autorisée pour la strucrure, sinon 0
+   (_nouveau dans la version 0.4.0_)
+** clé `__delete_allowed` (avec n'importe quelle valeur) : retourne 1 si la
+   suppression est autorisée pour la structure, sinon 0
+** clé `__update_allowed`, la valeur est le nom d'une variable : retourne 1 si
+   la mise à jour est autorisée pour la variable, sinon 0
+** clé `__delete` (avec n'importe quelle valeur) : supprime la structure
+   (si autorisé)
+
+Valeur de retour :
+
+* nombre de variables mises à jour
+
+Exemple en C :
+
+[source,C]
+----------------------------------------
+/* soustrait une heure sur le dernier message affiché dans le tampon courant */
+
+struct t_gui_lines *own_lines;
+struct t_gui_line *line;
+struct t_gui_line_data  *line_data;
+struct t_hdata *hdata;
+struct t_hashtable *hashtable;
+char str_date[64];
+
+own_lines = weechat_hdata_pointer (weechat_hdata_get ("buffer"), weechat_current_buffer (), "own_lines");
+if (own_lines)
+{
+    line = weechat_hdata_pointer (weechat_hdata_get ("lines"), own_lines, "last_line");
+    if (line)
+    {
+        line_data = weechat_hdata_pointer (weechat_hdata_get ("line"), line, "data");
+        hdata = weechat_hdata_get ("line_data");
+        hashtable = weechat_hashtable_new (8,
+                                           WEECHAT_HASHTABLE_STRING,
+                                           WEECHAT_HASHTABLE_STRING,
+                                           NULL,
+                                           NULL);
+        if (hashtable)
+        {
+            snprintf (str_date, sizeof (str_date), "%ld", ((long int)weechat_hdata_time (hdata, line_data, "date")) - 3600);
+            weechat_hashtable_set (hashtable, "date", str_date);
+            weechat_hdata_update (hdata, line_data, hashtable);
+            weechat_hashtable_free (hashtable);
+        }
+    }
+}
+----------------------------------------
+
+Script (Python) :
+
+[source,python]
+----------------------------------------
+# prototype
+count = weechat.hdata_update(hdata, pointer, hashtable)
+
+# exemple : soustrait une heure sur le dernier message affiché dans le tampon courant
+own_lines = weechat.hdata_pointer(weechat.hdata_get('buffer'), weechat.current_buffer(), 'own_lines')
+if own_lines:
+    line = weechat.hdata_pointer(weechat.hdata_get('lines'), own_lines, 'last_line')
+    if line:
+        line_data = weechat.hdata_pointer(weechat.hdata_get('line'), line, 'data')
+        hdata = weechat.hdata_get('line_data')
+        weechat.hdata_update(hdata, line_data, { 'date': str(weechat.hdata_time(hdata, line_data, 'date') - 3600) })
+----------------------------------------
+
 weechat_hdata_get_string
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -14131,8 +14454,8 @@ Exemple en C :
 
 [source,C]
 ----------------------------------------
-weechat_printf (NULL, "variables dans le hdata: %s" weechat_hdata_get_string (hdata, "var_keys"));
-weechat_printf (NULL, "listes dans le hdata: %s" weechat_hdata_get_string (hdata, "list_keys"));
+weechat_printf (NULL, "variables dans le hdata: %s", weechat_hdata_get_string (hdata, "var_keys"));
+weechat_printf (NULL, "listes dans le hdata: %s", weechat_hdata_get_string (hdata, "list_keys"));
 ----------------------------------------
 
 Script (Python) :

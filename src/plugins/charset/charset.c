@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * charset.c - charset plugin for WeeChat: encode/decode strings
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,11 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * charset.c: charset plugin for WeeChat: encode/decode strings to other
- *            charset, depending on buffer
  */
 
 #include <stdio.h>
@@ -57,7 +54,7 @@ const char *charset_internal = NULL;
 
 
 /*
- * charset_config_reaload: reload charset configuration file
+ * Reloads charset configuration file.
  */
 
 int
@@ -74,23 +71,25 @@ charset_config_reload (void *data, struct t_config_file *config_file)
 }
 
 /*
- * charset_is_allowed: check if charset is allowed (different from "UTF-8",
- *                     which is the internal charset)
- *                     return 1 if charset is allowed, otherwise 0
- *                     (and error is displayed)
+ * Checks if a decoding charset is allowed (different from "UTF-8", which is the
+ * internal charset).
+ *
+ * Returns:
+ *   1: charset is allowed
+ *   0: charset not allowed
  */
 
 int
-charset_is_allowed (const char *charset)
+charset_decode_is_allowed (const char *charset)
 {
     if (weechat_strcasestr (charset, "utf-8")
         || weechat_strcasestr (charset, "utf8"))
     {
         weechat_printf (NULL,
-                        _("%s%s: UTF-8 is not allowed in charset options (it "
-                          "is internal and default charset: default encode "
-                          "is UTF-8 and decode of UTF-8 is OK even if you "
-                          "specify another charset to decode)"),
+                        _("%s%s: UTF-8 is not allowed in charset decoding "
+                          "options (it is internal and default charset: decode "
+                          "of UTF-8 is OK even if you specify another charset "
+                          "to decode)"),
                         weechat_prefix ("error"), CHARSET_PLUGIN_NAME);
         return 0;
     }
@@ -99,22 +98,26 @@ charset_is_allowed (const char *charset)
 }
 
 /*
- * charset_check_charset_cb: callback called to check the charset value
+ * Checks the validity of a decoding charset.
+ *
+ * Returns:
+ *   1: valid
+ *   0: invalid
  */
 
 int
-charset_check_charset_cb (void *data, struct t_config_option *option,
-                          const char *value)
+charset_check_charset_decode_cb (void *data, struct t_config_option *option,
+                                 const char *value)
 {
     /* make C compiler happy */
     (void) data;
     (void) option;
 
-    return charset_is_allowed (value);
+    return charset_decode_is_allowed (value);
 }
 
 /*
- * charset_config_create_option: set a charset
+ * Sets a charset.
  */
 
 int
@@ -148,13 +151,15 @@ charset_config_create_option (void *data, struct t_config_file *config_file,
         {
             if (value && value[0])
             {
-                if (charset_is_allowed (value))
+                if ((section != charset_config_section_decode)
+                    || charset_decode_is_allowed (value))
                 {
                     ptr_option = weechat_config_new_option (
                         config_file, section,
                         option_name, "string", NULL,
                         NULL, 0, 0, "", value, 0,
-                        &charset_check_charset_cb, NULL, NULL, NULL, NULL, NULL);
+                        (section == charset_config_section_decode) ? &charset_check_charset_decode_cb : NULL, NULL,
+                        NULL, NULL, NULL, NULL);
                     rc = (ptr_option) ?
                         WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE : WEECHAT_CONFIG_OPTION_SET_ERROR;
                 }
@@ -176,8 +181,11 @@ charset_config_create_option (void *data, struct t_config_file *config_file,
 }
 
 /*
- * charset_config_init: init charset configuration file
- *                      return: 1 if ok, 0 if error
+ * Initializes charset configuration file.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -204,19 +212,23 @@ charset_config_init ()
     charset_default_decode = weechat_config_new_option (
         charset_config_file, ptr_section,
         "decode", "string",
-        N_("global decoding charset"),
+        N_("global decoding charset: charset used to decode incoming messages "
+           "(if decoding fails, fallback is UTF-8 because it is the WeeChat "
+           "internal charset)"),
         NULL, 0, 0,
         (charset_terminal && charset_internal
          && (strcasecmp (charset_terminal,
                          charset_internal) != 0)) ?
         charset_terminal : "iso-8859-1", NULL, 0,
-        &charset_check_charset_cb, NULL, NULL, NULL, NULL, NULL);
+        &charset_check_charset_decode_cb, NULL, NULL, NULL, NULL, NULL);
     charset_default_encode = weechat_config_new_option (
         charset_config_file, ptr_section,
         "encode", "string",
-        N_("global encoding charset"),
+        N_("global encoding charset: charset used to encode outgoing messages "
+           "(if empty, default is UTF-8 because it is the WeeChat internal "
+           "charset)"),
         NULL, 0, 0, "", NULL, 0,
-        &charset_check_charset_cb, NULL, NULL, NULL, NULL, NULL);
+        NULL, NULL, NULL, NULL, NULL, NULL);
 
     ptr_section = weechat_config_new_section (charset_config_file, "decode",
                                               1, 1,
@@ -250,7 +262,7 @@ charset_config_init ()
 }
 
 /*
- * charset_config_read: read charset configuration file
+ * Reads charset configuration file.
  */
 
 int
@@ -260,7 +272,7 @@ charset_config_read ()
 }
 
 /*
- * charset_config_write: write charset configuration file
+ * Writes charset configuration file.
  */
 
 int
@@ -270,8 +282,11 @@ charset_config_write ()
 }
 
 /*
- * charset_check: check if a charset is valid
- *                return 1 if charset is valid, 0 if not valid
+ * Checks if a charset is valid.
+ *
+ * Returns:
+ *   1: charset is valid
+ *   0: charset is not valid
  */
 
 int
@@ -291,9 +306,10 @@ charset_check (const char *charset)
 }
 
 /*
- * charset_get: read a charset in config file
- *              we first try with all arguments, then remove one by one
- *              to find charset (from specific to general charset)
+ * Reads a charset in configuration file.
+ *
+ * First tries with all arguments, then removes one by one to find charset (from
+ * specific to general charset).
  */
 
 const char *
@@ -345,7 +361,7 @@ charset_get (struct t_config_section *section, const char *name,
 }
 
 /*
- * charset_decode_cb: decode a string with a charset to internal charset
+ * Decodes a string with a charset to internal charset (UTF-8).
  */
 
 char *
@@ -374,7 +390,7 @@ charset_decode_cb (void *data, const char *modifier, const char *modifier_data,
 }
 
 /*
- * charset_encode_cb: encode a string from internal charset to another one
+ * Encodes a string from internal charset (UTF-8) to another charset.
  */
 
 char *
@@ -403,7 +419,7 @@ charset_encode_cb (void *data, const char *modifier, const char *modifier_data,
 }
 
 /*
- * charset_set: set a charset
+ * Sets a charset.
  */
 
 void
@@ -426,7 +442,7 @@ charset_set (struct t_config_section *section, const char *type,
 }
 
 /*
- * charset_display_charsets: display charsets
+ * Displays terminal and internal charsets.
  */
 
 void
@@ -438,7 +454,7 @@ charset_display_charsets ()
 }
 
 /*
- * charset_command_cb: callback for /charset command
+ * Callback for command "/charset".
  */
 
 int
@@ -542,7 +558,7 @@ charset_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
 }
 
 /*
- * weechat_plugin_init: init charset plugin
+ * Initializes charset plugin.
  */
 
 int
@@ -591,7 +607,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: end charset plugin
+ * Ends charset plugin.
  */
 
 int

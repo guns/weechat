@@ -11,28 +11,29 @@ message: Abwesenheitsnachricht (ohne eine Nachricht wird der Abwesenheitszustand
 [command]*`bar`* Infobars verwalten::
 ........................................
 /bar  list|listfull|listitems
-      add <name> <type>[,<cond1>[,<cond2>...]] <position> <size> <separator> <item1>[,<item2>...]
+      add <name> <type>[,<condition>] <position> <size> <separator> <item1>[,<item2>...]
       default [input|title|status|nicklist]
       del <name>|-all
       set <name> <option> <value>
       hide|show|toggle <name>
       scroll <name> <window> <scroll_value>
 
-         list: listet alle Infobars auf
-     listfull: listet alle Infobars detailliert auf (Standardaufruf)
-    listitems: listet alle Items auf, die in den Infobars genutzt werden
+         list: zeigt alle Infobars an
+     listfull: zeigt eine detaillierte Liste aller Infobars an (ausführlich)
+    listitems: zeigt alle Items an, die in den Infobars genutzt werden
           add: füge eine neue Infobar hinzu
          name: Name der Infobar (muss einmalig sein)
-         type:   root: außerhalb des Fensters,
-               window: innerhalb des Fensters, mit optionalen Merkmalen (siehe unten)
-    cond1,...: Merkmal(e) für eine Infobar (nur nutzbar mit der Type-Option "window"):
+         type:   root: außerhalb eines Fensters,
+               window: innerhalb eines Fensters, mit optionalen Merkmalen (siehe unten)
+    condition: Merkmal(e) für eine Infobar (nur nutzbar mit der Type-Option "window"):
                  active: in einem aktiven Fenster
                inactive: in einem inaktiven Fenster
                nicklist: in Fenstern mit einer Nickliste
-               werden keine Merkmale angegeben, ist die Infobar immer sichtbar
+               weitere Merkmale: siehe /help weechat.bar.xxx.conditions und /help eval
+               ohne Angabe von Merkmalen wird die Infobar immer angezeigt
      position: bottom (unten), top (oben), left (links) oder right (rechts)
          size: Größe der Infobar (in Zeichen)
-    separator: 1 um eine Trennlinien zu zeichnen, bei 0 oder ohne eine Angabe wird keine Trennlinien gezeichnet
+    separator: 1 um eine Trennlinien zu zeichnen, bei 0 oder ohne eine Angabe, wird keine Trennlinien gezeichnet
     item1,...: Items die in der Infobar genutzt werden sollen (Items können durch Kommata oder Leerzeichen getrennt werden ("+" (verbindet Items))
       default: erstellt standardisierte Infobars
           del: entfernt eine Infobar (alle Infobars können mit der Option "-all" entfernt werden).
@@ -44,7 +45,7 @@ message: Abwesenheitsnachricht (ohne eine Nachricht wird der Abwesenheitszustand
        toggle: zeigt/versteckt eine Infobar
        scroll: scrollt Infobar hoch/runter
        window: Nummer des Fensters (nutze '*' für aktuelles Fenster oder für die Root-Bars)
- scroll_value: Werte für Scroll-Funktion: 'x' oder 'y', gefolgt von '+', '-', 'b' (Beginn) oder 'e' (Ende), Wert (für +/-), und optional % (zum scrollen der Breite/Höhe in %, ansonsten wird dieser Wert als Anzahl der Zeichen interpretiert um die gescrollt werden soll)
+ scroll_value: Werte für Scroll-Funktion: 'x' oder 'y' (optional), gefolgt von '+', '-', 'b' (Beginn) oder 'e' (Ende), Wert (für +/-), und optional % (zum scrollen der Breite/Höhe in %, ansonsten wird dieser Wert als Anzahl der Zeichen interpretiert um die gescrollt werden soll)
 
 Beispiele:
   erstellt eine Infobar mit den Items: time, buffer number + name, und Vervollständigung:
@@ -150,7 +151,7 @@ command: auszuführender Befehl (es wird automatisch ein '/' vorangestellt, fall
 ........................................
 
 [[command_weechat_cursor]]
-[command]*`cursor`* Cursor kann frei auf dem Bildschirm bewegt werden um Aktionen in bestimmten Bildschirmbereichen auszuführen::
+[command]*`cursor`* Cursor kann frei auf dem Bildschirm bewegt werden, um Aktionen in bestimmten Bildschirmbereichen auszuführen::
 ........................................
 /cursor  go chat|<bar>|<x>,<y>
          move up|down|left|right|area_up|area_down|area_left|area_right
@@ -162,7 +163,7 @@ stop: beendet den Cursor-Modus
 
 Ohne Angabe von Argumenten wird der Cursor-Modus umgeschaltet.
 
-Ist die Mausfunktion aktiviert (siehe /help mouse), startet man den Cursor-Modus mit der mittleren Maustaste und positioniert den Cursor an diesen Punkt.
+Ist die Mausfunktion aktiviert (siehe /help mouse), startet man den Cursor-Modus mit der mittleren Maustaste und positioniert den Cursor auf diesen Punkt.
 
 Beispiele:
   gehe zur Nickliste:
@@ -197,6 +198,61 @@ infolists: zeigt Information über die Infolists an
      tags: zeigt für jede einzelne Zeile die dazugehörigen Schlagwörter an
      term: gibt Informationen über das Terminal und verfügbare Farben aus
   windows: zeigt die Fensterstruktur an
+........................................
+
+[[command_weechat_eval]]
+[command]*`eval`* wertet einen Ausdruck aus und gibt das Resultat im Buffer aus::
+........................................
+/eval  [-n] <expression>
+       [-n] <expression1> <operator> <expression2>
+
+        -n: zeigt das Ergebnis an, ohne dieses in den Buffer zu schreiben (debug Modus)
+expression: Ausdruck welcher verarbeitet werden soll. Variablen im Format ${variable} werden ersetzt (siehe unten)
+  operator: ein logischer oder vergleichender Operand:
+            - logische Operanden:
+                &&  boolean "und"
+                ||  boolean "oder"
+            - vergleichende Operanden:
+                ==  gleichl
+                !=  nicht gleich
+                <=  kleiner oder gleich
+                <   kleiner
+                >=  größer oder gleich
+                >   größer
+                =~  stimmt mit regulärem Ausdruck überein
+                !~  stimmt NICHT mit regulärem Ausdruck überein
+
+Ein Ausdruck gilt als "wahr", sofern das Ergebnis nicht NULL, nicht leer und von "0" abweichend ist.
+Der Vergleich findet zwischen zwei Integer statt, sofern die beiden Ausdrücke gültige Integer-Werte sind.
+Um einen Vergleich zwischen zwei Zeichenketten zu erzwingen, müssen die Ausdrücke in Anführungszeichen gesetzt werden, zum Beispiel:
+  50 > 100      ==> 0
+  "50" > "100"  ==> 1
+
+Einige Variablen werden im Ausdruck, mittels der Formatierung ${Variable}, ersetzt. Mögliche Variablen sind, nach Reihenfolge ihrer Priorität:
+  1. der Name einer Option (file.section.option)
+  2. der Name der lokalen Variablen für Buffer
+  3. ein hdata Name/Variable (der Wert wird automatisch als Zeichenkette konvertiert), Standardmäßig wird für "window" und "buffer" das aktuelle Fenster/Buffer verwendet.
+Das Format für hdata:
+  hdata.var1.var2...: startet mit hdata (der Pointer muss bekannt sein) und fragt eine Variable nach der anderen ab (weitere hdata können folgen)
+  hdata(list).var1.var2...: startet hdata mittels einer Liste, zum Beispiel:
+    ${buffer[gui_buffers].full_name}: der vollständige Name des ersten Buffers, in der verknüpften Liste aller Buffer
+    ${plugin[weechat_plugins].name}: Name der ersten Erweiterung, in der verknüpften Liste aller Erweiterungen
+Die vorhandenen Namen für hdata und Variablen sind in der "Anleitung für API Erweiterung", Bereich "weechat_hdata_get". beschrieben
+
+Beispiele:
+  /eval -n ${weechat.look.scroll_amount}  ==> 3
+  /eval -n ${window}                      ==> 0x2549aa0
+  /eval -n ${window.buffer}               ==> 0x2549320
+  /eval -n ${window.buffer.full_name}     ==> core.weechat
+  /eval -n ${window.buffer.number}        ==> 1
+  /eval -n ${window.buffer.number} > 2    ==> 0
+  /eval -n ${window.win_width} > 100      ==> 1
+  /eval -n (8 > 12) || (5 > 2)            ==> 1
+  /eval -n (8 > 12) && (5 > 2)            ==> 0
+  /eval -n abcd =~ ^ABC                   ==> 1
+  /eval -n abcd =~ (?-i)^ABC              ==> 0
+  /eval -n abcd =~ (?-i)^abc              ==> 1
+  /eval -n abcd !~ abc                    ==> 0
 ........................................
 
 [[command_weechat_filter]]
@@ -244,7 +300,7 @@ Beispiele:
     /filter add irc_smart *,!*#weechat* irc_smart_filter *
   filtert alle IRC join/part/quit Nachrichten:
     /filter add joinquit * irc_join,irc_part,irc_quit *
-  filtert Nicks wenn diese den Channel betreten oder durch den Befehl "/names:" angezeigt werden:
+  filtert Nicks wenn diese den Channel betreten oder durch den Befehl "/names" angezeigt werden:
     /filter add nicks * irc_366 *
   filtert Nick "toto" im IRC Channel #weechat:
     /filter add toto irc.freenode.#weechat nick_toto *
@@ -325,6 +381,7 @@ Auflistung der möglichen Funktionen:
   set_unread_current_buffer: setzt nur für den aktuellen Buffer eine Markierung der ungelesen Nachrichten
   switch_active_buffer: springt zum nächsten zusammengefügten Buffer
   switch_active_buffer_previous: springt zum vorherigen zusammengefügten Buffer
+  zoom_merged_buffer: zoomt in zusammengefügte Buffer
   insert: fügt einen Text in die Eingabezeile ein
   paste_start: Einfügen wird gestartet (bracketed paste mode)
   paste_stop: Einfügen wird beendet (bracketed paste mode)
@@ -382,7 +439,7 @@ Beispiele:
     /key reset meta-r
   "Tab"-Taste nutzen um im Kontext "search" die Suche innerhalb eines Buffers zu beenden:
     /key bindctxt search ctrl-I /input search_stop
-  Auswahl eines Nicknamens mittels mittlerem Mausknopf zeigt zusätzliche Informationen zu dem Nick an:
+  Auswahl eines Nicknamens mittels mittlerer Maustaste zeigt zusätzliche Informationen zu dem Nick an:
     /key bindctxt mouse @item(buffer_nicklist):button3 /msg nickserv info ${nick}
 ........................................
 
@@ -490,7 +547,7 @@ Beispiele:
   erstellt einen HTTP-Proxy, der auf einem lokalen Host läuft und den Port 8888 nutzt:
     /proxy add local http 127.0.0.1 8888
   erstellt einen HTTP-Proxy der das IPv6 Protokoll nutzt:
-    /proxy add local http 127.0.0.1 8888
+    /proxy add local http ::1 8888
     /proxy set local ipv6 on
   erstellt einen socks5-Proxy, mit Username und Passwort:
     /proxy add myproxy socks5 sample.host.org 3128 myuser mypass
@@ -548,9 +605,11 @@ Wird keine Datei angegeben dann werden alle Konfigurationen (WeeChat und Erweite
 [command]*`set`* Konfigurationsparameter setzen::
 ........................................
 /set  [<option> [<value>]]
+      diff [<option> [<option>...]]
 
-option: Name der zu ändernden Option (darf mit einem Joker '*' beginnen oder enden um mehrere Optionen anzuzeigen)
+option: Name der zu ändernden Option (um mehrere Optionen anzuzeigen, darf der Name mit einem Joker '*' beginnen oder enden)
  value: neuer Wert, den die Option erhalten soll
+  diff: es werden nur Optionen angezeigt, die geändert wurden
 
 Abhängig von der ausgewählten Option, kann die Variable folgenden Inhalt haben:
   boolean: on, off oder toggle
@@ -558,13 +617,17 @@ Abhängig von der ausgewählten Option, kann die Variable folgenden Inhalt haben
   string : jede Zeichenkette ("" für eine leere Zeichenkette)
   color  : Name einer Farbe, ++Anzahl oder --Anzahl
 
-Für alle Typen von Variablen kann die Zeichenkette "null" (ohne "")  genutzt werden um den Wert der Option zu löschen (undefinierter Wert). Dies  kann nur bei einigen Erweiterungen genutzt werden.
+Für alle Typen von Variablen kann die Zeichenkette "null" (ohne "")  genutzt werden, um den Wert der Option zu löschen (undefinierter Wert). Dies kann nur auf einige besondere Variablen (Erweiterungen) angewendet werden.
 
 Beispiele:
-  Zeigt alle Optionen an die etwas mit highlight zu tun haben:
+  Zeigt alle Optionen an, die etwas mit highlight zu tun haben:
     /set *highlight*
   Fügt ein highlight-Wort hinzu:
     /set weechat.look.highlight "word"
+  zeigt geänderte Optionen an:
+    /set diff
+  zeigt geänderte Optionen, der IRC Erweiterung, an:
+    /set diff irc.*
 ........................................
 
 [[command_weechat_unset]]
@@ -586,19 +649,30 @@ Beispiele:
 [[command_weechat_upgrade]]
 [command]*`upgrade`* Aktualisiert WeeChat ohne die Verbindung zum Server zu trennen::
 ........................................
-/upgrade  [<path_to_binary>]
+/upgrade  [<path_to_binary>|-quit]
 
 path_to_binary: Pfad zu einer ausführbaren WeeChat Binärdatei (Standardeinstellung ist die aktuell ausführbare Datei)
+         -quit: trennt *ALLE* Verbindungen, speichert die aktuelle Sitzung und beendet WeeChat, um den aktuellen Zustand später wiederherstellen (siehe unten)
 
-Dieser Befehl führt ein Upgrade von WeeChat durch und startet die laufende Sitzung neu. Die neue Version von WeeChat muss deshalb vorab kompiliert oder mit einem Paketmanager installiert worden sein, bevor der Befehl ausgeführt werden kann.
+Dieser Befehl führt ein Upgrade von WeeChat durch und startet die laufende Sitzung neu. Bevor dieser Befehl ausgeführt wird, sollte eine neue Version von WeeChat entweder vorab kompiliert, oder mit einem Paketmanager installiert worden sein.
 
-Hinweis: SSL Verbindungen werden während eines Upgrades unterbrochen, da solche Verbindungen zur Zeit nicht mit GnuTLS gehalten werden können. Nach einem erfolgten Upgrade findet eine automatische Verbindung zu diesen Servern statt.
+Hinweis: SSL Verbindungen werden während eines Upgrades unterbrochen, da diese Verbindungen zur Zeit nicht mit GnuTLS gehalten werden können. Nach einem erfolgten Upgrade findet eine automatische Verbindung zu diesen Servern statt.
 
 Der Upgrade Vorgang besteht aus vier Schritten:
-  1. Speicherung der Session in Dateien für Core und Erweiterungen (buffers, history, ..)
+  1. Sicherung der Sitzung, in Dateien für Core und Erweiterungen (buffers, history, ..)
   2. alle Erweiterungen werden ausgeschaltet (Konfigurationen *.conf werden gesichert)
-  3. Speicherung der WeeChat Konfiguration (weechat.conf)
-  4. ausführen einer neuen WeeChat Session.
+  3. Sicherung der WeeChat Konfiguration (weechat.conf)
+  4. ausführen der neuen Version von WeeChat und wiederherstellen der Sitzung.
+
+Nutzt man die "-quit" Funktion ist die Abfolge geringfügig anders:
+  1. es werden *ALLE* Verbindungen getrennt (irc,xfer,relay, ...)
+  2. die Sitzung wird in Dateien gesichert (*.upgrade)
+  3. alle Erweiterungen werden ausgeschaltet
+  4. die WeeChat Konfiguration wird gesichert
+  5. WeeChat wird beendet
+Die Sitzung kann zu einem späteren Zeitpunkt wiederhergestellt werden: weechat-curses --upgrade
+WICHTIG: Die Sitzung muss mit exakt den selben Konfigurationsdateien wiederhergestellt werden (*.conf)
+Es ist möglich die WeeChat-Sitzung auf einem anderen Rechner wiederherzustellen, sofern man den Inhalt des "~/.weechat" Verzeichnisses dorthin kopiert.
 ........................................
 
 [[command_weechat_uptime]]

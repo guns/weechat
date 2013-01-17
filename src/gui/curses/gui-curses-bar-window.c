@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-curses-bar-window.c - bar window functions for Curses GUI
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-curses-bar-window.c: bar window functions for Curses GUI
  */
 
 #ifdef HAVE_CONFIG_H
@@ -45,7 +43,7 @@
 
 
 /*
- * gui_bar_window_objects_init: init Curses windows for bar window
+ * Initializes Curses windows for bar window.
  */
 
 int
@@ -65,7 +63,7 @@ gui_bar_window_objects_init (struct t_gui_bar_window *bar_window)
 }
 
 /*
- * gui_window_objects_free: free Curses windows for a bar window
+ * Frees Curses windows for a bar window.
  */
 
 void
@@ -84,7 +82,7 @@ gui_bar_window_objects_free (struct t_gui_bar_window *bar_window)
 }
 
 /*
- * gui_bar_window_create_win: create curses window for bar
+ * Creates curses window for bar.
  */
 
 void
@@ -143,10 +141,11 @@ gui_bar_window_create_win (struct t_gui_bar_window *bar_window)
 }
 
 /*
- * gui_bar_window_print_string: print a string text on a bar window
- *                              return 1 if all was printed, 0 if some text
- *                              was not displayed (wrapped due to bar window
- *                              width)
+ * Prints a string text on a bar window.
+ *
+ * Returns:
+ *   1: everything was printed
+ *   0: some text was not displayed (wrapped due to bar window width)
  */
 
 int
@@ -334,7 +333,7 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
                 }
 
                 size_on_screen = utf8_char_size_screen (utf_char);
-                if (size_on_screen > 0)
+                if (size_on_screen >= 0)
                 {
                     if (hide_chars_if_scrolling
                         && (x_with_hidden < bar_window->scroll_x))
@@ -347,7 +346,7 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
                         if (*x + size_on_screen > bar_window->width)
                         {
                             if (filling == GUI_BAR_FILLING_VERTICAL)
-                                return 0;
+                                return 1;
                             if (*y >= bar_window->height - 1)
                                 return 0;
                             *x = 0;
@@ -376,7 +375,7 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
 }
 
 /*
- * gui_bar_window_draw: draw a bar for a window
+ * Draws a bar for a window.
  */
 
 void
@@ -786,7 +785,7 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
 }
 
 /*
- * gui_bar_window_objects_print_log: print bar window infos in log (usually for crash dump)
+ * Prints bar window infos in WeeChat log file (usually for crash dump).
  */
 
 void

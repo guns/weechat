@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * gui-filter.c - filter functions (used by all GUI)
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * gui-filter.c: filter functions (used by all GUI)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -41,6 +39,7 @@
 #include "gui-filter.h"
 #include "gui-buffer.h"
 #include "gui-line.h"
+#include "gui-window.h"
 
 
 struct t_gui_filter *gui_filters = NULL;           /* first filter          */
@@ -49,9 +48,12 @@ int gui_filters_enabled = 1;                       /* filters enabled?      */
 
 
 /*
- * gui_filter_line_has_tag_no_filter: return 1 if line has tag "no_filter",
- *                                    which means that line should never
- *                                    been filtered (always displayed)
+ * Checks if a line has tag "no_filter" (which means that line should never been
+ * filtered: it is always displayed).
+ *
+ * Returns:
+ *   1: line has tag "no_filter"
+ *   0: line does not have tag "no_filter"
  */
 
 int
@@ -70,8 +72,11 @@ gui_filter_line_has_tag_no_filter (struct t_gui_line *line)
 }
 
 /*
- * gui_filter_check_line: return 1 if a line should be displayed, or
- *                        0 if line is hidden (tag or regex found)
+ * Checks if a line must be displayed or not (filtered).
+ *
+ * Returns:
+ *   1: line must be displayed (not filtered)
+ *   0: line must be hidden (filtered)
  */
 
 int
@@ -126,15 +131,17 @@ gui_filter_check_line (struct t_gui_line *line)
 }
 
 /*
- * gui_filter_buffer: filter a buffer, using message filters
+ * Filters a buffer, using message filters.
  */
 
 void
 gui_filter_buffer (struct t_gui_buffer *buffer)
 {
     struct t_gui_line *ptr_line;
-    int line_displayed, lines_hidden;
+    struct t_gui_window *ptr_window;
+    int lines_changed, line_displayed, lines_hidden;
 
+    lines_changed = 0;
     lines_hidden = 0;
 
     buffer->lines->prefix_max_length = CONFIG_INTEGER(config_look_prefix_align_min);
@@ -152,7 +159,10 @@ gui_filter_buffer (struct t_gui_buffer *buffer)
 
         /* force chat refresh if at least one line changed */
         if (ptr_line->data->displayed != line_displayed)
+        {
             gui_buffer_ask_chat_refresh (buffer, 2);
+            lines_changed = 1;
+        }
 
         ptr_line->data->displayed = line_displayed;
 
@@ -166,10 +176,31 @@ gui_filter_buffer (struct t_gui_buffer *buffer)
         hook_signal_send ("buffer_lines_hidden",
                           WEECHAT_HOOK_SIGNAL_POINTER, buffer);
     }
+
+    /*
+     * if status of at least one line has changed, check that a scroll in a
+     * window displaying this buffer is not on a hidden line (if this happens,
+     * use the previous displayed line as scroll)
+     */
+    if (lines_changed)
+    {
+        for (ptr_window = gui_windows; ptr_window;
+             ptr_window = ptr_window->next_window)
+        {
+            if ((ptr_window->buffer == buffer)
+                && ptr_window->scroll->start_line
+                && !ptr_window->scroll->start_line->data->displayed)
+            {
+                ptr_window->scroll->start_line =
+                    gui_line_get_prev_displayed (ptr_window->scroll->start_line);
+                ptr_window->scroll->start_line_pos = 0;
+            }
+        }
+    }
 }
 
 /*
- * gui_filter_all_buffers: filter all buffers, using message filters
+ * Filters all buffers, using message filters.
  */
 
 void
@@ -185,7 +216,7 @@ gui_filter_all_buffers ()
 }
 
 /*
- * gui_filter_global_enable: enable message filtering
+ * Enables message filtering.
  */
 
 void
@@ -201,7 +232,7 @@ gui_filter_global_enable ()
 }
 
 /*
- * gui_filter_global_disable: disable message filtering
+ * Disables message filtering.
  */
 
 void
@@ -217,7 +248,9 @@ gui_filter_global_disable ()
 }
 
 /*
- * gui_filter_search_by_name: search a filter by name
+ * Searches for a filter by name.
+ *
+ * Returns pointer to filter found, NULL if not found.
  */
 
 struct t_gui_filter *
@@ -237,7 +270,9 @@ gui_filter_search_by_name (const char *name)
 }
 
 /*
- * gui_filter_new: create a new filter
+ * Creates a new filter.
+ *
+ * Returns pointer to new filter, NULL if error.
  */
 
 struct t_gui_filter *
@@ -357,7 +392,11 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
 }
 
 /*
- * gui_filter_rename: rename a filter
+ * Renames a filter.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -376,7 +415,7 @@ gui_filter_rename (struct t_gui_filter *filter, const char *new_name)
 }
 
 /*
- * gui_filter_free: remove a filter
+ * Removes a filter.
  */
 
 void
@@ -425,7 +464,7 @@ gui_filter_free (struct t_gui_filter *filter)
 }
 
 /*
- * gui_filter_free_all: remove all filters
+ * Removes all filters.
  */
 
 void
@@ -438,7 +477,7 @@ gui_filter_free_all ()
 }
 
 /*
- * gui_filter_hdata_filter_cb: return hdata for filter
+ * Returns hdata for filter.
  */
 
 struct t_hdata *
@@ -449,22 +488,23 @@ gui_filter_hdata_filter_cb (void *data, const char *hdata_name)
     /* make C compiler happy */
     (void) data;
 
-    hdata = hdata_new (NULL, hdata_name, "prev_filter", "next_filter");
+    hdata = hdata_new (NULL, hdata_name, "prev_filter", "next_filter",
+                       0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_filter, enabled, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, buffer_name, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, num_buffers, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, buffers, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, tags, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, tags_count, INTEGER, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, tags_array, STRING, "tags_count", NULL);
-        HDATA_VAR(struct t_gui_filter, regex, STRING, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, regex_prefix, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, regex_message, POINTER, NULL, NULL);
-        HDATA_VAR(struct t_gui_filter, prev_filter, POINTER, NULL, hdata_name);
-        HDATA_VAR(struct t_gui_filter, next_filter, POINTER, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_filter, enabled, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, buffer_name, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, num_buffers, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, buffers, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, tags, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, tags_count, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, tags_array, STRING, 0, "tags_count", NULL);
+        HDATA_VAR(struct t_gui_filter, regex, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, regex_prefix, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, regex_message, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_filter, prev_filter, POINTER, 0, NULL, hdata_name);
+        HDATA_VAR(struct t_gui_filter, next_filter, POINTER, 0, NULL, hdata_name);
         HDATA_LIST(gui_filters);
         HDATA_LIST(last_gui_filter);
     }
@@ -472,8 +512,11 @@ gui_filter_hdata_filter_cb (void *data, const char *hdata_name)
 }
 
 /*
- * gui_filter_add_to_infolist: add a filter in an infolist
- *                             return 1 if ok, 0 if error
+ * Add a filter in an infolist.
+ *
+ * Returns:
+ *   1: OK
+ *   0: error
  */
 
 int
@@ -515,7 +558,7 @@ gui_filter_add_to_infolist (struct t_infolist *infolist,
 }
 
 /*
- * gui_filter_print_log: print filter infos in log (usually for crash dump)
+ * Prints filter infos in WeeChat log file (usually for crash dump).
  */
 
 void

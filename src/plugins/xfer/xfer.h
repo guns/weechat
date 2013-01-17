@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -78,8 +78,8 @@ enum t_xfer_error
 
 /* xfer blocksize */
 
-#define XFER_BLOCKSIZE_MIN    1024     /* min blocksize when sending file   */
-#define XFER_BLOCKSIZE_MAX  102400     /* max blocksize when sending file   */
+#define XFER_BLOCKSIZE_MIN    1024     /* min blocksize                     */
+#define XFER_BLOCKSIZE_MAX  102400     /* max blocksize                     */
 
 /* separator in filenames */
 
@@ -119,14 +119,15 @@ struct t_xfer
     char *filename;                    /* filename                          */
     unsigned long long size;           /* file size                         */
     char *proxy;                       /* proxy to use (optional)           */
-    unsigned long address;             /* local or remote IP address        */
+    unsigned long local_address;       /* local IP address                  */
+    unsigned long remote_address;      /* remote IP address                 */
     int port;                          /* remote port                       */
 
     /* internal data */
     enum t_xfer_status status;         /* xfer status (waiting, sending,..) */
     struct t_gui_buffer *buffer;       /* buffer (for chat only)            */
-    char *remote_nick_color;           /* color for remote nick (given by   */
-                                       /* IRC plugin)                       */
+    char *remote_nick_color;           /* color name for remote nick        */
+                                       /* (returned by IRC plugin)          */
     int fast_send;                     /* fast send file: does not wait ACK */
     int blocksize;                     /* block size for sending file       */
     time_t start_time;                 /* time when xfer started            */

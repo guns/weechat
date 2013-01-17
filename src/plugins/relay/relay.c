@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay.c - network communication between WeeChat and remote client
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,11 +19,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * relay.c: network communication between WeeChat and remote client
- */
-
 #include <stdlib.h>
+#include <string.h>
 
 #include "../weechat-plugin.h"
 #include "relay.h"
@@ -55,7 +54,10 @@ struct t_hook *relay_hook_timer = NULL;
 
 
 /*
- * relay_protocol_search: search a protocol by name
+ * Searches for a protocol.
+ *
+ * Returns index of protocol in enum t_relay_protocol, -1 if protocol is not
+ * found.
  */
 
 int
@@ -65,7 +67,7 @@ relay_protocol_search (const char *name)
 
     for (i = 0; i < RELAY_NUM_PROTOCOLS; i++)
     {
-        if (weechat_strcasecmp (relay_protocol_string[i], name) == 0)
+        if (strcmp (relay_protocol_string[i], name) == 0)
             return i;
     }
 
@@ -74,7 +76,7 @@ relay_protocol_search (const char *name)
 }
 
 /*
- * relay_signal_upgrade_cb: callback for "upgrade" signal
+ * Callback for signal "upgrade".
  */
 
 int
@@ -83,7 +85,7 @@ relay_signal_upgrade_cb (void *data, const char *signal, const char *type_data,
 {
     struct t_relay_server *ptr_server;
     struct t_relay_client *ptr_client;
-    int disconnected;
+    int quit, ssl_disconnected;
 
     /* make C compiler happy */
     (void) data;
@@ -100,45 +102,50 @@ relay_signal_upgrade_cb (void *data, const char *signal, const char *type_data,
         relay_server_close_socket (ptr_server);
     }
 
-    /*
-     * FIXME: it's not possible to upgrade with SSL clients connected (GnuTLS
-     * lib can't reload data after upgrade), so we close connection for
-     * all SSL clients currently connected
-     */
-    disconnected = 0;
+    quit = (signal_data && (strcmp (signal_data, "quit") == 0));
+    ssl_disconnected = 0;
+
     for (ptr_client = relay_clients; ptr_client;
          ptr_client = ptr_client->next_client)
     {
-        if ((ptr_client->sock >= 0) && ptr_client->ssl)
+        /*
+         * FIXME: it's not possible to upgrade with SSL clients connected (GnuTLS
+         * lib can't reload data after upgrade), so we close connection for
+         * all SSL clients currently connected
+         */
+        if ((ptr_client->sock >= 0) && (ptr_client->ssl || quit))
         {
-            disconnected++;
-            weechat_printf (NULL,
-                            _("%s%s: disconnecting from client %s%s%s because "
-                              "upgrade can't work for clients connected via SSL"),
-                            weechat_prefix ("error"),
-                            RELAY_PLUGIN_NAME,
-                            RELAY_COLOR_CHAT_CLIENT,
-                            ptr_client->desc,
-                            RELAY_COLOR_CHAT);
+            if (!quit)
+            {
+                ssl_disconnected++;
+                weechat_printf (NULL,
+                                _("%s%s: disconnecting from client %s%s%s because "
+                                  "upgrade can't work for clients connected via SSL"),
+                                weechat_prefix ("error"),
+                                RELAY_PLUGIN_NAME,
+                                RELAY_COLOR_CHAT_CLIENT,
+                                ptr_client->desc,
+                                RELAY_COLOR_CHAT);
+            }
             relay_client_set_status (ptr_client, RELAY_STATUS_DISCONNECTED);
         }
     }
-    if (disconnected > 0)
+    if (ssl_disconnected > 0)
     {
         weechat_printf (NULL,
                         /* TRANSLATORS: "%s" after "%d" is "client" or "clients" */
                         _("%s%s: disconnected from %d %s (SSL connection "
                           "not supported with upgrade)"),
                         weechat_prefix ("error"), RELAY_PLUGIN_NAME,
-                        disconnected,
-                        NG_("client", "clients", disconnected));
+                        ssl_disconnected,
+                        NG_("client", "clients", ssl_disconnected));
     }
 
     return WEECHAT_RC_OK;
 }
 
 /*
- * relay_debug_dump_cb: callback for "debug_dump" signal
+ * Callback for signal "debug_dump".
  */
 
 int
@@ -169,7 +176,7 @@ relay_debug_dump_cb (void *data, const char *signal, const char *type_data,
 }
 
 /*
- * weechat_plugin_init: initialize relay plugin
+ * Initializes relay plugin.
  */
 
 int
@@ -221,7 +228,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 }
 
 /*
- * weechat_plugin_end: end relay plugin
+ * Ends relay plugin.
  */
 
 int
@@ -252,6 +259,8 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     }
 
     relay_network_end ();
+
+    relay_config_free ();
 
     return WEECHAT_RC_OK;
 }

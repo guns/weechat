@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -51,7 +51,7 @@
 #endif
 
 
-#define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2012"
+#define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2013"
 #define WEECHAT_WEBSITE          "http://www.weechat.org/"
 #define WEECHAT_WEBSITE_DOWNLOAD "http://www.weechat.org/download"
 
@@ -108,6 +108,8 @@ extern int weechat_quit;
 extern char *weechat_home;
 extern char *weechat_local_charset;
 extern int weechat_plugin_no_dlclose;
+extern int weechat_no_gnutls;
+extern int weechat_no_gcrypt;
 extern char *weechat_startup_commands;
 
 extern void weechat_shutdown (int return_code, int crash);

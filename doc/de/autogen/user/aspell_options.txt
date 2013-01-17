@@ -23,6 +23,11 @@
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
+* [[option_aspell.check.suggestions]] *aspell.check.suggestions*
+** Beschreibung: `legt die Anzahl an Vorschlägen fest, für ein falsch geschriebenes Wort. Die Vorschläge werden in der Bar-Item "aspell_suggest", für die jeweilige(n) Sprache(n), im Buffer, angezeigt (-1 = deaktiviert die Funktion, 0 = zeigt alle verfügbaren Vorschläge an, für alle betreffenden Sprachen)`
+** Typ: integer
+** Werte: -1 .. 2147483647 (Standardwert: `-1`)
+
 * [[option_aspell.check.word_min_length]] *aspell.check.word_min_length*
 ** Beschreibung: `Mindestlänge für ein Wort, welches auf Rechtschreibung überprüft werden soll (bei 0 werden alle Wörter überprüft)`
 ** Typ: integer

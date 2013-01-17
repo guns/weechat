@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * wee-debug.c - debug functions
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * wee-debug.c: debug functions for WeeChat
  */
 
 #ifdef HAVE_CONFIG_H
@@ -41,7 +39,6 @@
 #include "wee-infolist.h"
 #include "wee-list.h"
 #include "wee-log.h"
-#include "wee-hook.h"
 #include "wee-proxy.h"
 #include "wee-string.h"
 #include "../gui/gui-bar.h"
@@ -61,7 +58,7 @@ int debug_dump_active = 0;
 
 
 /*
- * debug_dump: write dump to WeeChat log file
+ * Writes dump of data to WeeChat log file.
  */
 
 void
@@ -117,7 +114,10 @@ debug_dump (int crash)
 }
 
 /*
- * debug_dump_cb: callback for "debug_dump" signal hooked
+ * Callback for signal "debug_dump".
+ *
+ * This function is called when WeeChat is crashing or when command
+ * "/debug dump" is issued.
  */
 
 int
@@ -136,8 +136,9 @@ debug_dump_cb (void *data, const char *signal, const char *type_data,
 }
 
 /*
- * debug_sigsegv: SIGSEGV handler: save crash log to
- *                <weechat_home>/weechat.log and exit
+ * Callback for system signal SIGSEGV handler.
+ *
+ * Writes dump of data and backtrace to WeeChat log file, then exit.
  */
 
 void
@@ -169,7 +170,9 @@ debug_sigsegv ()
 }
 
 /*
- * debug_buffer_cb: callback for "debug_buffer" signal hooked
+ * Callback for signal "debug_buffer".
+ *
+ * This function is called when command "/debug buffer" is issued.
  */
 
 int
@@ -187,7 +190,7 @@ debug_buffer_cb (void *data, const char *signal, const char *type_data,
 }
 
 /*
- * debug_windows_tree_display: display tree of windows
+ * Displays tree of windows (this function must not be called directly).
  */
 
 void
@@ -239,7 +242,7 @@ debug_windows_tree_display (struct t_gui_window_tree *tree, int indent)
 }
 
 /*
- * debug_windows_tree_display: display tree of windows
+ * Displays tree of windows.
  */
 
 void
@@ -251,7 +254,9 @@ debug_windows_tree ()
 }
 
 /*
- * debug_windows_cb: callback for "debug_windows" signal hooked
+ * Callback for signal "debug_windows".
+ *
+ * This function is called when command "/debug windows" is issued.
  */
 
 int
@@ -270,7 +275,7 @@ debug_windows_cb (void *data, const char *signal, const char *type_data,
 }
 
 /*
- * debug_memory: display information about dynamic memory allocation
+ * Displays information about dynamic memory allocation.
  */
 
 void
@@ -301,7 +306,7 @@ debug_memory ()
 }
 
 /*
- * debug_hdata_hash_var_map_cb: function called for each variable in hdata
+ * Callback called for each variable in hdata.
  */
 
 void
@@ -310,20 +315,21 @@ debug_hdata_hash_var_map_cb (void *data,
                              const void *key, const void *value)
 {
     struct t_weelist *list;
+    struct t_hdata_var *var;
     char str_offset[16];
 
     /* make C compiler happy */
     (void) hashtable;
 
     list = (struct t_weelist *)data;
+    var = (struct t_hdata_var *)value;
 
-    snprintf (str_offset, sizeof (str_offset),
-              "%12d", (*((int *)value)) & 0xFFFF);
+    snprintf (str_offset, sizeof (str_offset), "%12d", var->offset);
     weelist_add (list, str_offset, WEECHAT_LIST_POS_SORT, (void *)key);
 }
 
 /*
- * debug_hdata_hash_list_map_cb: function called for each list in hdata
+ * Callback called for each list in hdata.
  */
 
 void
@@ -342,7 +348,7 @@ debug_hdata_hash_list_map_cb (void *data,
 }
 
 /*
- * debug_hdata_map_cb: function called for each hdata in memory
+ * Callback called for each hdata in memory.
  */
 
 void
@@ -350,9 +356,9 @@ debug_hdata_map_cb (void *data, struct t_hashtable *hashtable,
                     const void *key, const void *value)
 {
     struct t_hdata *ptr_hdata;
+    struct t_hdata_var *ptr_var;
     struct t_weelist *list;
     struct t_weelist_item *ptr_item;
-    void *ptr_value;
 
     /* make C compiler happy */
     (void) data;
@@ -379,21 +385,26 @@ debug_hdata_map_cb (void *data, struct t_hashtable *hashtable,
     for (ptr_item = list->items; ptr_item;
          ptr_item = ptr_item->next_item)
     {
-        ptr_value = hashtable_get (ptr_hdata->hash_var, ptr_item->user_data);
-        if (ptr_value)
+        ptr_var = hashtable_get (ptr_hdata->hash_var, ptr_item->user_data);
+        if (ptr_var)
         {
             gui_chat_printf (NULL,
-                             "    %04d -> %s (%s)",
-                             (*((int *)ptr_value)) & 0xFFFF,
+                             "    %04d -> %s (%s%s%s%s%s%s)",
+                             ptr_var->offset,
                              (char *)ptr_item->user_data,
-                             hdata_type_string[(*((int *)ptr_value)) >> 16]);
+                             hdata_type_string[(int)ptr_var->type],
+                             (ptr_var->update_allowed) ? ", R/W" : "",
+                             (ptr_var->array_size) ? ", array size: " : "",
+                             (ptr_var->array_size) ? ptr_var->array_size : "",
+                             (ptr_var->hdata_name) ? ", hdata: " : "",
+                             (ptr_var->hdata_name) ? ptr_var->hdata_name : "");
         }
     }
     weelist_free (list);
 }
 
 /*
- * debug_hdata: display list of hdata in memory
+ * Displays a list of hdata in memory.
  */
 
 void
@@ -411,7 +422,7 @@ debug_hdata ()
 }
 
 /*
- * debug_hooks: display infos about hooks
+ * Displays info about hooks.
  */
 
 void
@@ -440,7 +451,7 @@ debug_hooks ()
 }
 
 /*
- * debug_infolists: display list of infolists in memory
+ * Displays a list of infolists in memory.
  */
 
 void
@@ -529,7 +540,7 @@ debug_infolists ()
 }
 
 /*
- * debug_init: hook signals for debug
+ * Hooks signals for debug.
  */
 
 void

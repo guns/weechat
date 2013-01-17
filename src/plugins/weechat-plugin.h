@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * weechat-plugin.h - header to compile WeeChat plugins
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,11 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * weechat-plugin.h: this header is designed to be distributed with
- *                   WeeChat plugins, in order to compile them
  */
 
 #ifndef __WEECHAT_WEECHAT_PLUGIN_H
@@ -45,8 +42,12 @@ struct timeval;
  * some functions in this file, then please update API version below.
  */
 
-/* API version (used to check that plugin has same API and can be loaded) */
-#define WEECHAT_PLUGIN_API_VERSION "20120804-01"
+/*
+ * API version (used to check that plugin has same API and can be loaded):
+ * please change the date with current one; for a second change at same
+ * date, increment the 01, otherwise please keep 01.
+ */
+#define WEECHAT_PLUGIN_API_VERSION "20121208-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -138,6 +139,7 @@ struct timeval;
 #define WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR 7
 #define WEECHAT_HOOK_CONNECT_MEMORY_ERROR           8
 #define WEECHAT_HOOK_CONNECT_TIMEOUT                9
+#define WEECHAT_HOOK_CONNECT_SOCKET_ERROR           10
 
 /* action for gnutls callback: verify or set certificate */
 #define WEECHAT_HOOK_CONNECT_GNUTLS_CB_VERIFY_CERT  0
@@ -246,6 +248,9 @@ struct t_weechat_plugin
     int (*string_decode_base64) (const char *from, char *to);
     int (*string_is_command_char) (const char *string);
     const char *(*string_input_for_buffer) (const char *string);
+    char *(*string_eval_expression )(const char *expr,
+                                     struct t_hashtable *pointers,
+                                     struct t_hashtable *extra_vars);
 
     /* UTF-8 strings */
     int (*utf8_has_8bits) (const char *string);
@@ -535,8 +540,8 @@ struct t_weechat_plugin
                                     const char *proxy,
                                     const char *address,
                                     int port,
-                                    int sock,
                                     int ipv6,
+                                    int retry,
                                     void *gnutls_sess, void *gnutls_cb,
                                     int gnutls_dhkey_size,
                                     const char *gnutls_priorities,
@@ -544,6 +549,7 @@ struct t_weechat_plugin
                                     int (*callback)(void *data,
                                                     int status,
                                                     int gnutls_rc,
+                                                    int sock,
                                                     const char *error,
                                                     const char *ip_address),
                                     void *callback_data);
@@ -833,9 +839,15 @@ struct t_weechat_plugin
     /* hdata */
     struct t_hdata *(*hdata_new) (struct t_weechat_plugin *plugin,
                                   const char *hdata_name, const char *var_prev,
-                                  const char *var_next);
+                                  const char *var_next,
+                                  int create_allowed, int delete_allowed,
+                                  int (*callback_update)(void *data,
+                                                         struct t_hdata *hdata,
+                                                         void *pointer,
+                                                         struct t_hashtable *hashtable),
+                                  void *callback_update_data);
     void (*hdata_new_var) (struct t_hdata *hdata, const char *name, int offset,
-                           int type, const char *array_size,
+                           int type, int update_allowed, const char *array_size,
                            const char *hdata_name);
     void (*hdata_new_list) (struct t_hdata *hdata, const char *name,
                             void *pointer);
@@ -874,6 +886,10 @@ struct t_weechat_plugin
                           const char *name);
     struct t_hashtable *(*hdata_hashtable) (struct t_hdata *hdata,
                                             void *pointer, const char *name);
+    int (*hdata_set) (struct t_hdata *hdata, void *pointer, const char *name,
+                      const char *value);
+    int (*hdata_update) (struct t_hdata *hdata, void *pointer,
+                         struct t_hashtable *hashtable);
     const char *(*hdata_get_string) (struct t_hdata *hdata,
                                      const char *property);
 
@@ -993,6 +1009,10 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->string_is_command_char(__string)
 #define weechat_string_input_for_buffer(__string)                       \
     weechat_plugin->string_input_for_buffer(__string)
+#define weechat_string_eval_expression(__expr, __pointers,              \
+                                       __extra_vars)                    \
+    weechat_plugin->string_eval_expression(__expr, __pointers,          \
+                                           __extra_vars)                \
 
 /* UTF-8 strings */
 #define weechat_utf8_has_8bits(__string)                                \
@@ -1322,13 +1342,14 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->hook_process_hashtable(weechat_plugin, __command,   \
                                            __options, __timeout,        \
                                             __callback, __callback_data)
-#define weechat_hook_connect(__proxy, __address, __port, __sock,        \
-                            __ipv6, __gnutls_sess, __gnutls_cb,         \
+#define weechat_hook_connect(__proxy, __address, __port, __ipv6,        \
+                             __retry, __gnutls_sess, __gnutls_cb,       \
                              __gnutls_dhkey_size, __gnutls_priorities,  \
-                             __local_hostname,  __callback, __data)     \
+                             __local_hostname, __callback, __data)      \
     weechat_plugin->hook_connect(weechat_plugin, __proxy, __address,    \
-                                 __port, __sock, __ipv6, __gnutls_sess, \
-                                 __gnutls_cb, __gnutls_dhkey_size,      \
+                                 __port, __ipv6, __retry,               \
+                                 __gnutls_sess, __gnutls_cb,            \
+                                 __gnutls_dhkey_size,                   \
                                  __gnutls_priorities, __local_hostname, \
                                  __callback, __data)
 #define weechat_hook_print(__buffer, __tags, __msg, __strip__colors,    \
@@ -1600,18 +1621,24 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->infolist_free(__list)
 
 /* hdata */
-#define weechat_hdata_new(__hdata_name, __var_prev, __var_next)         \
+#define weechat_hdata_new(__hdata_name, __var_prev, __var_next,         \
+                          __create_allowed, __delete_allowed,           \
+                          __callback_update, __callback_update_data)    \
     weechat_plugin->hdata_new(weechat_plugin, __hdata_name, __var_prev, \
-                              __var_next)
+                              __var_next, __create_allowed,             \
+                              __delete_allowed, __callback_update,      \
+                              __callback_update_data)
 #define weechat_hdata_new_var(__hdata, __name, __offset, __type,        \
-                              __array_size, __hdata_name)               \
+                              __update_allowed, __array_size,           \
+                              __hdata_name)                             \
     weechat_plugin->hdata_new_var(__hdata, __name, __offset, __type,    \
-                                  __array_size, __hdata_name)
-#define WEECHAT_HDATA_VAR(__struct, __name, __type, __array_size,       \
-                          __hdata_name)                                 \
+                                  __update_allowed, __array_size,       \
+                                  __hdata_name)
+#define WEECHAT_HDATA_VAR(__struct, __name, __type, __update_allowed,   \
+                          __array_size, __hdata_name)                   \
     weechat_hdata_new_var (hdata, #__name, offsetof (__struct, __name), \
-                           WEECHAT_HDATA_##__type, __array_size,        \
-                           __hdata_name)
+                           WEECHAT_HDATA_##__type, __update_allowed,    \
+                           __array_size, __hdata_name)
 #define weechat_hdata_new_list(__hdata, __name, __pointer)              \
     weechat_plugin->hdata_new_list(__hdata, __name, __pointer)
 #define WEECHAT_HDATA_LIST(__name)                                      \
@@ -1658,6 +1685,10 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     weechat_plugin->hdata_time(__hdata, __pointer, __name)
 #define weechat_hdata_hashtable(__hdata, __pointer, __name)             \
     weechat_plugin->hdata_hashtable(__hdata, __pointer, __name)
+#define weechat_hdata_set(__hdata, __pointer, __name, __value)          \
+    weechat_plugin->hdata_set(__hdata, __pointer, __name, __value)
+#define weechat_hdata_update(__hdata, __pointer, __hashtable)           \
+    weechat_plugin->hdata_update(__hdata, __pointer, __hashtable)
 #define weechat_hdata_get_string(__hdata, __property)                   \
     weechat_plugin->hdata_get_string(__hdata, __property)
 

@@ -100,8 +100,8 @@ Argumenty:
 * 'licencja': string, licencja
 * 'opis': string, krótki opis skryptu
 * 'funkcja_wyłączająca': string, nazwa funkcji wywoływanej podczas wyładowania skryptu
-  (opcjonalne)
-* 'kodowanie': string, kodowane skryptu (opcjonalne, jeśli skrypt jest napisany
+  (może być pusty ciąg)
+* 'kodowanie': string, kodowane skryptu (jeśli skrypt jest napisany
   w UTF-8 można nie podawać tej wartości - UTF-8 to domyślne kodowanie)
 
 Przykład dla skryptu w każdym z języków:
@@ -384,7 +384,8 @@ Lista stałych w API skryptów:
   WEECHAT_HOOK_CONNECT_IP_ADDRESS_NOT_FOUND, WEECHAT_HOOK_CONNECT_CONNECTION_REFUSED,
   WEECHAT_HOOK_CONNECT_PROXY_ERROR, WEECHAT_HOOK_CONNECT_LOCAL_HOSTNAME_ERROR,
   WEECHAT_HOOK_CONNECT_GNUTLS_INIT_ERROR, WEECHAT_HOOK_CONNECT_GNUTLS_HANDSHAKE_ERROR,
-  WEECHAT_HOOK_CONNECT_MEMORY_ERROR, WEECHAT_HOOK_CONNECT_TIMEOUT
+  WEECHAT_HOOK_CONNECT_MEMORY_ERROR, WEECHAT_HOOK_CONNECT_TIMEOUT,
+  WEECHAT_HOOK_CONNECT_SOCKET_ERROR
 | hook signal         |
   WEECHAT_HOOK_SIGNAL_STRING, WEECHAT_HOOK_SIGNAL_INT, WEECHAT_HOOK_SIGNAL_POINTER
 |========================================
@@ -684,7 +685,7 @@ script_options = {
     "opcja2" : "wartość2",
     "opcja3" : "wartość3",
 }
-for option, default_value in script_options.iteritems():
+for option, default_value in script_options.items():
     if not weechat.config_is_set_plugin(option):
         weechat.config_set_plugin(option, default_value)
 ----------------------------------------

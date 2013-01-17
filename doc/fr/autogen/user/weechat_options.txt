@@ -204,7 +204,7 @@
 ** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `blue`)
 
 * [[option_weechat.color.separator]] *weechat.color.separator*
-** description: `couleur du fond pour les séparateurs de fenêtres (quand divisé)`
+** description: `couleur pour les séparateurs de fenêtres (quand divisé) et les séparateurs à côté des barres (comme la liste de pseudos)`
 ** type: couleur
 ** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `blue`)
 
@@ -593,16 +593,6 @@
 ** type: entier
 ** valeurs: 1 .. 10000 (valeur par défaut: `100`)
 
-* [[option_weechat.look.nickmode]] *weechat.look.nickmode*
-** description: `afficher le mode du pseudo ((half)op/voice) devant chaque utilisateur`
-** type: booléen
-** valeurs: on, off (valeur par défaut: `on`)
-
-* [[option_weechat.look.nickmode_empty]] *weechat.look.nickmode_empty*
-** description: `afficher un espace si le mode du pseudo n'est pas (half)op/voice`
-** type: booléen
-** valeurs: on, off (valeur par défaut: `off`)
-
 * [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
 ** description: `activer le mode du terminal "bracketed paste" (pas supporté par tous les terminaux/multiplexeurs): dans ce mode, le texte collé est entouré avec des séquences de contrôle de sorte que WeeChat puisse différencier le texte collé du texté tapé ("ESC[200~", suivi par le texte collé, suivi par "ESC[201~")`
 ** type: booléen
@@ -619,7 +609,7 @@
 ** valeurs: -1 .. 2147483647 (valeur par défaut: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
-** description: `préfixe pour les messages d'action`
+** description: `préfixe pour les messages d'action, les couleurs sont autorisées avec le format "${couleur}"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `" *"`)
 
@@ -659,22 +649,22 @@
 ** valeurs: toute chaîne (valeur par défaut: `"+"`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
-** description: `préfixe pour les messages d'erreur`
+** description: `préfixe pour les messages d'erreur, les couleurs sont autorisées avec le format "${couleur}"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"=!="`)
 
 * [[option_weechat.look.prefix_join]] *weechat.look.prefix_join*
-** description: `préfixe pour les messages d'arrivée`
+** description: `préfixe pour les messages d'arrivée, les couleurs sont autorisées avec le format "${couleur}"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"-->"`)
 
 * [[option_weechat.look.prefix_network]] *weechat.look.prefix_network*
-** description: `préfixe pour les messages réseau`
+** description: `préfixe pour les messages réseau, les couleurs sont autorisées avec le format "${couleur}"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"--"`)
 
 * [[option_weechat.look.prefix_quit]] *weechat.look.prefix_quit*
-** description: `préfixe pour les messages de départ`
+** description: `préfixe pour les messages de départ, les couleurs sont autorisées avec le format "${couleur}"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"<--"`)
 

@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2003-2012 Sebastien Helleu <flashcode@flashtux.org>
+ * relay-network.c - network functions for relay plugin
+ *
+ * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -15,10 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * relay-network.c: network functions for relay plugin
  */
 
 #include <stdlib.h>
@@ -44,10 +42,10 @@ gnutls_dh_params_t *relay_gnutls_dh_params = NULL;
 
 
 /*
- * relay_network_set_ssl_cert_key: set SSL certificate/key file
- *                                 if verbose == 1, a message is displayed if
- *                                 successful, otherwise a warning (if no
- *                                 cert/key found in file)
+ * Sets SSL certificate/key file.
+ *
+ * If verbose == 1, a message is displayed if successful, otherwise a warning
+ * (if no cert/key found in file).
  */
 
 void
@@ -106,7 +104,7 @@ relay_network_set_ssl_cert_key (int verbose)
 }
 
 /*
- * relay_network_init: init network for relay
+ * Initializes network for relay.
  */
 
 void
@@ -137,7 +135,7 @@ relay_network_init ()
 }
 
 /*
- * relay_network_end: end network for relay
+ * Ends network for relay.
  */
 
 void
