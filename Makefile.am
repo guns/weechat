@@ -57,7 +57,6 @@ EXTRA_DIST = CMakeLists.txt \
              cmake/cmake_uninstall.cmake.in \
              po/CMakeLists.txt \
              po/srcfiles.cmake \
-             weechat.spec \
              weechat_icon_32.png \
              weechat.pc.in
 
@@ -65,3 +64,6 @@ ACLOCAL_AMFLAGS = -I m4
 
 pkgconfigdir   = $(libdir)/pkgconfig
 pkgconfig_DATA = weechat.pc
+
+clean-local:
+	$(RM) config-git.h

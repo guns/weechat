@@ -78,6 +78,7 @@ char *gui_buffer_properties_get_integer[] =
   "num_displayed", "active", "print_hooks_enabled", "lines_hidden",
   "prefix_max_length", "time_for_each_line", "nicklist",
   "nicklist_case_sensitive", "nicklist_max_length", "nicklist_display_groups",
+  "nicklist_count", "nicklist_groups_count", "nicklist_nicks_count",
   "nicklist_visible_count", "input", "input_get_unknown_commands",
   "input_size", "input_length", "input_pos", "input_1st_display",
   "num_history", "text_search", "text_search_exact", "text_search_found",
@@ -459,7 +460,7 @@ gui_buffer_new (struct t_weechat_plugin *plugin,
         new_buffer->plugin_name_for_upgrade = NULL;
 
         /* number will be set later (when inserting buffer in list) */
-        gui_layout_buffer_get_number (gui_layout_buffers,
+        gui_layout_buffer_get_number (gui_layout_current,
                                       plugin_get_name (plugin),
                                       name,
                                       &(new_buffer->layout_number),
@@ -494,6 +495,9 @@ gui_buffer_new (struct t_weechat_plugin *plugin,
         new_buffer->nicklist_root = NULL;
         new_buffer->nicklist_max_length = 0;
         new_buffer->nicklist_display_groups = 1;
+        new_buffer->nicklist_count = 0;
+        new_buffer->nicklist_groups_count = 0;
+        new_buffer->nicklist_nicks_count = 0;
         new_buffer->nicklist_visible_count = 0;
         new_buffer->nickcmp_callback = NULL;
         new_buffer->nickcmp_callback_data = NULL;
@@ -546,7 +550,7 @@ gui_buffer_new (struct t_weechat_plugin *plugin,
         new_buffer->highlight_tags_array = NULL;
 
         /* hotlist */
-        new_buffer->hotlist_max_level_nicks = hashtable_new (8,
+        new_buffer->hotlist_max_level_nicks = hashtable_new (32,
                                                              WEECHAT_HASHTABLE_STRING,
                                                              WEECHAT_HASHTABLE_INTEGER,
                                                              NULL,
@@ -558,7 +562,7 @@ gui_buffer_new (struct t_weechat_plugin *plugin,
         new_buffer->keys_count = 0;
 
         /* local variables */
-        new_buffer->local_variables = hashtable_new (8,
+        new_buffer->local_variables = hashtable_new (32,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      NULL,
@@ -574,11 +578,8 @@ gui_buffer_new (struct t_weechat_plugin *plugin,
         /* set notify level */
         new_buffer->notify = gui_buffer_notify_get (new_buffer);
 
-        /*
-         * check if this buffer should be assigned to a window,
-         * according to windows layout saved
-         */
-        gui_layout_window_check_buffer (new_buffer);
+        /* assign this buffer to windows of layout */
+        gui_layout_window_assign_buffer (new_buffer);
 
         if (first_buffer_creation)
         {
@@ -868,6 +869,12 @@ gui_buffer_get_integer (struct t_gui_buffer *buffer, const char *property)
             return buffer->nicklist_max_length;
         else if (string_strcasecmp (property, "nicklist_display_groups") == 0)
             return buffer->nicklist_display_groups;
+        else if (string_strcasecmp (property, "nicklist_count") == 0)
+            return buffer->nicklist_count;
+        else if (string_strcasecmp (property, "nicklist_groups_count") == 0)
+            return buffer->nicklist_groups_count;
+        else if (string_strcasecmp (property, "nicklist_nicks_count") == 0)
+            return buffer->nicklist_nicks_count;
         else if (string_strcasecmp (property, "nicklist_visible_count") == 0)
             return buffer->nicklist_visible_count;
         else if (string_strcasecmp (property, "input") == 0)
@@ -1638,7 +1645,9 @@ gui_buffer_set (struct t_gui_buffer *buffer, const char *property,
     {
         gui_buffer_undo_snap (buffer);
         gui_input_replace_input (buffer, value);
-        gui_input_text_changed_modifier_and_signal (buffer, 1);
+        gui_input_text_changed_modifier_and_signal (buffer,
+                                                    1, /* save undo */
+                                                    1); /* stop completion */
     }
     else if (string_strcasecmp (property, "input_pos") == 0)
     {
@@ -1864,7 +1873,7 @@ gui_buffer_search_by_partial_name (const char *plugin, const char *name)
     if (!name || !name[0])
         return gui_current_window->buffer;
 
-    /* 0: mathces beginning of buffer name, 1: in the middle, 2: the end */
+    /* 0: matches beginning of buffer name, 1: in the middle, 2: the end */
     buffer_partial_match[0] = NULL;
     buffer_partial_match[1] = NULL;
     buffer_partial_match[2] = NULL;
@@ -2203,6 +2212,18 @@ gui_buffer_close (struct t_gui_buffer *buffer)
         free (buffer->mixed_lines);
 
     /* free some data */
+    gui_buffer_undo_free_all (buffer);
+    gui_history_buffer_free (buffer);
+    if (buffer->completion)
+        gui_completion_free (buffer->completion);
+    gui_nicklist_remove_all (buffer);
+    gui_nicklist_remove_group (buffer, buffer->nicklist_root);
+    if (buffer->hotlist_max_level_nicks)
+        hashtable_free (buffer->hotlist_max_level_nicks);
+    gui_key_free_all (&buffer->keys, &buffer->last_key,
+                      &buffer->keys_count);
+    gui_buffer_local_var_remove_all (buffer);
+    hashtable_free (buffer->local_variables);
     if (buffer->plugin_name_for_upgrade)
         free (buffer->plugin_name_for_upgrade);
     if (buffer->name)
@@ -2215,16 +2236,10 @@ gui_buffer_close (struct t_gui_buffer *buffer)
         free (buffer->title);
     if (buffer->input_buffer)
         free (buffer->input_buffer);
-    gui_buffer_undo_free_all (buffer);
     if (buffer->input_undo_snap)
         free (buffer->input_undo_snap);
-    if (buffer->completion)
-        gui_completion_free (buffer->completion);
-    gui_history_buffer_free (buffer);
     if (buffer->text_search_input)
         free (buffer->text_search_input);
-    gui_nicklist_remove_all (buffer);
-    gui_nicklist_remove_group (buffer, buffer->nicklist_root);
     if (buffer->highlight_words)
         free (buffer->highlight_words);
     if (buffer->highlight_regex)
@@ -2238,12 +2253,6 @@ gui_buffer_close (struct t_gui_buffer *buffer)
         free (buffer->highlight_tags);
     if (buffer->highlight_tags_array)
         string_free_split (buffer->highlight_tags_array);
-    if (buffer->hotlist_max_level_nicks)
-        hashtable_free (buffer->hotlist_max_level_nicks);
-    gui_key_free_all (&buffer->keys, &buffer->last_key,
-                      &buffer->keys_count);
-    gui_buffer_local_var_remove_all (buffer);
-    hashtable_free (buffer->local_variables);
 
     /* remove buffer from buffers list */
     if (buffer->prev_buffer)
@@ -2409,7 +2418,7 @@ gui_buffer_move_to_number (struct t_gui_buffer *buffer, int number)
     if (number < 1)
         number = 1;
 
-    /* buffer number is already ok ? */
+    /* buffer number is already OK ? */
     if (number == buffer->number)
         return;
 
@@ -3185,6 +3194,9 @@ gui_buffer_hdata_buffer_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_buffer, nicklist_root, POINTER, 0, NULL, "nick_group");
         HDATA_VAR(struct t_gui_buffer, nicklist_max_length, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, nicklist_display_groups, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_buffer, nicklist_count, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_buffer, nicklist_groups_count, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_buffer, nicklist_nicks_count, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, nicklist_visible_count, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, nickcmp_callback, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_buffer, nickcmp_callback_data, POINTER, 0, NULL, NULL);
@@ -3350,6 +3362,12 @@ gui_buffer_add_to_infolist (struct t_infolist *infolist,
     if (!infolist_new_var_integer (ptr_item, "nicklist_display_groups", buffer->nicklist_display_groups))
         return 0;
     if (!infolist_new_var_integer (ptr_item, "nicklist_max_length", buffer->nicklist_max_length))
+        return 0;
+    if (!infolist_new_var_integer (ptr_item, "nicklist_count", buffer->nicklist_count))
+        return 0;
+    if (!infolist_new_var_integer (ptr_item, "nicklist_groups_count", buffer->nicklist_groups_count))
+        return 0;
+    if (!infolist_new_var_integer (ptr_item, "nicklist_nicks_count", buffer->nicklist_nicks_count))
         return 0;
     if (!infolist_new_var_integer (ptr_item, "nicklist_visible_count", buffer->nicklist_visible_count))
         return 0;
@@ -3542,6 +3560,9 @@ gui_buffer_print_log ()
         log_printf ("  nicklist_root . . . . . : 0x%lx", ptr_buffer->nicklist_root);
         log_printf ("  nicklist_max_length . . : %d",    ptr_buffer->nicklist_max_length);
         log_printf ("  nicklist_display_groups : %d",    ptr_buffer->nicklist_display_groups);
+        log_printf ("  nicklist_count. . . . . : %d",    ptr_buffer->nicklist_count);
+        log_printf ("  nicklist_groups_count . : %d",    ptr_buffer->nicklist_groups_count);
+        log_printf ("  nicklist_nicks_count. . : %d",    ptr_buffer->nicklist_nicks_count);
         log_printf ("  nicklist_visible_count. : %d",    ptr_buffer->nicklist_visible_count);
         log_printf ("  nickcmp_callback. . . . : 0x%lx", ptr_buffer->nickcmp_callback);
         log_printf ("  nickcmp_callback_data . : 0x%lx", ptr_buffer->nickcmp_callback_data);

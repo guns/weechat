@@ -6,7 +6,9 @@
 
 | alias | alias_value | valore dell'alias
 
-| aspell | aspell_langs | elenco di lingue supportate per aspell
+| aspell | aspell_dicts | list of aspell installed dictionaries
+
+| aspell | aspell_langs | list of all languages supported by aspell
 
 | guile | guile_script | elenco degli script
 
@@ -56,13 +58,13 @@
 
 | ruby | ruby_script | elenco degli script
 
-| script | script_files | files in script directories
+| script | script_files | file nella directory degli script
 
-| script | script_scripts | list of scripts in repository
+| script | script_scripts | elenco degli script nel repository
 
-| script | script_scripts_installed | list of scripts installed (from repository)
+| script | script_scripts_installed | elenco degli script installati (dal repository)
 
-| script | script_tags | tags of scripts in repository
+| script | script_tags | tag degli script nel repository
 
 | tcl | tcl_script | elenco degli script
 
@@ -103,6 +105,8 @@
 | weechat | keys_codes_for_reset | codici tasti che possono essere ripristinati (tasti aggiunti, ridefiniti o rimossi)
 
 | weechat | keys_contexts | contesti del tasto
+
+| weechat | layouts_names | names of layouts
 
 | weechat | nicks | nick nella lista nick del buffer corrente
 

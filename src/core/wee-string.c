@@ -412,7 +412,7 @@ string_match (const char *string, const char *mask, int case_sensitive)
     if ((mask[0] == '*') && (last == '*'))
     {
         /* not enough chars in string to match */
-        if (len_string < len_mask - 1)
+        if (len_string < len_mask - 2)
             return 0;
         /* keep only relevant chars in mask for searching string */
         mask2 = string_strndup (mask + 1, len_mask - 2);
@@ -730,7 +730,7 @@ string_mask_to_regex (const char *mask)
     char *result;
     const char *ptr_mask;
     int index_result;
-    char *regex_special_char = ".[]{}()?+";
+    char *regex_special_char = ".[]{}()?+|^$\\";
 
     if (!mask)
         return NULL;
@@ -990,7 +990,13 @@ string_has_highlight_regex_compiled (const char *string, regex_t *regex)
     while (string && string[0])
     {
         rc = regexec (regex, string,  1, &regex_match, 0);
-        if ((rc != 0) || (regex_match.rm_so < 0) || (regex_match.rm_eo < 0))
+
+        /*
+         * no match found: exit the loop (if rm_eo == 0, it is an empty match
+         * at beginning of string: we consider there is no match, to prevent an
+         * infinite loop)
+         */
+        if ((rc != 0) || (regex_match.rm_so < 0) || (regex_match.rm_eo <= 0))
             break;
 
         startswith = (regex_match.rm_so == 0);
@@ -1485,7 +1491,7 @@ string_split_command (const char *command, char separator)
             buffer[str_idx] = '\0';
             str_idx = -1;
             p = buffer;
-            /* strip white spaces a the begining of the line */
+            /* strip white spaces a the beginning of the line */
             while (*p == ' ') p++;
             if (p  && p[0])
                 array[arr_idx++] = strdup (p);

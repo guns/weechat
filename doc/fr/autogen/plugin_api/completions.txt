@@ -6,7 +6,9 @@
 
 | alias | alias_value | valeur de l'alias
 
-| aspell | aspell_langs | liste des langues supportées pour aspell
+| aspell | aspell_dicts | liste des dictionnaires aspell installés
+
+| aspell | aspell_langs | liste de toutes les langues supportées par aspell
 
 | guile | guile_script | liste des scripts
 
@@ -58,11 +60,11 @@
 
 | script | script_files | fichiers dans les répertoires de script
 
-| script | script_scripts | liste des scripts du repository
+| script | script_scripts | liste des scripts du dépôt
 
-| script | script_scripts_installed | liste des scripts installés (du repository)
+| script | script_scripts_installed | liste des scripts installés (du dépôt)
 
-| script | script_tags | étiquettes des scripts dans le repository
+| script | script_tags | étiquettes des scripts dans le dépôt
 
 | tcl | tcl_script | liste des scripts
 
@@ -103,6 +105,8 @@
 | weechat | keys_codes_for_reset | codes des touches pouvant être réinitialisées (touches ajoutées, redéfinies ou supprimées)
 
 | weechat | keys_contexts | contextes de touches
+
+| weechat | layouts_names | noms des dispositions
 
 | weechat | nicks | pseudos dans la liste des pseudos du tampon courant
 

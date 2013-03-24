@@ -158,11 +158,6 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
-* [[option_irc.look.hide_nickserv_pwd]] *irc.look.hide_nickserv_pwd*
-** description: `masquer le mot de passe affiché par nickserv`
-** type: booléen
-** valeurs: on, off (valeur par défaut: `on`)
-
 * [[option_irc.look.highlight_channel]] *irc.look.highlight_channel*
 ** description: `liste de mots pour le highlight dans les tampons de type "canal", séparés par des virgules (insensible à la casse, utilisez "(?-i)" au début des mots pour les rendre sensibles à la casse; les variables spéciales $nick, $channel et $server sont remplacées par leurs valeurs), ces mots sont ajoutés à la variable locale du tampon "highlight_words" seulement lorsque le tampon est créé (cela n'affecte pas les tampons courants), une chaîne vide désactive le highlight par défaut sur le pseudo, exemples: "$nick", "(?-i)$nick"`
 ** type: chaîne
@@ -258,6 +253,11 @@
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
+* [[option_irc.look.nicks_hide_password]] *irc.look.nicks_hide_password*
+** description: `liste des pseudos (séparés par des virgules) pour lesquels les mots de passe seront masqués quand un message est envoyé, par exemple pour cacher le mot de passe dans le message affiché par "/msg nickserv identify motedepasse", exemple: "nickserv|nickbot"`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"nickserv"`)
+
 * [[option_irc.look.notice_as_pv]] *irc.look.notice_as_pv*
 ** description: `afficher les notices comme des messages privés (si auto, utilise le tampon privé s'il est trouvé)`
 ** type: entier
@@ -269,7 +269,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `"notify_message"`)
 
 * [[option_irc.look.notify_tags_whois]] *irc.look.notify_tags_whois*
-** description: `liste des tags (séparés par des virgules) utilisés dans les messages affichés par notify lorsque le status d'absence d'un pseudo change (résultat de la commande whois), par exemple: "notify_highlight", "notify_message" ou "notify_private"`
+** description: `liste des tags (séparés par des virgules) utilisés dans les messages affichés par notify lorsque le statut d'absence d'un pseudo change (résultat de la commande whois), par exemple: "notify_highlight", "notify_message" ou "notify_private"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"notify_message"`)
 
@@ -278,13 +278,18 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
+* [[option_irc.look.pv_buffer]] *irc.look.pv_buffer*
+** description: `mélanger les tampons privés`
+** type: entier
+** valeurs: independent, merge_by_server, merge_all (valeur par défaut: `independent`)
+
 * [[option_irc.look.raw_messages]] *irc.look.raw_messages*
 ** description: `nombre de messages bruts à sauvegarder en mémoire lorsque le tampon des données brutes est fermé (ces messages seront affichés lors de l'ouverture du tampon des données brutes)`
 ** type: entier
 ** valeurs: 0 .. 65535 (valeur par défaut: `256`)
 
 * [[option_irc.look.server_buffer]] *irc.look.server_buffer*
-** description: `mélange des tampons de serveur`
+** description: `mélanger les tampons de serveur`
 ** type: entier
 ** valeurs: merge_with_core, merge_without_core, independent (valeur par défaut: `merge_with_core`)
 
@@ -303,8 +308,13 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
+* [[option_irc.look.smart_filter_join_unmask]] *irc.look.smart_filter_join_unmask*
+** description: `délai pour démasquer un message "join" qui a été filtré avec l'étiquette "irc_smart_filter" (en minutes): si le pseudo a rejoint au maximum il y a N minutes et qu'il a dit quelque chose sur le canal (message, notice ou mise à jour du topic), le "join" est démasqué, tout comme les changements de pseudo après ce "join" (0 = désactiver: ne jamais démasquer un "join")`
+** type: entier
+** valeurs: 0 .. 10080 (valeur par défaut: `30`)
+
 * [[option_irc.look.smart_filter_nick]] *irc.look.smart_filter_nick*
-** description: `activer le filtre intelligent pour les messages "nick"`
+** description: `activer le filtre intelligent pour les messages "nick" (changements de pseudo)`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
@@ -319,17 +329,17 @@
 ** valeurs: on, off (valeur par défaut: `off`)
 
 * [[option_irc.network.alternate_nick]] *irc.network.alternate_nick*
-** description: `obtenir un pseudo alternatif lorsque le pseudo est déjà utilisé sur le serveur: ajouter des "_" jusqu'à ce que le pseudo ait une longeur de 9, puis remplacer le dernier caractère (ou les deux derniers) par un nombre de 1 à 99, jusqu'à trouver un pseudo non utilisé sur le serveur`
+** description: `obtenir un pseudo alternatif lorsque le pseudo est déjà utilisé sur le serveur: ajouter des "_" jusqu'à ce que le pseudo ait une longueur de 9, puis remplacer le dernier caractère (ou les deux derniers) par un nombre de 1 à 99, jusqu'à trouver un pseudo non utilisé sur le serveur`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_irc.network.autoreconnect_delay_growing]] *irc.network.autoreconnect_delay_growing*
-** description: `facteur de croissance du délai d'autoreconnection au serveur (1 = toujours le même délai, 2 = délai*2 pour chaque tentative, etc...)`
+** description: `facteur de croissance du délai d'auto-reconnexion au serveur (1 = toujours le même délai, 2 = délai*2 pour chaque tentative, etc...)`
 ** type: entier
 ** valeurs: 1 .. 100 (valeur par défaut: `2`)
 
 * [[option_irc.network.autoreconnect_delay_max]] *irc.network.autoreconnect_delay_max*
-** description: `délai maximum d'autoreconnection au serveur (en secondes, 0 = pas de maximum)`
+** description: `délai maximum d'auto-reconnexion au serveur (en secondes, 0 = pas de maximum)`
 ** type: entier
 ** valeurs: 0 .. 86400 (valeur par défaut: `1800`)
 
@@ -348,18 +358,18 @@
 ** type: entier
 ** valeurs: 0 .. 604800 (valeur par défaut: `60`)
 
-* [[option_irc.network.lag_disconnect]] *irc.network.lag_disconnect*
-** description: `déconnexion après un lag important (en minutes, 0 = ne jamais se déconnecter)`
-** type: entier
-** valeurs: 0 .. 10080 (valeur par défaut: `0`)
-
 * [[option_irc.network.lag_min_show]] *irc.network.lag_min_show*
 ** description: `lag minimum à afficher (en millisecondes)`
 ** type: entier
 ** valeurs: 0 .. 86400000 (valeur par défaut: `500`)
 
+* [[option_irc.network.lag_reconnect]] *irc.network.lag_reconnect*
+** description: `se reconnecter au serveur si le lag est supérieur à cette valeur (en secondes, 0 = ne jamais se reconnecter)`
+** type: entier
+** valeurs: 0 .. 604800 (valeur par défaut: `0`)
+
 * [[option_irc.network.lag_refresh_interval]] *irc.network.lag_refresh_interval*
-** description: `intervalle entre deux rafraichissements du lag, lorsque le lag augmente (en secondes)`
+** description: `intervalle entre deux rafraîchissements du lag, lorsque le lag augmente (en secondes)`
 ** type: entier
 ** valeurs: 1 .. 3600 (valeur par défaut: `1`)
 
@@ -469,7 +479,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `"WeeChat %v"`)
 
 * [[option_irc.server_default.ipv6]] *irc.server_default.ipv6*
-** description: `utiliser le protocole IPv6 pour la communication avec le serveur (essayer IPv6 puis repli sur l'IPv4); si désactivé, seulemenent l'IPv4 est utilisé`
+** description: `utiliser le protocole IPv6 pour la communication avec le serveur (essayer IPv6 puis repli sur l'IPv4); si désactivé, seulement l'IPv4 est utilisé`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
@@ -514,7 +524,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_irc.server_default.sasl_timeout]] *irc.server_default.sasl_timeout*
-** description: `délai d'attende maximum (en secondes) avant d'abandonner l'authentification SASL`
+** description: `délai d'attente maximum (en secondes) avant d'abandonner l'authentification SASL`
 ** type: entier
 ** valeurs: 1 .. 3600 (valeur par défaut: `15`)
 

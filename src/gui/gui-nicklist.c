@@ -35,6 +35,7 @@
 
 #include "../core/weechat.h"
 #include "../core/wee-config.h"
+#include "../core/wee-hashtable.h"
 #include "../core/wee-hdata.h"
 #include "../core/wee-hook.h"
 #include "../core/wee-infolist.h"
@@ -45,6 +46,9 @@
 #include "gui-nicklist.h"
 #include "gui-buffer.h"
 #include "gui-color.h"
+
+
+struct t_hashtable *gui_nicklist_hsignal = NULL;
 
 
 /*
@@ -77,6 +81,40 @@ gui_nicklist_send_signal (const char *signal, struct t_gui_buffer *buffer,
         hook_signal_send (signal, WEECHAT_HOOK_SIGNAL_STRING,
                           (char *)arguments);
     }
+}
+
+/*
+ * Sends a hsignal when something will change or has changed in nicklist.
+ */
+
+void
+gui_nicklist_send_hsignal (const char *signal, struct t_gui_buffer *buffer,
+                           struct t_gui_nick_group *group,
+                           struct t_gui_nick *nick)
+{
+    if (!gui_nicklist_hsignal)
+    {
+        gui_nicklist_hsignal = hashtable_new (32,
+                                              WEECHAT_HASHTABLE_STRING,
+                                              WEECHAT_HASHTABLE_POINTER,
+                                              NULL,
+                                              NULL);
+    }
+
+    if (!gui_nicklist_hsignal)
+        return;
+
+    hashtable_remove_all (gui_nicklist_hsignal);
+
+    hashtable_set (gui_nicklist_hsignal, "buffer", buffer);
+    hashtable_set (gui_nicklist_hsignal, "parent_group",
+                   (group) ? group->parent : nick->group);
+    if (group)
+        hashtable_set (gui_nicklist_hsignal, "group", group);
+    if (nick)
+        hashtable_set (gui_nicklist_hsignal, "nick", nick);
+
+    hook_hsignal_send (signal, gui_nicklist_hsignal);
 }
 
 /*
@@ -247,6 +285,8 @@ gui_nicklist_add_group (struct t_gui_buffer *buffer,
         gui_nicklist_insert_group_sorted (&(new_group->parent->children),
                                           &(new_group->parent->last_child),
                                           new_group);
+        buffer->nicklist_count++;
+        buffer->nicklist_groups_count++;
     }
     else
     {
@@ -257,6 +297,7 @@ gui_nicklist_add_group (struct t_gui_buffer *buffer,
         buffer->nicklist_visible_count++;
 
     gui_nicklist_send_signal ("nicklist_group_added", buffer, name);
+    gui_nicklist_send_hsignal ("nicklist_group_added", buffer, new_group, NULL);
 
     return new_group;
 }
@@ -409,6 +450,9 @@ gui_nicklist_add_nick (struct t_gui_buffer *buffer,
 
     gui_nicklist_insert_nick_sorted (new_nick->group, new_nick);
 
+    buffer->nicklist_count++;
+    buffer->nicklist_nicks_count++;
+
     if (visible)
         buffer->nicklist_visible_count++;
 
@@ -416,6 +460,7 @@ gui_nicklist_add_nick (struct t_gui_buffer *buffer,
         gui_buffer_ask_chat_refresh (buffer, 1);
 
     gui_nicklist_send_signal ("nicklist_nick_added", buffer, name);
+    gui_nicklist_send_hsignal ("nicklist_nick_added", buffer, NULL, new_nick);
 
     return new_nick;
 }
@@ -434,6 +479,9 @@ gui_nicklist_remove_nick (struct t_gui_buffer *buffer,
         return;
 
     nick_removed = (nick->name) ? strdup (nick->name) : NULL;
+
+    gui_nicklist_send_signal ("nicklist_nick_removing", buffer, nick_removed);
+    gui_nicklist_send_hsignal ("nicklist_nick_removing", buffer, NULL, nick);
 
     /* remove nick from list */
     if (nick->prev_nick)
@@ -454,6 +502,9 @@ gui_nicklist_remove_nick (struct t_gui_buffer *buffer,
         free (nick->prefix);
     if (nick->prefix_color)
         free (nick->prefix_color);
+
+    buffer->nicklist_count--;
+    buffer->nicklist_nicks_count--;
 
     if (nick->visible)
     {
@@ -499,6 +550,9 @@ gui_nicklist_remove_group (struct t_gui_buffer *buffer,
         gui_nicklist_remove_nick (buffer, group->nicks);
     }
 
+    gui_nicklist_send_signal ("nicklist_group_removing", buffer, group_removed);
+    gui_nicklist_send_hsignal ("nicklist_group_removing", buffer, group, NULL);
+
     if (group->parent)
     {
         /* remove group from list */
@@ -510,6 +564,9 @@ gui_nicklist_remove_group (struct t_gui_buffer *buffer,
             (group->parent)->children = group->next_group;
         if ((group->parent)->last_child == group)
             (group->parent)->last_child = group->prev_group;
+
+        buffer->nicklist_count--;
+        buffer->nicklist_groups_count--;
     }
     else
     {
@@ -544,13 +601,19 @@ gui_nicklist_remove_group (struct t_gui_buffer *buffer,
 void
 gui_nicklist_remove_all (struct t_gui_buffer *buffer)
 {
-    if (buffer)
+    if (buffer && buffer->nicklist_root)
     {
-        while (buffer->nicklist_root)
+        /* remove children of root group */
+        while (buffer->nicklist_root->children)
         {
-            gui_nicklist_remove_group (buffer, buffer->nicklist_root);
+            gui_nicklist_remove_group (buffer, buffer->nicklist_root->children);
         }
-        gui_nicklist_add_group (buffer, NULL, "root", NULL, 0);
+
+        /* remove nicks of root group */
+        while (buffer->nicklist_root->nicks)
+        {
+            gui_nicklist_remove_nick (buffer, buffer->nicklist_root->nicks);
+        }
     }
 }
 
@@ -838,6 +901,7 @@ gui_nicklist_group_set (struct t_gui_buffer *buffer,
     {
         gui_nicklist_send_signal ("nicklist_group_changed", buffer,
                                   group->name);
+        gui_nicklist_send_hsignal ("nicklist_group_changed", buffer, group, NULL);
     }
 }
 
@@ -962,6 +1026,7 @@ gui_nicklist_nick_set (struct t_gui_buffer *buffer,
     {
         gui_nicklist_send_signal ("nicklist_nick_changed", buffer,
                                   nick->name);
+        gui_nicklist_send_hsignal ("nicklist_nick_changed", buffer, NULL, nick);
     }
 }
 

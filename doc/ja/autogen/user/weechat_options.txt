@@ -204,7 +204,7 @@
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `blue`)
 
 * [[option_weechat.color.separator]] *weechat.color.separator*
-** 説明: `color for window separators (when split) and separators beside bars (like nicklist)`
+** 説明: `ウィンドウセパレータ (分割時) とバーセパレータ (ニックネームリスト等) の色`
 ** タイプ: 色
 ** 値: WeeChat の色名 (default、black、(dark)gray、white、(light)red、(light)green、brown、yellow、(light)blue、(light)magenta、(light)cyan) 、ターミナル色番号またはその別名; 色の前に属性を置くことができます (テキスト前景色のみ、背景色は出来ません): 太字は "*"、反転は "!"、下線は "_"。 (デフォルト値: `blue`)
 
@@ -284,7 +284,7 @@
 ** 値: on, off (デフォルト値: `on`)
 
 * [[option_weechat.completion.default_template]] *weechat.completion.default_template*
-** 説明: `デフォルトの補完テンプレート (テンプレートコードと値のドキュメントを参照)`
+** 説明: `default completion template (please see documentation for template codes and values: plugin API reference, function "weechat_hook_command")`
 ** タイプ: 文字列
 ** 値: 未制約文字列 (デフォルト値: `"%(nicks)|%(irc_channels)"`)
 

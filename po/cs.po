@@ -18,22 +18,22 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WeeChat 0.4.0-rc3\n"
+"Project-Id-Version: WeeChat 0.4.1-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2013-01-14 12:18+0100\n"
-"PO-Revision-Date: 2013-01-14 12:17+0100\n"
+"POT-Creation-Date: 2013-03-17 22:01+0100\n"
+"PO-Revision-Date: 2013-03-16 17:49+0100\n"
 "Last-Translator: Jiri Golembiovsky <golemj@gmail.com>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
-"Language: Czech\n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
 #. TRANSLATORS: "%s %s" after "compiled on" is date and time
-#, fuzzy, c-format
+#, c-format
 msgid ""
-"WeeChat %s%s%s%s Copyright %s, compiled on %s %s\n"
+"WeeChat %s Copyright %s, compiled on %s %s\n"
 "Developed by Sebastien Helleu <flashcode@flashtux.org> - %s"
 msgstr ""
 "WeeChat %s Copyright %s, zkompilováno %s %s\n"
@@ -182,7 +182,8 @@ msgstr "Všechny pole byly smazány"
 msgid "%sError: unknown bar \"%s\""
 msgstr "%sChyba: neznámé pole \"%s\""
 
-msgid "Bar deleted"
+#, fuzzy, c-format
+msgid "Bar \"%s\" deleted"
 msgstr "Pole bylo smazáno"
 
 #, c-format
@@ -461,41 +462,53 @@ msgstr[0] "přidána %d nová klávesa"
 msgstr[1] "přidány %d nové klávesy"
 msgstr[2] "přidáno %d nových kláves"
 
-#, c-format
-msgid "leaf: id: %d, parent: %d, plugin: \"%s\", buffer: \"%s\""
-msgstr "list: id: %d, rodič: %d, plugin: \"%s\", buffer: \"%s\""
-
-#, c-format
-msgid "node: id: %d, parent: %d, child1: %d, child2: %d, size: %d%% (%s)"
-msgstr ""
-"uzel: id: %d, rodič: %d, potomek1: %d, potomek2: %d, velikost: %d%% (%s)"
-
-msgid "horizontal split"
-msgstr "horizontální rozdělení"
-
-msgid "vertical split"
-msgstr "vertikální rozdělení"
-
-msgid "Saved layout for buffers:"
+#, fuzzy
+msgid "Saved layouts:"
 msgstr "Uložené rozložení bufferů:"
 
-msgid "Saved layout for windows:"
-msgstr "Uložené rozložení oken:"
+#, fuzzy
+msgid " (current layout)"
+msgstr "aktuální hodnota"
 
 msgid "No layout saved"
 msgstr "Nebylo uloženo žádné rozložení"
 
-msgid "Layout saved for buffers (order of buffers)"
-msgstr "Rozložení bufferů uloženo (pořadí bufferů)"
+#. TRANSLATORS: %s%s%s is "buffers" or "windows" or "buffers+windows"
+#, c-format
+msgid "Layout of %s%s%s saved in \"%s\" (current layout: %s)"
+msgstr ""
 
-msgid "Layout saved for windows (buffer displayed by each window)"
-msgstr "Rozložení oken uloženo (buffer zobrazený v každém okně)"
+#, fuzzy
+msgid "buffers"
+msgstr "řídit buffery"
 
-msgid "Layout reset for buffers"
-msgstr "Rozložení bufferů resetováno"
+#, fuzzy
+msgid "windows"
+msgstr "spravuje okna"
 
-msgid "Layout reset for windows"
-msgstr "Rozložení oken resetováno"
+msgid "Layout of buffers+windows reset (current layout: -)"
+msgstr ""
+
+#, c-format
+msgid "Layout \"%s\" deleted (current layout: %s)"
+msgstr ""
+
+#. TRANSLATORS: %s%s%s is "buffers" or "windows" or "buffers+windows"
+#, fuzzy, c-format
+msgid "Layout of %s%s%s reset in \"%s\""
+msgstr "%sTéma pro %s%s%s nastaveno %s"
+
+#, fuzzy, c-format
+msgid "%sError: unknown layout \"%s\""
+msgstr "%sChyba: neznámé pole \"%s\""
+
+#, fuzzy, c-format
+msgid "%sError: layout \"%s\" already exists for \"%s\" command"
+msgstr "%s%s: server \"%s\" pro příkaz \"%s\" již existuje"
+
+#, fuzzy, c-format
+msgid "Layout \"%s\" has been renamed to \"%s\""
+msgstr "Filtr \"%s\" přejmenován na \"%s\""
 
 #, fuzzy
 msgid "Mouse enabled"
@@ -1188,6 +1201,7 @@ msgid ""
 "   buffer: dump buffer content with hexadecimal values in log file\n"
 "    color: display infos about current color pairs\n"
 "   cursor: toggle debug for cursor mode\n"
+"     dirs: display directories\n"
 "    hdata: display infos about hdata (with free: remove all hdata in "
 "memory)\n"
 "    hooks: display infos about hooks\n"
@@ -1244,7 +1258,7 @@ msgid ""
 "  \"50\" > \"100\"  ==> 1\n"
 "\n"
 "Some variables are replaced in expression, using the format ${variable}, "
-"variable can be, by order of prioity :\n"
+"variable can be, by order of priority :\n"
 "  1. the name of an option (file.section.option)\n"
 "  2. the name of a local variable in buffer\n"
 "  3. a hdata name/variable (the value is automatically converted to string), "
@@ -1324,7 +1338,7 @@ msgid ""
 "  notify_none, notify_message, notify_private, notify_highlight,\n"
 "  nick_xxx (xxx is nick in message), prefix_nick_ccc (ccc is color of "
 "nick),\n"
-"  irc_xxx (xxx is command name or number, see /server raw),\n"
+"  irc_xxx (xxx is command name or number, see /server raw or /debug tags),\n"
 "  irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, "
 "irc_smart_filter, away_info.\n"
 "To see tags for lines in buffers: /debug tags\n"
@@ -1634,19 +1648,26 @@ msgstr ""
 msgid "save/apply/reset layout for buffers and windows"
 msgstr "uložit/použít/resetovat rozložení bufferů a oken"
 
+#, fuzzy
 msgid ""
-"save [buffers|windows] || apply [buffers|windows] || reset [buffers|windows]"
+"save [<name>] [buffers|windows] || apply [<name>] [buffers|windows] || leave "
+"|| reset [<name>] [buffers|windows] || rename <name> <new_name>"
 msgstr ""
 "save [buffers|windows] || apply [buffers|windows] || reset [buffers|windows]"
 
+#, fuzzy
 msgid ""
 "   save: save current layout\n"
 "  apply: apply saved layout\n"
-"  reset: remove saved layout\n"
+"  leave: leave current layout (does not update any layout)\n"
+"  reset: reset buffers and/or windows in a saved layout\n"
+"         (if both buffers and windows are reset, the layout is removed)\n"
+" rename: rename a layout\n"
+"   name: name for saved layout (default is \"default\")\n"
 "buffers: save/apply only buffers (order of buffers)\n"
 "windows: save/apply only windows (buffer displayed by each window)\n"
 "\n"
-"Without argument, this command displays saved layout."
+"Without argument, this command displays saved layouts."
 msgstr ""
 "   save: uložit aktuální rozložení\n"
 "  apply: aplikovat uložené rozložení\n"
@@ -2298,6 +2319,10 @@ msgstr ""
 
 msgid "areas (\"chat\" or bar name) for free cursor movement"
 msgstr ""
+
+#, fuzzy
+msgid "names of layouts"
+msgstr "jména polí"
 
 msgid ""
 "Warning: you should now issue /save to write \"save_config_on_exit\" option "
@@ -3010,9 +3035,10 @@ msgid ""
 "the base word ends at first space after cursor"
 msgstr ""
 
+#, fuzzy
 msgid ""
 "default completion template (please see documentation for template codes and "
-"values)"
+"values: plugin API reference, function \"weechat_hook_command\")"
 msgstr ""
 "výchozí šablona pro doplňování (prosím podívejte se do dokumentace pro kódy "
 "šablon a hodnot)"
@@ -3199,6 +3225,13 @@ msgstr "Využití paměti (viz \"man mallinfo\" pro nápovědu):"
 
 msgid "Memory usage not available (function \"mallinfo\" not found)"
 msgstr "Využití pamětí není dostupné (funkce \"mallinfo\" nenalezena)"
+
+msgid "Directories:"
+msgstr ""
+
+#, fuzzy
+msgid "default"
+msgstr "výchozí hodnota"
 
 #, c-format
 msgid "%sError: another command \"%s\" already exists for plugin \"%s\""
@@ -3455,12 +3488,6 @@ msgstr "Filtrování zpráv zakázáno"
 msgid "  TERM='%s', size: %dx%d"
 msgstr "  TERM='%s', velikost: %dx%d"
 
-msgid "server"
-msgid_plural "servers"
-msgstr[0] "server"
-msgstr[1] "servery"
-msgstr[2] "serverů"
-
 #, c-format
 msgid ""
 "%sUnable to change bar type: you must delete bar and create another to do "
@@ -3684,9 +3711,9 @@ msgid ""
 "      $n-m: arguments from 'n' to 'm'\n"
 "        $*: all arguments\n"
 "        $~: last argument\n"
-"     $nick: current nick\n"
-"  $channel: current channel\n"
-"   $server: current server\n"
+"      $var: where \"var\" is a local variable of buffer (see /buffer "
+"localvar)\n"
+"            examples: $nick, $channel, $server, $plugin, $name\n"
 "\n"
 "To remove an alias, use command /unalias.\n"
 "\n"
@@ -3758,18 +3785,29 @@ msgstr ""
 msgid "Spell checker for input (with Aspell)"
 msgstr ""
 
-#, c-format
-msgid "%s: \"%s\" removed"
-msgstr "%s: \"%s\" odebrán"
-
 #. TRANSLATORS: "%s" is "aspell"
 #, c-format
 msgid "%s dictionaries list:"
 msgstr "seznam slovníku %s:"
 
 #, c-format
+msgid "%s: \"%s\" removed"
+msgstr "%s: \"%s\" odebrán"
+
+#, c-format
 msgid "%s: error: dictionary \"%s\" is not available on your system"
 msgstr "%s: chyba: slovník \"%s\" není ve vašem systému dostupný"
+
+#, c-format
+msgid "%s%s: no dictionary on this buffer for adding word"
+msgstr "%s%s: není žádný slovník pro přidání slova pro tento buffer"
+
+#, c-format
+msgid ""
+"%s%s: many dictionaries are defined for this buffer, please specify "
+"dictionary"
+msgstr ""
+"%s%s: pro tento buffer je definováno mnoho slovníků, prosím uveďte slovník"
 
 #, c-format
 msgid "%s: word \"%s\" added to personal dictionary"
@@ -3805,24 +3843,13 @@ msgstr "1 pokud jsou filtry povoleny"
 msgid "Aspell disabled"
 msgstr "Filtrování zpráv zakázáno"
 
-#, c-format
-msgid "%s%s: no dictionary on this buffer for adding word"
-msgstr "%s%s: není žádný slovník pro přidání slova pro tento buffer"
-
-#, c-format
-msgid ""
-"%s%s: many dictionaries are defined for this buffer, please specify "
-"dictionary"
-msgstr ""
-"%s%s: pro tento buffer je definováno mnoho slovníků, prosím uveďte slovník"
-
 msgid "aspell plugin configuration"
 msgstr "konfigurace pluginu aspell"
 
 #, fuzzy
 msgid ""
-"enable|disable|toggle || listdict || setdict <lang> || deldict || addword "
-"[<lang>] <word>"
+"enable|disable|toggle || listdict || setdict <dict>[,<dict>...] || deldict "
+"|| addword [<dict>] <word>"
 msgstr "dictlist || enable <jazyk> || disable || addword [<jazyk>] <slovo>"
 
 #, fuzzy
@@ -3831,7 +3858,8 @@ msgid ""
 " disable: disable aspell\n"
 "  toggle: toggle aspell\n"
 "listdict: show installed dictionaries\n"
-" setdict: set dictionary for current buffer\n"
+" setdict: set dictionary for current buffer (multiple dictionaries can be "
+"separated by a comma)\n"
 " deldict: delete dictionary used on current buffer\n"
 " addword: add a word in personal aspell dictionary\n"
 "\n"
@@ -3852,8 +3880,12 @@ msgstr ""
 "\n"
 "Vstupní řádka začínající '/' není kontrolována, vyjma některých příkaů."
 
-msgid "list of supported langs for aspell"
+#, fuzzy
+msgid "list of all languages supported by aspell"
 msgstr "seznam podporovaných jazyků v aspell"
+
+msgid "list of aspell installed dictionaries"
+msgstr ""
 
 msgid "comma separated list of dictionaries to use on this buffer"
 msgstr "čárkami oddělený seznam slovníků, které použít pro tento buffer"
@@ -3918,13 +3950,18 @@ msgstr ""
 "mimimální délka slova pro kontrolu pravopisu (použijte 0 pro kontrolu všech "
 "slov)"
 
+#, fuzzy
+msgid "comma-separated list of dictionaries used in buffer"
+msgstr "čárkami oddělený seznam slovníků, které použít pro tento buffer"
+
+msgid ""
+"buffer pointer (\"0x12345678\") or buffer full name (\"irc.freenode.#weechat"
+"\")"
+msgstr ""
+
 #, c-format
 msgid "%s: warning: dictionary \"%s\" is not available on your system"
 msgstr "%s: upozornění: slovník \"%s\" není dostupný ve vašem systému"
-
-#, c-format
-msgid "%s%s: not enough memory to create new speller"
-msgstr "%s%s: nedostatek paměti pro vytvoření kontroly pravopisu"
 
 #, fuzzy
 msgid "Charset conversions"
@@ -4087,8 +4124,8 @@ msgstr "%s:roura otevřena"
 msgid "%s%s: unable to open pipe (%s) for reading"
 msgstr "%s%s: nemohu otevřít rouru (%s) pro čtení"
 
-#, c-format
-msgid "%s%s: unable to create pipe for remote control (%s)"
+#, fuzzy, c-format
+msgid "%s%s: unable to create pipe for remote control (%s): error %d %s"
 msgstr "%s%s: nemohu vytvořit rouru pro vzdálené ovládání (%s)"
 
 #, c-format
@@ -4116,6 +4153,12 @@ msgstr "jméno FIFO roury"
 
 msgid "away"
 msgstr "pryč"
+
+msgid "server"
+msgid_plural "servers"
+msgstr[0] "server"
+msgstr[1] "servery"
+msgstr[2] "serverů"
 
 msgid "Lag"
 msgstr "Lag"
@@ -4329,6 +4372,37 @@ msgstr "%s%s: notifikace nenalezena"
 #, c-format
 msgid "%s%s: cannot create new private buffer \"%s\""
 msgstr "%s%s: nemohu vytvořít nový soukromý buffer\"%s\""
+
+#, fuzzy, c-format
+msgid "Server: %s%s %s[%s%s%s]%s%s"
+msgstr "%sServer: %s%s %s[%s%s%s]%s%s"
+
+msgid "connected"
+msgstr "připojen"
+
+msgid "not connected"
+msgstr "nepřipojen"
+
+msgid " (temporary)"
+msgstr " (dočasný)"
+
+msgid "on"
+msgstr "na"
+
+msgid "off"
+msgstr "off"
+
+msgid "minute"
+msgid_plural "minutes"
+msgstr[0] "minuta"
+msgstr[1] "minuty"
+msgstr[2] "minut"
+
+msgid "channel"
+msgid_plural "channels"
+msgstr[0] "kanál"
+msgstr[1] "kanály"
+msgstr[2] "kanálů"
 
 msgid "All servers:"
 msgstr "Všechny servery:"
@@ -5833,6 +5907,10 @@ msgstr ""
 msgid "merge server buffers"
 msgstr "spojit buffery serverů"
 
+#, fuzzy
+msgid "merge private buffers"
+msgstr "spojit buffery serverů"
+
 msgid ""
 "force position of new channel in list of buffers (none = default position "
 "(should be last buffer), next = current buffer + 1, near_server = after last "
@@ -5872,8 +5950,8 @@ msgstr "zobrazit mezeru pokud mód přezdívkz není (částečný)op/voice"
 #, fuzzy
 msgid ""
 "force color for some nicks: hash computed with nickname to find color will "
-"not be used for these nicks (format is: \"nick1:color1;nick2:color2\"); "
-"lookup for nicks is with exact case then lower case, so it's possible to use "
+"not be used for these nicks (format is: \"nick1:color1;nick2:color2\"); look "
+"up for nicks is with exact case then lower case, so it's possible to use "
 "only lower case for nicks in this option"
 msgstr ""
 "vynutit barvu u některých přezdívek: hash spočítaný z přezdívky pro nalezení "
@@ -5949,9 +6027,6 @@ msgstr "zobrazovat módy přezdívky v položce pole \"input_prompt\""
 msgid "display nick prefix in \"input_prompt\" bar item"
 msgstr "zobrazovat předponu přezdívky v položce pole \"input_prompt\""
 
-msgid "hide password displayed by nickserv"
-msgstr "schovat heslo zobrazené nickservem"
-
 msgid ""
 "comma separated list of words to highlight in server buffers (case "
 "insensitive, use \"(?-i)\" at beginning of words to make them case "
@@ -5998,6 +6073,12 @@ msgid ""
 msgstr ""
 "výchozí cílový buffer pro volby msgbuffer, když je cíl soukromý a příslušný "
 "soukromý buffer není nalezen"
+
+msgid ""
+"comma separated list of nicks for which passwords will be hidden when a "
+"message is sent, for example to hide password in message displayed by \"/msg "
+"nickserv identify password\", example: \"nickserv,nickbot\""
+msgstr ""
 
 msgid ""
 "display notices as private messages (if auto, use private buffer if found)"
@@ -6047,12 +6128,21 @@ msgstr "zpoždění pro filtrování zpráv join/part/quit (v minutách)"
 msgid "enable smart filter for \"join\" messages"
 msgstr "povolit chytrý filter pro \"join\" zprávy"
 
+msgid ""
+"delay for unmasking a join message that was filtered with tag "
+"\"irc_smart_filter\" (in minutes): if a nick has joined max N minutes ago "
+"and then says something on channel (message, notice or update on topic), the "
+"join is unmasked, as well as nick changes after this join (0 = disable: "
+"never unmask a join)"
+msgstr ""
+
 #. TRANSLATORS: please do not translate "part" and "quit"
 msgid "enable smart filter for \"part\" and \"quit\" messages"
 msgstr "povolit chytrý filter pro \"part\" a \"quit\" zprávy"
 
 #. TRANSLATORS: please do not translate "nick"
-msgid "enable smart filter for \"nick\" messages"
+#, fuzzy
+msgid "enable smart filter for \"nick\" messages (nick changes)"
 msgstr "povolit chytrý filter pro \"nick\" zprávy"
 
 msgid "strip colors in topic (used only when displaying buffer title)"
@@ -6164,7 +6254,10 @@ msgstr ""
 msgid "minimum lag to show (in milliseconds)"
 msgstr "minimální lag, který zobrazit (v milisekundách)"
 
-msgid "disconnect after important lag (in minutes, 0 = never disconnect)"
+#, fuzzy
+msgid ""
+"reconnect to server if lag is greater than this value (in seconds, 0 = never "
+"reconnect)"
 msgstr "odpojit po závažném lagu (v minutách, 0 = nikny neodpojit)"
 
 msgid ""
@@ -6228,37 +6321,6 @@ msgstr "%s%s: neznámý DCC CHAT typ obdržen od %s%s%s: \"%s\""
 #, c-format
 msgid "%sUnknown CTCP requested by %s%s%s: %s%s%s%s%s"
 msgstr "%sNeznámý CTCP požadavek od %s%s%s: %s%s%s%s%s"
-
-#, fuzzy, c-format
-msgid "Server: %s%s %s[%s%s%s]%s%s"
-msgstr "%sServer: %s%s %s[%s%s%s]%s%s"
-
-msgid "connected"
-msgstr "připojen"
-
-msgid "not connected"
-msgstr "nepřipojen"
-
-msgid " (temporary)"
-msgstr " (dočasný)"
-
-msgid "on"
-msgstr "na"
-
-msgid "off"
-msgstr "off"
-
-msgid "minute"
-msgid_plural "minutes"
-msgstr[0] "minuta"
-msgstr[1] "minuty"
-msgstr[2] "minut"
-
-msgid "channel"
-msgid_plural "channels"
-msgstr[0] "kanál"
-msgstr[1] "kanály"
-msgstr[2] "kanálů"
 
 #, fuzzy
 msgid "1 if string is a valid IRC channel name for server"
@@ -6886,7 +6948,7 @@ msgid "%s%s: sasl authentication timeout"
 msgstr "%s%s: vypršel čas pro sasl autentizaci"
 
 #, fuzzy, c-format
-msgid "%s%s: lag is high, disconnecting from server..."
+msgid "%s%s: lag is high, reconnecting to server %s%s%s"
 msgstr "%s: zpoždění je veliké, odpojuji se od serveru..."
 
 #, fuzzy, c-format
@@ -7674,6 +7736,18 @@ msgid "%s%s: TLS handshake timeout for client %s%s%s"
 msgstr "%s%s: TLS handshake selhal"
 
 #, fuzzy, c-format
+msgid "%s%s: invalid websocket handshake received for client %s%s%s"
+msgstr "%s%s: TLS handshake selhal"
+
+#, fuzzy, c-format
+msgid "%s%s: origin \"%s\" not allowed for websocket"
+msgstr "%s%s: adresa \"%s\" nenalezena"
+
+#, fuzzy, c-format
+msgid "%s%s: error decoding websocket frame for client %s%s%s"
+msgstr "%s%s: čtu data ze soketu: chyba %d %s"
+
+#, fuzzy, c-format
 msgid "%s%s: reading data on socket for client %s%s%s: error %d %s"
 msgstr "%s%s: čtu data ze soketu: chyba %d %s"
 
@@ -7773,7 +7847,9 @@ msgid ""
 "         ipv6: force use of IPv6\n"
 "          ssl: enable SSL\n"
 "protocol.name: protocol and name to relay:\n"
-"                 - protocol \"irc\": name is the server to share\n"
+"                 - protocol \"irc\": name is the server to share (optional, "
+"if not given, the server name must be sent by client in command \"PASS\", "
+"with format: \"PASS server:password\")\n"
 "                 - protocol \"weechat\" (name is not used)\n"
 "         port: port used for relay\n"
 "          raw: open buffer with raw Relay data\n"
@@ -7787,6 +7863,8 @@ msgid ""
 "    /relay add irc.freenode 8000\n"
 "  irc proxy, for server \"freenode\", with SSL:\n"
 "    /relay add ssl.irc.freenode 8001\n"
+"  irc proxy, for all servers (client will choose), with SSL:\n"
+"    /relay add ssl.irc 8002\n"
 "  weechat protocol:\n"
 "    /relay add weechat 9000\n"
 "  weechat protocol with SSL:\n"
@@ -7841,10 +7919,6 @@ msgstr "%s%s: chyba: neznámý protokol \"%s\""
 
 #, fuzzy, c-format
 msgid "%s%s: error: name is not allowed for protocol \"%s\""
-msgstr "%s%s: chyba: neznámý protokol \"%s\""
-
-#, fuzzy, c-format
-msgid "%s%s: error: name is not required for protocol \"%s\""
 msgstr "%s%s: chyba: neznámý protokol \"%s\""
 
 #, c-format
@@ -7925,6 +7999,12 @@ msgid ""
 "file with SSL certificate and private key (for serving clients with SSL)"
 msgstr ""
 
+msgid ""
+"regular expression with origins allowed in websockets (case insensitive, use "
+"\"(?-i)\" at beginning to make it case sensitive), example: \"^http://(www"
+"\\.)?example\\.(com|org)\""
+msgstr ""
+
 #, fuzzy
 msgid "maximum number of lines in backlog per IRC channel (0 = unlimited)"
 msgstr "maximální počet řádků v historii bufferu (0 = nekonečně)"
@@ -7973,16 +8053,16 @@ msgid "%s: socket closed for %s (port %d)"
 msgstr "%s: soket pro %s.%s (port %d) uzavřen"
 
 #, fuzzy, c-format
-msgid "%s%s: cannot accept client on port %d (%s)"
+msgid "%s%s: cannot accept client on port %d (%s): error %d %s"
 msgstr "%s%s: nemohu akceptovat klienta na portu %d (%s.%s)"
 
 #, fuzzy, c-format
 msgid "%s%s: IP address \"%s\" not allowed for relay"
 msgstr "%s%s: adresa \"%s\" nenalezena"
 
-#, c-format
-msgid "%s%s: cannot set socket option \"SO_REUSEADDR\""
-msgstr "%s%s: nemohu nastavit nastavení sketu \"SO_REUSEADDR\""
+#, fuzzy, c-format
+msgid "%s%s: cannot set socket option \"%s\" to %d: error %d %s"
+msgstr "%s%s: nemohu vytvořit soket pro xfer"
 
 #, fuzzy, c-format
 msgid "%s%s: cannot create socket: error %d %s"
@@ -7993,16 +8073,12 @@ msgid "%s%s: try /set relay.network.ipv6 off"
 msgstr ""
 
 #, fuzzy, c-format
-msgid "%s%s: cannot set socket option \"IPV6_V6ONLY\" to value %d"
-msgstr "%s%s: nemohu nastavit nastavení soketu \"SO_KEEPALIVE\""
-
-#, c-format
-msgid "%s%s: cannot set socket option \"SO_KEEPALIVE\""
-msgstr "%s%s: nemohu nastavit nastavení soketu \"SO_KEEPALIVE\""
+msgid "%s%s: cannot \"bind\" on port %d (%s): error %d %s"
+msgstr "%s%s: chyba s \"bind\" na portu %d (%s.%s)"
 
 #, fuzzy, c-format
-msgid "%s%s: error with \"bind\" on port %d (%s)"
-msgstr "%s%s: chyba s \"bind\" na portu %d (%s.%s)"
+msgid "%s%s: cannot \"listen\" on port %d (%s): error %d %s"
+msgstr "%s%s: nemohu akceptovat klienta na portu %d (%s.%s)"
 
 #, fuzzy, c-format
 msgid "%s: listening on port %d (relay: %s, %s, max %d clients)"
@@ -8093,8 +8169,9 @@ msgid ""
 "        add: add a rmodifier\n"
 "       name: name of rmodifier\n"
 "  modifiers: comma separated list of modifiers\n"
-"     groups: action on groups found: comma separated list of groups (from 1 "
-"to 9) with optional \"*\" after number to hide group\n"
+"     groups: action on groups captured in regular expression (inside "
+"parentheses): comma separated list of groups (from 1 to 9) with optional \"*"
+"\" after number to hide the group\n"
 "      regex: regular expression (case insensitive, can start by \"(?-i)\" to "
 "become case sensitive)\n"
 "        del: delete a rmodifier\n"
@@ -8248,20 +8325,8 @@ msgid "%s%s: not enough memory in function \"%s\""
 msgstr "%s%s: nedostatek paměti ve funkci \"%s\""
 
 #, c-format
-msgid "%s%s: not enough memory to parse file \"%s\""
-msgstr "%s%s: nedostatek paměti pro parsování souboru \"%s\""
-
-#, c-format
 msgid "%s%s: unable to parse file \"%s\""
 msgstr "%s%s: nemůžu parsovat soubor \"%s\""
-
-#, c-format
-msgid "%s%s: unable to run file \"%s\""
-msgstr "%s%s: nemůžu spustit soubor \"%s\""
-
-#, c-format
-msgid "%s%s: unknown error while loading file \"%s\""
-msgstr "%s%s: neznámá chyba při načítání souboru \"%s\""
 
 #, c-format
 msgid "%s%s: unable to initialize %s"
@@ -8322,9 +8387,9 @@ msgid ""
 "%s%s: warning, invalid pointer (\"%s\") for function \"%s\" (script: %s)"
 msgstr "%s%s: špatné parametry pro funkci \"%s\" (skript: %s)"
 
-#, c-format
-msgid "%s: error loading script \"%s\" (bad name, spaces are forbidden)"
-msgstr "%s: chyba načítání skriptu \"%s\" (špatné jméno, mezery jsou zakázány)"
+#, fuzzy, c-format
+msgid "%s: error loading script \"%s\" (spaces or empty name not allowed)"
+msgstr "%s: chyba načítání skriptu \"%s\" (nedostatek paměti)"
 
 #, c-format
 msgid ""
@@ -8463,6 +8528,22 @@ msgid "%s: script \"%s\" is not loaded"
 msgstr "%s%s: skript \"%s\" nenačten"
 
 #, fuzzy, c-format
+msgid "%s: script \"%s\" not found"
+msgstr "%s%s: skript \"%s\" nenalezen"
+
+#, fuzzy, c-format
+msgid "%s: script \"%s\" is not installed"
+msgstr "%s%s: skript \"%s\" nenačten"
+
+#, fuzzy, c-format
+msgid "%s: autoload enabled for script \"%s\""
+msgstr "%s: odebírám skript \"%s\""
+
+#, fuzzy, c-format
+msgid "%s: autoload disabled for script \"%s\""
+msgstr "%s: odebírám skript \"%s\""
+
+#, fuzzy, c-format
 msgid "%s%s: error downloading script \"%s\": %s"
 msgstr "%s: odebírám skript \"%s\""
 
@@ -8475,14 +8556,6 @@ msgstr ""
 #, fuzzy, c-format
 msgid "%s: downloading script \"%s\"..."
 msgstr "%s: odebírám skript \"%s\""
-
-#, fuzzy, c-format
-msgid "%s: script \"%s\" not found"
-msgstr "%s%s: skript \"%s\" nenalezen"
-
-#, fuzzy, c-format
-msgid "%s: script \"%s\" is not installed"
-msgstr "%s%s: skript \"%s\" nenačten"
 
 #, fuzzy, c-format
 msgid "%s: script \"%s\" is held"
@@ -8572,9 +8645,9 @@ msgstr ""
 #, c-format
 msgid ""
 "%d/%d scripts (filter: %s) | Sort: %s | Alt+key/input: i=install r=remove "
-"l=load L=reload u=unload h=(un)hold v=view script | Input: q=close $=refresh "
-"s:x,y=sort words=filter *=reset filter | Mouse: left=select right=install/"
-"remove"
+"l=load L=reload u=unload A=autoload h=(un)hold v=view script | Input: "
+"q=close $=refresh s:x,y=sort words=filter *=reset filter | Mouse: "
+"left=select right=install/remove"
 msgstr ""
 
 msgid "Scripts"
@@ -8586,30 +8659,34 @@ msgstr "stránka WeeChat"
 
 msgid ""
 "list [-o|-i] || search <text> || show <script> || load|unload|reload "
-"<script> [<script>...] || install|remove|installremove|hold [-q] <script> "
+"<script> [<script>...] || autoload|noautoload|toggleautoload <script> "
+"[<script>...] || install|remove|installremove|hold [-q] <script> "
 "[<script>...] || upgrade || update"
 msgstr ""
 
 msgid ""
-"         list: list loaded scripts (all languages)\n"
-"           -o: send list of loaded scripts to buffer\n"
-"           -i: copy list of loaded scripts in command line (for sending to "
+"          list: list loaded scripts (all languages)\n"
+"            -o: send list of loaded scripts to buffer\n"
+"            -i: copy list of loaded scripts in command line (for sending to "
 "buffer)\n"
-"       search: search scripts by tags or text and display result on scripts "
+"        search: search scripts by tags or text and display result on scripts "
 "buffer\n"
-"         show: show detailed info about a script\n"
-"         load: load script(s)\n"
-"       unload: unload script(s)\n"
-"       reload: reload script(s)\n"
-"      install: install/upgrade script(s)\n"
-"       remove: remove script(s)\n"
-"installremove: install or remove script(s), depending on current state\n"
-"         hold: hold/unhold script(s) (a script held will not be upgraded any "
-"more and cannot be removed)\n"
-"           -q: quiet mode: do not display messages\n"
-"      upgrade: upgrade all installed scripts which are obsolete (new version "
-"available)\n"
-"       update: update local scripts cache\n"
+"          show: show detailed info about a script\n"
+"          load: load script(s)\n"
+"        unload: unload script(s)\n"
+"        reload: reload script(s)\n"
+"      autoload: autoload the script\n"
+"    noautoload: do not autoload the script\n"
+"toggleautoload: toggle autoload\n"
+"       install: install/upgrade script(s)\n"
+"        remove: remove script(s)\n"
+" installremove: install or remove script(s), depending on current state\n"
+"          hold: hold/unhold script(s) (a script held will not be upgraded "
+"any more and cannot be removed)\n"
+"            -q: quiet mode: do not display messages\n"
+"       upgrade: upgrade all installed scripts which are obsolete (new "
+"version available)\n"
+"        update: update local scripts cache\n"
 "\n"
 "Without argument, this command opens a buffer with list of scripts.\n"
 "\n"
@@ -8816,6 +8893,11 @@ msgid "background color for selected line in script buffer"
 msgstr "barva textu řádku vybraného klienta"
 
 msgid ""
+"autoload scripts installed (make a link in \"autoload\" directory to script "
+"in parent directory)"
+msgstr ""
+
+msgid ""
 "local cache expiration time, in minutes (-1 = never expires, 0 = always "
 "expire)"
 msgstr ""
@@ -9014,8 +9096,8 @@ msgstr "%s%s: nemohu přistupovat k souboru \"%s\""
 msgid "%s%s: could not find address for \"%s\", falling back to local IP"
 msgstr "%s%s: nemůžu najít adresu pro \"%s\", navracím se k lokální IP"
 
-#, c-format
-msgid "%s%s: cannot create socket for xfer"
+#, fuzzy, c-format
+msgid "%s%s: cannot create socket for xfer: error %d %s"
 msgstr "%s%s: nemohu vytvořit soket pro xfer"
 
 #, c-format
@@ -9229,8 +9311,8 @@ msgstr "seznam xfer"
 msgid "xfer pointer (optional)"
 msgstr "ukazatel xfer (volitelné)"
 
-#, c-format
-msgid "%s%s: unable to create pipe"
+#, fuzzy, c-format
+msgid "%s%s: unable to create pipe: error %d %s"
 msgstr "%s%s: nemohu vytvořit rouru"
 
 #, c-format
@@ -9257,6 +9339,10 @@ msgstr "%s%s: nemohu přijmout blok od odesílatele"
 msgid "%s%s: unable to write local file"
 msgstr "%s%s: nemohu zapisovat do lokálního souboru"
 
+#, fuzzy, c-format
+msgid "%s%s: unable to send ACK to sender"
+msgstr "%s%s: nemohu se připojit k odesílateli"
+
 #, c-format
 msgid "%s%s: unable to fork"
 msgstr "%s%s: nemohu provést fork"
@@ -9269,12 +9355,12 @@ msgstr ""
 "%s: posílám soubor k %s: %s (lokální jméno souboru: %s), %llu bytů "
 "(protokol: %s)"
 
-#, c-format
-msgid "%s%s: unable to create socket for sending file"
+#, fuzzy, c-format
+msgid "%s%s: unable to create socket for sending file: error %d %s"
 msgstr "%s%s: nemohu vytvořit soket pro odesílání souboru"
 
-#, c-format
-msgid "%s%s: unable to set option \"nonblock\" for socket"
+#, fuzzy, c-format
+msgid "%s%s: unable to set option \"nonblock\" for socket: error %d %s"
 msgstr "%s%s: nemohu nastavit \"neblokovaci\" volbu na soket"
 
 #, c-format
@@ -9317,6 +9403,3 @@ msgstr ""
 
 msgid "Constants"
 msgstr ""
-
-#~ msgid "%s%s: cannot create socket"
-#~ msgstr "%s%s nemohu vytvořit soket"

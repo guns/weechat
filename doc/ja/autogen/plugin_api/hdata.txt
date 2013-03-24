@@ -42,6 +42,7 @@
   'nicks_speaking' (pointer) +
   'nicks_speaking_time' (pointer, hdata: "irc_channel_speaking") +
   'last_nick_speaking_time' (pointer, hdata: "irc_channel_speaking") +
+  'join_smart_filtered' (hashtable) +
   'buffer' (pointer, hdata: "buffer") +
   'buffer_as_string' (string) +
   'prev_channel' (pointer, hdata: "irc_channel") +
@@ -185,6 +186,7 @@
   'cmd_list_regexp' (pointer) +
   'last_user_message' (time) +
   'last_away_check' (time) +
+  'last_data_purge' (time) +
   'outqueue' (pointer) +
   'last_outqueue' (pointer) +
   'redirects' (pointer, hdata: "irc_redirect") +
@@ -403,6 +405,9 @@
   'nicklist_root' (pointer, hdata: "nick_group") +
   'nicklist_max_length' (integer) +
   'nicklist_display_groups' (integer) +
+  'nicklist_count' (integer) +
+  'nicklist_groups_count' (integer) +
+  'nicklist_nicks_count' (integer) +
   'nicklist_visible_count' (integer) +
   'nickcmp_callback' (pointer) +
   'nickcmp_callback_data' (pointer) +

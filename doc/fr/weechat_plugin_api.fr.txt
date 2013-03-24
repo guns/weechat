@@ -3287,15 +3287,15 @@ Paramètres :
 ** 'WEECHAT_HASHTABLE_BUFFER'
 ** 'WEECHAT_HASHTABLE_TIME'
 * 'callback_hash_key' : fonction appelée pour rendre le "hash" d'une clé (la clé
-  sous forme de nombre entier), peut être NULL si le type de clé est "string"
-  (une fonction par défaut est utilisée pour les chaînes, et seulement pour les
-  chaînes). Paramètres et valeur de retour :
+  sous forme de nombre entier), peut être NULL si le type de clé n'est pas
+  "buffer" (une fonction de hash par défaut est utilisée), paramètres et valeur
+  de retour :
 ** 'struct t_hashtable *hashtable' : pointeur vers la hashtable
 ** 'const void *key' : clé
 ** valeur de retour : "hash" de la clé
 * 'callback_keycmp' : fonction appelée pour comparer deux clés, peut être NULL
-  si le type de valeur est "string" (une fonction par défaut est utilisée pour
-  les chaînes, et seulement pour les chaînes). Paramètres et valeur de retour :
+  si le type de clé n'est pas "buffer" (une fonction de comparaison par défaut
+  est utilisée), paramètres et valeur de retour :
 ** 'struct t_hashtable *hashtable' : pointeur vers la hashtable
 ** 'const void *key1' : première clé
 ** 'const void *key2' : seconde clé
@@ -3868,7 +3868,7 @@ Valeur de retour :
 
 [NOTE]
 Le fichier n'est PAS créé sur le disque par cette fonction. Il sera créé par
-l'appel à la fonction <<_weechat_write_config,weechat_write_config>>.
+l'appel à la fonction <<_weechat_config_write,weechat_config_write>>.
 Vous ne devriez appeler cette fonction qu'après avoir créé les sections (avec
 <<_weechat_config_new_section,weechat_config_new_section>>) et les options (avec
 <<_weechat_config_new_option,weechat_config_new_option>>).
@@ -4404,6 +4404,12 @@ option5 = weechat.config_new_option(config_file, section, "option5", "color",
     "", "",
     "", "")
 ----------------------------------------
+
+[NOTE]
+En Ruby, les 3 "callbacks" + "data" (6 chaînes) doivent être données dans un
+tableau de 6 chaînes de caractères (en raison d'une limitation de Ruby à 15
+paramètres par fonction), voir le 'Guide pour Scripts WeeChat' pour plus d'infos
+(_corrigé dans la version 0.4.1_).
 
 weechat_config_search_option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -5721,7 +5727,7 @@ Prototype :
 
 [source,C]
 ----------------------------------------
-void weechat_config_section_free (struct t_config_option *option);
+void weechat_config_section_free (struct t_config_section *section);
 ----------------------------------------
 
 Paramètres :
@@ -6971,7 +6977,7 @@ Paramètres :
 * 'flag_write' : 1 = intercepter un évènement d'éctiture, 0 = ignorer
 * 'flag_exception' : 1 = intercepter un évènement d'exception, 0 = ignorer
 * 'callback' : fonction appelée lorsqu'un des évènements sélectionnés se
-  produit pour le fichier (ou la socket), paramètres et valeur de retour :
+  produit pour le fichier (ou le socket), paramètres et valeur de retour :
 ** 'void *data' : pointeur
 ** 'int fd' : descripteur de fichier
 ** valeur de retour :
@@ -6996,7 +7002,7 @@ my_fd_cb (void *data, int fd)
 }
 
 int sock = socket (AF_INET, SOCK_STREAM, 0);
-/* définir les options de la socket */
+/* définir les options du socket */
 /* ... */
 struct t_hook *my_fd_hook = weechat_hook_fd (sock, 1, 0, 0, &my_fd_cb, NULL);
 ----------------------------------------
@@ -7087,6 +7093,11 @@ La commande peut être une URL avec le format : "url:http://www.example.com",
 pour télécharger le contenu de l'URL (_nouveau dans la version 0.3.7_).
 Des options pour l'URL sont possibles avec la fonction
 <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>>.
+
+[TIP]
+Si vous souhaitez récupérer des infos à propos de WeeChat (comme la version
+stable actuelle, le dernier commit git, etc...), vous pouvez utiliser les URLs
+sur la page http://weechat.org/info
 
 [NOTE]
 La taille du tampon pour l'envoi des données au "callback" est de 64 Ko (il y a
@@ -7411,7 +7422,7 @@ Paramètres :
 *** 'WEECHAT_HOOK_CONNECT_TIMEOUT' : temps maximum dépassé
 *** 'WEECHAT_HOOK_CONNECT_SOCKET_ERROR' : erreur de création socket
 ** 'gnutls_rc' : valeur retour de 'gnutls_handshake()'
-** 'sock' : socket utilisée pour la connexion
+** 'sock' : socket utilisé pour la connexion
 ** 'const char *error' : valeur retour de 'gnutls_strerror(gnutls_rc)'
 ** 'const char *ip_address' : adresse IP trouvée
 ** valeur de retour :
@@ -7429,8 +7440,8 @@ Exemple en C :
 [source,C]
 ----------------------------------------
 int
-my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
-               const char *ip_address)
+my_connect_cb (void *data, int status, int gnutls_rc, int sock,
+               const char *error, const char *ip_address)
 {
     switch (status)
     {
@@ -7473,7 +7484,7 @@ my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
 
 struct t_hook *my_connect_hook = weechat_hook_connect (NULL,
                                                        "my.server.org", 1234,
-                                                       sock, 0,
+                                                       1, 0,
                                                        NULL, NULL, 0, /* GnuTLS */
                                                        NULL,
                                                        &my_connect_cb, NULL);
@@ -7484,11 +7495,11 @@ Script (Python) :
 [source,python]
 ----------------------------------------
 # prototype
-hook = weechat.hook_connect(proxy, address, port, sock, ipv6, local_hostname,
+hook = weechat.hook_connect(proxy, address, port, ipv6, retry, local_hostname,
     callback, callback_data)
 
 # exemple
-def my_connect_cb(data, status, gnutls_rc, error, ip_address):
+def my_connect_cb(data, status, gnutls_rc, sock, error, ip_address):
     if status == WEECHAT_HOOK_CONNECT_OK:
         # ...
     elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
@@ -7513,7 +7524,7 @@ def my_connect_cb(data, status, gnutls_rc, error, ip_address):
         # ...
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_connect("", "my.server.org", 1234, sock, 0, "",
+hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
                             "my_connect_cb", "")
 ----------------------------------------
 
@@ -7885,6 +7896,11 @@ Paramètres :
   pointeur : tampon |
   tampon fermé
 
+| weechat | buffer_line_added +
+  (_nouveau dans la version 0.3.7_) |
+  pointeur : ligne |
+  ligne ajoutée dans un tampon
+
 | weechat | buffer_lines_hidden |
   pointeur : tampon |
   lignes cachées dans le tampon
@@ -7900,6 +7916,14 @@ Paramètres :
 | weechat | buffer_localvar_removed |
   pointeur : tampon |
   variable locale supprimée
+
+| weechat | buffer_merged |
+  pointeur : tampon |
+  tampon mélangé
+
+| weechat | buffer_unmerged |
+  pointeur : tampon |
+  le tampon n'est plus mélangé
 
 | weechat | buffer_moved |
   pointeur : tampon |
@@ -7924,11 +7948,6 @@ Paramètres :
 | weechat | buffer_type_changed |
   pointeur : tampon |
   type de tampon changé
-
-| weechat | buffer_line_added +
-  (_nouveau dans la version 0.3.7_) |
-  pointeur : ligne |
-  ligne ajoutée dans un tampon
 
 | weechat | day_changed +
   (_nouveau dans la version 0.3.2_) |
@@ -7979,6 +7998,14 @@ Paramètres :
   pointeur : tampon |
   curseur déplacé dans la barre "input"
 
+| weechat | key_bind |
+  chaîne : touche |
+  touche ajoutée
+
+| weechat | key_unbind |
+  chaîne : touche |
+  touche supprimée
+
 | weechat | key_pressed |
   chaîne : touche appuyée |
   touche appuyée
@@ -7987,6 +8014,16 @@ Paramètres :
   (_nouveau dans la version 0.3.2_) |
   chaîne : pointeur tampon + "," + nom du groupe |
   groupe ajouté dans la liste des pseudos
+
+| weechat | nicklist_group_changed +
+  (_nouveau dans la version 0.3.4_) |
+  chaîne : pointeur tampon + "," + nom du groupe |
+  groupe modifié dans la liste des pseudos
+
+| weechat | nicklist_group_removing +
+  (_nouveau dans la version 0.4.1_) |
+  chaîne : pointeur tampon + "," + nom du groupe |
+  suppression du groupe de la liste des pseudos
 
 | weechat | nicklist_group_removed +
   (_nouveau dans la version 0.3.2_) |
@@ -7997,6 +8034,16 @@ Paramètres :
   (_nouveau dans la version 0.3.2_) |
   chaîne : pointeur tampon + "," + pseudo |
   pseudo ajouté dans la liste des pseudos
+
+| weechat | nicklist_nick_changed +
+  (_nouveau dans la version 0.3.4_) |
+  chaîne : pointeur tampon + "," + pseudo |
+  pseudo modifié dans la liste des pseudos
+
+| weechat | nicklist_nick_removing +
+  (_nouveau dans la version 0.4.1_) |
+  chaîne : pointeur tampon + "," + pseudo |
+  suppression du pseudo de la liste des pseudos
 
 | weechat | nicklist_nick_removed +
   (_nouveau dans la version 0.3.2_) |
@@ -8037,6 +8084,21 @@ Paramètres :
 | weechat | weechat_pv |
   chaîne : message avec le préfixe |
   un message privé a été affiché
+
+| weechat | window_closing +
+  (_nouveau dans la version 0.3.6_) |
+  pointeur : fenêtre |
+  fermeture de la fenêtre en cours
+
+| weechat | window_closed +
+  (_nouveau dans la version 0.3.6_) |
+  pointeur : fenêtre |
+  fenêtre fermée
+
+| weechat | window_opened +
+  (_nouveau dans la version 0.4.1_) |
+  pointeur : fenêtre |
+  fenêtre ouverte
 
 | weechat | window_scrolled |
   pointeur : fenêtre |
@@ -8367,12 +8429,55 @@ Paramètres :
 * 'signal' : signal à intercepter, peut commencer ou se terminer par "*"
   (priorité autorisée, voir la note sur la <<hook_priority,priorité>>) :
 
-[width="100%",cols="^1,^3,5",options="header"]
+[width="100%",cols="^1,^3,5,5",options="header"]
 |========================================
-| Extension | Signal | Paramètres
+| Extension | Signal | Paramètres | Description
 
-| irc | irc_redirection_xxx_yyy ^(1)^ |
+| irc | irc_redirection_xxx_yyy ^(1)^ +
+  (_nouveau dans la version 0.3.4_) |
   sortie de la redirection (voir <<hsignal_irc_redirect_command>>)
+
+| weechat | nicklist_group_added +
+  (_nouveau dans la version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *') : tampon +
+  'parent_group' ('struct t_gui_nick_group *') : groupe parent +
+  'group' ('struct t_gui_nick_group *') : groupe |
+  group added in nicklist
+
+| weechat | nicklist_nick_added +
+  (_nouveau dans la version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *') : tampon +
+  'parent_group' ('struct t_gui_nick_group *') : groupe parent +
+  'nick' ('struct t_gui_nick *') : pseudo |
+  nick added in nicklist
+
+| weechat | nicklist_group_removing +
+  (_nouveau dans la version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *') : tampon +
+  'parent_group' ('struct t_gui_nick_group *') : groupe parent +
+  'group' ('struct t_gui_nick_group *') : groupe |
+  removing group from nicklist
+
+| weechat | nicklist_nick_removing +
+  (_nouveau dans la version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *') : tampon +
+  'parent_group' ('struct t_gui_nick_group *') : groupe parent +
+  'nick' ('struct t_gui_nick *') : pseudo |
+  removing nick from nicklist
+
+| weechat | nicklist_group_changed +
+  (_nouveau dans la version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *') : tampon +
+  'parent_group' ('struct t_gui_nick_group *') : groupe parent +
+  'group' ('struct t_gui_nick_group *') : groupe |
+  group changed in nicklist
+
+| weechat | nicklist_nick_changed +
+  (_nouveau dans la version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *') : tampon +
+  'parent_group' ('struct t_gui_nick_group *') : parent +
+  'nick' ('struct t_gui_nick *') : pseudo |
+  nick changed in nicklist
 |========================================
 
 [NOTE]
@@ -8957,6 +9062,18 @@ Paramètres :
   "1" pour garder les couleurs, "0" pour les supprimer |
   toute chaîne |
   chaîne avec des codes couleur IRC, ou sans couleur
+
+| irc | irc_command_auth +
+  (_nouveau dans la version 0.4.1_) |
+  nom du serveur |
+  commande d'authentification (par exemple: `/msg nickserv identify password`) |
+  commande avec le mot de passe caché (par exemple: `/msg nickserv identify ********`)
+
+| irc | irc_message_auth +
+  (_nouveau dans la version 0.4.1_) |
+  nom du serveur |
+  message affiché après `msg` envoyé à nickserv |
+  message avec le mot de passe caché
 
 | irc | irc_in_xxx ^(1)^ |
   nom de serveur |
@@ -10076,6 +10193,9 @@ Paramètres :
    sinon 0
 ** 'nicklist_max_length' : longueur maxi d'un pseudo
 ** 'nicklist_display_groups' : 1 si les groupes sont affichés, sinon 0
+** 'nicklist_count' : nombre de pseudos et groupes dans la liste de pseudos
+** 'nicklist_groups_count' : nombre de groupes dans la liste de pseudos
+** 'nicklist_nicks_count' : nombre de pseudos dans la liste de pseudos
 ** 'nicklist_visible_count' : nombre de pseudos/groupes affichés
 ** 'input' : 1 si la zone de saisie est activée, sinon 0
 ** 'input_get_unknown_commands' : 1 si les commandes inconnues sont envoyées
@@ -11693,9 +11813,9 @@ Prototype :
 [source,C]
 ----------------------------------------
 struct t_gui_bar_item *weechat_bar_item_new (const char *name,
-                                             char *(build_callback)(void *data,
-                                                                    struct t_gui_bar_item *item,
-                                                                    struct t_gui_window *window),
+                                             char *(*build_callback)(void *data,
+                                                                     struct t_gui_bar_item *item,
+                                                                     struct t_gui_window *window),
                                              void *build_callback_data);
 ----------------------------------------
 

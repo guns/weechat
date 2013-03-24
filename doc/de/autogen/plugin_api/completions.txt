@@ -6,7 +6,9 @@
 
 | alias | alias_value | Wert von Alias
 
-| aspell | aspell_langs | Liste der zu nutzenden Übersetzungen für Aspell
+| aspell | aspell_dicts | Auflistung der installierten Wörterbücher
+
+| aspell | aspell_langs | Liste aller Sprachen die durch Aspell unterstützt werden
 
 | guile | guile_script | Liste der Skripten
 
@@ -103,6 +105,8 @@
 | weechat | keys_codes_for_reset | Tastenbelegungen die zurückgesetzt werden können (hinzugefügte/verändert/gelöschte Tastenbelegungen)
 
 | weechat | keys_contexts | Tastaturkontext
+
+| weechat | layouts_names | names of layouts
 
 | weechat | nicks | Nicks in Nickliste für aktuellen Buffer
 

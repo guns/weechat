@@ -56,6 +56,7 @@ struct t_config_option *irc_config_look_color_nicks_in_server_messages;
 struct t_config_option *irc_config_look_color_pv_nick_like_channel;
 struct t_config_option *irc_config_look_ctcp_time_format;
 struct t_config_option *irc_config_look_server_buffer;
+struct t_config_option *irc_config_look_pv_buffer;
 struct t_config_option *irc_config_look_new_channel_position;
 struct t_config_option *irc_config_look_new_pv_position;
 struct t_config_option *irc_config_look_nick_prefix;
@@ -79,13 +80,13 @@ struct t_config_option *irc_config_look_item_away_message;
 struct t_config_option *irc_config_look_item_channel_modes_hide_key;
 struct t_config_option *irc_config_look_item_nick_modes;
 struct t_config_option *irc_config_look_item_nick_prefix;
-struct t_config_option *irc_config_look_hide_nickserv_pwd;
 struct t_config_option *irc_config_look_highlight_server;
 struct t_config_option *irc_config_look_highlight_channel;
 struct t_config_option *irc_config_look_highlight_pv;
 struct t_config_option *irc_config_look_highlight_tags;
 struct t_config_option *irc_config_look_item_display_server;
 struct t_config_option *irc_config_look_msgbuffer_fallback;
+struct t_config_option *irc_config_look_nicks_hide_password;
 struct t_config_option *irc_config_look_notice_as_pv;
 struct t_config_option *irc_config_look_notify_tags_ison;
 struct t_config_option *irc_config_look_notify_tags_whois;
@@ -94,6 +95,7 @@ struct t_config_option *irc_config_look_raw_messages;
 struct t_config_option *irc_config_look_smart_filter;
 struct t_config_option *irc_config_look_smart_filter_delay;
 struct t_config_option *irc_config_look_smart_filter_join;
+struct t_config_option *irc_config_look_smart_filter_join_unmask;
 struct t_config_option *irc_config_look_smart_filter_quit;
 struct t_config_option *irc_config_look_smart_filter_nick;
 struct t_config_option *irc_config_look_topic_strip_colors;
@@ -125,7 +127,7 @@ struct t_config_option *irc_config_network_colors_receive;
 struct t_config_option *irc_config_network_colors_send;
 struct t_config_option *irc_config_network_lag_check;
 struct t_config_option *irc_config_network_lag_min_show;
-struct t_config_option *irc_config_network_lag_disconnect;
+struct t_config_option *irc_config_network_lag_reconnect;
 struct t_config_option *irc_config_network_lag_refresh_interval;
 struct t_config_option *irc_config_network_notify_check_ison;
 struct t_config_option *irc_config_network_notify_check_whois;
@@ -142,6 +144,8 @@ int irc_config_num_nick_colors = 0;
 struct t_hashtable *irc_config_hashtable_nick_color_force = NULL;
 struct t_hashtable *irc_config_hashtable_nick_prefixes = NULL;
 struct t_hashtable *irc_config_hashtable_color_mirc_remap = NULL;
+char **irc_config_nicks_hide_password = NULL;
+int irc_config_num_nicks_hide_password = 0;
 
 int irc_config_write_temp_servers = 0;
 
@@ -302,7 +306,7 @@ irc_config_change_look_server_buffer (void *data,
         ptr_buffer =
             (weechat_config_integer (irc_config_look_server_buffer) ==
              IRC_CONFIG_LOOK_SERVER_BUFFER_MERGE_WITH_CORE) ?
-            weechat_buffer_search_main () : irc_buffer_search_first_for_all_servers ();
+            weechat_buffer_search_main () : irc_buffer_search_server_lowest_number ();
 
         if (ptr_buffer)
         {
@@ -311,6 +315,70 @@ irc_config_change_look_server_buffer (void *data,
             {
                 if (ptr_server->buffer && (ptr_server->buffer != ptr_buffer))
                     weechat_buffer_merge (ptr_server->buffer, ptr_buffer);
+            }
+        }
+    }
+}
+
+/*
+ * Callback for changes on option "irc.look.pv_buffer".
+ */
+
+void
+irc_config_change_look_pv_buffer (void *data,
+                                  struct t_config_option *option)
+{
+    struct t_irc_server *ptr_server;
+    struct t_irc_channel *ptr_channel;
+    struct t_gui_buffer *ptr_buffer;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    /* first unmerge all IRC private buffers */
+    for (ptr_server = irc_servers; ptr_server;
+         ptr_server = ptr_server->next_server)
+    {
+        for (ptr_channel = ptr_server->channels; ptr_channel;
+             ptr_channel = ptr_channel->next_channel)
+        {
+            if ((ptr_channel->type == IRC_CHANNEL_TYPE_PRIVATE)
+                && ptr_channel->buffer)
+            {
+                weechat_buffer_unmerge (ptr_channel->buffer, -1);
+            }
+        }
+    }
+
+    /* merge IRC private buffers */
+    if ((weechat_config_integer (irc_config_look_pv_buffer) == IRC_CONFIG_LOOK_PV_BUFFER_MERGE_BY_SERVER)
+        || (weechat_config_integer (irc_config_look_pv_buffer) == IRC_CONFIG_LOOK_PV_BUFFER_MERGE_ALL))
+    {
+        for (ptr_server = irc_servers; ptr_server;
+             ptr_server = ptr_server->next_server)
+        {
+            for (ptr_channel = ptr_server->channels; ptr_channel;
+                 ptr_channel = ptr_channel->next_channel)
+            {
+                if ((ptr_channel->type == IRC_CHANNEL_TYPE_PRIVATE)
+                    && ptr_channel->buffer)
+                {
+                    ptr_buffer = NULL;
+                    switch (weechat_config_integer (irc_config_look_pv_buffer))
+                    {
+                        case IRC_CONFIG_LOOK_PV_BUFFER_MERGE_BY_SERVER:
+                            /* merge private buffers by server */
+                            ptr_buffer = irc_buffer_search_private_lowest_number (ptr_server);
+                            break;
+                        case IRC_CONFIG_LOOK_PV_BUFFER_MERGE_ALL:
+                            /* merge *ALL* private buffers */
+                            ptr_buffer = irc_buffer_search_private_lowest_number (NULL);
+                            break;
+                    }
+                    if (ptr_buffer && (ptr_channel->buffer != ptr_buffer))
+                        weechat_buffer_merge (ptr_channel->buffer, ptr_buffer);
+                }
             }
         }
     }
@@ -428,7 +496,7 @@ irc_config_change_look_nick_color_force (void *data,
 
     if (!irc_config_hashtable_nick_color_force)
     {
-        irc_config_hashtable_nick_color_force = weechat_hashtable_new (8,
+        irc_config_hashtable_nick_color_force = weechat_hashtable_new (32,
                                                                        WEECHAT_HASHTABLE_STRING,
                                                                        WEECHAT_HASHTABLE_STRING,
                                                                        NULL,
@@ -487,6 +555,36 @@ irc_config_change_look_item_display_server (void *data,
 
     weechat_bar_item_update ("buffer_plugin");
     weechat_bar_item_update ("buffer_name");
+}
+
+/*
+ * Callback for changes on option "irc.look.nicks_hide_password".
+ */
+
+void
+irc_config_change_look_nicks_hide_password (void *data,
+                                            struct t_config_option *option)
+{
+    const char *nicks_hide_password;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (irc_config_nicks_hide_password)
+    {
+        weechat_string_free_split (irc_config_nicks_hide_password);
+        irc_config_nicks_hide_password = NULL;
+    }
+    irc_config_num_nicks_hide_password = 0;
+
+    nicks_hide_password = weechat_config_string (irc_config_look_nicks_hide_password);
+    if (nicks_hide_password && nicks_hide_password[0])
+    {
+        irc_config_nicks_hide_password = weechat_string_split (nicks_hide_password,
+                                                               ",", 0, 0,
+                                                               &irc_config_num_nicks_hide_password);
+    }
 }
 
 /*
@@ -581,7 +679,7 @@ irc_config_change_color_mirc_remap (void *data, struct t_config_option *option)
 
     if (!irc_config_hashtable_color_mirc_remap)
     {
-        irc_config_hashtable_color_mirc_remap = weechat_hashtable_new (8,
+        irc_config_hashtable_color_mirc_remap = weechat_hashtable_new (32,
                                                                        WEECHAT_HASHTABLE_STRING,
                                                                        WEECHAT_HASHTABLE_STRING,
                                                                        NULL,
@@ -626,7 +724,7 @@ irc_config_change_color_nick_prefixes (void *data,
 
     if (!irc_config_hashtable_nick_prefixes)
     {
-        irc_config_hashtable_nick_prefixes = weechat_hashtable_new (8,
+        irc_config_hashtable_nick_prefixes = weechat_hashtable_new (32,
                                                                     WEECHAT_HASHTABLE_STRING,
                                                                     WEECHAT_HASHTABLE_STRING,
                                                                     NULL,
@@ -1954,17 +2052,17 @@ irc_config_init ()
 {
     struct t_config_section *ptr_section;
 
-    irc_config_hashtable_color_mirc_remap = weechat_hashtable_new (8,
+    irc_config_hashtable_color_mirc_remap = weechat_hashtable_new (32,
                                                                    WEECHAT_HASHTABLE_STRING,
                                                                    WEECHAT_HASHTABLE_STRING,
                                                                    NULL,
                                                                    NULL);
-    irc_config_hashtable_nick_color_force = weechat_hashtable_new (8,
+    irc_config_hashtable_nick_color_force = weechat_hashtable_new (32,
                                                                    WEECHAT_HASHTABLE_STRING,
                                                                    WEECHAT_HASHTABLE_STRING,
                                                                    NULL,
                                                                    NULL);
-    irc_config_hashtable_nick_prefixes = weechat_hashtable_new (8,
+    irc_config_hashtable_nick_prefixes = weechat_hashtable_new (32,
                                                                 WEECHAT_HASHTABLE_STRING,
                                                                 WEECHAT_HASHTABLE_STRING,
                                                                 NULL,
@@ -2039,6 +2137,13 @@ irc_config_init ()
         "merge_with_core|merge_without_core|independent", 0, 0, "merge_with_core",
         NULL, 0, NULL, NULL,
         &irc_config_change_look_server_buffer, NULL, NULL, NULL);
+    irc_config_look_pv_buffer = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "pv_buffer", "integer",
+        N_("merge private buffers"),
+        "independent|merge_by_server|merge_all", 0, 0, "independent",
+        NULL, 0, NULL, NULL,
+        &irc_config_change_look_pv_buffer, NULL, NULL, NULL);
     irc_config_look_new_channel_position = weechat_config_new_option (
         irc_config_file, ptr_section,
         "new_channel_position", "integer",
@@ -2087,7 +2192,7 @@ irc_config_init ()
         "nick_color_force", "string",
         N_("force color for some nicks: hash computed with nickname "
            "to find color will not be used for these nicks (format is: "
-           "\"nick1:color1;nick2:color2\"); lookup for nicks is with "
+           "\"nick1:color1;nick2:color2\"); look up for nicks is with "
            "exact case then lower case, so it's possible to use only lower "
            "case for nicks in this option"),
         NULL, 0, 0, "", NULL, 0, NULL, NULL,
@@ -2194,11 +2299,6 @@ irc_config_init ()
         N_("display nick prefix in \"input_prompt\" bar item"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL,
         &irc_config_change_look_item_nick_prefix, NULL, NULL, NULL);
-    irc_config_look_hide_nickserv_pwd = weechat_config_new_option (
-        irc_config_file, ptr_section,
-        "hide_nickserv_pwd", "boolean",
-        N_("hide password displayed by nickserv"),
-        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_highlight_server = weechat_config_new_option (
         irc_config_file, ptr_section,
         "highlight_server", "string",
@@ -2256,6 +2356,15 @@ irc_config_init ()
            "private and that private buffer is not found"),
         "current|server", 0, 0, "current", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
+    irc_config_look_nicks_hide_password = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "nicks_hide_password", "string",
+        N_("comma separated list of nicks for which passwords will be hidden "
+           "when a message is sent, for example to hide password in message "
+           "displayed by \"/msg nickserv identify password\", example: "
+           "\"nickserv,nickbot\""),
+        NULL, 0, 0, "nickserv", NULL, 0, NULL, NULL,
+        &irc_config_change_look_nicks_hide_password, NULL, NULL, NULL);
     irc_config_look_notice_as_pv = weechat_config_new_option (
         irc_config_file, ptr_section,
         "notice_as_pv", "integer",
@@ -2309,6 +2418,15 @@ irc_config_init ()
         /* TRANSLATORS: please do not translate "join" */
         N_("enable smart filter for \"join\" messages"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    irc_config_look_smart_filter_join_unmask = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "smart_filter_join_unmask", "integer",
+        N_("delay for unmasking a join message that was filtered with tag "
+           "\"irc_smart_filter\" (in minutes): if a nick has joined max N "
+           "minutes ago and then says something on channel (message, notice or "
+           "update on topic), the join is unmasked, as well as nick changes "
+           "after this join (0 = disable: never unmask a join)"),
+        NULL, 0, 60*24*7, "30", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_smart_filter_quit = weechat_config_new_option (
         irc_config_file, ptr_section,
         "smart_filter_quit", "boolean",
@@ -2319,7 +2437,7 @@ irc_config_init ()
         irc_config_file, ptr_section,
         "smart_filter_nick", "boolean",
         /* TRANSLATORS: please do not translate "nick" */
-        N_("enable smart filter for \"nick\" messages"),
+        N_("enable smart filter for \"nick\" messages (nick changes)"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_topic_strip_colors = weechat_config_new_option (
         irc_config_file, ptr_section,
@@ -2506,12 +2624,12 @@ irc_config_init ()
         N_("minimum lag to show (in milliseconds)"),
         NULL, 0, 1000 * 3600 * 24, "500", NULL, 0, NULL, NULL,
         &irc_config_change_network_lag_min_show, NULL, NULL, NULL);
-    irc_config_network_lag_disconnect = weechat_config_new_option (
+    irc_config_network_lag_reconnect = weechat_config_new_option (
         irc_config_file, ptr_section,
-        "lag_disconnect", "integer",
-        N_("disconnect after important lag (in minutes, 0 = never "
-           "disconnect)"),
-        NULL, 0, 60 * 24 * 7, "0", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        "lag_reconnect", "integer",
+        N_("reconnect to server if lag is greater than this value (in seconds, "
+           "0 = never reconnect)"),
+        NULL, 0, 3600 * 24 * 7, "0", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_network_lag_refresh_interval = weechat_config_new_option (
         irc_config_file, ptr_section,
         "lag_refresh_interval", "integer",
@@ -2637,6 +2755,7 @@ irc_config_read ()
     {
         irc_notify_new_for_all_servers ();
         irc_config_change_look_nick_color_force (NULL, NULL);
+        irc_config_change_look_nicks_hide_password (NULL, NULL);
         irc_config_change_color_nick_prefixes (NULL, NULL);
         irc_config_change_color_mirc_remap (NULL, NULL);
         irc_config_change_network_notify_check_ison (NULL, NULL);
@@ -2676,6 +2795,13 @@ irc_config_free ()
         weechat_string_free_split (irc_config_nick_colors);
         irc_config_nick_colors = NULL;
         irc_config_num_nick_colors = 0;
+    }
+
+    if (irc_config_nicks_hide_password)
+    {
+        weechat_string_free_split (irc_config_nicks_hide_password);
+        irc_config_nicks_hide_password = NULL;
+        irc_config_num_nicks_hide_password = 0;
     }
 
     if (irc_config_hashtable_nick_color_force)

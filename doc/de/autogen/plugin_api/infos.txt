@@ -2,6 +2,8 @@
 |========================================
 | Erweiterung | Name | Beschreibung | Argumente
 
+| aspell | aspell_dict | eine durch Kommata getrennte Liste von Wörterbüchern, die in diesem Buffer genutzt wird | Buffer-Pointer ("0x12345678") oder der vollständige Buffername ("irc.freenode.#weechat")
+
 | fifo | fifo_filename | Name der FIFO-Pipe | -
 
 | irc | irc_buffer | holt Buffer Pointer für einen IRC Server/Channel/Nick | server,channel,nick (Channel und Nicks sind optional)

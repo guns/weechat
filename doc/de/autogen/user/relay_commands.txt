@@ -16,7 +16,7 @@
          ipv6: erzwingt die Nutzung von IPv6
           ssl: aktiviert SSL
 protocol.name: Protokoll und Name des Relay:
-                 - Protokoll "irc": und der Name des Servers welcher geteilt werden soll
+                 - Protokoll "irc": Name des Servers welcher geteilt werden soll (optional). Wird kein Name angegeben, dann muss der Client den Servernamen mittels Befehl "PASS" anfordern. Format: "PASS Server:Passwort")
                  - Protokoll "weechat" (Name wird nicht unterstützt)
          port: Port den das Relay nutzen soll
           raw: öffnet Buffer mit RAW-Relay Daten
@@ -29,6 +29,8 @@ Beispiele:
     /relay add irc.freenode 8000
   IRC Proxy, für Server "freenode", mit SSL:
     /relay add ssl.irc.freenode 8001
+  IRC Proxy für alle Server (Client wählt aus), mit SSL:
+    /relay add ssl.irc 8002
   WeeChat Protokoll:
     /relay add weechat 9000
   WeeChat Protokoll, mit SSL:

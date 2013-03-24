@@ -23,11 +23,11 @@ WeeChat (Wee Enhanced Environment for Chat) はフリーのチャットクライ
 * 複数のサーバへの接続 (SSL、IPv6、プロキシをサポート)
 * コンパクト、高速、軽量
 * プラグインとスクリプトでカスタマイズや拡張が可能
-* IRC の RFC に準拠 http://www.ietf.org/rfc/rfc1459.txt[1459]、
-  http://www.ietf.org/rfc/rfc2810.txt[2810]、
-  http://www.ietf.org/rfc/rfc2811.txt[2811]、
-  http://www.ietf.org/rfc/rfc2812.txt[2812]、
-  http://www.ietf.org/rfc/rfc2813.txt[2813]。
+* IRC の RFC に準拠 http://tools.ietf.org/html/rfc1459[1459]、
+  http://tools.ietf.org/html/rfc2810[2810]、
+  http://tools.ietf.org/html/rfc2811[2811]、
+  http://tools.ietf.org/html/rfc2812[2812]、
+  http://tools.ietf.org/html/rfc2813[2813]。
 * マルチプラットフォーム (GNU/Linux、*BSD、MacOS X、Windows 等)
 * 完全な GPL、フリーソフトウェア
 
@@ -93,7 +93,7 @@ WeeChat は cmake または autotools を使ってコンパイルできます (c
 | ruby1.9.1-dev          | ≥ 1.8       |          | ruby プラグイン
 | liblua5.1-0-dev        |             |          | lua プラグイン
 | tcl-dev                | ≥ 8.5       |          | tcl プラグイン
-| guile-1.8-dev          |             |          | guile (scheme) プラグイン
+| guile-2.0-dev          | ≥ 2.0       |          | guile (scheme) プラグイン
 | asciidoc               | ≥ 8.5.0     |          | 文書の生成 (HTML ファイル)
 | source-highlight       |             |          | HTML 文書に含まれるソースコードのシンタックスハイライト
 |========================================
@@ -2202,45 +2202,21 @@ include::autogen/user/relay_options.txt[]
 
 include::autogen/user/relay_commands.txt[]
 
-[[relay_irc_proxy]]
-==== IRC プロキシ ====
+// TRANSLATION MISSING
+[[relay_password]]
+Password
+^^^^^^^^
 
-Relay プラグインは IRC プロキシにもなります。IRC サーバ用にポートを設定して、
-クライアントからの接続に必要なパスワードを設定することができます。
-
-例:
-
-----------------------------------------
-/set relay.network.password "mypass"
-/relay add irc.freenode 8000
-----------------------------------------
-
-この後、適当な IRC クライアント (WeeChat、xchat、irssi、..) を使って 8000
-番ポートに対して、サーバパスワード "mypass" で接続することができます。
-
-クライアントの数を制限することも可能です:
-
-----------------------------------------
-/set relay.network.max_clients 1
-----------------------------------------
-
-[[relay_weechat_protocol]]
-==== WeeChat プロトコル ====
-
-Relay プラグインは WeeChat プロトコルを使ってリモートインターフェイスに対してデータを送信できます。
-
-例:
+It is highly recommended to set a password for relay, with command:
 
 ----------------------------------------
 /set relay.network.password "mypass"
-/relay add weechat 9000
 ----------------------------------------
 
-この後、リモートインターフェイス (QWeeChat 等) を使って 9000
-番ポートに対して、パスワード "mypass" で接続することができます。
+This password is used for 'irc' and 'weechat' protocols.
 
 [[relay_ssl]]
-==== SSL 経由のリレー ====
+==== SSL ====
 
 証明書と秘密鍵を作り、プロトコル名の最初に "ssl." を付けることで
 SSL 経由でリレーを利用することができます。
@@ -2263,12 +2239,73 @@ WeeChat が既に起動している場合、
 /relay sslcertkey
 ----------------------------------------
 
-この後に SSL 経由のリレーを追加します、例えば:
+// TRANSLATION MISSING
+[[relay_irc_proxy]]
+==== IRC プロキシ ====
+
+The Relay plugin can act as an IRC proxy: it will simulate an IRC server, and
+you can connect to WeeChat with any other IRC client (including WeeChat itself).
+
+You can define one port by IRC server, or one generic port for all servers.
+
+When using one port for all servers, the client must send the internal name of
+server in the IRC "PASS" command, with this format:
 
 ----------------------------------------
-/relay add ssl.irc.freenode 8001
-/relay add ssl.weechat 9001
+PASS server:mypass
 ----------------------------------------
+
+Example: IRC proxy with SSL for any server (client will choose):
+
+----------------------------------------
+/relay add ssl.irc 8000
+----------------------------------------
+
+Example: IRC proxy without SSL only for server "freenode":
+
+----------------------------------------
+/relay add irc.freenode 8000
+----------------------------------------
+
+Now you can connect on port 8000 with any IRC client using server password
+"mypass" (or "freenode:mypass" if no server was specified in the relay).
+
+[[relay_weechat_protocol]]
+==== WeeChat プロトコル ====
+
+Relay プラグインは WeeChat プロトコルを使ってリモートインターフェイスに対してデータを送信できます。
+
+例:
+
+----------------------------------------
+/relay add weechat 9000
+----------------------------------------
+
+この後、リモートインターフェイスを使って 9000
+番ポートに対して、パスワード "mypass" で接続することができます。
+
+// TRANSLATION MISSING
+[[relay_websocket]]
+WebSocket
+^^^^^^^^^
+
+WebSocket protocol (http://tools.ietf.org/html/rfc6455[RFC 6455]) is supported
+in Relay plugin for all protocols.
+
+The WebSocket handshake is automatically detected and socket becomes ready for
+WebSocket if required headers are found in handshake and if origin is allowed
+(see option
+<<option_relay.network.websocket_allowed_origins,relay.network.websocket_allowed_origins>>).
+
+A WebSocket can be opened in a HTML5 with a single line of JavaScript:
+
+[source,js]
+----------------------------------------
+websocket = new WebSocket("ws://server.com:9000/weechat");
+----------------------------------------
+
+The port (9000 in example) is the port defined in Relay plugin.
+The URI must always end with "/weechat" (for 'irc' and 'weechat' protocols).
 
 [[rmodifier_plugin]]
 === Rmodifier プラグイン ===

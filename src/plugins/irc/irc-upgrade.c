@@ -284,8 +284,10 @@ irc_upgrade_read_cb (void *data,
                      int object_id,
                      struct t_infolist *infolist)
 {
-    int flags, sock, size, i, index;
-    char *buf, option_name[64];
+    int flags, sock, size, i, index, nicks_count;
+    long number;
+    time_t join_time;
+    char *buf, option_name[64], **nicks, *nick_join, *pos, *error;
     const char *buffer_name, *str, *nick;
     struct t_irc_nick *ptr_nick;
     struct t_irc_redirect *ptr_redirect;
@@ -418,6 +420,7 @@ irc_upgrade_read_cb (void *data,
                     irc_upgrade_current_server->lag_last_refresh = weechat_infolist_time (infolist, "lag_last_refresh");
                     irc_upgrade_current_server->last_user_message = weechat_infolist_time (infolist, "last_user_message");
                     irc_upgrade_current_server->last_away_check = weechat_infolist_time (infolist, "last_away_check");
+                    irc_upgrade_current_server->last_data_purge = weechat_infolist_time (infolist, "last_data_purge");
                 }
                 break;
             case IRC_UPGRADE_TYPE_CHANNEL:
@@ -480,6 +483,38 @@ irc_upgrade_read_cb (void *data,
                                                                 weechat_infolist_time (infolist,
                                                                                        option_name));
                             index++;
+                        }
+                        str = weechat_infolist_string (infolist, "join_smart_filtered");
+                        if (str)
+                        {
+                            nicks = weechat_string_split (str, ",", 0, 0,
+                                                          &nicks_count);
+                            if (nicks)
+                            {
+                                for (i = 0; i < nicks_count; i++)
+                                {
+                                    pos = strchr (nicks[i], ':');
+                                    if (pos)
+                                    {
+                                        nick_join = weechat_strndup (nicks[i],
+                                                                     pos - nicks[i]);
+                                        if (nick_join)
+                                        {
+                                            error = NULL;
+                                            number = strtol (pos + 1, &error, 10);
+                                            if (error && !error[0])
+                                            {
+                                                join_time = (time_t)number;
+                                                irc_channel_join_smart_filtered_add (irc_upgrade_current_channel,
+                                                                                     nick_join,
+                                                                                     join_time);
+                                            }
+                                            free (nick_join);
+                                        }
+                                    }
+                                }
+                                weechat_string_free_split (nicks);
+                            }
                         }
                     }
                 }

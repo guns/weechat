@@ -3246,16 +3246,17 @@ Argomenti:
 ** 'WEECHAT_HASHTABLE_POINTER'
 ** 'WEECHAT_HASHTABLE_BUFFER'
 ** 'WEECHAT_HASHTABLE_TIME'
-* 'callback_hash_key': callback utilizzata per effettuare un "hash" di una
-  chiave (chiave come valore intero), può essere NULL se il tipo della chiave è
-  "string" (viene usata una funzione predefinita per le stringhe, e solo per le
-  stringhe), argomenti e valore restituito:
+// TRANSLATION MISSING
+* 'callback_hash_key': callback used to "hash" a key (key as integer value), can
+  be NULL if key type is not "buffer" (a default hash function is used),
+  arguments and return value:
 ** 'struct t_hashtable *hashtable': puntatore alla tabella hash
 ** 'const void *key': chiave
 ** return value: hash della chiave
-* 'callback_keycmp': callback utilizzata per comparare due chiavi, può essere
-  NULL se il tipo di valore è "string" (una funzione di confronto predefinita è
-  usata per le stringhe e solo per le stringhe), argomenti e valore restituito:
+// TRANSLATION MISSING
+* 'callback_keycmp': callback used to compare two keys, can be NULL if key type
+  is not "buffer" (a default comparison function is used), arguments and return
+  value:
 ** 'struct t_hashtable *hashtable': puntatore alla tabella hash
 ** 'const void *key1': prima chiave
 ** 'const void *key2': seconda chiave
@@ -3823,7 +3824,7 @@ Valore restituito:
 
 [NOTE]
 Il file NON viene creato su disco da questa funzione. Verrà creato chiamando
-la funzione <<_weechat_write_config,weechat_write_config>>.
+la funzione <<_weechat_config_write,weechat_config_write>>.
 Si dovrebbe chiamare questa funzione solo dopo aver aggiunto alcune sezioni
 (con <<_weechat_config_new_section,weechat_config_new_section>>) e le
 opzioni (con <<_weechat_config_new_option,weechat_config_new_option>>).
@@ -4352,6 +4353,12 @@ option5 = weechat.config_new_option(config_file, section, "option5", "color",
     "", "",
     "", "")
 ----------------------------------------
+
+// TRANSLATION MISSING
+[NOTE]
+In Ruby, the 3 callbacks + data (6 strings) must be given in an array of 6
+strings (due to a Ruby limitation of 15 arguments by function), see the
+'WeeChat Scripting Guide' for more info (_fixed in version 0.4.1_).
 
 weechat_config_search_option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -5667,7 +5674,7 @@ Prototipo:
 
 [source,C]
 ----------------------------------------
-void weechat_config_section_free (struct t_config_option *option);
+void weechat_config_section_free (struct t_config_section *section);
 ----------------------------------------
 
 Argomenti:
@@ -7021,6 +7028,11 @@ scaricare il contenuto dell'URL (_novità nella versione 0.3.7_). Le opzioni per
 un URL sono disponibili con la funzione
 <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>>.
 
+// TRANSLATION MISSING
+[TIP]
+If you want to retrieve infos about WeeChat (like current stable version,
+latest git commit, ...), you can use URLs on page http://weechat.org/info
+
 [NOTE]
 La dimensione del buffer per l'invio dei dati alla callback è di 64KB (ci sono
 2 buffer: uno per stdout ed uno per stderr).
@@ -7360,8 +7372,8 @@ Esempio in C:
 [source,C]
 ----------------------------------------
 int
-my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
-               const char *ip_address)
+my_connect_cb (void *data, int status, int gnutls_rc, int sock,
+               const char *error, const char *ip_address)
 {
     switch (status)
     {
@@ -7404,7 +7416,7 @@ my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
 
 struct t_hook *my_connect_hook = weechat_hook_connect (NULL,
                                                        "my.server.org", 1234,
-                                                       sock, 0,
+                                                       1, 0,
                                                        NULL, NULL, 0, /* GnuTLS */
                                                        NULL,
                                                        &my_connect_cb, NULL);
@@ -7415,11 +7427,11 @@ Script (Python):
 [source,python]
 ----------------------------------------
 # prototipo
-hook = weechat.hook_connect(proxy, address, port, sock, ipv6, local_hostname,
+hook = weechat.hook_connect(proxy, address, port, ipv6, retry, local_hostname,
     callback, callback_data)
 
 # esempio
-def my_connect_cb(data, status, gnutls_rc, error, ip_address):
+def my_connect_cb(data, status, gnutls_rc, sock, error, ip_address):
     if status == WEECHAT_HOOK_CONNECT_OK:
         # ...
     elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
@@ -7444,7 +7456,7 @@ def my_connect_cb(data, status, gnutls_rc, error, ip_address):
         # ...
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_connect("", "my.server.org", 1234, sock, 0, "",
+hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
                             "my_connect_cb", "")
 ----------------------------------------
 
@@ -7845,6 +7857,11 @@ Argomenti:
   puntatore: buffer |
   buffer chiuso
 
+| weechat | buffer_line_added +
+  (_novità nella versione 0.3.7_) |
+  puntatore: riga |
+  riga aggiunta in un buffer
+
 | weechat | buffer_lines_hidden |
   puntatore: buffer |
   righe nascoste nel buffer
@@ -7860,6 +7877,16 @@ Argomenti:
 | weechat | buffer_localvar_removed |
   puntatore: buffer |
   variabili locali rimosse
+
+// TRANSLATION MISSING
+| weechat | buffer_merged |
+  puntatore: buffer |
+  buffer merged
+
+// TRANSLATION MISSING
+| weechat | buffer_unmerged |
+  puntatore: buffer |
+  buffer unmerged
 
 | weechat | buffer_moved |
   puntatore: buffer |
@@ -7884,11 +7911,6 @@ Argomenti:
 | weechat | buffer_type_changed |
   puntatore: buffer |
   tipo di buffer modificato
-
-| weechat | buffer_line_added +
-  (_novità nella versione 0.3.7_) |
-  puntatore: riga |
-  riga aggiunta in un buffer
 
 | weechat | day_changed +
   (_novità nella versione 0.3.2_) |
@@ -7939,25 +7961,63 @@ Argomenti:
   puntatore: buffer |
   cursore del testo di input spostato
 
+// TRANSLATION MISSING
+| weechat | key_bind |
+  string: key |
+  key added
+
+// TRANSLATION MISSING
+| weechat | key_unbind |
+  string: key |
+  key removed
+
 | weechat | key_pressed |
   string: tasto digitato |
   tasto digitato
 
+// TRANSLATION MISSING
 | weechat | nicklist_group_added +
   (_novità nella versione 0.3.2_) |
   string: buffer pointer + "," + group name |
   group added in nicklist
 
+// TRANSLATION MISSING
+| weechat | nicklist_group_changed +
+  (_novità nella versione 0.3.4_) |
+  string: buffer pointer + "," + group name |
+  group changed in nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_group_removing +
+  (_novità nella versione 0.4.1_) |
+  string: buffer pointer + "," + group name |
+  removing group from nicklist
+
+// TRANSLATION MISSING
 | weechat | nicklist_group_removed +
   (_novità nella versione 0.3.2_) |
   string: buffer pointer + "," + group name |
   group removed from nicklist
 
+// TRANSLATION MISSING
 | weechat | nicklist_nick_added +
   (_novità nella versione 0.3.2_) |
   string: buffer pointer + "," + nick name |
   nick added in nicklist
 
+// TRANSLATION MISSING
+| weechat | nicklist_nick_changed +
+  (_novità nella versione 0.3.4_) |
+  string: buffer pointer + "," + nick name |
+  nick changed in nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_nick_removing +
+  (_novità nella versione 0.4.1_) |
+  string: buffer pointer + "," + nick name |
+  removing nick from nicklist
+
+// TRANSLATION MISSING
 | weechat | nicklist_nick_removed +
   (_novità nella versione 0.3.2_) |
   string: buffer pointer + "," + nick name |
@@ -8000,6 +8060,24 @@ Argomenti:
 | weechat | weechat_pv |
   string: messaggio con prefisso |
   messaggio privato visualizzato
+
+// TRANSLATION MISSING
+| weechat | window_closing +
+  (_novità nella versione 0.3.6_) |
+  puntatore: finestra |
+  closing window
+
+// TRANSLATION MISSING
+| weechat | window_closed +
+  (_novità nella versione 0.3.6_) |
+  puntatore: finestra |
+  window closed
+
+// TRANSLATION MISSING
+| weechat | window_opened +
+  (_novità nella versione 0.4.1_) |
+  puntatore: finestra |
+  window opened
 
 | weechat | window_scrolled |
   puntatore: finestra |
@@ -8332,12 +8410,62 @@ Argomenti:
 * 'signal': segnale da catturare, può iniziare o terminare con "*"
   (priorità consentita, consultare la nota a proposito di <<hook_priority,priority>>):
 
-[width="100%",cols="^1,^3,5",options="header"]
+[width="100%",cols="^1,^3,5,5",options="header"]
 |========================================
-| Plugin | Segnale | Argomenti
+| Plugin | Segnale | Argomenti | Descrizione
 
-| irc | irc_redirection_xxx_yyy ^(1)^ |
-  redirection output (consultare <<hsignal_irc_redirect_command>>)
+| irc | irc_redirection_xxx_yyy ^(1)^ +
+  (_novità nella versione 0.3.4_) |
+  consultare <<hsignal_irc_redirect_command,hsignal_irc_redirect_command>> |
+  redirection output
+
+// TRANSLATION MISSING
+| weechat | nicklist_group_added +
+  (_novità nella versione 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'group' ('struct t_gui_nick_group *'): group |
+  group added in nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_nick_added +
+  (_novità nella versione 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'nick' ('struct t_gui_nick *'): nick |
+  nick added in nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_group_removing +
+  (_novità nella versione 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'group' ('struct t_gui_nick_group *'): group |
+  removing group from nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_nick_removing +
+  (_novità nella versione 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'nick' ('struct t_gui_nick *'): nick |
+  removing nick from nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_group_changed +
+  (_novità nella versione 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'group' ('struct t_gui_nick_group *'): group |
+  group changed in nicklist
+
+// TRANSLATION MISSING
+| weechat | nicklist_nick_changed +
+  (_novità nella versione 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'nick' ('struct t_gui_nick *'): nick |
+  nick changed in nicklist
 |========================================
 
 [NOTE]
@@ -8914,6 +9042,20 @@ Argomenti:
   "1" per mantenere i colori, "0" per rimuovere i colori |
   qualsiasi stringa |
   stringa con i codici colori IRC, o senza colore
+
+// TRANSLATION MISSING
+| irc | irc_command_auth +
+  (_novità nella versione 0.4.1_) |
+  nome server |
+  authentication command (for example: `/msg nickserv identify password`) |
+  command with hidden password (for example: `/msg nickserv identify ********`)
+
+// TRANSLATION MISSING
+| irc | irc_message_auth +
+  (_novità nella versione 0.4.1_) |
+  nome server |
+  message displayed after `/msg` sent to nickserv |
+  message with hidden password
 
 | irc | irc_in_xxx ^(1)^ |
   nome server |
@@ -10024,6 +10166,12 @@ Argomenti:
    altrimenti 0
 ** 'nicklist_max_length': lunghezza massima per un nick
 ** 'nicklist_display_groups': 1 se i gruppi vengono visualizzati, altrimenti 0
+// TRANSLATION MISSING
+** 'nicklist_count': number of nicks and groups in nicklist
+// TRANSLATION MISSING
+** 'nicklist_groups_count': number of groups in nicklist
+// TRANSLATION MISSING
+** 'nicklist_nicks_count': number of nicks in nicklist
 ** 'nicklist_visible_count': numero di nick/gruppi visualizzati
 ** 'input': 1 se l'input è abilitato, altrimenti 0
 ** 'input_get_unknown_commands': 1 se i comandi sconosciuti vengono inviati
@@ -11632,9 +11780,9 @@ Prototipo:
 [source,C]
 ----------------------------------------
 struct t_gui_bar_item *weechat_bar_item_new (const char *name,
-                                             char *(build_callback)(void *data,
-                                                                    struct t_gui_bar_item *item,
-                                                                    struct t_gui_window *window),
+                                             char *(*build_callback)(void *data,
+                                                                     struct t_gui_bar_item *item,
+                                                                     struct t_gui_window *window),
                                              void *build_callback_data);
 ----------------------------------------
 
@@ -12552,10 +12700,10 @@ Esempio in C:
 ----------------------------------------
 char buffer[256];
 /* ... */
-struct t_infolist_var *var = weechat_infolist_new_variable_buffer (item,
-                                                                   "my_buffer",
-                                                                   &buffer,
-                                                                   sizeof (buffer));
+struct t_infolist_var *var = weechat_infolist_new_var_buffer (item,
+                                                              "my_buffer",
+                                                              &buffer,
+                                                              sizeof (buffer));
 ----------------------------------------
 
 [NOTE]
@@ -12589,9 +12737,9 @@ Esempio in C:
 
 [source,C]
 ----------------------------------------
-struct t_infolist_var *var = weechat_infolist_new_variable_time (item,
-                                                                 "my_time",
-                                                                 time (NULL));
+struct t_infolist_var *var = weechat_infolist_new_var_time (item,
+                                                            "my_time",
+                                                            time (NULL));
 ----------------------------------------
 
 Script (Python):

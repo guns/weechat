@@ -84,7 +84,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_relay.network.bind_address]] *relay.network.bind_address*
-** description: `addresse pour le bind (si vide, la connexion est possible sur toutes les interfaces, utiliser "127.0.0.1" pour autoriser les connections depuis la machine locale seulement)`
+** description: `adresse pour le bind (si vide, la connexion est possible sur toutes les interfaces, utiliser "127.0.0.1" pour autoriser les connections depuis la machine locale seulement)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -94,7 +94,7 @@
 ** valeurs: 0 .. 9 (valeur par défaut: `6`)
 
 * [[option_relay.network.ipv6]] *relay.network.ipv6*
-** description: `écouter en IPv6 sur la socket par défaut (en plus de l'IPv4 qui est par défaut); les protocoles IPv4 et IPv6 peuvent être forcés (individuellement ou ensemble) dans le nom du protocole (voir /help relay)`
+** description: `écouter en IPv6 sur le socket par défaut (en plus de l'IPv4 qui est par défaut); les protocoles IPv4 et IPv6 peuvent être forcés (individuellement ou ensemble) dans le nom du protocole (voir /help relay)`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
@@ -112,4 +112,9 @@
 ** description: `fichier avec le certificat et la clé privée SSL (pour servir les clients avec SSL)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"%h/ssl/relay.pem"`)
+
+* [[option_relay.network.websocket_allowed_origins]] *relay.network.websocket_allowed_origins*
+** description: `expression régulière avec les origines autorisées dans les websockets (insensible à la casse, utilisez "(?-i)" en début de chaîne pour la rendre insensible à la casse), exemple: "^http://(www\.)?example\.(com|org)"`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
 

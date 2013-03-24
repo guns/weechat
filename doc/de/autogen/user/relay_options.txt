@@ -113,3 +113,8 @@
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"%h/ssl/relay.pem"`)
 
+* [[option_relay.network.websocket_allowed_origins]] *relay.network.websocket_allowed_origins*
+** Beschreibung: `erlaubt regulären Ausdruck für Origins in WebSockets (Groß- und Kleinschreibung wird ignoriert, um Groß- und Kleinschreibung zu nutzen muss "(?-i)" dem Origin vorangestellt werden), Beispiele: "^http://(www\.)?example\.(com|org)"`
+** Typ: Zeichenkette
+** Werte: beliebige Zeichenkette (Standardwert: `""`)
+

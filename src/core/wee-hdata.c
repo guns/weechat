@@ -93,7 +93,7 @@ hdata_new (struct t_weechat_plugin *plugin, const char *hdata_name,
         new_hdata->plugin = plugin;
         new_hdata->var_prev = (var_prev) ? strdup (var_prev) : NULL;
         new_hdata->var_next = (var_next) ? strdup (var_next) : NULL;
-        new_hdata->hash_var = hashtable_new (16,
+        new_hdata->hash_var = hashtable_new (32,
                                              WEECHAT_HASHTABLE_STRING,
                                              WEECHAT_HASHTABLE_POINTER,
                                              NULL,
@@ -101,7 +101,7 @@ hdata_new (struct t_weechat_plugin *plugin, const char *hdata_name,
         hashtable_set_pointer (new_hdata->hash_var,
                                "callback_free_value",
                                &hdata_free_var);
-        new_hdata->hash_list = hashtable_new (16,
+        new_hdata->hash_list = hashtable_new (32,
                                               WEECHAT_HASHTABLE_STRING,
                                               WEECHAT_HASHTABLE_POINTER,
                                               NULL,
@@ -475,7 +475,7 @@ hdata_get_index_and_name (const char *name, int *index, const char **ptr_name)
     long number;
 
     if (index)
-        *index = 0;
+        *index = -1;
     if (ptr_name)
         *ptr_name = name;
 
@@ -520,7 +520,7 @@ hdata_char (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return (*((char **)(pointer + var->offset)))[index];
@@ -550,7 +550,7 @@ hdata_integer (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return ((int *)(pointer + var->offset))[index];
@@ -580,7 +580,7 @@ hdata_long (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return ((long *)(pointer + var->offset))[index];
@@ -610,7 +610,7 @@ hdata_string (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return (*((char ***)(pointer + var->offset)))[index];
@@ -640,7 +640,7 @@ hdata_pointer (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return (*((void ***)(pointer + var->offset)))[index];
@@ -670,7 +670,7 @@ hdata_time (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return ((time_t *)(pointer + var->offset))[index];
@@ -700,7 +700,7 @@ hdata_hashtable (struct t_hdata *hdata, void *pointer, const char *name)
     var = hashtable_get (hdata->hash_var, ptr_name);
     if (var && (var->offset >= 0))
     {
-        if (var->array_size)
+        if (var->array_size && (index >= 0))
         {
             if (*((void **)(pointer + var->offset)))
                 return (*((struct t_hashtable ***)(pointer + var->offset)))[index];
@@ -1039,7 +1039,7 @@ hdata_print_log ()
 void
 hdata_init ()
 {
-    weechat_hdata = hashtable_new (16,
+    weechat_hdata = hashtable_new (32,
                                    WEECHAT_HASHTABLE_STRING,
                                    WEECHAT_HASHTABLE_POINTER,
                                    NULL,

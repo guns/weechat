@@ -79,6 +79,29 @@ plugin_script_config_cb (void *data, const char *option, const char *value)
 }
 
 /*
+ * Creates directories for plugin in WeeChat home:
+ * - ~/.weechat/XXX/
+ * - ~/.weechat/XXX/autoload/
+ */
+
+void
+plugin_script_create_dirs (struct t_weechat_plugin *weechat_plugin)
+{
+    char *string;
+    int length;
+
+    weechat_mkdir_home (weechat_plugin->name, 0755);
+    length = strlen (weechat_plugin->name) + strlen ("/autoload") + 1;
+    string = malloc (length);
+    if (string)
+    {
+        snprintf (string, length, "%s/autoload", weechat_plugin->name);
+        weechat_mkdir_home (string, 0755);
+        free (string);
+    }
+}
+
+/*
  * Initializes script plugin:
  *   - reads configuration
  *   - hooks config
@@ -93,8 +116,8 @@ plugin_script_init (struct t_weechat_plugin *weechat_plugin,
                     int argc, char *argv[],
                     struct t_plugin_script_init *init)
 {
-    char *string, *completion;
-    char signal_name[128];
+    char *string, *completion, signal_name[128];
+    char *action_signals[] = { "install", "remove", "autoload", NULL };
     int length, i, auto_load_scripts;
 
     /* read script configuration */
@@ -112,15 +135,7 @@ plugin_script_init (struct t_weechat_plugin *weechat_plugin,
     }
 
     /* create directories in WeeChat home */
-    weechat_mkdir_home (weechat_plugin->name, 0755);
-    length = strlen (weechat_plugin->name) + strlen ("/autoload") + 1;
-    string = malloc (length);
-    if (string)
-    {
-        snprintf (string, length, "%s/autoload", weechat_plugin->name);
-        weechat_mkdir_home (string, 0755);
-        free (string);
-    }
+    plugin_script_create_dirs (weechat_plugin);
 
     /* add command */
     completion = NULL;
@@ -192,15 +207,15 @@ plugin_script_init (struct t_weechat_plugin *weechat_plugin,
     weechat_hook_signal ("buffer_closed",
                          init->callback_signal_buffer_closed, NULL);
 
-    /* add signal for a script action (install/remove) */
-    snprintf (signal_name, sizeof (signal_name), "%s_script_install",
-              weechat_plugin->name);
-    weechat_hook_signal (signal_name,
-                         init->callback_signal_script_action, NULL);
-    snprintf (signal_name, sizeof (signal_name), "%s_script_remove",
-              weechat_plugin->name);
-    weechat_hook_signal (signal_name,
-                         init->callback_signal_script_action, NULL);
+    /* add signals for script actions (install/remove/autoload) */
+    for (i = 0; action_signals[i]; i++)
+    {
+        snprintf (signal_name, sizeof (signal_name), "%s_script_%s",
+                  weechat_plugin->name,
+                  action_signals[i]);
+        weechat_hook_signal (signal_name,
+                             init->callback_signal_script_action, NULL);
+    }
 
     /* parse arguments */
     auto_load_scripts = 1;
@@ -550,11 +565,11 @@ plugin_script_add (struct t_weechat_plugin *weechat_plugin,
 {
     struct t_plugin_script *new_script;
 
-    if (strchr (name, ' '))
+    if (!name[0] || strchr (name, ' '))
     {
         weechat_printf (NULL,
-                        _("%s: error loading script \"%s\" (bad name, spaces "
-                          "are forbidden)"),
+                        _("%s: error loading script \"%s\" (spaces or empty name "
+                          "not allowed)"),
                         weechat_plugin->name, name);
         return NULL;
     }
@@ -931,7 +946,7 @@ plugin_script_remove_file (struct t_weechat_plugin *weechat_plugin,
  *   1. unloads script (if script is loaded)
  *   2. removes script file(s)
  *   3. moves script file from "install" dir to language dir
- *   4. makes link in autoload dir
+ *   4. makes link in autoload dir (if option "-a" is given)
  *   5. loads script.
  */
 
@@ -946,18 +961,36 @@ plugin_script_action_install (struct t_weechat_plugin *weechat_plugin,
     char **argv, *name, *ptr_base_name, *base_name, *new_path, *autoload_path;
     char *symlink_path, str_signal[128], *ptr_list;
     const char *dir_home, *dir_separator;
-    int argc, i, length, rc;
+    int argc, i, length, rc, autoload;
     struct t_plugin_script *ptr_script;
 
     if (!*list)
         return;
 
+    /* create again directories, just in case they have been removed */
+    plugin_script_create_dirs (weechat_plugin);
+
     ptr_list = *list;
+    autoload = 0;
     *quiet = 0;
-    if (strncmp (ptr_list, "-q ", 3) == 0)
+
+    while ((ptr_list[0] == ' ') || (ptr_list[0] == '-'))
     {
-        *quiet = 1;
-        ptr_list += 3;
+        if (ptr_list[0] == ' ')
+            ptr_list++;
+        else
+        {
+            switch (ptr_list[1])
+            {
+                case 'a': /* no autoload */
+                    autoload = 1;
+                    break;
+                case 'q': /* quiet mode */
+                    *quiet = 1;
+                    break;
+            }
+            ptr_list += 2;
+        }
     }
 
     argv = weechat_string_split (ptr_list, ",", 0, 0, &argc);
@@ -994,29 +1027,32 @@ plugin_script_action_install (struct t_weechat_plugin *weechat_plugin,
                         if (rename (name, new_path) == 0)
                         {
                             /* make link in autoload dir */
-                            length = strlen (dir_home) +
-                                strlen (weechat_plugin->name) + 8 +
-                                strlen (base_name) + 16;
-                            autoload_path = malloc (length);
-                            if (autoload_path)
+                            if (autoload)
                             {
-                                snprintf (autoload_path, length,
-                                          "%s/%s/autoload/%s",
-                                          dir_home, weechat_plugin->name,
-                                          base_name);
-                                dir_separator = weechat_info_get ("dir_separator", "");
-                                length = 2 + strlen (dir_separator) +
-                                    strlen (base_name) + 1;
-                                symlink_path = malloc (length);
-                                if (symlink_path)
+                                length = strlen (dir_home) +
+                                    strlen (weechat_plugin->name) + 8 +
+                                    strlen (base_name) + 16;
+                                autoload_path = malloc (length);
+                                if (autoload_path)
                                 {
-                                    snprintf (symlink_path, length, "..%s%s",
-                                              dir_separator, base_name);
-                                    rc = symlink (symlink_path, autoload_path);
-                                    (void) rc;
-                                    free (symlink_path);
+                                    snprintf (autoload_path, length,
+                                              "%s/%s/autoload/%s",
+                                              dir_home, weechat_plugin->name,
+                                              base_name);
+                                    dir_separator = weechat_info_get ("dir_separator", "");
+                                    length = 2 + strlen (dir_separator) +
+                                        strlen (base_name) + 1;
+                                    symlink_path = malloc (length);
+                                    if (symlink_path)
+                                    {
+                                        snprintf (symlink_path, length, "..%s%s",
+                                                  dir_separator, base_name);
+                                        rc = symlink (symlink_path, autoload_path);
+                                        (void) rc;
+                                        free (symlink_path);
+                                    }
+                                    free (autoload_path);
                                 }
-                                free (autoload_path);
                             }
 
                             /* load script */
@@ -1076,6 +1112,9 @@ plugin_script_action_remove (struct t_weechat_plugin *weechat_plugin,
     if (!*list)
         return;
 
+    /* create again directories, just in case they have been removed */
+    plugin_script_create_dirs (weechat_plugin);
+
     ptr_list = *list;
     *quiet = 0;
     if (strncmp (ptr_list, "-q ", 3) == 0)
@@ -1106,6 +1145,107 @@ plugin_script_action_remove (struct t_weechat_plugin *weechat_plugin,
               "%s_script_removed", weechat_plugin->name);
     weechat_hook_signal_send (str_signal, WEECHAT_HOOK_SIGNAL_STRING,
                               ptr_list);
+
+    free (*list);
+    *list = NULL;
+}
+
+/*
+ * Enables/disables autoload for some scripts (using comma separated list).
+ */
+
+void
+plugin_script_action_autoload (struct t_weechat_plugin *weechat_plugin,
+                               int *quiet,
+                               char **list)
+{
+    char **argv, *name, *ptr_base_name, *base_name, *autoload_path;
+    char *symlink_path, *ptr_list;
+    const char *dir_home, *dir_separator;
+    int argc, i, length, rc, autoload;
+
+    if (!*list)
+        return;
+
+    /* create again directories, just in case they have been removed */
+    plugin_script_create_dirs (weechat_plugin);
+
+    ptr_list = *list;
+    autoload = 0;
+    *quiet = 0;
+
+    while ((ptr_list[0] == ' ') || (ptr_list[0] == '-'))
+    {
+        if (ptr_list[0] == ' ')
+            ptr_list++;
+        else
+        {
+            switch (ptr_list[1])
+            {
+                case 'a': /* no autoload */
+                    autoload = 1;
+                    break;
+                case 'q': /* quiet mode */
+                    *quiet = 1;
+                    break;
+            }
+            ptr_list += 2;
+        }
+    }
+
+    argv = weechat_string_split (ptr_list, ",", 0, 0, &argc);
+    if (argv)
+    {
+        for (i = 0; i < argc; i++)
+        {
+            name = strdup (argv[i]);
+            if (name)
+            {
+                ptr_base_name = basename (name);
+                base_name = strdup (ptr_base_name);
+                if (base_name)
+                {
+                    dir_home = weechat_info_get ("weechat_dir", "");
+                    length = strlen (dir_home) +
+                        strlen (weechat_plugin->name) + 8 +
+                        strlen (base_name) + 16;
+                    autoload_path = malloc (length);
+                    if (autoload_path)
+                    {
+                        snprintf (autoload_path, length,
+                                  "%s/%s/autoload/%s",
+                                  dir_home, weechat_plugin->name,
+                                  base_name);
+                        if (autoload)
+                        {
+                            dir_separator = weechat_info_get ("dir_separator", "");
+                            length = 2 + strlen (dir_separator) +
+                                strlen (base_name) + 1;
+                            symlink_path = malloc (length);
+                            if (symlink_path)
+                            {
+                                snprintf (symlink_path, length, "..%s%s",
+                                          dir_separator, base_name);
+                                rc = symlink (symlink_path, autoload_path);
+                                (void) rc;
+                                free (symlink_path);
+                            }
+                        }
+                        else
+                        {
+                            unlink (autoload_path);
+                        }
+                        free (autoload_path);
+                    }
+                    free (base_name);
+                }
+                free (name);
+            }
+        }
+        weechat_string_free_split (argv);
+    }
+
+    *quiet = 0;
 
     free (*list);
     *list = NULL;

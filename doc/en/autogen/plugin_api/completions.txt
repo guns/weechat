@@ -6,7 +6,9 @@
 
 | alias | alias_value | value of alias
 
-| aspell | aspell_langs | list of supported langs for aspell
+| aspell | aspell_dicts | list of aspell installed dictionaries
+
+| aspell | aspell_langs | list of all languages supported by aspell
 
 | guile | guile_script | list of scripts
 
@@ -103,6 +105,8 @@
 | weechat | keys_codes_for_reset | key codes that can be reset (keys added, redefined or removed)
 
 | weechat | keys_contexts | key contexts
+
+| weechat | layouts_names | names of layouts
 
 | weechat | nicks | nicks in nicklist of current buffer
 

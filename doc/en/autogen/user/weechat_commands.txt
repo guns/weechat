@@ -190,6 +190,7 @@ Examples:
    buffer: dump buffer content with hexadecimal values in log file
     color: display infos about current color pairs
    cursor: toggle debug for cursor mode
+     dirs: display directories
     hdata: display infos about hdata (with free: remove all hdata in memory)
     hooks: display infos about hooks
 infolists: display infos about infolists
@@ -228,7 +229,7 @@ To force a string comparison, add double quotes around each expression, for exam
   50 > 100      ==> 0
   "50" > "100"  ==> 1
 
-Some variables are replaced in expression, using the format ${variable}, variable can be, by order of prioity :
+Some variables are replaced in expression, using the format ${variable}, variable can be, by order of priority :
   1. the name of an option (file.section.option)
   2. the name of a local variable in buffer
   3. a hdata name/variable (the value is automatically converted to string), by default "window" and "buffer" point to current window/buffer.
@@ -289,7 +290,7 @@ Tags most commonly used:
   no_filter, no_highlight, no_log, log0..log9 (log level),
   notify_none, notify_message, notify_private, notify_highlight,
   nick_xxx (xxx is nick in message), prefix_nick_ccc (ccc is color of nick),
-  irc_xxx (xxx is command name or number, see /server raw),
+  irc_xxx (xxx is command name or number, see /server raw or /debug tags),
   irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, irc_smart_filter, away_info.
 To see tags for lines in buffers: /debug tags
 
@@ -446,17 +447,23 @@ Examples:
 [[command_weechat_layout]]
 [command]*`layout`* save/apply/reset layout for buffers and windows::
 ........................................
-/layout  save [buffers|windows]
-         apply [buffers|windows]
-         reset [buffers|windows]
+/layout  save [<name>] [buffers|windows]
+         apply [<name>] [buffers|windows]
+         leave
+         reset [<name>] [buffers|windows]
+         rename <name> <new_name>
 
    save: save current layout
   apply: apply saved layout
-  reset: remove saved layout
+  leave: leave current layout (does not update any layout)
+  reset: reset buffers and/or windows in a saved layout
+         (if both buffers and windows are reset, the layout is removed)
+ rename: rename a layout
+   name: name for saved layout (default is "default")
 buffers: save/apply only buffers (order of buffers)
 windows: save/apply only windows (buffer displayed by each window)
 
-Without argument, this command displays saved layout.
+Without argument, this command displays saved layouts.
 ........................................
 
 [[command_weechat_mouse]]

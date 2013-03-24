@@ -195,12 +195,15 @@ gui_completion_free (struct t_gui_completion *completion)
  */
 
 void
-gui_completion_stop (struct t_gui_completion *completion,
-                     int remove_partial_completion_list)
+gui_completion_stop (struct t_gui_completion *completion)
 {
+    if (!completion)
+        return;
+
     completion->context = GUI_COMPLETION_NULL;
     completion->position = -1;
-    if (remove_partial_completion_list)
+
+    if (completion->partial_completion_list)
     {
         gui_completion_partial_list_free_all (completion);
         hook_signal_send ("partial_completion",
@@ -424,7 +427,7 @@ gui_completion_build_list_template (struct t_gui_completion *completion,
                     switch (pos[0])
                     {
                         case '-': /* stop completion */
-                            gui_completion_stop (completion, 1);
+                            gui_completion_stop (completion);
                             free (word);
                             return;
                             break;
@@ -494,7 +497,7 @@ gui_completion_get_matching_template (struct t_gui_completion *completion,
          * template, for example with these templates (command /set):
          *   %(config_options) %(config_option_values)
          *   diff %(config_options)|%*
-         * if first argument is "diff", the match is ok (second template)
+         * if first argument is "diff", the match is OK (second template)
          * if first argument is not "diff", we will fallback on the first
          * template containing "%" (here first template)
          */
@@ -582,7 +585,7 @@ gui_completion_build_list (struct t_gui_completion *completion)
 
     if (strcmp (HOOK_COMMAND(ptr_hook, completion), "-") == 0)
     {
-        gui_completion_stop (completion, 1);
+        gui_completion_stop (completion);
         return;
     }
 
@@ -990,7 +993,7 @@ gui_completion_complete (struct t_gui_completion *completion)
                 if (item_is_nick
                     && CONFIG_BOOLEAN(config_completion_nick_first_only))
                 {
-                    gui_completion_stop (completion, 1);
+                    gui_completion_stop (completion);
                     return;
                 }
 
@@ -1068,7 +1071,7 @@ gui_completion_complete (struct t_gui_completion *completion)
     }
 
     /*
-     * if we was on last completion in list, then recomplete, starting from
+     * if we was on last completion in list, then complete again, starting from
      * first matching item
      */
     if (completion->word_found && (completion->position >= 0))

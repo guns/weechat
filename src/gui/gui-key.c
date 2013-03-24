@@ -243,9 +243,9 @@ gui_key_grab_end_timer_cb (void *data, int remaining_calls)
                     gui_input_insert_string (gui_current_window->buffer, ptr_key->command, -1);
                 }
             }
-            if (gui_current_window->buffer->completion)
-                gui_completion_stop (gui_current_window->buffer->completion, 1);
-            gui_input_text_changed_modifier_and_signal (gui_current_window->buffer, 1);
+            gui_input_text_changed_modifier_and_signal (gui_current_window->buffer,
+                                                        1, /* save undo */
+                                                        1); /* stop completion */
         }
         free (expanded_key);
     }
@@ -1926,8 +1926,8 @@ gui_key_print_log (struct t_gui_buffer *buffer)
     {
         for (i = 0; i < GUI_KEY_NUM_CONTEXTS; i++)
         {
-            log_printf ("[keys for context: %s]", gui_key_context_string[i]);
             log_printf ("");
+            log_printf ("[keys for context: %s]", gui_key_context_string[i]);
             log_printf ("  keys . . . . . . . . : 0x%lx", gui_keys[i]);
             log_printf ("  last_key . . . . . . : 0x%lx", last_gui_key[i]);
             log_printf ("  keys_count . . . . . : %d",    gui_keys_count[i]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -17,12 +17,9 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_IRC_DISPLAY_H
-#define __WEECHAT_IRC_DISPLAY_H 1
+#ifndef __WEECHAT_ASPELL_INFO_H
+#define __WEECHAT_ASPELL_INFO_H 1
 
-extern void irc_display_hide_password (char *string, int look_for_nickserv);
-extern void irc_display_away (struct t_irc_server *server, const char *string1,
-                              const char *string2);
-extern void irc_display_server (struct t_irc_server *server, int with_detail);
+extern void weechat_aspell_info_init ();
 
-#endif /* __WEECHAT_IRC_DISPLAY_H */
+#endif /* __WEECHAT_ASPELL_INFO_H */

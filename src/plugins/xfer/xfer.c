@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -323,7 +324,7 @@ xfer_close (struct t_xfer *xfer, enum t_xfer_status status)
         }
     }
 
-    /* remove empty file if received file failed and nothing was transfered */
+    /* remove empty file if received file failed and nothing was transferred */
     if (((xfer->status == XFER_STATUS_FAILED)
          || (xfer->status == XFER_STATUS_ABORTED))
         && XFER_IS_FILE(xfer->type)
@@ -964,8 +965,9 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
         if (sock < 0)
         {
             weechat_printf (NULL,
-                            _("%s%s: cannot create socket for xfer"),
-                            weechat_prefix ("error"), XFER_PLUGIN_NAME);
+                            _("%s%s: cannot create socket for xfer: error %d %s"),
+                            weechat_prefix ("error"), XFER_PLUGIN_NAME,
+                            errno, strerror (errno));
             if (filename2)
                 free (filename2);
             goto error;

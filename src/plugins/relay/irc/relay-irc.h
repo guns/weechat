@@ -29,7 +29,7 @@ struct t_relay_irc_data
 {
     char *address;                     /* client address (used when sending */
                                        /* data to client)                   */
-    int password_ok;                   /* password received and ok?         */
+    int password_ok;                   /* password received and OK?         */
     char *nick;                        /* nick for client                   */
     int user_received;                 /* command "USER" received           */
     int connected;                     /* 1 if client is connected as IRC   */
@@ -63,7 +63,7 @@ enum t_relay_irc_server_capab
 };
 
 extern void relay_irc_recv (struct t_relay_client *client,
-                                   const char *data);
+                            const char *data);
 extern void relay_irc_close_connection (struct t_relay_client *client);
 extern void relay_irc_alloc (struct t_relay_client *client);
 extern void relay_irc_alloc_with_infolist (struct t_relay_client *client,

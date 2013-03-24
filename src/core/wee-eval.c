@@ -518,7 +518,7 @@ eval_expression_internal (const char *expr, struct t_hashtable *pointers,
                 }
                 pos++;
             }
-            /* closing parenthese not found */
+            /* closing parenthesis not found */
             if (pos[0] != ')')
                 goto end;
             sub_expr = string_strndup (expr2 + 1, pos - expr2 - 1);
@@ -694,7 +694,7 @@ eval_expression (const char *expr, struct t_hashtable *pointers,
     /* create hashtable pointers if it's NULL */
     if (!pointers)
     {
-        pointers = hashtable_new (16,
+        pointers = hashtable_new (32,
                                   WEECHAT_HASHTABLE_STRING,
                                   WEECHAT_HASHTABLE_POINTER,
                                   NULL,
@@ -723,7 +723,7 @@ eval_expression (const char *expr, struct t_hashtable *pointers,
     /* create hashtable extra_vars if it's NULL */
     if (!extra_vars)
     {
-        extra_vars = hashtable_new (16,
+        extra_vars = hashtable_new (32,
                                     WEECHAT_HASHTABLE_STRING,
                                     WEECHAT_HASHTABLE_STRING,
                                     NULL,

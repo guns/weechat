@@ -161,7 +161,7 @@ COMMAND_CALLBACK(bar)
 {
     int i, type, position, number;
     long value;
-    char *error, *str_type, *pos_condition;
+    char *error, *str_type, *pos_condition, *name;
     struct t_gui_bar *ptr_bar;
     struct t_gui_bar_item *ptr_item;
     struct t_gui_window *ptr_window;
@@ -333,8 +333,11 @@ COMMAND_CALLBACK(bar)
                                  argv[2]);
                 return WEECHAT_RC_OK;
             }
+            name = strdup (ptr_bar->name);
             gui_bar_free (ptr_bar);
-            gui_chat_printf (NULL, _("Bar deleted"));
+            gui_chat_printf (NULL, _("Bar \"%s\" deleted"), name);
+            if (name)
+                free (name);
             gui_bar_create_default_input ();
         }
 
@@ -1414,6 +1417,10 @@ COMMAND_CALLBACK(debug)
     {
         debug_windows_tree ();
     }
+    else if (string_strcasecmp (argv[1], "dirs") == 0)
+    {
+        debug_directories ();
+    }
     else if (string_strcasecmp (argv[1], "set") == 0)
     {
         COMMAND_MIN_ARGS(4, "debug set");
@@ -1919,7 +1926,7 @@ command_help_list_plugin_commands (struct t_weechat_plugin *plugin,
             snprintf (str_format, sizeof (str_format),
                       " %%-%ds", max_length);
 
-            /* auto compute number of colums, max size is 90% of chat width */
+            /* auto compute number of columns, max size is 90% of chat width */
             cols = ((gui_current_window->win_chat_width * 90) / 100) / (max_length + 1);
             if (cols == 0)
                 cols = 1;
@@ -3096,38 +3103,24 @@ command_layout_display_tree (struct t_gui_layout_window *layout_window,
         {
             /* leaf */
             snprintf (format, sizeof (format), "%%-%ds%s",
-                      indent * 2,
-                      _("leaf: id: %d, parent: %d, plugin: \"%s\", "
-                        "buffer: \"%s\""));
+                      (indent + 1) * 2,
+                      "|-- %s.%s");
             gui_chat_printf (NULL, format,
                              " ",
-                             layout_window->internal_id,
-                             (layout_window->parent_node) ?
-                             layout_window->parent_node->internal_id : 0,
-                             (layout_window->plugin_name) ?
-                             layout_window->plugin_name : "-",
-                             (layout_window->buffer_name) ?
-                             layout_window->buffer_name : "-");
+                             (layout_window->plugin_name) ? layout_window->plugin_name : "-",
+                             (layout_window->buffer_name) ? layout_window->buffer_name : "-");
         }
         else
         {
             /* node */
             snprintf (format, sizeof (format), "%%-%ds%s",
-                      indent * 2,
-                      _("node: id: %d, parent: %d, child1: %d, child2: %d, "
-                        "size: %d%% (%s)"));
+                      (indent + 1) * 2,
+                      "%s== %d%% (split%s)");
             gui_chat_printf (NULL, format,
                              " ",
-                             layout_window->internal_id,
-                             (layout_window->parent_node) ?
-                             layout_window->parent_node->internal_id : 0,
-                             (layout_window->child1) ?
-                             layout_window->child1->internal_id : 0,
-                             (layout_window->child2) ?
-                             layout_window->child2->internal_id : 0,
+                             (indent == 1) ? "\\" : "|",
                              layout_window->split_pct,
-                             (layout_window->split_horiz) ?
-                             _("horizontal split") : _("vertical split"));
+                             (layout_window->split_horiz) ? "h" : "v");
         }
 
         if (layout_window->child1)
@@ -3139,43 +3132,86 @@ command_layout_display_tree (struct t_gui_layout_window *layout_window,
 }
 
 /*
- * Callback for command "/layout": saves/applies buffers/windows layout.
+ * Gets arguments for /layout command (if option is save/apply/reset).
+ */
+
+void
+command_layout_get_arguments (int argc, char **argv,
+                              const char **layout_name,
+                              struct t_gui_layout **ptr_layout,
+                              int *flag_buffers, int *flag_windows)
+{
+    int i;
+
+    *layout_name = NULL;
+    *ptr_layout = NULL;
+    *flag_buffers = 1;
+    *flag_windows = 1;
+
+    for (i = 2; i < argc; i++)
+    {
+        if (string_strcasecmp (argv[i], "buffers") == 0)
+            *flag_windows = 0;
+        else if (string_strcasecmp (argv[i], "windows") == 0)
+            *flag_buffers = 0;
+        else if (!*layout_name)
+            *layout_name = argv[i];
+    }
+
+    if (*layout_name)
+        *ptr_layout = gui_layout_search (*layout_name);
+    else
+    {
+        *ptr_layout = gui_layout_current;
+        if (!*ptr_layout)
+            *ptr_layout = gui_layout_search (GUI_LAYOUT_DEFAULT_NAME);
+    }
+}
+
+/*
+ * Callback for command "/layout": manages layouts.
  */
 
 COMMAND_CALLBACK(layout)
 {
+    struct t_gui_layout *ptr_layout, *ptr_layout2;
     struct t_gui_layout_buffer *ptr_layout_buffer;
-    int flag_buffers, flag_windows;
+    const char *layout_name;
+    char *name;
+    int flag_buffers, flag_windows, layout_is_current;
 
     /* make C compiler happy */
     (void) data;
     (void) buffer;
     (void) argv_eol;
 
-    /* display all key bindings */
+    /* display all layouts */
     if (argc == 1)
     {
-        if (gui_layout_buffers || gui_layout_windows)
+        /* display saved layouts */
+        if (gui_layouts)
         {
-            if (gui_layout_buffers)
+            gui_chat_printf (NULL, "");
+            gui_chat_printf (NULL, _("Saved layouts:"));
+            for (ptr_layout = gui_layouts; ptr_layout;
+                 ptr_layout = ptr_layout->next_layout)
             {
-                gui_chat_printf (NULL, "");
-                gui_chat_printf (NULL, _("Saved layout for buffers:"));
-                for (ptr_layout_buffer = gui_layout_buffers;
+                gui_chat_printf (NULL, "  %s%s%s%s:",
+                                 GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
+                                 ptr_layout->name,
+                                 GUI_COLOR(GUI_COLOR_CHAT),
+                                 (ptr_layout == gui_layout_current) ? _(" (current layout)") : "");
+                for (ptr_layout_buffer = ptr_layout->layout_buffers;
                      ptr_layout_buffer;
                      ptr_layout_buffer = ptr_layout_buffer->next_layout)
                 {
-                    gui_chat_printf (NULL, "  %d. %s / %s",
+                    gui_chat_printf (NULL, "    %d. %s.%s",
                                      ptr_layout_buffer->number,
                                      ptr_layout_buffer->plugin_name,
                                      ptr_layout_buffer->buffer_name);
                 }
-            }
-            if (gui_layout_windows)
-            {
-                gui_chat_printf (NULL, "");
-                gui_chat_printf (NULL, _("Saved layout for windows:"));
-                command_layout_display_tree (gui_layout_windows, 1);
+                if (ptr_layout->layout_windows)
+                    command_layout_display_tree (ptr_layout->layout_windows, 1);
             }
         }
         else
@@ -3184,33 +3220,31 @@ COMMAND_CALLBACK(layout)
         return WEECHAT_RC_OK;
     }
 
-    flag_buffers = 1;
-    flag_windows = 1;
-
-    if (argc > 2)
-    {
-        if (string_strcasecmp (argv[2], "buffers") == 0)
-            flag_windows = 0;
-        else if (string_strcasecmp (argv[2], "windows") == 0)
-            flag_buffers = 0;
-    }
-
     /* save layout */
     if (string_strcasecmp (argv[1], "save") == 0)
     {
+        command_layout_get_arguments (argc, argv, &layout_name, &ptr_layout,
+                                      &flag_buffers, &flag_windows);
+        if (!ptr_layout)
+        {
+            ptr_layout = gui_layout_alloc ((layout_name) ? layout_name : GUI_LAYOUT_DEFAULT_NAME);
+            if (!ptr_layout)
+                return WEECHAT_RC_ERROR;
+            gui_layout_add (ptr_layout);
+        }
         if (flag_buffers)
-        {
-            gui_layout_buffer_save (&gui_layout_buffers, &last_gui_layout_buffer);
-            gui_chat_printf (NULL,
-                             _("Layout saved for buffers (order of buffers)"));
-        }
+            gui_layout_buffer_save (ptr_layout);
         if (flag_windows)
-        {
-            gui_layout_window_save (&gui_layout_windows);
-            gui_chat_printf (NULL,
-                             _("Layout saved for windows (buffer displayed by "
-                               "each window)"));
-        }
+            gui_layout_window_save (ptr_layout);
+        gui_layout_current = ptr_layout;
+        gui_chat_printf (NULL,
+                         /* TRANSLATORS: %s%s%s is "buffers" or "windows" or "buffers+windows" */
+                         _("Layout of %s%s%s saved in \"%s\" (current layout: %s)"),
+                         (flag_buffers) ? _("buffers") : "",
+                         (flag_buffers && flag_windows) ? "+" : "",
+                         (flag_windows) ? _("windows") : "",
+                         ptr_layout->name,
+                         ptr_layout->name);
 
         return WEECHAT_RC_OK;
     }
@@ -3218,10 +3252,30 @@ COMMAND_CALLBACK(layout)
     /* apply layout */
     if (string_strcasecmp (argv[1], "apply") == 0)
     {
-        if (flag_buffers)
-            gui_layout_buffer_apply (gui_layout_buffers);
-        if (flag_windows)
-            gui_layout_window_apply (gui_layout_windows, -1);
+        command_layout_get_arguments (argc, argv, &layout_name, &ptr_layout,
+                                      &flag_buffers, &flag_windows);
+        if (ptr_layout)
+        {
+            if (flag_buffers)
+                gui_layout_buffer_apply (ptr_layout);
+            if (flag_windows)
+                gui_layout_window_apply (ptr_layout, -1);
+            gui_layout_current = ptr_layout;
+        }
+
+        return WEECHAT_RC_OK;
+    }
+
+    /* leave current layout */
+    if (string_strcasecmp (argv[1], "leave") == 0)
+    {
+        gui_layout_buffer_reset ();
+        gui_layout_window_reset ();
+
+        gui_layout_current = NULL;
+
+        gui_chat_printf (NULL,
+                         _("Layout of buffers+windows reset (current layout: -)"));
 
         return WEECHAT_RC_OK;
     }
@@ -3229,20 +3283,80 @@ COMMAND_CALLBACK(layout)
     /* reset layout */
     if (string_strcasecmp (argv[1], "reset") == 0)
     {
-        if (flag_buffers)
+        command_layout_get_arguments (argc, argv, &layout_name, &ptr_layout,
+                                      &flag_buffers, &flag_windows);
+        if (ptr_layout)
         {
-            gui_layout_buffer_reset (&gui_layout_buffers, &last_gui_layout_buffer);
-            gui_chat_printf (NULL,
-                             _("Layout reset for buffers"));
-        }
-        if (flag_windows)
-        {
-            gui_layout_window_reset (&gui_layout_windows);
-            gui_chat_printf (NULL,
-                             _("Layout reset for windows"));
+            layout_is_current = (ptr_layout == gui_layout_current);
+            if (flag_buffers && flag_windows)
+            {
+                name = strdup (ptr_layout->name);
+                gui_layout_remove (ptr_layout);
+                if (layout_is_current)
+                {
+                    gui_layout_buffer_reset ();
+                    gui_layout_window_reset ();
+                }
+                gui_chat_printf (NULL,
+                                 _("Layout \"%s\" deleted (current layout: %s)"),
+                                 name,
+                                 (gui_layout_current) ? gui_layout_current->name : "-");
+                if (name)
+                    free (name);
+            }
+            else
+            {
+                if (flag_buffers)
+                {
+                    gui_layout_buffer_remove_all (ptr_layout);
+                    if (layout_is_current)
+                        gui_layout_buffer_reset ();
+                }
+                else if (flag_windows)
+                {
+                    gui_layout_window_remove_all (ptr_layout);
+                    if (layout_is_current)
+                        gui_layout_window_reset ();
+                }
+                gui_chat_printf (NULL,
+                                 /* TRANSLATORS: %s%s%s is "buffers" or "windows" or "buffers+windows" */
+                                 _("Layout of %s%s%s reset in \"%s\""),
+                                 (flag_buffers) ? _("buffers") : "",
+                                 (flag_buffers && flag_windows) ? "+" : "",
+                                 (flag_windows) ? _("windows") : "",
+                                 ptr_layout->name);
+            }
         }
 
         return WEECHAT_RC_OK;
+    }
+
+    /* rename layout */
+    if (string_strcasecmp (argv[1], "rename") == 0)
+    {
+        COMMAND_MIN_ARGS(4, "layout rename");
+        ptr_layout = gui_layout_search (argv[2]);
+        if (!ptr_layout)
+        {
+            gui_chat_printf (NULL,
+                             _("%sError: unknown layout \"%s\""),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             argv[2]);
+            return WEECHAT_RC_OK;
+        }
+        ptr_layout2 = gui_layout_search (argv[3]);
+        if (ptr_layout2)
+        {
+            gui_chat_printf (NULL,
+                             _("%sError: layout \"%s\" already exists for "
+                               "\"%s\" command"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             argv[3], "layout rename");
+            return WEECHAT_RC_OK;
+        }
+        gui_layout_rename (ptr_layout, argv[3]);
+        gui_chat_printf (NULL, _("Layout \"%s\" has been renamed to \"%s\""),
+                         argv[2], argv[3]);
     }
 
     return WEECHAT_RC_OK;
@@ -5004,7 +5118,7 @@ COMMAND_CALLBACK(upgrade)
     exec_args[3] = strdup (weechat_home);
     execvp (exec_args[0], exec_args);
 
-    /* this code should not be reached if execvp is ok */
+    /* this code should not be reached if execvp is OK */
     string_iconv_fprintf (stderr, "\n\n*****\n");
     string_iconv_fprintf (stderr,
                           _("***** Error: exec failed (program: \"%s\"), exiting WeeChat"),
@@ -5104,21 +5218,14 @@ command_version_display (struct t_gui_buffer *buffer,
                          int display_git_version)
 {
     char string[512];
-    const char *git_version;
-
-    /* get git version */
-    git_version = (display_git_version) ? version_get_git () : NULL;
 
     if (send_to_buffer_as_input)
     {
         if (translated_string)
         {
             snprintf (string, sizeof (string),
-                      "WeeChat %s%s%s%s [%s %s %s]",
-                      version_get_version (),
-                      (git_version && git_version[0]) ? " (git: " : "",
-                      (git_version && git_version[0]) ? git_version : "",
-                      (git_version && git_version[0]) ? ")" : "",
+                      "WeeChat %s [%s %s %s]",
+                      (display_git_version) ? version_get_version_with_git () : version_get_version (),
                       _("compiled on"),
                       version_get_compilation_date (),
                       version_get_compilation_time ());
@@ -5137,11 +5244,8 @@ command_version_display (struct t_gui_buffer *buffer,
         else
         {
             snprintf (string, sizeof (string),
-                      "WeeChat %s%s%s%s [%s %s %s]",
-                      version_get_version (),
-                      (git_version && git_version[0]) ? " (git: " : "",
-                      (git_version && git_version[0]) ? git_version : "",
-                      (git_version && git_version[0]) ? ")" : "",
+                      "WeeChat %s [%s %s %s]",
+                      (display_git_version) ? version_get_version_with_git () : version_get_version (),
                       "compiled on",
                       version_get_compilation_date (),
                       version_get_compilation_time ());
@@ -5160,12 +5264,9 @@ command_version_display (struct t_gui_buffer *buffer,
     }
     else
     {
-        gui_chat_printf (NULL, "%sWeeChat %s%s%s%s %s[%s%s %s %s%s]",
+        gui_chat_printf (NULL, "%sWeeChat %s %s[%s%s %s %s%s]",
                          GUI_COLOR(GUI_COLOR_CHAT_BUFFER),
-                         version_get_version (),
-                         (git_version && git_version[0]) ? " (git: " : "",
-                         (git_version && git_version[0]) ? git_version : "",
-                         (git_version && git_version[0]) ? ")" : "",
+                         (display_git_version) ? version_get_version_with_git () : version_get_version (),
                          GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
                          GUI_COLOR(GUI_COLOR_CHAT_VALUE),
                          _("compiled on"),
@@ -5956,6 +6057,7 @@ command_init ()
                      "in log file\n"
                      "    color: display infos about current color pairs\n"
                      "   cursor: toggle debug for cursor mode\n"
+                     "     dirs: display directories\n"
                      "    hdata: display infos about hdata (with free: remove "
                      "all hdata in memory)\n"
                      "    hooks: display infos about hooks\n"
@@ -5971,6 +6073,7 @@ command_init ()
                   " || buffer"
                   " || color"
                   " || cursor verbose"
+                  " || dirs"
                   " || hdata free"
                   " || hooks"
                   " || infolists"
@@ -6010,7 +6113,7 @@ command_init ()
                      "  50 > 100      ==> 0\n"
                      "  \"50\" > \"100\"  ==> 1\n\n"
                      "Some variables are replaced in expression, using the "
-                     "format ${variable}, variable can be, by order of prioity :\n"
+                     "format ${variable}, variable can be, by order of priority :\n"
                      "  1. the name of an option (file.section.option)\n"
                      "  2. the name of a local variable in buffer\n"
                      "  3. a hdata name/variable (the value is automatically "
@@ -6086,7 +6189,8 @@ command_init ()
                      "notify_highlight,\n"
                      "  nick_xxx (xxx is nick in message), "
                      "prefix_nick_ccc (ccc is color of nick),\n"
-                     "  irc_xxx (xxx is command name or number, see /server raw),\n"
+                     "  irc_xxx (xxx is command name or number, see /server raw "
+                     "or /debug tags),\n"
                      "  irc_numeric, irc_error, irc_action, irc_ctcp, "
                      "irc_ctcp_reply, irc_smart_filter, away_info.\n"
                      "To see tags for lines in buffers: /debug tags\n\n"
@@ -6306,17 +6410,28 @@ command_init ()
                   &command_key, NULL);
     hook_command (NULL, "layout",
                   N_("save/apply/reset layout for buffers and windows"),
-                  N_("save [buffers|windows]"
-                     " || apply [buffers|windows]"
-                     " || reset [buffers|windows]"),
+                  N_("save [<name>] [buffers|windows]"
+                     " || apply [<name>] [buffers|windows]"
+                     " || leave"
+                     " || reset [<name>] [buffers|windows]"
+                     " || rename <name> <new_name>"),
                   N_("   save: save current layout\n"
                      "  apply: apply saved layout\n"
-                     "  reset: remove saved layout\n"
+                     "  leave: leave current layout (does not update any layout)\n"
+                     "  reset: reset buffers and/or windows in a saved layout\n"
+                     "         (if both buffers and windows are reset, the "
+                     "layout is removed)\n"
+                     " rename: rename a layout\n"
+                     "   name: name for saved layout (default is \"default\")\n"
                      "buffers: save/apply only buffers (order of buffers)\n"
                      "windows: save/apply only windows (buffer displayed by "
                      "each window)\n\n"
-                     "Without argument, this command displays saved layout."),
-                  "save|apply|reset buffers|windows",
+                     "Without argument, this command displays saved layouts."),
+                  "save %(layouts_names)|buffers|windows buffers|windows"
+                  " || apply %(layouts_names)|buffers|windows buffers|windows"
+                  " || leave"
+                  " || reset %(layouts_names)|buffers|windows buffers|windows"
+                  " || rename %(layouts_names) %(layouts_names)",
                   &command_layout, NULL);
     hook_command (NULL, "mouse",
                   N_("mouse control"),

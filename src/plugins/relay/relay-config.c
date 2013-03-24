@@ -57,6 +57,7 @@ struct t_config_option *relay_config_network_ipv6;
 struct t_config_option *relay_config_network_max_clients;
 struct t_config_option *relay_config_network_password;
 struct t_config_option *relay_config_network_ssl_cert_key;
+struct t_config_option *relay_config_network_websocket_allowed_origins;
 
 /* relay config, irc section */
 
@@ -69,6 +70,7 @@ struct t_config_option *relay_config_irc_backlog_time_format;
 /* other */
 
 regex_t *relay_config_regex_allowed_ips = NULL;
+regex_t *relay_config_regex_websocket_allowed_origins = NULL;
 struct t_hashtable *relay_config_hashtable_irc_backlog_tags = NULL;
 
 
@@ -188,6 +190,44 @@ relay_config_change_network_ssl_cert_key (void *data,
 }
 
 /*
+ * Callback for changes on option "relay.network.websocker_allowed_origins".
+ */
+
+void
+relay_config_change_network_websocket_allowed_origins (void *data,
+                                                       struct t_config_option *option)
+{
+    const char *allowed_origins;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (relay_config_regex_websocket_allowed_origins)
+    {
+        regfree (relay_config_regex_websocket_allowed_origins);
+        free (relay_config_regex_websocket_allowed_origins);
+        relay_config_regex_websocket_allowed_origins = NULL;
+    }
+
+    allowed_origins = weechat_config_string (relay_config_network_websocket_allowed_origins);
+    if (allowed_origins && allowed_origins[0])
+    {
+        relay_config_regex_websocket_allowed_origins = malloc (sizeof (*relay_config_regex_websocket_allowed_origins));
+        if (relay_config_regex_websocket_allowed_origins)
+        {
+            if (weechat_string_regcomp (relay_config_regex_websocket_allowed_origins,
+                                        allowed_origins,
+                                        REG_EXTENDED | REG_ICASE) != 0)
+            {
+                free (relay_config_regex_websocket_allowed_origins);
+                relay_config_regex_websocket_allowed_origins = NULL;
+            }
+        }
+    }
+}
+
+/*
  * Callback for changes on option "relay.irc.backlog_tags".
  */
 
@@ -204,7 +244,7 @@ relay_config_change_irc_backlog_tags (void *data,
 
     if (!relay_config_hashtable_irc_backlog_tags)
     {
-        relay_config_hashtable_irc_backlog_tags = weechat_hashtable_new (8,
+        relay_config_hashtable_irc_backlog_tags = weechat_hashtable_new (32,
                                                                          WEECHAT_HASHTABLE_STRING,
                                                                          WEECHAT_HASHTABLE_STRING,
                                                                          NULL,
@@ -352,14 +392,6 @@ relay_config_create_option_port (void *data,
         if ((protocol_number == RELAY_PROTOCOL_WEECHAT) && protocol_args)
         {
             weechat_printf (NULL, _("%s%s: error: name is not allowed for "
-                                    "protocol \"%s\""),
-                            weechat_prefix ("error"),
-                            RELAY_PLUGIN_NAME, protocol);
-            rc = WEECHAT_CONFIG_OPTION_SET_ERROR;
-        }
-        else if ((protocol_number == RELAY_PROTOCOL_IRC) && !protocol_args)
-        {
-            weechat_printf (NULL, _("%s%s: error: name is not required for "
                                     "protocol \"%s\""),
                             weechat_prefix ("error"),
                             RELAY_PLUGIN_NAME, protocol);
@@ -606,6 +638,14 @@ relay_config_init ()
            "with SSL)"),
         NULL, 0, 0, "%h/ssl/relay.pem", NULL, 0, NULL, NULL,
         &relay_config_change_network_ssl_cert_key, NULL, NULL, NULL);
+    relay_config_network_websocket_allowed_origins = weechat_config_new_option (
+        relay_config_file, ptr_section,
+        "websocket_allowed_origins", "string",
+        N_("regular expression with origins allowed in websockets (case "
+           "insensitive, use \"(?-i)\" at beginning to make it case sensitive), "
+           "example: \"^http://(www\\.)?example\\.(com|org)\""),
+        NULL, 0, 0, "", NULL, 0, NULL, NULL,
+        &relay_config_change_network_websocket_allowed_origins, NULL, NULL, NULL);
 
     /* section irc */
     ptr_section = weechat_config_new_section (relay_config_file, "irc",

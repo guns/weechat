@@ -168,6 +168,11 @@
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `on`)
 
+* [[option_script.scripts.autoload]] *script.scripts.autoload*
+** Beschreibung: `autoload Skripten installiert (erstellt einen Link im "autoload" Verzeichnis zum Skript im übergeordneten Verzeichnis)`
+** Typ: boolesch
+** Werte: on, off (Standardwert: `on`)
+
 * [[option_script.scripts.cache_expire]] *script.scripts.cache_expire*
 ** Beschreibung: `Ablaufdatum des lokalen Caches, in Minuten (-1 = ohne Ablaufdatum, 0 = umgehend)`
 ** Typ: integer

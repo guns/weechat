@@ -64,10 +64,6 @@ struct t_gui_window *gui_current_window = NULL; /* current window           */
 
 struct t_gui_window_tree *gui_windows_tree = NULL; /* windows tree          */
 
-struct t_gui_layout_window *gui_window_layout_before_zoom = NULL;
-                                       /* layout before zooming on a window */
-int gui_window_layout_id_current_window = -1;
-                                       /* current window id before zoom     */
 int gui_window_cursor_x = 0;           /* cursor pos on screen              */
 int gui_window_cursor_y = 0;           /* cursor pos on screen              */
 
@@ -588,85 +584,88 @@ gui_window_new (struct t_gui_window *parent_window, struct t_gui_buffer *buffer,
         ptr_leaf = gui_windows_tree;
     }
 
-    if ((new_window = (malloc (sizeof (*new_window)))))
-    {
-        /* create scroll structure */
-        new_window->scroll = malloc (sizeof (*new_window->scroll));
-        if (!new_window->scroll)
-        {
-            free (new_window);
-            return NULL;
-        }
-
-        /* create window objects */
-        if (!gui_window_objects_init (new_window))
-        {
-            free (new_window->scroll);
-            free (new_window);
-            return NULL;
-        }
-
-        /* number */
-        new_window->number = (last_gui_window) ? last_gui_window->number + 1 : 1;
-
-        /* position & size */
-        new_window->win_x = x;
-        new_window->win_y = y;
-        new_window->win_width = width;
-        new_window->win_height = height;
-        new_window->win_width_pct = width_pct;
-        new_window->win_height_pct = height_pct;
-
-        /* chat window */
-        new_window->win_chat_x = 0;
-        new_window->win_chat_y = 0;
-        new_window->win_chat_width = 0;
-        new_window->win_chat_height = 0;
-        new_window->win_chat_cursor_x = 0;
-        new_window->win_chat_cursor_y = 0;
-
-        /* bar windows */
-        new_window->bar_windows = NULL;
-        new_window->last_bar_window = NULL;
-
-        /* refresh */
-        new_window->refresh_needed = 0;
-
-        /* buffer and layout infos */
-        new_window->buffer = buffer;
-        new_window->layout_plugin_name = NULL;
-        new_window->layout_buffer_name = NULL;
-
-        /* scroll */
-        gui_window_scroll_init (new_window->scroll, buffer);
-
-        /* coordinates */
-        new_window->coords_size = 0;
-        new_window->coords = NULL;
-        new_window->coords_x_message = 0;
-
-        /* tree */
-        new_window->ptr_tree = ptr_leaf;
-        ptr_leaf->window = new_window;
-
-        /* add window to windows queue */
-        new_window->prev_window = last_gui_window;
-        if (gui_windows)
-            last_gui_window->next_window = new_window;
-        else
-            gui_windows = new_window;
-        last_gui_window = new_window;
-        new_window->next_window = NULL;
-
-        /* create bar windows */
-        for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
-        {
-            if (CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) != GUI_BAR_TYPE_ROOT)
-                gui_bar_window_new (ptr_bar, new_window);
-        }
-    }
-    else
+    new_window = (malloc (sizeof (*new_window)));
+    if (!new_window)
         return NULL;
+
+    /* create scroll structure */
+    new_window->scroll = malloc (sizeof (*new_window->scroll));
+    if (!new_window->scroll)
+    {
+        free (new_window);
+        return NULL;
+    }
+
+    /* create window objects */
+    if (!gui_window_objects_init (new_window))
+    {
+        free (new_window->scroll);
+        free (new_window);
+        return NULL;
+    }
+
+    /* number */
+    new_window->number = (last_gui_window) ? last_gui_window->number + 1 : 1;
+
+    /* position & size */
+    new_window->win_x = x;
+    new_window->win_y = y;
+    new_window->win_width = width;
+    new_window->win_height = height;
+    new_window->win_width_pct = width_pct;
+    new_window->win_height_pct = height_pct;
+
+    /* chat window */
+    new_window->win_chat_x = 0;
+    new_window->win_chat_y = 0;
+    new_window->win_chat_width = 0;
+    new_window->win_chat_height = 0;
+    new_window->win_chat_cursor_x = 0;
+    new_window->win_chat_cursor_y = 0;
+
+    /* bar windows */
+    new_window->bar_windows = NULL;
+    new_window->last_bar_window = NULL;
+
+    /* refresh */
+    new_window->refresh_needed = 0;
+
+    /* buffer and layout infos */
+    new_window->buffer = buffer;
+    new_window->layout_plugin_name = NULL;
+    new_window->layout_buffer_name = NULL;
+
+    /* scroll */
+    gui_window_scroll_init (new_window->scroll, buffer);
+
+    /* coordinates */
+    new_window->coords_size = 0;
+    new_window->coords = NULL;
+    new_window->coords_x_message = 0;
+
+    /* tree */
+    new_window->ptr_tree = ptr_leaf;
+    ptr_leaf->window = new_window;
+
+    /* add window to windows queue */
+    new_window->prev_window = last_gui_window;
+    if (gui_windows)
+        last_gui_window->next_window = new_window;
+    else
+        gui_windows = new_window;
+    last_gui_window = new_window;
+    new_window->next_window = NULL;
+
+    /* create bar windows */
+    for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
+    {
+        if (CONFIG_INTEGER(ptr_bar->options[GUI_BAR_OPTION_TYPE]) != GUI_BAR_TYPE_ROOT)
+            gui_bar_window_new (ptr_bar, new_window);
+    }
+
+    /* send signal */
+    hook_signal_send ("window_opened",
+                      WEECHAT_HOOK_SIGNAL_POINTER, new_window);
 
     return new_window;
 }
@@ -1562,7 +1561,9 @@ gui_window_search_stop (struct t_gui_window *window)
     {
         gui_input_insert_string (window->buffer,
                                  window->buffer->text_search_input, -1);
-        gui_input_text_changed_modifier_and_signal (window->buffer, 0);
+        gui_input_text_changed_modifier_and_signal (window->buffer,
+                                                    0, /* save undo */
+                                                    1); /* stop completion */
         free (window->buffer->text_search_input);
         window->buffer->text_search_input = NULL;
     }
@@ -1579,31 +1580,37 @@ gui_window_search_stop (struct t_gui_window *window)
 void
 gui_window_zoom (struct t_gui_window *window)
 {
+    struct t_gui_layout *ptr_layout;
+
     if (!gui_init_ok)
         return;
 
-    if (gui_window_layout_before_zoom)
+    ptr_layout = gui_layout_search (GUI_LAYOUT_ZOOM);
+    if (ptr_layout)
     {
         /* restore layout as it was before zooming a window */
         hook_signal_send ("window_unzoom",
                           WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
-        gui_layout_window_apply (gui_window_layout_before_zoom,
-                                 gui_window_layout_id_current_window);
-        gui_layout_window_remove_all (&gui_window_layout_before_zoom);
-        gui_window_layout_id_current_window = -1;
+        gui_layout_window_apply (ptr_layout,
+                                 ptr_layout->internal_id_current_window);
+        gui_layout_remove (ptr_layout);
         hook_signal_send ("window_unzoomed",
                           WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
     }
     else
     {
         /* save layout and zoom on current window */
-        hook_signal_send ("window_zoom",
-                          WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
-        gui_window_layout_id_current_window =
-            gui_layout_window_save (&gui_window_layout_before_zoom);
-        gui_window_merge_all (window);
-        hook_signal_send ("window_zoomed",
-                          WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+        ptr_layout = gui_layout_alloc (GUI_LAYOUT_ZOOM);
+        if (ptr_layout)
+        {
+            gui_layout_add (ptr_layout);
+            hook_signal_send ("window_zoom",
+                              WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+            gui_layout_window_save (ptr_layout);
+            gui_window_merge_all (window);
+            hook_signal_send ("window_zoomed",
+                              WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+        }
     }
 }
 
@@ -1785,7 +1792,6 @@ gui_window_print_log ()
     log_printf ("last_gui_window . . . . . . . : 0x%lx", last_gui_window);
     log_printf ("gui_current window. . . . . . : 0x%lx", gui_current_window);
     log_printf ("gui_windows_tree. . . . . . . : 0x%lx", gui_windows_tree);
-    log_printf ("gui_window_layout_before_zoom : 0x%lx", gui_window_layout_before_zoom);
 
     for (ptr_window = gui_windows; ptr_window; ptr_window = ptr_window->next_window)
     {

@@ -408,6 +408,79 @@ script_action_reload (const char *name, int quiet)
 }
 
 /*
+ * Enables/disables autoload for a script.
+ *
+ * Argument "autoload" can be:
+ *    0: disables autoload
+ *    1: enables autoload
+ *   -1: toggles autoload
+ */
+
+void
+script_action_autoload (const char *name, int quiet, int autoload)
+{
+    struct t_script_repo *ptr_script;
+    char str_signal[256], *filename;
+    int length;
+
+    ptr_script = script_repo_search_by_name_ext (name);
+    if (!ptr_script)
+    {
+        if (!quiet)
+        {
+            weechat_printf (NULL,
+                            _("%s: script \"%s\" not found"),
+                            SCRIPT_PLUGIN_NAME, name);
+        }
+        return;
+    }
+
+    /* check that script is installed */
+    if (!(ptr_script->status & SCRIPT_STATUS_INSTALLED))
+    {
+        if (!quiet)
+        {
+            weechat_printf (NULL,
+                            _("%s: script \"%s\" is not installed"),
+                            SCRIPT_PLUGIN_NAME, name);
+        }
+        return;
+    }
+
+    /* toggle autoload if value is -1 */
+    if (autoload < 0)
+        autoload = (ptr_script->status & SCRIPT_STATUS_AUTOLOADED) ? 0 : 1;
+
+    /* ask plugin to autoload (or not) script */
+    length = 16 + strlen (ptr_script->name_with_extension) + 1;
+    filename = malloc (length);
+    if (filename)
+    {
+        snprintf (filename, length,
+                  "%s%s%s",
+                  (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
+                  (autoload) ? "-a " : "",
+                  ptr_script->name_with_extension);
+        snprintf (str_signal, sizeof (str_signal),
+                  "%s_script_autoload",
+                  script_language[ptr_script->language]);
+        weechat_hook_signal_send (str_signal,
+                                  WEECHAT_HOOK_SIGNAL_STRING,
+                                  filename);
+        free (filename);
+    }
+    if (!quiet)
+    {
+        weechat_printf (NULL,
+                        (autoload) ?
+                        _("%s: autoload enabled for script \"%s\"") :
+                        _("%s: autoload disabled for script \"%s\""),
+                        SCRIPT_PLUGIN_NAME, name);
+    }
+    script_repo_update_status (ptr_script);
+}
+
+/*
  * Installs next script.
  */
 
@@ -461,13 +534,14 @@ script_action_install_process_cb (void *data, const char *command,
                                                                        NULL);
                 if (filename)
                 {
-                    length = 3 + strlen (filename) + 1;
+                    length = 16 + strlen (filename) + 1;
                     filename2 = malloc (length);
                     if (filename2)
                     {
                         snprintf (filename2, length,
-                                  "%s%s",
+                                  "%s%s%s",
                                   (quiet && weechat_config_boolean (script_config_look_quiet_actions)) ? "-q " : "",
+                                  (weechat_config_boolean (script_config_scripts_autoload)) ? "-a " : "",
                                   filename);
                         snprintf (str_signal, sizeof (str_signal),
                                   "%s_script_install",
@@ -556,7 +630,7 @@ script_action_install (int quiet)
                                                            NULL);
     if (filename)
     {
-        options = weechat_hashtable_new (8,
+        options = weechat_hashtable_new (32,
                                          WEECHAT_HASHTABLE_STRING,
                                          WEECHAT_HASHTABLE_STRING,
                                          NULL,
@@ -986,7 +1060,7 @@ script_action_show (const char *name, int quiet)
                                                                        ".repository");
                 if (filename)
                 {
-                    options = weechat_hashtable_new (8,
+                    options = weechat_hashtable_new (32,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      NULL,
@@ -1157,6 +1231,27 @@ script_action_run ()
                         script_action_reload (argv[j], quiet);
                     }
                 }
+                else if (weechat_strcasecmp (argv[0], "autoload") == 0)
+                {
+                    for (j = 1; j < argc; j++)
+                    {
+                        script_action_autoload (argv[j], quiet, 1);
+                    }
+                }
+                else if (weechat_strcasecmp (argv[0], "noautoload") == 0)
+                {
+                    for (j = 1; j < argc; j++)
+                    {
+                        script_action_autoload (argv[j], quiet, 0);
+                    }
+                }
+                else if (weechat_strcasecmp (argv[0], "toggleautoload") == 0)
+                {
+                    for (j = 1; j < argc; j++)
+                    {
+                        script_action_autoload (argv[j], quiet, -1);
+                    }
+                }
                 else if (weechat_strcasecmp (argv[0], "install") == 0)
                 {
                     script_found = 0;
@@ -1266,7 +1361,7 @@ script_action_run ()
                          ptr_script = ptr_script->next_script)
                     {
                         /*
-                         * if script is intalled, with new version available,
+                         * if script is installed, with new version available,
                          * and not held, then upgrade it
                          */
                         if ((ptr_script->status & SCRIPT_STATUS_INSTALLED)
@@ -1341,6 +1436,9 @@ void
 script_action_schedule (const char *action, int need_repository, int quiet)
 {
     script_action_add (action);
+
+    /* create again "script" directory, just in case it has been removed */
+    weechat_mkdir_home (SCRIPT_PLUGIN_NAME, 0755);
 
     if (need_repository)
     {

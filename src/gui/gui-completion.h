@@ -41,7 +41,7 @@ struct t_gui_completion
     char *base_command;           /* cmd with arg to complete (can be NULL)  */
     int base_command_arg_index;   /* # arg to complete (if context=cmd arg)  */
     char *base_word;              /* word to complete (when Tab was pressed) */
-    int base_word_pos;            /* beggining of base word                  */
+    int base_word_pos;            /* beginning of base word                  */
     int position;                 /* position where Tab was pressed          */
     char *args;                   /* command line args (including base word) */
     int direction;                /* +1=search next word, -1=previous word   */
@@ -68,8 +68,7 @@ struct t_gui_completion
 extern void gui_completion_buffer_init (struct t_gui_completion *completion,
                                         struct t_gui_buffer *buffer);
 extern void gui_completion_free (struct t_gui_completion *completion);
-extern void gui_completion_stop (struct t_gui_completion *completion,
-                                 int remove_partial_completion_list);
+extern void gui_completion_stop (struct t_gui_completion *completion);
 extern void gui_completion_list_add (struct t_gui_completion *completion,
                                      const char *word,
                                      int nick_completion, const char *where);

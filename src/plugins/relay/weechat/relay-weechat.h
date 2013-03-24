@@ -28,21 +28,22 @@ struct t_relay_client;
 enum t_relay_weechat_compression
 {
     RELAY_WEECHAT_COMPRESSION_OFF = 0, /* no compression of binary objects  */
-    RELAY_WEECHAT_COMPRESSION_GZIP,    /* gzip compression                  */
+    RELAY_WEECHAT_COMPRESSION_ZLIB,    /* zlib compression                  */
     /* number of compressions */
     RELAY_WEECHAT_NUM_COMPRESSIONS,
 };
 
 struct t_relay_weechat_data
 {
-    int password_ok;                   /* password received and ok?         */
-    int compression;                   /* compression type                  */
+    int password_ok;                   /* password received and OK?         */
+    enum t_relay_weechat_compression compression; /* compression type       */
+    int nicklist_diff;                 /* (TEMPORARY) nicklist diff enabled?*/
 
     /* sync of buffers */
     struct t_hashtable *buffers_sync;  /* buffers synchronized (events      */
                                        /* received for these buffers)       */
     struct t_hook *hook_signal_buffer;    /* hook for signals "buffer_*"    */
-    struct t_hook *hook_signal_nicklist;  /* hook for signals "nicklist_*"  */
+    struct t_hook *hook_hsignal_nicklist; /* hook for hsignals "nicklist_*" */
     struct t_hook *hook_signal_upgrade;   /* hook for signals "upgrade*"    */
     struct t_hashtable *buffers_nicklist; /* send nicklist for these buffers*/
     struct t_hook *hook_timer_nicklist;   /* timer for sending nicklist     */

@@ -158,11 +158,6 @@
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
-* [[option_irc.look.hide_nickserv_pwd]] *irc.look.hide_nickserv_pwd*
-** descrizione: `nascondi password visualizzata da nickserv`
-** tipo: bool
-** valori: on, off (valore predefinito: `on`)
-
 * [[option_irc.look.highlight_channel]] *irc.look.highlight_channel*
 ** descrizione: `elenco separato da virgole di parole da notificare nei buffer dei canali (non sensibili alle maiuscole, usare "(?-i)" all'inizio delle parole per renderle sensibili alle maiuscole; le variabili speciali $nick, $channel e $server sono sostituite dal loro valore), queste parole vengono aggiunte alla variabile locale del buffer "highlight_words" solo quando viene creato il buffer (non interessa gli attuali buffer), una stringa vuota disabilita la notifica predefinita sul nick, esempi: "$nick", "(?-i)$nick"`
 ** tipo: stringa
@@ -224,7 +219,7 @@
 ** valori: none, next, near_server (valore predefinito: `none`)
 
 * [[option_irc.look.nick_color_force]] *irc.look.nick_color_force*
-** descrizione: `forza colore per alcuni nick: l'hash calcolato con il nick per trovare il colore non verrà usato per questi nick (il formato è: "nick1:color1;nick2:color2"); la ricerca dei nick è prima sensibile alle maiuscole, poi con le minuscole, per cui è possibile usare solo le minuscole per i nick in questa opzione`
+** descrizione: `force color for some nicks: hash computed with nickname to find color will not be used for these nicks (format is: "nick1:color1;nick2:color2"); look up for nicks is with exact case then lower case, so it's possible to use only lower case for nicks in this option`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -258,6 +253,11 @@
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
+* [[option_irc.look.nicks_hide_password]] *irc.look.nicks_hide_password*
+** descrizione: `comma separated list of nicks for which passwords will be hidden when a message is sent, for example to hide password in message displayed by "/msg nickserv identify password", example: "nickserv,nickbot"`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `"nickserv"`)
+
 * [[option_irc.look.notice_as_pv]] *irc.look.notice_as_pv*
 ** descrizione: `visualizza notifiche come messaggi privati (se automatico, usa il buffer privato se viene trovato)`
 ** tipo: intero
@@ -277,6 +277,11 @@
 ** descrizione: `chiude buffer quando viene digitato /part nel canale`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `off`)
+
+* [[option_irc.look.pv_buffer]] *irc.look.pv_buffer*
+** descrizione: `merge private buffers`
+** tipo: intero
+** valori: independent, merge_by_server, merge_all (valore predefinito: `independent`)
 
 * [[option_irc.look.raw_messages]] *irc.look.raw_messages*
 ** descrizione: `numero di messaggi raw da salvare in memoria quando il buffer dei dati raw viene chiuso (i messaggi verranno visualizzati all'apertura del buffer dei dati raw)`
@@ -303,8 +308,13 @@
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
+* [[option_irc.look.smart_filter_join_unmask]] *irc.look.smart_filter_join_unmask*
+** descrizione: `delay for unmasking a join message that was filtered with tag "irc_smart_filter" (in minutes): if a nick has joined max N minutes ago and then says something on channel (message, notice or update on topic), the join is unmasked, as well as nick changes after this join (0 = disable: never unmask a join)`
+** tipo: intero
+** valori: 0 .. 10080 (valore predefinito: `30`)
+
 * [[option_irc.look.smart_filter_nick]] *irc.look.smart_filter_nick*
-** descrizione: `abilita filtro smart per i messaggi "nick"`
+** descrizione: `enable smart filter for "nick" messages (nick changes)`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
 
@@ -348,15 +358,15 @@
 ** tipo: intero
 ** valori: 0 .. 604800 (valore predefinito: `60`)
 
-* [[option_irc.network.lag_disconnect]] *irc.network.lag_disconnect*
-** descrizione: `disconnetti dopo un ritardo eccessivo (in minuti, 0 = nessuna disconnessione)`
-** tipo: intero
-** valori: 0 .. 10080 (valore predefinito: `0`)
-
 * [[option_irc.network.lag_min_show]] *irc.network.lag_min_show*
 ** descrizione: `ritardo minimo da visualizzare (in millisecondi)`
 ** tipo: intero
 ** valori: 0 .. 86400000 (valore predefinito: `500`)
+
+* [[option_irc.network.lag_reconnect]] *irc.network.lag_reconnect*
+** descrizione: `reconnect to server if lag is greater than this value (in seconds, 0 = never reconnect)`
+** tipo: intero
+** valori: 0 .. 604800 (valore predefinito: `0`)
 
 * [[option_irc.network.lag_refresh_interval]] *irc.network.lag_refresh_interval*
 ** descrizione: `intervallo tra due aggiornamenti per l'elemento ritardo, quando è in aumento (in secondi)`

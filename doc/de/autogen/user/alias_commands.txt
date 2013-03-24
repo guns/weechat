@@ -17,9 +17,8 @@ Anmerkung: Im Befehl können Variablen genutzt werden, die dann durch den entspr
       $n-m: Argumente von 'n' bis 'm'
         $*: alle Argumente
         $~: letztes Argument
-     $nick: aktueller Nick
-  $channel: aktueller Channel
-   $server: aktueller Server
+      $var: "var" ist eine lokale Variable für den jeweiligen Buffer (siehe /buffer localvar)
+            Beispiel: $nick, $channel, $server, $plugin, $name
 
 Um ein Alias zu löschen wird der Befehl "/unalias" genutzt.
 

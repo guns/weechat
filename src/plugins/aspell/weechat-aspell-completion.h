@@ -1,7 +1,5 @@
 /*
- * gui-gtk-term.c - terminal functions for Gtk GUI
- *
- * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013 Sebastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -19,17 +17,9 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef __WEECHAT_ASPELL_COMPLETION_H
+#define __WEECHAT_ASPELL_COMPLETION_H 1
 
-/*
- * Not used in Gtk GUI.
- */
+extern void weechat_aspell_completion_init ();
 
-void
-gui_term_set_eat_newline_glitch (int value)
-{
-    /* make C compiler happy */
-    (void) value;
-}
+#endif /* __WEECHAT_ASPELL_COMPLETION_H */

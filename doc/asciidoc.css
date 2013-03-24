@@ -4,11 +4,15 @@ body {
 div.sectionbody {
     font-family: serif,Helvetica,arial;
 }
+h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.6em 0;
+}
+
 h5 {
     font-size: 0.95em;
 }
-tt {
-    font-family: monospace;
+pre, tt {
+    font-size: 14px;
 }
 span.command {
     background: #EEEEFF;
@@ -19,6 +23,11 @@ span.command {
 p.table {
     margin-top: 0;
     margin-bottom: 0;
+}
+div.listingblock > div.content {
+    border: solid 1px #DADADA;
+    border-radius: 4px;
+    background-color: #FAFAFA;
 }
 .key {
     border-top: solid 1px #D5D5E5;

@@ -3248,14 +3248,14 @@ Arguments:
 ** 'WEECHAT_HASHTABLE_BUFFER'
 ** 'WEECHAT_HASHTABLE_TIME'
 * 'callback_hash_key': callback used to "hash" a key (key as integer value), can
-  be NULL if key type is "string" (a default function is used for strings, and
-  only for strings), arguments and return value:
+  be NULL if key type is not "buffer" (a default hash function is used),
+  arguments and return value:
 ** 'struct t_hashtable *hashtable': hashtable pointer
 ** 'const void *key': key
 ** return value: hash of the key
-* 'callback_keycmp': callback used to compare two keys, can be NULL if value
-  type is "string" (a default comparison function is used for strings, and only
-  for strings), arguments and return value:
+* 'callback_keycmp': callback used to compare two keys, can be NULL if key type
+  is not "buffer" (a default comparison function is used), arguments and return
+  value:
 ** 'struct t_hashtable *hashtable': hashtable pointer
 ** 'const void *key1': first key
 ** 'const void *key2': second key
@@ -3822,7 +3822,7 @@ Return value:
 
 [NOTE]
 File is NOT created on disk by this function. It will be created by call to
-function <<_weechat_write_config,weechat_write_config>>.
+function <<_weechat_config_write,weechat_config_write>>.
 You should call this function only after adding some sections (with
 <<_weechat_config_new_section,weechat_config_new_section>>) and options (with
 <<_weechat_config_new_option,weechat_config_new_option>>).
@@ -4351,6 +4351,11 @@ option5 = weechat.config_new_option(config_file, section, "option5", "color",
     "", "",
     "", "")
 ----------------------------------------
+
+[NOTE]
+In Ruby, the 3 callbacks + data (6 strings) must be given in an array of 6
+strings (due to a Ruby limitation of 15 arguments by function), see the
+'WeeChat Scripting Guide' for more info (_fixed in version 0.4.1_).
 
 weechat_config_search_option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -5657,7 +5662,7 @@ Prototype:
 
 [source,C]
 ----------------------------------------
-void weechat_config_section_free (struct t_config_option *option);
+void weechat_config_section_free (struct t_config_section *section);
 ----------------------------------------
 
 Arguments:
@@ -6987,6 +6992,10 @@ The command can be an URL with format: "url:http://www.example.com", to download
 content of URL (_new in version 0.3.7_). Options are possible for URL with
 function <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>>.
 
+[TIP]
+If you want to retrieve infos about WeeChat (like current stable version,
+latest git commit, ...), you can use URLs on page http://weechat.org/info
+
 [NOTE]
 Buffer size for sending data to callback is 64KB (there are 2 buffers: one for
 stdout and one for stderr).
@@ -7318,8 +7327,8 @@ C example:
 [source,C]
 ----------------------------------------
 int
-my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
-               const char *ip_address)
+my_connect_cb (void *data, int status, int gnutls_rc, int sock,
+               const char *error, const char *ip_address)
 {
     switch (status)
     {
@@ -7362,7 +7371,7 @@ my_connect_cb (void *data, int status, int gnutls_rc, const char *error,
 
 struct t_hook *my_connect_hook = weechat_hook_connect (NULL,
                                                        "my.server.org", 1234,
-                                                       sock, 0,
+                                                       1, 0,
                                                        NULL, NULL, 0, /* GnuTLS */
                                                        NULL,
                                                        &my_connect_cb, NULL);
@@ -7373,11 +7382,11 @@ Script (Python):
 [source,python]
 ----------------------------------------
 # prototype
-hook = weechat.hook_connect(proxy, address, port, sock, ipv6, local_hostname,
+hook = weechat.hook_connect(proxy, address, port, ipv6, retry, local_hostname,
     callback, callback_data)
 
 # example
-def my_connect_cb(data, status, gnutls_rc, error, ip_address):
+def my_connect_cb(data, status, gnutls_rc, sock, error, ip_address):
     if status == WEECHAT_HOOK_CONNECT_OK:
         # ...
     elif status == WEECHAT_HOOK_CONNECT_ADDRESS_NOT_FOUND:
@@ -7402,7 +7411,7 @@ def my_connect_cb(data, status, gnutls_rc, error, ip_address):
         # ...
     return weechat.WEECHAT_RC_OK
 
-hook = weechat.hook_connect("", "my.server.org", 1234, sock, 0, "",
+hook = weechat.hook_connect("", "my.server.org", 1234, 1, 0, "",
                             "my_connect_cb", "")
 ----------------------------------------
 
@@ -7772,6 +7781,11 @@ Arguments:
   pointer: buffer |
   buffer closed
 
+| weechat | buffer_line_added +
+  (_new in version 0.3.7_) |
+  pointer: line |
+  line added in a buffer
+
 | weechat | buffer_lines_hidden |
   pointer: buffer |
   lines hidden in buffer
@@ -7787,6 +7801,14 @@ Arguments:
 | weechat | buffer_localvar_removed |
   pointer: buffer |
   local variable has been removed
+
+| weechat | buffer_merged |
+  pointer: buffer |
+  buffer merged
+
+| weechat | buffer_unmerged |
+  pointer: buffer |
+  buffer unmerged
 
 | weechat | buffer_moved |
   pointer: buffer |
@@ -7811,11 +7833,6 @@ Arguments:
 | weechat | buffer_type_changed |
   pointer: buffer |
   type of buffer changed
-
-| weechat | buffer_line_added +
-  (_new in version 0.3.7_) |
-  pointer: line |
-  line added in a buffer
 
 | weechat | day_changed +
   (_new in version 0.3.2_) |
@@ -7866,6 +7883,14 @@ Arguments:
   pointer: buffer |
   input text cursor moved
 
+| weechat | key_bind |
+  string: key |
+  key added
+
+| weechat | key_unbind |
+  string: key |
+  key removed
+
 | weechat | key_pressed |
   string: key pressed |
   key pressed
@@ -7874,6 +7899,16 @@ Arguments:
   (_new in version 0.3.2_) |
   string: buffer pointer + "," + group name |
   group added in nicklist
+
+| weechat | nicklist_group_changed +
+  (_new in version 0.3.4_) |
+  string: buffer pointer + "," + group name |
+  group changed in nicklist
+
+| weechat | nicklist_group_removing +
+  (_new in version 0.4.1_) |
+  string: buffer pointer + "," + group name |
+  removing group from nicklist
 
 | weechat | nicklist_group_removed +
   (_new in version 0.3.2_) |
@@ -7884,6 +7919,16 @@ Arguments:
   (_new in version 0.3.2_) |
   string: buffer pointer + "," + nick name |
   nick added in nicklist
+
+| weechat | nicklist_nick_changed +
+  (_new in version 0.3.4_) |
+  string: buffer pointer + "," + nick name |
+  nick changed in nicklist
+
+| weechat | nicklist_nick_removing +
+  (_new in version 0.4.1_) |
+  string: buffer pointer + "," + nick name |
+  removing nick from nicklist
 
 | weechat | nicklist_nick_removed +
   (_new in version 0.3.2_) |
@@ -7924,6 +7969,21 @@ Arguments:
 | weechat | weechat_pv |
   string: message with prefix |
   private message displayed
+
+| weechat | window_closing +
+  (_new in version 0.3.6_) |
+  pointer: window |
+  closing window
+
+| weechat | window_closed +
+  (_new in version 0.3.6_) |
+  pointer: window |
+  window closed
+
+| weechat | window_opened +
+  (_new in version 0.4.1_) |
+  pointer: window |
+  window opened
 
 | weechat | window_scrolled |
   pointer: window |
@@ -8245,12 +8305,56 @@ Arguments:
 * 'signal': signal to catch, can begin or end with "*"
   (priority allowed, see note about <<hook_priority,priority>>):
 
-[width="100%",cols="^1,^3,5",options="header"]
+[width="100%",cols="^1,^3,5,5",options="header"]
 |========================================
-| Plugin | Signal | Arguments
+| Plugin | Signal | Arguments | Description
 
-| irc | irc_redirection_xxx_yyy ^(1)^ |
-  redirection output (see <<hsignal_irc_redirect_command>>)
+| irc | irc_redirection_xxx_yyy ^(1)^ +
+  (_new in version 0.3.4_) |
+  see <<hsignal_irc_redirect_command,hsignal_irc_redirect_command>> |
+  redirection output
+
+| weechat | nicklist_group_added +
+  (_new in version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'group' ('struct t_gui_nick_group *'): group |
+  group added in nicklist
+
+| weechat | nicklist_nick_added +
+  (_new in version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'nick' ('struct t_gui_nick *'): nick |
+  nick added in nicklist
+
+| weechat | nicklist_group_removing +
+  (_new in version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'group' ('struct t_gui_nick_group *'): group |
+  removing group from nicklist
+
+| weechat | nicklist_nick_removing +
+  (_new in version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'nick' ('struct t_gui_nick *'): nick |
+  removing nick from nicklist
+
+| weechat | nicklist_group_changed +
+  (_new in version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'group' ('struct t_gui_nick_group *'): group |
+  group changed in nicklist
+
+| weechat | nicklist_nick_changed +
+  (_new in version 0.4.1_) |
+  'buffer' ('struct t_gui_buffer *'): buffer +
+  'parent_group' ('struct t_gui_nick_group *'): parent group +
+  'nick' ('struct t_gui_nick *'): nick |
+  nick changed in nicklist
 |========================================
 
 [NOTE]
@@ -8632,7 +8736,7 @@ Arguments:
 * 'callback_data': pointer given to callback when it is called by WeeChat
 
 [NOTE]
-Completion names are global (shared accross WeeChat and plugins). So it is
+Completion names are global (shared across WeeChat and plugins). So it is
 recommended to choose a name with a unique prefix, like "plugin_xxx" (where
 "xxx" is your item name).
 
@@ -8818,6 +8922,18 @@ Arguments:
   "1" to keep colors, "0" to remove colors |
   any string |
   string with IRC color codes, or without color
+
+| irc | irc_command_auth +
+  (_new in version 0.4.1_) |
+  server name |
+  authentication command (for example: `/msg nickserv identify password`) |
+  command with hidden password (for example: `/msg nickserv identify ********`)
+
+| irc | irc_message_auth +
+  (_new in version 0.4.1_) |
+  server name |
+  message displayed after `/msg` sent to nickserv |
+  message with hidden password
 
 | irc | irc_in_xxx ^(1)^ |
   server name |
@@ -9912,6 +10028,9 @@ Arguments:
 ** 'nicklist_case_sensitive': 1 if nicks are case sensitive, otherwise 0
 ** 'nicklist_max_length': max length for a nick
 ** 'nicklist_display_groups': 1 if groups are displayed, otherwise 0
+** 'nicklist_count': number of nicks and groups in nicklist
+** 'nicklist_groups_count': number of groups in nicklist
+** 'nicklist_nicks_count': number of nicks in nicklist
 ** 'nicklist_visible_count': number of nicks/groups displayed
 ** 'input': 1 if input is enabled, otherwise 0
 ** 'input_get_unknown_commands': 1 if unknown commands are sent to input
@@ -11501,9 +11620,9 @@ Prototype:
 [source,C]
 ----------------------------------------
 struct t_gui_bar_item *weechat_bar_item_new (const char *name,
-                                             char *(build_callback)(void *data,
-                                                                    struct t_gui_bar_item *item,
-                                                                    struct t_gui_window *window),
+                                             char *(*build_callback)(void *data,
+                                                                     struct t_gui_bar_item *item,
+                                                                     struct t_gui_window *window),
                                              void *build_callback_data);
 ----------------------------------------
 
@@ -12402,10 +12521,10 @@ C example:
 ----------------------------------------
 char buffer[256];
 /* ... */
-struct t_infolist_var *var = weechat_infolist_new_variable_buffer (item,
-                                                                   "my_buffer",
-                                                                   &buffer,
-                                                                   sizeof (buffer));
+struct t_infolist_var *var = weechat_infolist_new_var_buffer (item,
+                                                              "my_buffer",
+                                                              &buffer,
+                                                              sizeof (buffer));
 ----------------------------------------
 
 [NOTE]
@@ -12439,9 +12558,9 @@ C example:
 
 [source,C]
 ----------------------------------------
-struct t_infolist_var *var = weechat_infolist_new_variable_time (item,
-                                                                 "my_time",
-                                                                 time (NULL));
+struct t_infolist_var *var = weechat_infolist_new_var_time (item,
+                                                            "my_time",
+                                                            time (NULL));
 ----------------------------------------
 
 Script (Python):

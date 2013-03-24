@@ -56,6 +56,16 @@ Ruby
 
 * Trzeba zdefiniować 'weechat_init' i wywołać 'register' wewnątrz
 * Funkcje są wywoływane za pomocą `Weechat.xxx(arg1, arg2, ...)`
+// TRANSLATION MISSING
+* Due to a limitation of Ruby (15 arguments max by function), the function
+  `Weechat.config_new_option` receives the callbacks in an array of 6 strings
+  (3 callbacks + 3 data strings), so a call to this function looks like:
+
+[source,ruby]
+----------------------------------------
+Weechat.config_new_option(config, section, "name", "string", "description of option", "", 0, 0,
+                          "value", "value", 0, ["check_cb", "", "change_cb", "", "delete_cb", ""])
+----------------------------------------
 
 Lua
 ^^^
@@ -163,7 +173,20 @@ weechat::print "" "Witaj ze skryptu tcl!"
 Ładowanie skryptu
 ~~~~~~~~~~~~~~~~~
 
-Musisz użyć komendy dla danego języka:
+// TRANSLATION MISSING
+It is recommended to use the "script" plugin to load scripts, for example:
+
+----------------------------------------
+/script load script.py
+/script load script.pl
+/script load script.rb
+/script load script.lua
+/script load script.tcl
+/script load script.scm
+----------------------------------------
+
+// TRANSLATION MISSING
+Each language has also its own command:
 
 ----------------------------------------
 /python load python/skrypt.py
@@ -184,6 +207,11 @@ $ cd ~/.weechat/python/autoload
 $ ln -s ../skrypt.py
 ----------------------------------------
 
+// TRANSLATION MISSING
+[NOTE]
+When installing a script with command `/script install` the link in 'autoload'
+directory is automatically created.
+
 [[differences_with_c_api]]
 Różnice pomiędzy API dla C
 --------------------------
@@ -200,17 +228,21 @@ plikiem tekstowym załadowanym przez wtyczkę jak 'python' za pomocą komendy
 W momencie, kiedy Twój skrypt 'test.py' wywołuje funkcję z API Weechat, wygląda to tak:
 
 ........................................
-       (API skryptów)                          (C API)
-            \/                                    \/
-test.py  ------->  wtyczka python (python.so)  ------->  rdzeń WeeChat
+               ┌────────────────────────┐        ╔══════════════════╗
+               │     wtyczka python     │        ║  WeeChat "core"  ║
+               ├──────────────┬─────────┤        ╟─────────┐        ║
+test.py ─────► │ API skryptów │  C API  │ ─────► ║  C API  │        ║
+               └──────────────┴─────────┘        ╚═════════╧════════╝
 ........................................
 
 Kiedy WeeChat odwołuje się do Twojego skryptu 'test.py' wygląda to tak:
 
 ........................................
-              (C API)                             (API skryptów)
-                 \/                                     \/
-rdzeń WeeChat  ------->  wtyczka python (python.so)  ------->  test.py
+╔══════════════════╗        ┌────────────────────────┐
+║  WeeChat "core"  ║        │     wtyczka python     │
+║        ┌─────────╢        ├─────────┬──────────────┤
+║        │  C API  ║ ─────► │  C API  │ API skryptów │ ─────► test.py
+╚════════╧═════════╝        └─────────┴──────────────┘
 ........................................
 
 [[pointers]]
@@ -250,16 +282,79 @@ Prawie wszystkie callbacki muszą zwrócić WEECHAT_RC_OK lub WEECHAT_RC_ERROR
 Callbacki C używają argumentu "data", który jest wskaźnikiem. W API skryptów,
 "data" jest ciągiem o dowolnej wartości (nie jest wskaźnikiem).
 
-Na przykład:
+// TRANSLATION MISSING
+Example of callback, for each language:
+
+* python:
 
 [source,python]
 ----------------------------------------
-weechat.hook_timer(1000, 0, 1, "my_timer_cb", "moje dane")
-
-def my_timer_cb(data, remaining_calls):
-    # wyświetli to: "moje dane"
-    weechat.prnt("", data)
+def timer_cb(data, remaining_calls):
+    weechat.prnt("", "timer! data=%s" % data)
     return weechat.WEECHAT_RC_OK
+
+weechat.hook_timer(1000, 0, 1, "timer_cb", "test")
+----------------------------------------
+
+* perl:
+
+[source,perl]
+----------------------------------------
+sub timer_cb {
+    my ($data, $remaining_calls) = @_;
+    weechat::print("", "timer! data=$data");
+    return weechat::WEECHAT_RC_OK;
+}
+
+weechat::hook_timer(1000, 0, 1, "timer_cb", "test");
+----------------------------------------
+
+* ruby:
+
+[source,ruby]
+----------------------------------------
+def timer_cb(data, remaining_calls)
+  Weechat.print("", "timer! data=#{data}");
+  return Weechat::WEECHAT_RC_OK
+end
+
+Weechat.hook_timer(1000, 0, 1, "timer_cb", "test");
+----------------------------------------
+
+* lua:
+
+[source,lua]
+----------------------------------------
+function timer_cb(data, remaining_calls)
+    weechat.print("", "timer! data="..data)
+    return weechat.WEECHAT_RC_OK
+end
+
+weechat.hook_timer(1000, 0, 1, "timer_cb", "test")
+----------------------------------------
+
+* tcl:
+
+[source,tcl]
+----------------------------------------
+proc timer_cb { data remaining_calls } {
+    weechat::print {} "timer! data=$data"
+    return $::weechat::WEECHAT_RC_OK
+}
+
+weechat::hook_timer 1000 0 1 timer_cb test
+----------------------------------------
+
+* guile (scheme):
+
+[source,lisp]
+----------------------------------------
+(define (timer_cb data remaining_calls)
+  (weechat:print "" (string-append "timer! data=" data))
+  weechat:WEECHAT_RC_OK
+)
+
+(weechat:hook_timer 1000 0 1 "timer_cb" "test")
 ----------------------------------------
 
 [[script_api]]
@@ -630,22 +725,27 @@ Aby pobrać URL (albo wysłać do URL), należy użyć funkcji `hook_process`, l
 Przykład transferu URL bez opcji: strona HTML jest otrzymywana jako "out"
 (standardowe wyjście procesu):
 
+// TRANSLATION MISSING
 [source,python]
 ----------------------------------------
-# Wyświetla wersje Linuksowych kerneli.
-kernel_txt = ""
+# Display current stable version of WeeChat.
+weechat_version = ""
 
-def kernel_process_cb(data, command, rc, out, err):
-    global kernel_txt
+def weechat_process_cb(data, command, rc, out, err):
+    global weechat_version
     if out != "":
-        kernel_txt += out
+        weechat_version += out
     if int(rc) >= 0:
-        weechat.prnt("", kernel_txt)
+        weechat.prnt("", "Current WeeChat stable is: %s" % weechat_version)
     return weechat.WEECHAT_RC_OK
 
-weechat.hook_process("url:http://www.kernel.org/kdist/finger_banner",
-                     30 * 1000, "kernel_process_cb", "")
+weechat.hook_process("url:http://weechat.org/info/stable/",
+                     30 * 1000, "weechat_process_cb", "")
 ----------------------------------------
+
+// TRANSLATION MISSING
+[TIP]
+All infos available about WeeChat are on page http://weechat.org/info
 
 Przykładowy transfer URL z opcją: pobranie najnowszej wersji rozwojowej WeeChat
 do pliku '/tmp/weechat-devel.tar.gz':
