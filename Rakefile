@@ -7,7 +7,7 @@
 task :default => :build
 
 task :env do
-  ENV['CFLAGS' ] ||= ''
+  ENV['CFLAGS' ] ||= ' -I%s ' % RbConfig::CONFIG['rubyhdrdir']
   ENV['LDFLAGS'] ||= ''
 
   if RUBY_PLATFORM =~ /darwin/i
