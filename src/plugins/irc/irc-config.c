@@ -59,8 +59,6 @@ struct t_config_option *irc_config_look_server_buffer;
 struct t_config_option *irc_config_look_pv_buffer;
 struct t_config_option *irc_config_look_new_channel_position;
 struct t_config_option *irc_config_look_new_pv_position;
-struct t_config_option *irc_config_look_nick_prefix;
-struct t_config_option *irc_config_look_nick_suffix;
 struct t_config_option *irc_config_look_nick_mode;
 struct t_config_option *irc_config_look_nick_mode_empty;
 struct t_config_option *irc_config_look_nick_color_force;
@@ -73,6 +71,7 @@ struct t_config_option *irc_config_look_display_ctcp_unknown;
 struct t_config_option *irc_config_look_display_host_join;
 struct t_config_option *irc_config_look_display_host_join_local;
 struct t_config_option *irc_config_look_display_host_quit;
+struct t_config_option *irc_config_look_display_join_message;
 struct t_config_option *irc_config_look_display_old_topic;
 struct t_config_option *irc_config_look_display_pv_away_once;
 struct t_config_option *irc_config_look_display_pv_back;
@@ -106,8 +105,6 @@ struct t_config_option *irc_config_color_message_join;
 struct t_config_option *irc_config_color_message_quit;
 struct t_config_option *irc_config_color_mirc_remap;
 struct t_config_option *irc_config_color_nick_prefixes;
-struct t_config_option *irc_config_color_nick_prefix;
-struct t_config_option *irc_config_color_nick_suffix;
 struct t_config_option *irc_config_color_notice;
 struct t_config_option *irc_config_color_input_nick;
 struct t_config_option *irc_config_color_item_away;
@@ -141,6 +138,7 @@ struct t_config_option *irc_config_server_default[IRC_SERVER_NUM_OPTIONS];
 struct t_hook *irc_config_hook_config_nick_colors = NULL;
 char **irc_config_nick_colors = NULL;
 int irc_config_num_nick_colors = 0;
+struct t_hashtable *irc_config_hashtable_display_join_message = NULL;
 struct t_hashtable *irc_config_hashtable_nick_color_force = NULL;
 struct t_hashtable *irc_config_hashtable_nick_prefixes = NULL;
 struct t_hashtable *irc_config_hashtable_color_mirc_remap = NULL;
@@ -272,6 +270,45 @@ irc_config_change_look_color_nicks_in_nicklist (void *data,
     (void) option;
 
     irc_nick_nicklist_set_color_all ();
+}
+
+/*
+ * Callback for changes on option "irc.look.display_join_message".
+ */
+
+void
+irc_config_change_look_display_join_message (void *data,
+                                             struct t_config_option *option)
+{
+    char **items;
+    int num_items, i;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    if (!irc_config_hashtable_display_join_message)
+    {
+        irc_config_hashtable_display_join_message = weechat_hashtable_new (32,
+                                                                           WEECHAT_HASHTABLE_STRING,
+                                                                           WEECHAT_HASHTABLE_STRING,
+                                                                           NULL,
+                                                                           NULL);
+    }
+    else
+        weechat_hashtable_remove_all (irc_config_hashtable_display_join_message);
+
+    items = weechat_string_split (weechat_config_string (irc_config_look_display_join_message),
+                                  ",", 0, 0, &num_items);
+    if (items)
+    {
+        for (i = 0; i < num_items; i++)
+        {
+            weechat_hashtable_set (irc_config_hashtable_display_join_message,
+                                   items[i], "1");
+        }
+        weechat_string_free_split (items);
+    }
 }
 
 /*
@@ -1521,8 +1558,9 @@ irc_config_server_new_option (struct t_config_file *config_file,
                 option_name, "string",
                 /* TRANSLATORS: please keep words "client capabilities" between brackets if translation is different (see fr.po) */
                 N_("comma-separated list of client capabilities to enable for "
-                   "server if they are available (example: "
-                   "\"multi-prefix,extended-join\")"),
+                   "server if they are available; capabilities supported by "
+                   "WeeChat are: multi-prefix, userhost-in-names (example: "
+                   "\"multi-prefix,userhost-in-names\")"),
                 NULL, 0, 0,
                 default_value, value,
                 null_value_allowed,
@@ -1535,9 +1573,10 @@ irc_config_server_new_option (struct t_config_file *config_file,
                 config_file, section,
                 option_name, "integer",
                 N_("mechanism for SASL authentication: \"plain\" for plain text "
-                   "password, \"dh-blowfish\" for crypted password, \"external\" "
+                   "password, \"dh-blowfish\" for blowfish crypted password, "
+                   "\"dh-aes\" for AES crypted password, \"external\" "
                    "for authentication using client side SSL cert"),
-                "plain|dh-blowfish|external", 0, 0,
+                "plain|dh-blowfish|dh-aes|external", 0, 0,
                 default_value, value,
                 null_value_allowed,
                 callback_check_value, callback_check_value_data,
@@ -2052,11 +2091,11 @@ irc_config_init ()
 {
     struct t_config_section *ptr_section;
 
-    irc_config_hashtable_color_mirc_remap = weechat_hashtable_new (32,
-                                                                   WEECHAT_HASHTABLE_STRING,
-                                                                   WEECHAT_HASHTABLE_STRING,
-                                                                   NULL,
-                                                                   NULL);
+    irc_config_hashtable_display_join_message = weechat_hashtable_new (32,
+                                                                       WEECHAT_HASHTABLE_STRING,
+                                                                       WEECHAT_HASHTABLE_STRING,
+                                                                       NULL,
+                                                                       NULL);
     irc_config_hashtable_nick_color_force = weechat_hashtable_new (32,
                                                                    WEECHAT_HASHTABLE_STRING,
                                                                    WEECHAT_HASHTABLE_STRING,
@@ -2067,6 +2106,11 @@ irc_config_init ()
                                                                 WEECHAT_HASHTABLE_STRING,
                                                                 NULL,
                                                                 NULL);
+    irc_config_hashtable_color_mirc_remap = weechat_hashtable_new (32,
+                                                                   WEECHAT_HASHTABLE_STRING,
+                                                                   WEECHAT_HASHTABLE_STRING,
+                                                                   NULL,
+                                                                   NULL);
 
     irc_config_file = weechat_config_new (IRC_CONFIG_NAME,
                                           &irc_config_reload, NULL);
@@ -2162,16 +2206,6 @@ irc_config_init ()
            "of server)"),
         "none|next|near_server", 0, 0, "none",
         NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    irc_config_look_nick_prefix = weechat_config_new_option (
-        irc_config_file, ptr_section,
-        "nick_prefix", "string",
-        N_("text to display before nick in chat window"),
-        NULL, 0, 0, "", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    irc_config_look_nick_suffix = weechat_config_new_option (
-        irc_config_file, ptr_section,
-        "nick_suffix", "string",
-        N_("text to display after nick in chat window"),
-        NULL, 0, 0, "", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_nick_mode = weechat_config_new_option (
         irc_config_file, ptr_section,
         "nick_mode", "integer",
@@ -2257,6 +2291,14 @@ irc_config_init ()
         N_("display host in part/quit messages"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
+    irc_config_look_display_join_message = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "display_join_message", "string",
+        N_("comma-separated list of messages to display after joining a channel: "
+           "329 = channel creation date, 332 = topic, 333 = nick/date for topic, "
+           "366 = names on channel"),
+        NULL, 0, 0, "329,332,333,366", NULL, 0, NULL, NULL,
+        &irc_config_change_look_display_join_message, NULL, NULL, NULL);
     irc_config_look_display_old_topic = weechat_config_new_option (
         irc_config_file, ptr_section,
         "display_old_topic", "boolean",
@@ -2496,20 +2538,6 @@ irc_config_init ()
         NULL, 0, 0, "q:lightred;a:lightcyan;o:lightgreen;h:lightmagenta;"
         "v:yellow;*:lightblue", NULL, 0, NULL, NULL,
         &irc_config_change_color_nick_prefixes, NULL, NULL, NULL);
-    irc_config_color_nick_prefix = weechat_config_new_option (
-        irc_config_file, ptr_section,
-        "nick_prefix", "color",
-        N_("color for nick prefix (prefix is custom string displayed "
-            "before nick)"),
-        NULL, -1, 0, "green", NULL, 0, NULL, NULL,
-        NULL, NULL, NULL, NULL);
-    irc_config_color_nick_suffix = weechat_config_new_option (
-        irc_config_file, ptr_section,
-        "nick_suffix", "color",
-        N_("color for nick suffix (suffix is custom string displayed "
-            "after nick)"),
-        NULL, -1, 0, "green", NULL, 0, NULL, NULL,
-        NULL, NULL, NULL, NULL);
     irc_config_color_notice = weechat_config_new_option (
         irc_config_file, ptr_section,
         "notice", "color",
@@ -2754,6 +2782,7 @@ irc_config_read ()
     if (rc == WEECHAT_CONFIG_READ_OK)
     {
         irc_notify_new_for_all_servers ();
+        irc_config_change_look_display_join_message (NULL, NULL);
         irc_config_change_look_nick_color_force (NULL, NULL);
         irc_config_change_look_nicks_hide_password (NULL, NULL);
         irc_config_change_color_nick_prefixes (NULL, NULL);
@@ -2802,6 +2831,12 @@ irc_config_free ()
         weechat_string_free_split (irc_config_nicks_hide_password);
         irc_config_nicks_hide_password = NULL;
         irc_config_num_nicks_hide_password = 0;
+    }
+
+    if (irc_config_hashtable_display_join_message)
+    {
+        weechat_hashtable_free (irc_config_hashtable_display_join_message);
+        irc_config_hashtable_display_join_message = NULL;
     }
 
     if (irc_config_hashtable_nick_color_force)

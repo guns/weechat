@@ -294,7 +294,11 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
     {
         new_channel->key = NULL;
     }
-    new_channel->names_received = 0;
+    new_channel->join_msg_received = weechat_hashtable_new (32,
+                                                            WEECHAT_HASHTABLE_STRING,
+                                                            WEECHAT_HASHTABLE_STRING,
+                                                            NULL,
+                                                            NULL);
     new_channel->checking_away = 0;
     new_channel->away_message = NULL;
     new_channel->has_quit_server = 0;
@@ -583,6 +587,38 @@ irc_channel_nick_speaking_rename (struct t_irc_channel *channel,
             ptr_item = weechat_list_search (channel->nicks_speaking[i], old_nick);
             if (ptr_item)
                 weechat_list_set (ptr_item, new_nick);
+        }
+    }
+}
+
+/*
+ * Renames a nick speaking on a channel if it is already in list.
+ */
+
+void
+irc_channel_nick_speaking_rename_if_present (struct t_irc_server *server,
+                                             struct t_irc_channel *channel,
+                                             const char *nick_name)
+{
+    struct t_weelist_item *ptr_item;
+    int i, j, list_size;
+
+    for (i = 0; i < 2; i++)
+    {
+        if (channel->nicks_speaking[i])
+        {
+            list_size = weechat_list_size (channel->nicks_speaking[i]);
+            for (j = 0; j < list_size; j++)
+            {
+                ptr_item = weechat_list_get (channel->nicks_speaking[i], j);
+                if (ptr_item
+                    && (irc_server_strcasecmp (server,
+                                               weechat_list_string (ptr_item),
+                                               nick_name) == 0))
+                {
+                    weechat_list_set (ptr_item, nick_name);
+                }
+            }
         }
     }
 }
@@ -1071,18 +1107,19 @@ irc_channel_display_nick_back_in_pv (struct t_irc_server *server,
         {
             if (weechat_config_boolean (irc_config_look_display_pv_back))
             {
-                weechat_printf (ptr_channel->buffer,
-                                _("%s%s%s %s(%s%s%s)%s is back on server"),
-                                weechat_prefix ("join"),
-                                irc_nick_color_for_server_message (server,
-                                                                   nick,
-                                                                   nickname),
-                                (nick) ? nick->name : nickname,
-                                IRC_COLOR_CHAT_DELIMITERS,
-                                IRC_COLOR_CHAT_HOST,
-                                (nick && nick->host) ? nick->host : "",
-                                IRC_COLOR_CHAT_DELIMITERS,
-                                IRC_COLOR_MESSAGE_JOIN);
+                weechat_printf_tags (ptr_channel->buffer,
+                                     "irc_nick_back",
+                                     _("%s%s%s %s(%s%s%s)%s is back on server"),
+                                     weechat_prefix ("join"),
+                                     irc_nick_color_for_server_message (server,
+                                                                        nick,
+                                                                        nickname),
+                                     (nick) ? nick->name : nickname,
+                                     IRC_COLOR_CHAT_DELIMITERS,
+                                     IRC_COLOR_CHAT_HOST,
+                                     (nick && nick->host) ? nick->host : "",
+                                     IRC_COLOR_CHAT_DELIMITERS,
+                                     IRC_COLOR_MESSAGE_JOIN);
             }
             ptr_channel->has_quit_server = 0;
         }
@@ -1183,7 +1220,7 @@ irc_channel_hdata_channel_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_channel, modes, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, limit, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, key, STRING, 0, NULL, NULL);
-        WEECHAT_HDATA_VAR(struct t_irc_channel, names_received, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_channel, join_msg_received, HASHTABLE, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, checking_away, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, away_message, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_channel, has_quit_server, INTEGER, 0, NULL, NULL);
@@ -1278,7 +1315,8 @@ irc_channel_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "key", channel->key))
         return 0;
-    if (!weechat_infolist_new_var_integer (ptr_item, "names_received", channel->names_received))
+    if (!weechat_infolist_new_var_string (ptr_item, "join_msg_received",
+                                          weechat_hashtable_get_string (channel->join_msg_received, "keys")))
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "checking_away", channel->checking_away))
         return 0;
@@ -1360,7 +1398,10 @@ irc_channel_print_log (struct t_irc_channel *channel)
     weechat_log_printf ("       modes. . . . . . . . . . : '%s'",  channel->modes);
     weechat_log_printf ("       limit. . . . . . . . . . : %d",    channel->limit);
     weechat_log_printf ("       key. . . . . . . . . . . : '%s'",  channel->key);
-    weechat_log_printf ("       names_received . . . . . : %d",    channel->names_received);
+    weechat_log_printf ("       join_msg_received. . . . : 0x%lx (hashtable: '%s')",
+                        channel->join_msg_received,
+                        weechat_hashtable_get_string (channel->join_msg_received,
+                                                      "keys_values"));
     weechat_log_printf ("       checking_away. . . . . . : %d",    channel->checking_away);
     weechat_log_printf ("       away_message . . . . . . : '%s'",  channel->away_message);
     weechat_log_printf ("       has_quit_server. . . . . : %d",    channel->has_quit_server);

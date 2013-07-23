@@ -83,10 +83,20 @@
 ** Typ: Farbe
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `cyan`)
 
+* [[option_weechat.color.chat_nick_prefix]] *weechat.color.chat_nick_prefix*
+** Beschreibung: `Farbe für den Nick-Präfix (Zeichenkette die vor dem Nick steht)`
+** Typ: Farbe
+** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `green`)
+
 * [[option_weechat.color.chat_nick_self]] *weechat.color.chat_nick_self*
 ** Beschreibung: `Textfarbe für den eigenen Nicknamen, im lokalen Chat-Fenster.`
 ** Typ: Farbe
 ** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `white`)
+
+* [[option_weechat.color.chat_nick_suffix]] *weechat.color.chat_nick_suffix*
+** Beschreibung: `Farbe für den Nick-Suffix (Zeichenkette die nach dem Nick steht)`
+** Typ: Farbe
+** Werte: ein Farbname für WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), eine Terminal-Farbnummer oder ein Alias; Attribute können vor eine Farbe gesetzt werden (gilt ausschließlich für die Textfarbe und nicht für den Hintergrund): "*" für fett, "!" für invertiert, "_" für unterstrichen (Standardwert: `green`)
 
 * [[option_weechat.color.chat_prefix_action]] *weechat.color.chat_prefix_action*
 ** Beschreibung: `Textfarbe für Action-Präfix`
@@ -479,7 +489,7 @@
 ** Werte: beliebige Zeichenkette (Standardwert: `""`)
 
 * [[option_weechat.look.highlight_tags]] *weechat.look.highlight_tags*
-** Beschreibung: `eine durch Kommata getrennte Liste der hervorzuhebenden Wörter (Groß-/Kleinschreibung wird nicht beachtet. Beispiele: "irc_notice" für IRC Nachrichten, "nick_flashcode" für Nachrichten vom Nick "FlashCode")`
+** Beschreibung: `durch Kommata getrennte Liste der hervorzuhebenden Wörter (Groß-/Kleinschreibung wird nicht beachtet. Beispiele: "irc_notice" für IRC Nachrichten, "nick_flashcode" für Nachrichten vom Nick "FlashCode")`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `""`)
 
@@ -593,6 +603,16 @@
 ** Typ: integer
 ** Werte: 1 .. 10000 (Standardwert: `100`)
 
+* [[option_weechat.look.nick_prefix]] *weechat.look.nick_prefix*
+** Beschreibung: `Text, der vor dem Nick dargestellt werden soll, Beispiel: "<"`
+** Typ: Zeichenkette
+** Werte: beliebige Zeichenkette (Standardwert: `""`)
+
+* [[option_weechat.look.nick_suffix]] *weechat.look.nick_suffix*
+** Beschreibung: `Text, der nach dem Nick dargestellt werden soll, Beispiel: ">"`
+** Typ: Zeichenkette
+** Werte: beliebige Zeichenkette (Standardwert: `""`)
+
 * [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
 ** Beschreibung: `aktiviert den "bracketed paste mode" des Terminals (wird nicht durch alle Terminals/Multiplexer unterstützt): Dieser Modus erlaubt das Einfügen von Steuersequenzen die in Klammern gesetzt sind. WeeChat kann dadurch ermitteln ob ein Text eingefügt oder geschrieben wurde ("ESC[200~", gefolgt von dem einzufügenden Text und einem abschließenden "ESC[201~")`
 ** Typ: boolesch
@@ -633,6 +653,11 @@
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"+"`)
 
+* [[option_weechat.look.prefix_align_more_after]] *weechat.look.prefix_align_more_after*
+** Beschreibung: `Das Zeichen welches zum Verkürzen angezeigt wird (Standardzeichen: "+"), nach dem Nick-Suffix darstellen (das vorhandene Leerzeichen wird ersetzt); wird diese Funktion deaktiviert, dann wird das Zeichen nach dem Nick dargestellt.`
+** Typ: boolesch
+** Werte: on, off (Standardwert: `on`)
+
 * [[option_weechat.look.prefix_buffer_align]] *weechat.look.prefix_buffer_align*
 ** Beschreibung: `Einstellung des Präfix für den Namen des Buffers, falls viele Buffer zu einem Buffer zusammengefügt wurden (keine = none, links = left, rechts = right (Standardwert))`
 ** Typ: integer
@@ -647,6 +672,11 @@
 ** Beschreibung: `Zeichen welches dargestellt werden soll falls der Name des Buffers abgeschnitten wird (wenn mehrere Buffer zusammengefügt wurden und diese somit die selbe Nummer besitzen) (es darf nur ein Zeichen genutzt werden)`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"+"`)
+
+* [[option_weechat.look.prefix_buffer_align_more_after]] *weechat.look.prefix_buffer_align_more_after*
+** Beschreibung: `Das Zeichen welches zum Verkürzen angezeigt wird (Standardzeichen: "+"), nach dem Nick-Suffix darstellen (das vorhandene Leerzeichen wird ersetzt); wird diese Funktion deaktiviert, dann wird das Zeichen nach dem Nick dargestellt.`
+** Typ: boolesch
+** Werte: on, off (Standardwert: `on`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
 ** Beschreibung: `Präfix, dass bei einer Fehler-Nachricht angezeigt wird. Durch das Format "${Farbe}" ist es möglich eine Farbauswahl zu treffen.`
@@ -769,7 +799,7 @@
 ** Werte: 1 .. 2147483647 (Standardwert: `30`)
 
 * [[option_weechat.plugin.autoload]] *weechat.plugin.autoload*
-** Beschreibung: `eine durch Kommata getrennte Liste der Erweiterungen, die beim Programmstart automatisch geladen werden sollen; "*" lädt alle vorhandenen Erweiterungen. Beginnt der Name hingegen mit "!" wird die Erweiterung nicht geladen. Suchmuster können mit einem Joker ("*") beginnen oder enden um mehrere Erweiterungen zu laden (Beispiele: "*" oder "*,!lua,!tcl")`
+** Beschreibung: `durch Kommata getrennte Liste der Erweiterungen, die beim Programmstart automatisch geladen werden sollen; "*" lädt alle vorhandenen Erweiterungen. Beginnt der Name hingegen mit "!" wird die Erweiterung nicht geladen. Suchmuster können mit einem Joker ("*") beginnen oder enden um mehrere Erweiterungen zu laden (Beispiele: "*" oder "*,!lua,!tcl")`
 ** Typ: Zeichenkette
 ** Werte: beliebige Zeichenkette (Standardwert: `"*"`)
 

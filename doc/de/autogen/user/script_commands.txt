@@ -47,6 +47,7 @@ Tastenbefehle die im Skript-Buffer genutzt werden können:
   alt+l  startet ein Skript (Skript wird ausgeführt)
   alt+L  Skript wird neu gestartet
   alt+u  beendet ein Skript
+  alt+A  das Skript wird in das autoload-Verzeichnis eingebunden
   alt+h  Skript wird gehalten bzw. freigegeben
   alt+v  Skript anzeigen
 

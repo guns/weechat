@@ -1,7 +1,7 @@
 WeeChat Release Notes
 =====================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.4.1-dev, 2013-03-12
+v0.4.1, 2013-05-20
 
 
 This document lists important changes for each version, that require manual
@@ -13,13 +13,85 @@ http://weechat.org/files/changelog/ChangeLog-devel.html[ChangeLog]
 (file 'ChangeLog' in sources).
 
 
-Version 0.4.1 (under dev!)
+Version 0.4.1 (2013-05-20)
 --------------------------
+
+=== Nicklist diff in relay ===
+
+A new message with identifier "_nicklist_diff" has been added in relay (WeeChat
+protocol). WeeChat may decide to send full nicklist or this nicklist diff at any
+time (depending on size of message, the smaller is sent).
+
+Clients using nicklist must implement it.
+
+For more info about content of message, see document 'WeeChat Relay Protocol'.
+
+=== Dynamic nick prefix/suffix ===
+
+The nick prefix/suffix (for example: "<" and ">") are now dynamic and used on
+display (not stored any more in the line).
+
+Options moved from irc plugin (irc.conf) to core (weechat.conf):
+
+* 'irc.look.nick_prefix' moved to 'weechat.look.nick_prefix'
+* 'irc.look.nick_suffix' moved to 'weechat.look.nick_suffix'
+* 'irc.color.nick_prefix' moved to 'weechat.color.chat_nick_prefix'
+* 'irc.color.nick_suffix' moved to 'weechat.color.chat_nick_suffix'
+
+Types and default values for these four options remain unchanged.
+
+Two new options to customize the truncature char (by default "`+`"):
+
+* 'weechat.look.prefix_align_more_after' (boolean, 'on' by default)
+* 'weechat.look.prefix_buffer_align_more_after' (boolean, 'on' by default)
+
+When these options are enabled (default), the "`+`" is displayed after the
+text, replacing the space that should be displayed there. +
+When turned off, the "`+`" will replace last char of text.
+
+Example for a nicks "FlashCode" and "fc" with different values for options
+'weechat.look.prefix_align_max', 'weechat.look.prefix_align_more_after',
+'weechat.look.nick_prefix' and 'weechat.look.nick_suffix':
+
+----------------------------------------
+                      # align_max, more_after, prefix/suffix
+
+FlashCode │ test      # 0, on
+       fc │ test
+
+FlashCod+│ test       # 8, on
+      fc │ test
+
+FlashCo+ │ test       # 8, off
+      fc │ test
+
+<FlashCode> │ test    # 0, on,  < >
+       <fc> │ test
+
+<FlashC>+│ test       # 8, on,  < >
+    <fc> │ test
+
+<Flash+> │ test       # 8, off, < >
+    <fc> │ test
+----------------------------------------
+
+After `/upgrade`, if you set new options to non-empty strings, and if old
+options were set to non-empty strings too, you will see double prefix/suffix
+on old messages, this is normal behaviour (lines displayed before `/upgrade`
+have prefix/suffix saved in prefix, but new lines don't have them any more).
+
+New options in logger plugin (logger.conf):
+
+* 'logger.file.nick_prefix': prefix for nicks in log files (default: empty
+  string)
+* 'logger.file.nick_suffix': suffix for nicks in log files (default: empty
+  string)
 
 === IRC reconnection on important lag ===
 
 Option 'irc.network.lag_disconnect' has been renamed to
-'irc.network.lag_reconnect' and value is now a number of seconds.
+'irc.network.lag_reconnect' and value is now a number of seconds (instead of
+minutes).
 
 === IRC passwords hidden ===
 
@@ -46,6 +118,28 @@ If you added/changed some rmodifiers, do it manually with these commands:
 /rmodifier del nickserv
 /rmodifier add command_auth history_add,input_text_display,irc_command_auth 1,4* ^(/(msg|quote) +nickserv +(id|identify|register|ghost \S+|release \S+) +)(.*)
 /rmodifier add message_auth irc_message_auth 1,3* ^(.*(id|identify|register|ghost \S+|release \S+) +)(.*)
+----------------------------------------
+
+=== Lua constants ===
+
+For consistency with other supported languages, the API constants in Lua have
+been redefined as constants instead of functions.
+
+Therefore, the use of a constant must be changed: the parentheses must be
+removed.
+
+The old syntax was:
+
+[source,lua]
+----------------------------------------
+return weechat.WEECHAT_RC_OK()
+----------------------------------------
+
+The new syntax is:
+
+[source,lua]
+----------------------------------------
+return weechat.WEECHAT_RC_OK
 ----------------------------------------
 
 === Guile callbacks ===

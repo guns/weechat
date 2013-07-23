@@ -21,7 +21,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat 0.4.1-dev\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2013-03-17 22:01+0100\n"
+"POT-Creation-Date: 2013-05-03 22:21+0200\n"
 "PO-Revision-Date: 2013-02-14 18:20+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
@@ -1071,7 +1071,7 @@ msgid ""
 "Format for hdata can be one of following:\n"
 "  hdata.var1.var2...: start with a hdata (pointer must be known), and ask "
 "variables one after one (other hdata can be followed)\n"
-"  hdata(list).var1.var2...: start with a hdata using a list, for example:\n"
+"  hdata[list].var1.var2...: start with a hdata using a list, for example:\n"
 "    ${buffer[gui_buffers].full_name}: full name of first buffer in linked "
 "list of buffers\n"
 "    ${plugin[weechat_plugins].name}: name of first plugin in linked list of "
@@ -2059,6 +2059,12 @@ msgstr ""
 msgid "jump back to initial buffer after reaching end of hotlist"
 msgstr ""
 
+msgid "text to display before nick in prefix of message, example: \"<\""
+msgstr ""
+
+msgid "text to display after nick in prefix of message, example: \">\""
+msgstr ""
+
 msgid "enable mouse support"
 msgstr ""
 
@@ -2110,6 +2116,12 @@ msgstr ""
 
 msgid ""
 "char to display if prefix is truncated (must be exactly one char on screen)"
+msgstr ""
+
+msgid ""
+"display the truncature char (by default \"+\") after the text (by replacing "
+"the space that should be displayed here); if disabled, the truncature char "
+"replaces last char of text"
 msgstr ""
 
 msgid ""
@@ -2268,6 +2280,12 @@ msgstr ""
 msgid ""
 "text color for nicks (comma separated list of colors, background is allowed "
 "with format: \"fg:bg\", for example: \"lightred:blue\")"
+msgstr ""
+
+msgid "color for nick prefix (string displayed before nick in prefix)"
+msgstr ""
+
+msgid "color for nick suffix (string displayed after nick in prefix)"
 msgstr ""
 
 msgid "text color for local nick in chat window"
@@ -4610,13 +4628,14 @@ msgstr ""
 #. TRANSLATORS: please keep words "client capabilities" between brackets if translation is different (see fr.po)
 msgid ""
 "comma-separated list of client capabilities to enable for server if they are "
-"available (example: \"multi-prefix,extended-join\")"
+"available; capabilities supported by WeeChat are: multi-prefix, userhost-in-"
+"names (example: \"multi-prefix,userhost-in-names\")"
 msgstr ""
 
 msgid ""
 "mechanism for SASL authentication: \"plain\" for plain text password, \"dh-"
-"blowfish\" for crypted password, \"external\" for authentication using "
-"client side SSL cert"
+"blowfish\" for blowfish crypted password, \"dh-aes\" for AES crypted "
+"password, \"external\" for authentication using client side SSL cert"
 msgstr ""
 
 msgid "username for SASL authentication"
@@ -4768,12 +4787,6 @@ msgid ""
 "channel/pv of server)"
 msgstr ""
 
-msgid "text to display before nick in chat window"
-msgstr ""
-
-msgid "text to display after nick in chat window"
-msgstr ""
-
 msgid ""
 "display nick mode (op, voice, ...) before nick (none = never, prefix = in "
 "prefix only (default), action = in action messages only, both = prefix + "
@@ -4826,6 +4839,12 @@ msgid "display host in join messages from local client"
 msgstr ""
 
 msgid "display host in part/quit messages"
+msgstr ""
+
+msgid ""
+"comma-separated list of messages to display after joining a channel: 329 = "
+"channel creation date, 332 = topic, 333 = nick/date for topic, 366 = names "
+"on channel"
 msgstr ""
 
 msgid "display old topic when channel topic is changed"
@@ -4978,12 +4997,6 @@ msgid ""
 "format is: \"o:color1;h:color2;v:color3\" (if a mode is not found, WeeChat "
 "will try with next modes received from server (\"PREFIX\"); a special mode "
 "\"*\" can be used as default color if no mode has been found in list)"
-msgstr ""
-
-msgid "color for nick prefix (prefix is custom string displayed before nick)"
-msgstr ""
-
-msgid "color for nick suffix (suffix is custom string displayed after nick)"
 msgstr ""
 
 msgid "color for text \"Notice\" in notices"
@@ -6020,6 +6033,12 @@ msgid "write information line in log file when log starts or ends for a buffer"
 msgstr ""
 
 msgid "timestamp used in log files (see man strftime for date/time specifiers)"
+msgstr ""
+
+msgid "text to write before nick in prefix of message, example: \"<\""
+msgstr ""
+
+msgid "text to write after nick in prefix of message, example: \">\""
 msgstr ""
 
 msgid "list of logger buffers"
@@ -7239,6 +7258,7 @@ msgid ""
 "  alt+l  load script\n"
 "  alt+L  reload script\n"
 "  alt+u  unload script\n"
+"  alt+A  autoload script\n"
 "  alt+h  (un)hold script\n"
 "  alt+v  view script\n"
 "\n"
@@ -7768,6 +7788,12 @@ msgid "automatically accept incoming files (use carefully!)"
 msgstr ""
 
 msgid "automatically accept chat requests (use carefully!)"
+msgstr ""
+
+msgid ""
+"comma-separated list of nicks for which the incoming files and chats are "
+"automatically accepted; format is \"server.nick\" (for a specific server) or "
+"\"nick\" (for all servers); example: \"freenode.FlashCode,andrew\""
 msgstr ""
 
 msgid "list of xfer"

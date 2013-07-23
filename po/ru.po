@@ -19,18 +19,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WeeChat 0.4.1-dev\n"
+"Project-Id-Version: WeeChat 0.4.1\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2013-03-17 22:01+0100\n"
-"PO-Revision-Date: 2013-03-16 17:50+0100\n"
+"POT-Creation-Date: 2013-05-11 18:28+0200\n"
+"PO-Revision-Date: 2013-05-20 09:32+0200\n"
 "Last-Translator: Aleksey V Zapparov AKA ixti <ixti@member.fsf.org>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Poedit-Bookmarks: -1,-1,608,-1,-1,-1,-1,-1,-1,-1\n"
 
 #. TRANSLATORS: "%s %s" after "compiled on" is date and time
@@ -1217,7 +1216,7 @@ msgid ""
 "Format for hdata can be one of following:\n"
 "  hdata.var1.var2...: start with a hdata (pointer must be known), and ask "
 "variables one after one (other hdata can be followed)\n"
-"  hdata(list).var1.var2...: start with a hdata using a list, for example:\n"
+"  hdata[list].var1.var2...: start with a hdata using a list, for example:\n"
 "    ${buffer[gui_buffers].full_name}: full name of first buffer in linked "
 "list of buffers\n"
 "    ${plugin[weechat_plugins].name}: name of first plugin in linked list of "
@@ -2328,6 +2327,14 @@ msgstr ""
 msgid "jump back to initial buffer after reaching end of hotlist"
 msgstr ""
 
+#, fuzzy
+msgid "text to display before nick in prefix of message, example: \"<\""
+msgstr "текст, который отображать до ника в окне чата"
+
+#, fuzzy
+msgid "text to display after nick in prefix of message, example: \">\""
+msgstr "текст, который отображать после ника в окне чата"
+
 msgid "enable mouse support"
 msgstr ""
 
@@ -2385,6 +2392,12 @@ msgstr "строка, вставляемая после автодополнен
 
 msgid ""
 "char to display if prefix is truncated (must be exactly one char on screen)"
+msgstr ""
+
+msgid ""
+"display the truncature char (by default \"+\") after the text (by replacing "
+"the space that should be displayed here); if disabled, the truncature char "
+"replaces last char of text"
 msgstr ""
 
 msgid ""
@@ -2568,6 +2581,13 @@ msgid ""
 "text color for nicks (comma separated list of colors, background is allowed "
 "with format: \"fg:bg\", for example: \"lightred:blue\")"
 msgstr "цвет времени в окне чата"
+
+msgid "color for nick prefix (string displayed before nick in prefix)"
+msgstr ""
+
+#, fuzzy
+msgid "color for nick suffix (string displayed after nick in prefix)"
+msgstr "строка, вставляемая после автодополнения ника"
 
 #, fuzzy
 msgid "text color for local nick in chat window"
@@ -5318,13 +5338,14 @@ msgstr "пароль, используемый при подключении к 
 #. TRANSLATORS: please keep words "client capabilities" between brackets if translation is different (see fr.po)
 msgid ""
 "comma-separated list of client capabilities to enable for server if they are "
-"available (example: \"multi-prefix,extended-join\")"
+"available; capabilities supported by WeeChat are: multi-prefix, userhost-in-"
+"names (example: \"multi-prefix,userhost-in-names\")"
 msgstr ""
 
 msgid ""
 "mechanism for SASL authentication: \"plain\" for plain text password, \"dh-"
-"blowfish\" for crypted password, \"external\" for authentication using "
-"client side SSL cert"
+"blowfish\" for blowfish crypted password, \"dh-aes\" for AES crypted "
+"password, \"external\" for authentication using client side SSL cert"
 msgstr ""
 
 #, fuzzy
@@ -5507,12 +5528,6 @@ msgid ""
 "channel/pv of server)"
 msgstr ""
 
-msgid "text to display before nick in chat window"
-msgstr "текст, который отображать до ника в окне чата"
-
-msgid "text to display after nick in chat window"
-msgstr "текст, который отображать после ника в окне чата"
-
 msgid ""
 "display nick mode (op, voice, ...) before nick (none = never, prefix = in "
 "prefix only (default), action = in action messages only, both = prefix + "
@@ -5570,6 +5585,12 @@ msgstr "цвет  текущего окна с сообщениями"
 #, fuzzy
 msgid "display host in part/quit messages"
 msgstr "сообщение о выходе по-умолчанию"
+
+msgid ""
+"comma-separated list of messages to display after joining a channel: 329 = "
+"channel creation date, 332 = topic, 333 = nick/date for topic, 366 = names "
+"on channel"
+msgstr ""
 
 msgid "display old topic when channel topic is changed"
 msgstr ""
@@ -5728,12 +5749,6 @@ msgid ""
 "format is: \"o:color1;h:color2;v:color3\" (if a mode is not found, WeeChat "
 "will try with next modes received from server (\"PREFIX\"); a special mode "
 "\"*\" can be used as default color if no mode has been found in list)"
-msgstr ""
-
-msgid "color for nick prefix (prefix is custom string displayed before nick)"
-msgstr ""
-
-msgid "color for nick suffix (suffix is custom string displayed after nick)"
 msgstr ""
 
 #, fuzzy
@@ -6843,6 +6858,12 @@ msgid "write information line in log file when log starts or ends for a buffer"
 msgstr ""
 
 msgid "timestamp used in log files (see man strftime for date/time specifiers)"
+msgstr ""
+
+msgid "text to write before nick in prefix of message, example: \"<\""
+msgstr ""
+
+msgid "text to write after nick in prefix of message, example: \">\""
 msgstr ""
 
 #, fuzzy
@@ -8183,6 +8204,7 @@ msgid ""
 "  alt+l  load script\n"
 "  alt+L  reload script\n"
 "  alt+u  unload script\n"
+"  alt+A  autoload script\n"
 "  alt+h  (un)hold script\n"
 "  alt+v  view script\n"
 "\n"
@@ -8790,6 +8812,12 @@ msgstr "автоматически подтверждать dcc-чат (испо
 msgid "automatically accept chat requests (use carefully!)"
 msgstr "автоматически подтверждать dcc-чат (используйте осторожно!)"
 
+msgid ""
+"comma-separated list of nicks for which the incoming files and chats are "
+"automatically accepted; format is \"server.nick\" (for a specific server) or "
+"\"nick\" (for all servers); example: \"freenode.FlashCode,andrew\""
+msgstr ""
+
 #, fuzzy
 msgid "list of xfer"
 msgstr "Список сокращений:\n"
@@ -8890,3 +8918,7 @@ msgstr ""
 
 msgid "Constants"
 msgstr ""
+
+#, fuzzy
+#~ msgid "display names when joining channel"
+#~ msgstr "отображать специальное сообщение  при смене дня"

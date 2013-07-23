@@ -478,7 +478,9 @@ gui_chat_display_word (struct t_gui_window *window,
             if ((CONFIG_INTEGER(config_look_align_end_of_lines) == CONFIG_LOOK_ALIGN_END_OF_LINES_MESSAGE)
                 && (CONFIG_INTEGER(config_look_prefix_align) != CONFIG_LOOK_PREFIX_ALIGN_NONE)
                 && CONFIG_STRING(config_look_prefix_suffix)
-                && CONFIG_STRING(config_look_prefix_suffix)[0])
+                && CONFIG_STRING(config_look_prefix_suffix)[0]
+                && line->data->str_time
+                && line->data->str_time[0])
             {
                 if (!simulate)
                 {
@@ -602,9 +604,10 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
     char str_space[] = " ";
     char *prefix_no_color, *prefix_highlighted, *ptr_prefix, *ptr_prefix2;
     char *ptr_prefix_color;
-    const char *short_name, *str_color;
+    const char *short_name, *str_color, *ptr_nick_prefix, *ptr_nick_suffix;
     int i, length, length_allowed, num_spaces, prefix_length, extra_spaces;
-    int chars_displayed, nick_offline;
+    int chars_displayed, nick_offline, prefix_is_nick, length_nick_prefix_suffix;
+    int chars_to_display;
     struct t_gui_lines *mixed_lines;
 
     if (!simulate)
@@ -619,7 +622,7 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
 
     /* display time */
     if (window->buffer->time_for_each_line
-        && (line->data->str_time && line->data->str_time[0]))
+        && line->data->str_time && line->data->str_time[0])
     {
         if (window->win_chat_cursor_y < window->coords_size)
             window->coords[window->win_chat_cursor_y].time_x1 = window->win_chat_cursor_x;
@@ -701,11 +704,18 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
         if ((CONFIG_INTEGER(config_look_prefix_buffer_align) != CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE)
             && (num_spaces < 0))
         {
+            chars_to_display = length_allowed;
+            /*
+             * if the "+" is not displayed in the space after text, remove one
+             * more char to display the "+" before the space
+             */
+            if (!CONFIG_BOOLEAN(config_look_prefix_buffer_align_more_after))
+                chars_to_display--;
             gui_chat_display_word (window, line,
                                    short_name,
                                    short_name +
                                    gui_chat_string_real_pos (short_name,
-                                                             length_allowed),
+                                                             chars_to_display),
                                    1, num_lines, count, lines_displayed,
                                    simulate,
                                    CONFIG_BOOLEAN(config_look_color_inactive_prefix_buffer),
@@ -737,6 +747,21 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                    simulate,
                                    CONFIG_BOOLEAN(config_look_color_inactive_prefix_buffer),
                                    0);
+            if (!CONFIG_BOOLEAN(config_look_prefix_buffer_align_more_after))
+            {
+                if (!simulate)
+                {
+                    gui_chat_reset_style (window, line, 0, 1,
+                                          GUI_COLOR_CHAT_INACTIVE_WINDOW,
+                                          GUI_COLOR_CHAT_INACTIVE_BUFFER,
+                                          GUI_COLOR_CHAT);
+                }
+                gui_chat_display_word (window, line, str_space,
+                                       NULL, 1, num_lines, count, lines_displayed,
+                                       simulate,
+                                       CONFIG_BOOLEAN(config_look_color_inactive_prefix),
+                                       0);
+            }
         }
         else
         {
@@ -773,7 +798,7 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
 
     /* get prefix for display */
     gui_line_get_prefix_for_display (line, &ptr_prefix, &prefix_length,
-                                     &ptr_prefix_color);
+                                     &ptr_prefix_color, &prefix_is_nick);
     if (ptr_prefix)
     {
         ptr_prefix2 = NULL;
@@ -792,6 +817,20 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
             }
         }
         ptr_prefix = (ptr_prefix2) ? ptr_prefix2 : strdup (ptr_prefix);
+    }
+
+    /* get nick prefix/suffix (if prefix is a nick) */
+    if (prefix_is_nick && (config_length_nick_prefix_suffix > 0))
+    {
+        ptr_nick_prefix = CONFIG_STRING(config_look_nick_prefix);
+        ptr_nick_suffix = CONFIG_STRING(config_look_nick_suffix);
+        length_nick_prefix_suffix = config_length_nick_prefix_suffix;
+    }
+    else
+    {
+        ptr_nick_prefix = NULL;
+        ptr_nick_suffix = NULL;
+        length_nick_prefix_suffix = 0;
     }
 
     /* display prefix */
@@ -816,7 +855,19 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
         else
             length_allowed = window->buffer->lines->prefix_max_length;
 
-        num_spaces = length_allowed - prefix_length;
+        /*
+         * if we are not able to display at least 1 char of prefix (inside
+         * prefix/suffix), then do not display nick prefix/suffix at all
+         */
+        if (ptr_nick_prefix && ptr_nick_suffix
+            && (length_nick_prefix_suffix + 1 > length_allowed))
+        {
+            ptr_nick_prefix = NULL;
+            ptr_nick_suffix = NULL;
+            length_nick_prefix_suffix = 0;
+        }
+
+        num_spaces = length_allowed - prefix_length - length_nick_prefix_suffix;
 
         if (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_RIGHT)
         {
@@ -828,6 +879,20 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                        CONFIG_BOOLEAN(config_look_color_inactive_prefix),
                                        0);
             }
+        }
+
+        /* display prefix before nick (for example "<") */
+        if (ptr_nick_prefix)
+        {
+            if (!simulate)
+            {
+                gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_chat,
+                                              GUI_COLOR_CHAT_NICK_PREFIX);
+            }
+            gui_chat_display_word (window, line,
+                                   ptr_nick_prefix,
+                                   NULL, 1, num_lines, count,
+                                   lines_displayed, simulate, 0, 0);
         }
 
         nick_offline = CONFIG_BOOLEAN(config_look_color_nick_offline)
@@ -884,19 +949,25 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
         if ((CONFIG_INTEGER(config_look_prefix_align) != CONFIG_LOOK_PREFIX_ALIGN_NONE)
             && (num_spaces < 0))
         {
+            chars_to_display = length_allowed - length_nick_prefix_suffix;
+            /*
+             * if the "+" is not displayed in the space after text, remove one
+             * more char to display the "+" before the space
+             */
+            if (!CONFIG_BOOLEAN(config_look_prefix_align_more_after))
+                chars_to_display--;
             chars_displayed = gui_chat_display_word (window, line,
                                                      (prefix_highlighted) ? prefix_highlighted : ptr_prefix,
                                                      (prefix_highlighted) ?
                                                      prefix_highlighted + gui_chat_string_real_pos (prefix_highlighted,
-                                                                                                    length_allowed) :
+                                                                                                    chars_to_display) :
                                                      ptr_prefix + gui_chat_string_real_pos (ptr_prefix,
-                                                                                            length_allowed),
+                                                                                            chars_to_display),
                                                      1, num_lines, count, lines_displayed,
                                                      simulate,
                                                      CONFIG_BOOLEAN(config_look_color_inactive_prefix),
                                                      nick_offline);
-            if (chars_displayed < length_allowed)
-                extra_spaces = length_allowed - chars_displayed;
+            extra_spaces = length_allowed - length_nick_prefix_suffix - 1 - chars_displayed;
         }
         else
         {
@@ -922,8 +993,55 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                   GUI_COLOR_CHAT);
         }
 
+        for (i = 0; i < extra_spaces; i++)
+        {
+            gui_chat_display_word (window, line, str_space,
+                                   NULL, 1, num_lines, count, lines_displayed,
+                                   simulate,
+                                   CONFIG_BOOLEAN(config_look_color_inactive_prefix),
+                                   0);
+        }
+
+        if (!CONFIG_BOOLEAN(config_look_prefix_align_more_after)
+            && (CONFIG_INTEGER(config_look_prefix_align) != CONFIG_LOOK_PREFIX_ALIGN_NONE)
+            && (num_spaces < 0))
+        {
+            if (!simulate)
+            {
+                gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_chat,
+                                              GUI_COLOR_CHAT_PREFIX_MORE);
+            }
+            gui_chat_display_word (window, line,
+                                   CONFIG_STRING(config_look_prefix_align_more),
+                                   NULL, 1, num_lines, count, lines_displayed,
+                                   simulate,
+                                   CONFIG_BOOLEAN(config_look_color_inactive_prefix),
+                                   0);
+        }
+
+        /* display suffix after nick (for example ">") */
+        if (ptr_nick_suffix)
+        {
+            if (!simulate)
+            {
+                gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_chat,
+                                              GUI_COLOR_CHAT_NICK_SUFFIX);
+            }
+            gui_chat_display_word (window, line,
+                                   ptr_nick_suffix,
+                                   NULL, 1, num_lines, count,
+                                   lines_displayed, simulate, 0, 0);
+        }
+
         if (CONFIG_INTEGER(config_look_prefix_align) == CONFIG_LOOK_PREFIX_ALIGN_LEFT)
         {
+            if (!simulate)
+            {
+                gui_chat_reset_style (window, line, 0, 1,
+                                      GUI_COLOR_CHAT_INACTIVE_WINDOW,
+                                      GUI_COLOR_CHAT_INACTIVE_BUFFER,
+                                      GUI_COLOR_CHAT);
+            }
             for (i = 0; i < num_spaces; i++)
             {
                 gui_chat_display_word (window, line, str_space,
@@ -933,7 +1051,9 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                        0);
             }
         }
-        if ((CONFIG_INTEGER(config_look_prefix_align) != CONFIG_LOOK_PREFIX_ALIGN_NONE)
+
+        if (CONFIG_BOOLEAN(config_look_prefix_align_more_after)
+            && (CONFIG_INTEGER(config_look_prefix_align) != CONFIG_LOOK_PREFIX_ALIGN_NONE)
             && (num_spaces < 0))
         {
             if (!simulate)
@@ -952,6 +1072,13 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
         {
             if (window->buffer->lines->prefix_max_length > 0)
             {
+                if (!simulate)
+                {
+                    gui_chat_reset_style (window, line, 0, 1,
+                                          GUI_COLOR_CHAT_INACTIVE_WINDOW,
+                                          GUI_COLOR_CHAT_INACTIVE_BUFFER,
+                                          GUI_COLOR_CHAT);
+                }
                 gui_chat_display_word (window, line, str_space,
                                        NULL, 1, num_lines, count, lines_displayed,
                                        simulate,
@@ -959,17 +1086,10 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                        0);
             }
         }
-        for (i = 0; i < extra_spaces; i++)
-        {
-            gui_chat_display_word (window, line, str_space,
-                                   NULL, 1, num_lines, count, lines_displayed,
-                                   simulate,
-                                   CONFIG_BOOLEAN(config_look_color_inactive_prefix),
-                                   0);
-        }
+
         if ((CONFIG_INTEGER(config_look_prefix_align) != CONFIG_LOOK_PREFIX_ALIGN_NONE)
-            && (CONFIG_STRING(config_look_prefix_suffix)
-                && CONFIG_STRING(config_look_prefix_suffix)[0]))
+            && CONFIG_STRING(config_look_prefix_suffix)
+            && CONFIG_STRING(config_look_prefix_suffix)[0])
         {
             if (!simulate)
             {

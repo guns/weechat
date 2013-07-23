@@ -606,15 +606,22 @@ irc_nick_nicklist_set_color_all ()
 
 struct t_irc_nick *
 irc_nick_new (struct t_irc_server *server, struct t_irc_channel *channel,
-              const char *nickname, const char *prefixes, int away)
+              const char *nickname, const char *host, const char *prefixes,
+              int away)
 {
     struct t_irc_nick *new_nick, *ptr_nick;
     int length;
+
+    if (!nickname || !nickname[0])
+        return NULL;
 
     /* nick already exists on this channel? */
     ptr_nick = irc_nick_search (server, channel, nickname);
     if (ptr_nick)
     {
+        /* save away status from existing nick (before removing it) */
+        away = ptr_nick->away;
+
         /* remove old nick from nicklist */
         irc_nick_nicklist_remove (server, channel, ptr_nick);
 
@@ -634,7 +641,7 @@ irc_nick_new (struct t_irc_server *server, struct t_irc_channel *channel,
 
     /* initialize new nick */
     new_nick->name = strdup (nickname);
-    new_nick->host = NULL;
+    new_nick->host = (host) ? strdup (host) : NULL;
     length = strlen (irc_server_get_prefix_chars (server));
     new_nick->prefixes = malloc (length + 1);
     if (new_nick->prefixes)
@@ -949,22 +956,10 @@ irc_nick_as_prefix (struct t_irc_server *server, struct t_irc_nick *nick,
 {
     static char result[256];
 
-    snprintf (result, sizeof (result), "%s%s%s%s%s%s%s\t",
-              (weechat_config_string (irc_config_look_nick_prefix)
-               && weechat_config_string (irc_config_look_nick_prefix)[0]) ?
-              IRC_COLOR_NICK_PREFIX : "",
-              (weechat_config_string (irc_config_look_nick_prefix)
-               && weechat_config_string (irc_config_look_nick_prefix)[0]) ?
-              weechat_config_string (irc_config_look_nick_prefix) : "",
+    snprintf (result, sizeof (result), "%s%s%s\t",
               irc_nick_mode_for_display (server, nick, 1),
               (force_color) ? force_color : ((nick) ? nick->color : ((nickname) ? irc_nick_find_color (nickname) : IRC_COLOR_CHAT_NICK)),
-              (nick) ? nick->name : nickname,
-              (weechat_config_string (irc_config_look_nick_suffix)
-               && weechat_config_string (irc_config_look_nick_suffix)[0]) ?
-              IRC_COLOR_NICK_SUFFIX : "",
-              (weechat_config_string (irc_config_look_nick_suffix)
-               && weechat_config_string (irc_config_look_nick_suffix)[0]) ?
-              weechat_config_string (irc_config_look_nick_suffix) : "");
+              (nick) ? nick->name : nickname);
 
     return result;
 }

@@ -10202,6 +10202,12 @@ Arguments:
   "-": disable hotlist (global setting, buffer pointer is not used) +
   priority: add buffer to hotlist with this priority
 
+| completion_freeze | "0", "1" |
+  "0": no freeze of completion (default value)
+  (global setting, buffer pointer is not used) +
+  "1": do not stop completion when command line is updated
+  (global setting, buffer pointer is not used)
+
 | unread | - |
   set unread marker after last line of buffer
 
@@ -11102,9 +11108,9 @@ Prototype:
 
 [source,C]
 ----------------------------------------
-void gui_nicklist_get_next_item (struct t_gui_buffer *buffer,
-                                 struct t_gui_nick_group **group,
-                                 struct t_gui_nick **nick);
+void weechat_nicklist_get_next_item (struct t_gui_buffer *buffer,
+                                     struct t_gui_nick_group **group,
+                                     struct t_gui_nick **nick);
 ----------------------------------------
 
 Arguments:
@@ -11122,7 +11128,7 @@ struct t_gui_nick *ptr_nick;
 
 ptr_group = NULL;
 ptr_nick = NULL;
-gui_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
+weechat_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
 while (ptr_group || ptr_nick)
 {
     if (ptr_nick)
@@ -11135,7 +11141,7 @@ while (ptr_group || ptr_nick)
         /* group */
         /* ... */
     }
-    gui_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
+    weechat_nicklist_get_next_item (buffer, &ptr_group, &ptr_nick);
 }
 ----------------------------------------
 
@@ -13796,7 +13802,7 @@ Script (Python):
 pointer = weechat.hdata_move(hdata, pointer, count)
 
 # example
-hdata = weechat_hdata_get("buffer")
+hdata = weechat.hdata_get("buffer")
 buffer = weechat.buffer_search_main()
 
 # move to next buffer, 2 times
@@ -13805,6 +13811,67 @@ buffer = weechat.hdata_move(hdata, buffer, 2)
 # move to previous buffer
 if buffer:
     buffer = weechat.hdata_move(hdata, buffer, -1)
+----------------------------------------
+
+weechat_hdata_search
+^^^^^^^^^^^^^^^^^^^^
+
+_New in version 0.4.1._
+
+Search element in a list: the expression 'search' is evaluated for each element
+in list, until element is found (or end of list).
+
+Prototype:
+
+[source,C]
+----------------------------------------
+void *weechat_hdata_search (struct t_hdata *hdata, void *pointer, const char *search, int move);
+----------------------------------------
+
+Arguments:
+
+* 'hdata': hdata pointer
+* 'pointer': pointer to a WeeChat/plugin object
+* 'search': expression to evaluate, default pointer in expression is the name of
+  hdata (and this pointer changes for each element in list); for help on
+  expression, see command `/eval` in 'WeeChat User's guide'
+* 'move': number of jump(s) to execute after unsuccessful search (negative or
+  positive integer, different from 0)
+
+Return value:
+
+* pointer to element found, NULL if not found
+
+C example:
+
+[source,C]
+----------------------------------------
+struct t_hdata *hdata = weechat_hdata_get ("irc_server");
+void *servers = weechat_hdata_get (hdata, "irc_servers");
+
+/* search irc server with name "freenode" */
+void *server = weechat_hdata_search (hdata, servers, "${irc_server.name} == freenode", 1);
+if (server)
+{
+    /* ... */
+}
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototype
+pointer = weechat.hdata_search(hdata, pointer, search, count)
+
+# example
+hdata = weechat.hdata_get("irc_server")
+servers = weechat.hdata_get_list(hdata, "irc_servers")
+
+# search irc server with name "freenode"
+server = weechat.hdata_search(hdata, servers, "${irc_server.name} == freenode", 1)
+if server:
+    # ...
 ----------------------------------------
 
 weechat_hdata_char

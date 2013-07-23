@@ -53,6 +53,11 @@
 ** Typ: boolesch
 ** Werte: on, off (Standardwert: `off`)
 
+* [[option_xfer.file.auto_accept_nicks]] *xfer.file.auto_accept_nicks*
+** Beschreibung: `durch Kommata getrennte Liste von Nicks deren Chat- und Transferanfragen automatisch akzeptiert werden. Format : "server.nick" (für einen speziellen Server) oder "nick" (global, für alle Server); Beispiel: "freenode.FlashCode,andrew"`
+** Typ: Zeichenkette
+** Werte: beliebige Zeichenkette (Standardwert: `""`)
+
 * [[option_xfer.file.auto_rename]] *xfer.file.auto_rename*
 ** Beschreibung: `eingehende Dateien werden automatisch umbenannt um ein Überschreiben zu vermeiden (dabei wird dem Dateinamen '.1', '.2', ... hinzugefügt)`
 ** Typ: boolesch

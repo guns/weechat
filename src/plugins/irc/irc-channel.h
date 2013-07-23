@@ -47,7 +47,9 @@ struct t_irc_channel
     char *modes;                       /* channel modes                     */
     int limit;                         /* user limit (0 is limit not set)   */
     char *key;                         /* channel key (NULL if no key set)  */
-    int names_received;                /* names received (message 366)      */
+    struct t_hashtable *join_msg_received; /* messages received after join: */
+                                       /* 366=names, 332/333=topic,         */
+                                       /* 329=creation date                 */
     int checking_away;                 /* = 1 if checking away with WHO cmd */
     char *away_message;                /* to display away only once in pv   */
     int has_quit_server;               /* =1 if nick has quit (pv only), to */
@@ -106,6 +108,9 @@ extern void irc_channel_nick_speaking_add (struct t_irc_channel *channel,
 extern void irc_channel_nick_speaking_rename (struct t_irc_channel *channel,
                                               const char *old_nick,
                                               const char *new_nick);
+extern void irc_channel_nick_speaking_rename_if_present (struct t_irc_server *server,
+                                                         struct t_irc_channel *channel,
+                                                         const char *nick_name);
 extern struct t_irc_channel_speaking *irc_channel_nick_speaking_time_search (struct t_irc_server *server,
                                                                              struct t_irc_channel *channel,
                                                                              const char *nick_name,

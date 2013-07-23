@@ -53,6 +53,11 @@
 ** タイプ: ブール
 ** 値: on, off (デフォルト値: `off`)
 
+* [[option_xfer.file.auto_accept_nicks]] *xfer.file.auto_accept_nicks*
+** 説明: `ファイルやチャットの受け入れを自動的に許可するニックネームのコンマ区切りリスト; フォーマットは "server.nick" (サーバを特定する場合) または "nick" (すべてのサーバ); 例: "freenode.FlashCode,andrew"`
+** タイプ: 文字列
+** 値: 未制約文字列 (デフォルト値: `""`)
+
 * [[option_xfer.file.auto_rename]] *xfer.file.auto_rename*
 ** 説明: `既に存在する場合、受信ファイルをリネームする (".1"、".2"、...を追加)`
 ** タイプ: ブール
