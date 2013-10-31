@@ -9,19 +9,6 @@ task :default => :build
 task :env do
   ENV['CFLAGS' ] ||= ' -I%s ' % RbConfig::CONFIG['rubyhdrdir']
   ENV['LDFLAGS'] ||= ''
-
-  if RUBY_PLATFORM =~ /darwin/i
-    # Homebrew linking help
-    if system "/bin/sh -c 'command -v brew' &>/dev/null"
-      %w[libgcrypt libgpg-error gettext gnutls].each do |pkg|
-        cellar = %x(brew --prefix #{pkg}).chomp
-        ENV['CFLAGS' ] += " -I#{cellar}/include "
-        ENV['LDFLAGS'] += " -L#{cellar}/lib "
-      end
-      ENV['CFLAGS' ] += ' -DHAVE_GNUTLS '
-      ENV['LDFLAGS'] += ' -liconv -lgnutls '
-    end
-  end
 end
 
 desc 'Invoke cmake'
