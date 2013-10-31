@@ -52,7 +52,7 @@ struct timeval;
  * please change the date with current one; for a second change at same
  * date, increment the 01, otherwise please keep 01.
  */
-#define WEECHAT_PLUGIN_API_VERSION "20130421-01"
+#define WEECHAT_PLUGIN_API_VERSION "20130819-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -225,6 +225,7 @@ struct t_weechat_plugin
     int (*strcmp_ignore_chars) (const char *string1, const char *string2,
                                 const char *chars_ignored, int case_sensitive);
     char *(*strcasestr) (const char *string, const char *search);
+    int (*strlen_screen) (const char *string);
     int (*string_match) (const char *string, const char *mask,
                          int case_sensitive);
     char *(*string_replace) (const char *string, const char *search,
@@ -255,7 +256,8 @@ struct t_weechat_plugin
     const char *(*string_input_for_buffer) (const char *string);
     char *(*string_eval_expression )(const char *expr,
                                      struct t_hashtable *pointers,
-                                     struct t_hashtable *extra_vars);
+                                     struct t_hashtable *extra_vars,
+                                     struct t_hashtable *options);
 
     /* UTF-8 strings */
     int (*utf8_has_8bits) (const char *string);
@@ -321,16 +323,19 @@ struct t_weechat_plugin
     struct t_hashtable *(*hashtable_new) (int size,
                                           const char *type_keys,
                                           const char *type_values,
-                                          unsigned int (*callback_hash_key)(struct t_hashtable *hashtable,
-                                                                            const void *key),
+                                          unsigned long (*callback_hash_key)(struct t_hashtable *hashtable,
+                                                                             const void *key),
                                           int (*callback_keycmp)(struct t_hashtable *hashtable,
                                                                  const void *key1,
                                                                  const void *key2));
-    int (*hashtable_set_with_size) (struct t_hashtable *hashtable,
-                                    const void *key, int key_size,
-                                    const void *value, int value_size);
-    int (*hashtable_set) (struct t_hashtable *hashtable, const void *key,
-                          const void *value);
+    struct t_hashtable_item *(*hashtable_set_with_size) (struct t_hashtable *hashtable,
+                                                         const void *key,
+                                                         int key_size,
+                                                         const void *value,
+                                                         int value_size);
+    struct t_hashtable_item *(*hashtable_set) (struct t_hashtable *hashtable,
+                                               const void *key,
+                                               const void *value);
     void *(*hashtable_get) (struct t_hashtable *hashtable, const void *key);
     int (*hashtable_has_key) (struct t_hashtable *hashtable, const void *key);
     void (*hashtable_map) (struct t_hashtable *hashtable,
@@ -763,7 +768,9 @@ struct t_weechat_plugin
                                             const char *name,
                                             char *(*build_callback)(void *data,
                                                                     struct t_gui_bar_item *item,
-                                                                    struct t_gui_window *window),
+                                                                    struct t_gui_window *window,
+                                                                    struct t_gui_buffer *buffer,
+                                                                    struct t_hashtable *extra_info),
                                             void *build_callback_data);
     void (*bar_item_update) (const char *name);
     void (*bar_item_remove) (struct t_gui_bar_item *item);
@@ -969,6 +976,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                         __case_sensitive)
 #define weechat_strcasestr(__string, __search)                          \
     weechat_plugin->strcasestr(__string, __search)
+#define weechat_strlen_screen(__string)                                 \
+    weechat_plugin->strlen_screen(__string)
 #define weechat_string_match(__string, __mask, __case_sensitive)        \
     weechat_plugin->string_match(__string, __mask, __case_sensitive)
 #define weechat_string_replace(__string, __search, __replace)           \
@@ -1017,9 +1026,9 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 #define weechat_string_input_for_buffer(__string)                       \
     weechat_plugin->string_input_for_buffer(__string)
 #define weechat_string_eval_expression(__expr, __pointers,              \
-                                       __extra_vars)                    \
+                                       __extra_vars, __options)         \
     weechat_plugin->string_eval_expression(__expr, __pointers,          \
-                                           __extra_vars)                \
+                                           __extra_vars, __options)
 
 /* UTF-8 strings */
 #define weechat_utf8_has_8bits(__string)                                \

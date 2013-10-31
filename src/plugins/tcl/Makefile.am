@@ -18,7 +18,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(TCL_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(TCL_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -28,7 +28,7 @@ tcl_la_SOURCES = weechat-tcl.c \
                   weechat-tcl.h \
                   weechat-tcl-api.c \
                   weechat-tcl-api.h
-tcl_la_LDFLAGS = -module
+tcl_la_LDFLAGS = -module -no-undefined
 tcl_la_LIBADD = ../lib_weechat_plugins_scripts.la $(TCL_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

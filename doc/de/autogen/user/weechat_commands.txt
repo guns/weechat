@@ -1,10 +1,10 @@
 [[command_weechat_away]]
-[command]*`away`* Abwesenheitsstatus ein-/ausschalten::
+[command]*`away`* Abwesenheitsstatus setzen oder entfernen::
 ........................................
 /away  [-all] [<message>]
 
-   -all: Abwesenheitszustand auf allen Servern ändern
-message: Abwesenheitsnachricht (ohne eine Nachricht wird der Abwesenheitszustand deaktivieren)
+   -all: Abwesenheitsstatus auf allen verbundenen Server setzen oder entfernen
+message: Abwesenheitsnachricht (ohne Angabe einer Nachricht wird der Abwesenheitszustand entfernt)
 ........................................
 
 [[command_weechat_bar]]
@@ -125,12 +125,14 @@ Beispiele:
 /color  alias <color> <name>
         unalias <color>
         reset
+        -o
 
   alias: weist einer Farbzahl einen Namen zu
 unalias: entfernt einen Namen
   color: Farbnummer (>= 0, maximale Anzahl ist abhängig vom Terminal, üblicherweise 63 oder 255 Farben)
    name: Aliasname für eine Farbe (zum Beispiel: "orange")
   reset: setzt alle Farbpaarungen zurück (nützlich falls keine Farbpaarung mehr verfügbar sein sollte und die automatische Reset-Option deaktiviert ist, siehe Option: weechat.look.color_pairs_auto_reset)
+     -o: sendet Terminal-/Farbinformationen in den aktuellen Buffer
 
 Ohne Angabe von Argumenten wird in einem separaten Buffer die darstellbare Farbpalette angezeigt.
 
@@ -202,12 +204,13 @@ infolists: zeigt Information über die Infolists an
 ........................................
 
 [[command_weechat_eval]]
-[command]*`eval`* wertet einen Ausdruck aus und gibt das Resultat im Buffer aus::
+[command]*`eval`* wertet eine Expression aus und zeigt das Resultat im Buffer an::
 ........................................
 /eval  [-n] <expression>
-       [-n] <expression1> <operator> <expression2>
+       [-n] -c <expression1> <operator> <expression2>
 
-        -n: zeigt das Ergebnis an, ohne das dieses in den Buffer geschrieben wird (debug Modus)
+        -n: zeigt das Ergebnis lokal an, ohne das dieses in den Buffer gesendet wird (debug Modus)
+        -c: Auswertung als Bedingung: nutzt Operatoren und runde Klammern, Rückgabewert als Boolean-Wert ("0" oder "1")
 expression: Ausdruck welcher verarbeitet werden soll. Variablen im Format ${variable} werden ersetzt (siehe unten)
   operator: ein logischer oder vergleichender Operand:
             - logische Operanden:
@@ -230,30 +233,31 @@ Um einen Vergleich zwischen zwei Zeichenketten zu erzwingen, müssen die Ausdrü
   "50" > "100"  ==> 1
 
 Einige Variablen werden im Ausdruck, mittels der Formatierung ${Variable}, ersetzt. Mögliche Variablen sind, nach Reihenfolge ihrer Priorität:
-  1. der Name einer Option (file.section.option)
-  2. der Name der lokalen Variablen für Buffer
-  3. ein hdata Name/Variable (der Wert wird automatisch als Zeichenkette konvertiert), Standardmäßig wird für "window" und "buffer" das aktuelle Fenster/Buffer verwendet.
-Das Format für hdata:
+  1. eine Farbe (Format: color:xxx)
+  2. der Name einer Option (Format: file.section.option)
+  3. der Name einer lokalen Variablen eines Buffer
+  4. ein hdata Name/Variable (der Wert wird automatisch als Zeichenkette konvertiert), Standardmäßig wird für "window" und "buffer" das aktuelle Fenster/Buffer verwendet.
+Das Format für hdata kann wie folgt lauten:
   hdata.var1.var2...: startet mit hdata (der Pointer muss bekannt sein) und fragt eine Variable nach der anderen ab (weitere hdata können folgen)
-  hdata(list).var1.var2...: startet hdata mittels einer Liste, zum Beispiel:
+  hdata[list].var1.var2...: startet hdata mittels einer Liste, zum Beispiel:
     ${buffer[gui_buffers].full_name}: der vollständige Name des ersten Buffers, in der verknüpften Liste aller Buffer
     ${plugin[weechat_plugins].name}: Name der ersten Erweiterung, in der verknüpften Liste aller Erweiterungen
 Die vorhandenen Namen für hdata und Variablen sind in der "Anleitung für API Erweiterung", Bereich "weechat_hdata_get". beschrieben
 
 Beispiele:
-  /eval -n ${weechat.look.scroll_amount}  ==> 3
-  /eval -n ${window}                      ==> 0x2549aa0
-  /eval -n ${window.buffer}               ==> 0x2549320
-  /eval -n ${window.buffer.full_name}     ==> core.weechat
-  /eval -n ${window.buffer.number}        ==> 1
-  /eval -n ${window.buffer.number} > 2    ==> 0
-  /eval -n ${window.win_width} > 100      ==> 1
-  /eval -n (8 > 12) || (5 > 2)            ==> 1
-  /eval -n (8 > 12) && (5 > 2)            ==> 0
-  /eval -n abcd =~ ^ABC                   ==> 1
-  /eval -n abcd =~ (?-i)^ABC              ==> 0
-  /eval -n abcd =~ (?-i)^abc              ==> 1
-  /eval -n abcd !~ abc                    ==> 0
+  /eval -n ${weechat.look.scroll_amount}   ==> 3
+  /eval -n ${window}                       ==> 0x2549aa0
+  /eval -n ${window.buffer}                ==> 0x2549320
+  /eval -n ${window.buffer.full_name}      ==> core.weechat
+  /eval -n ${window.buffer.number}         ==> 1
+  /eval -n -c ${window.buffer.number} > 2  ==> 0
+  /eval -n -c ${window.win_width} > 100    ==> 1
+  /eval -n -c (8 > 12) || (5 > 2)          ==> 1
+  /eval -n -c (8 > 12) && (5 > 2)          ==> 0
+  /eval -n -c abcd =~ ^ABC                 ==> 1
+  /eval -n -c abcd =~ (?-i)^ABC            ==> 0
+  /eval -n -c abcd =~ (?-i)^abc            ==> 1
+  /eval -n -c abcd !~ abc                  ==> 0
 ........................................
 
 [[command_weechat_filter]]
@@ -344,6 +348,8 @@ Auflistung der möglichen Funktionen:
   complete_previous: vervollständigt Word mit vorheriger Komplettierung
   search_text: sucht nach Text im Buffer
   search_switch_case: schaltet Groß-/Kleinschreibung ein und aus
+  search_switch_regex: Wechsel des Suchmodus: einfache Textsuche/reguläre Ausdrücke
+  search_switch_where: wechselt Suche in Nachricht/Präfix
   search_previous: sucht vorheriger Zeile
   search_next: sucht nächste Zeile
   search_stop: suche stoppen
@@ -530,14 +536,14 @@ Ohne Angabe eines Arguments werden alle installierten Erweiterungen angezeigt.
 ........................................
 
 [[command_weechat_proxy]]
-[command]*`proxy`* Proxies verwalten::
+[command]*`proxy`* Proxys verwalten::
 ........................................
 /proxy  list
         add <name> <type> <address> <port> [<username> [<password>]]
         del <name>|-all
         set <name> <option> <value>
 
-         list: listet alle Proxies auf
+         list: listet alle Proxys auf
           add: fügt neuen Proxy hinzu
     name: Name des neuen Proxy (der Name darf nur einmal genutzt werden)
          type: http, socks4 oder socks5
@@ -545,7 +551,7 @@ Ohne Angabe eines Arguments werden alle installierten Erweiterungen angezeigt.
          port: Port
      username: Username (optional)
      password: Passwort (optional)
-          del: entfernt einen Proxy (-all um alle Proxies zu entfernen)
+          del: entfernt einen Proxy (-all um alle Proxys zu entfernen)
           set: setzt einen Wert für Proxy
        option: Optionen die geändert werden (für eine Liste der möglichen Optionen, bitte folgenden Befehl nutzen: /set weechat.proxy.<proxyname>.*)
         value: neuer Wert für Option
@@ -608,6 +614,47 @@ file: Konfigurationsdatei die gesichert werden soll (ohne Dateinamenserweiterung
 Wird keine Datei angegeben dann werden alle Konfigurationen (WeeChat und Erweiterungen) gesichert.
 ........................................
 
+[[command_weechat_secure]]
+[command]*`secure`* verwaltet zu schützende Daten (Passwörter oder private Daten werden in der Datei sec.conf verschlüsselt)::
+........................................
+/secure  passphrase <passphrase>|-delete
+         decrypt <passphrase>|-discard
+         set <name> <value>
+         del <name>
+
+passphrase: ändern der Passphrase (ohne Passphrase, werden die Daten in der Datei sec.conf in Klartext gesichert)
+   -delete: löscht Passphrase
+   decrypt: entschlüsselt Daten nachträglich (dies passiert nur falls die Passphrase beim Start nicht angegeben wurde)
+  -discard: verwirft alle verschlüsselten Daten
+       set: fügt eine schutzwürdige Information hinzu oder ändert eine bestehende
+       del: entfernt eine schutzwürdige Information
+
+Ohne Angabe von Argumenten wird ein neuer Buffer geöffnet und die schutzwürdigen Informationen können dort eingesehen werden.
+
+Wird eine Passphrase verwendet (Daten liegen verschlüsselt vor), fragt WeeChat beim Start die Passphrase ab.
+Es ist möglich eine Umgebungsvariable "WEECHAT_PASSPHRASE" zu setzen um die Eingabeaufforderung beim Programmstart zu vermeiden (diese Variable wird auch von WeeChat beim /upgrade verwendet).
+
+schutzwürdige Daten mit dem Format ${sec.data.xxx} können wie folgt genutzt werden:
+  - Argument in der Befehlszeile für "--run-command"
+  - Option weechat.startup.command_{before|after}_plugins
+  - Proxy-Optionen: username, password
+  - IRC Server Optionen: autojoin, command, password, sasl_{username|password}
+  - Option relay.network.password
+  - Befehl /eval.
+
+Beispiele:
+  setzen einer Passphrase:
+    /secure passphrase Dies ist meine Passphrase
+  verschlüsselt freenode SASL Passwort:
+    /secure set freenode meinPasswort
+    /set irc.server.freenode.sasl_password "${sec.data.freenode}"
+  verschlüsselt oftc Passwort für nickserv:
+    /secure set oftc meinPasswort
+    /set irc.server.oftc.command "/msg nickserv identify ${sec.data.oftc}"
+  alias um den eigenen Nick zu ghosten:
+    /alias ghost /eval /msg -server freenode nickserv ghost meinNick ${sec.data.freenode}
+........................................
+
 [[command_weechat_set]]
 [command]*`set`* Konfigurationsparameter setzen::
 ........................................
@@ -659,6 +706,7 @@ Beispiele:
 /upgrade  [<path_to_binary>|-quit]
 
 path_to_binary: Pfad zu einer ausführbaren WeeChat Binärdatei (Standardeinstellung ist die aktuell ausführbare Datei)
+        -dummy: ohne Funktion (dient lediglich dazu, um nicht versehentlich die "-quit" Funktion auszuführen)
          -quit: trennt *ALLE* Verbindungen, speichert die aktuelle Sitzung und beendet WeeChat, um den aktuellen Zustand später wiederherstellen (siehe unten)
 
 Dieser Befehl führt ein Upgrade von WeeChat durch und startet die laufende Sitzung neu. Bevor dieser Befehl ausgeführt wird, sollte eine neue Version von WeeChat entweder vorab kompiliert, oder mit einem Paketmanager installiert worden sein.
@@ -677,7 +725,7 @@ Nutzt man die "-quit" Funktion ist die Abfolge geringfügig anders:
   3. alle Erweiterungen werden ausgeschaltet
   4. die WeeChat Konfiguration wird gesichert
   5. WeeChat wird beendet
-Die Sitzung kann zu einem späteren Zeitpunkt wiederhergestellt werden: weechat-curses --upgrade
+Die Sitzung kann zu einem späteren Zeitpunkt wiederhergestellt werden: weechat --upgrade
 WICHTIG: Die Sitzung muss mit exakt den selben Konfigurationsdateien wiederhergestellt werden (*.conf)
 Es ist möglich die WeeChat-Sitzung auf einem anderen Rechner wiederherzustellen, sofern man den Inhalt des "~/.weechat" Verzeichnisses dorthin kopiert.
 ........................................
@@ -738,7 +786,7 @@ Beispiele:
          refresh
          scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]
          scroll_horiz [-window <number>] [+/-]<value>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_beyond_end|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
          swap [-window <number>] [up|down|left|right]
          zoom[-window <number>]
 
@@ -759,12 +807,13 @@ Beispiele:
       page_up: scrollt eine Seite nach oben
     page_down: scrollt eine Seite nach unten
       refresh: Seite wird neu aufgebaut
-       scroll: scrollt eine Anzahl an Zeilen (+/-N) oder zu einer gewissen Zeit: s=Sekunden, m=Minuten, h=Stunden, d=Tage, M=Monate, y=Jahre
+       scroll: scrollt eine Anzahl an Zeilen (+/-N) oder zu einer angegebenen Zeit: s=Sekunden, m=Minuten, h=Stunden, d=Tage, M=Monate, y=Jahre
  scroll_horiz: scrollt horizontal eine Anzahl an Spalten (+/-N) oder prozentual von der Fenstergröße ausgehend (dieses scrolling ist nur in Buffern möglich die über einen freien Inhalt verfügen)
     scroll_up: scrollt ein paar Zeilen nach oben
   scroll_down: scrollt ein paar Zeilen nach unten
    scroll_top: scrollt zum Anfang des Buffers
 scroll_bottom: scrollt zum Ende des  Buffers
+scroll_beyond_end: scrollt über das Ende des Buffers hinaus
 scroll_previous_highlight: scrollt zum vorherigen Hightlight
 scroll_next_highlight: scrollt zum nächsten Highlight
 scroll_unread: springt zur ersten ungelesenen Zeile in einem Buffer

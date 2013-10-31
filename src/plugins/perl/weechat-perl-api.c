@@ -278,6 +278,20 @@ XS (XS_weechat_api_ngettext)
     API_RETURN_STRING(result);
 }
 
+XS (XS_weechat_api_strlen_screen)
+{
+    int value;
+    dXSARGS;
+
+    API_FUNC(1, "strlen_screen", API_RETURN_INT(0));
+    if (items < 1)
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_strlen_screen (SvPV_nolen (ST (0))); /* string */
+
+    API_RETURN_INT(value);
+}
+
 XS (XS_weechat_api_string_match)
 {
     int value;
@@ -386,11 +400,11 @@ XS (XS_weechat_api_string_input_for_buffer)
 XS (XS_weechat_api_string_eval_expression)
 {
     char *expr, *result;
-    struct t_hashtable *pointers, *extra_vars;
+    struct t_hashtable *pointers, *extra_vars, *options;
     dXSARGS;
 
     API_FUNC(1, "string_eval_expression", API_RETURN_EMPTY);
-    if (items < 3)
+    if (items < 4)
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
     expr = SvPV_nolen (ST (0));
@@ -402,13 +416,20 @@ XS (XS_weechat_api_string_eval_expression)
                                                  WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
                                                  WEECHAT_HASHTABLE_STRING,
                                                  WEECHAT_HASHTABLE_STRING);
+    options = weechat_perl_hash_to_hashtable (ST (3),
+                                              WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                              WEECHAT_HASHTABLE_STRING,
+                                              WEECHAT_HASHTABLE_STRING);
 
-    result = weechat_string_eval_expression (expr, pointers, extra_vars);
+    result = weechat_string_eval_expression (expr, pointers, extra_vars,
+                                             options);
 
     if (pointers)
         weechat_hashtable_free (pointers);
     if (extra_vars)
         weechat_hashtable_free (extra_vars);
+    if (options)
+        weechat_hashtable_free (options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -3762,29 +3783,56 @@ XS (XS_weechat_api_bar_item_search)
 
 char *
 weechat_perl_api_bar_item_build_cb (void *data, struct t_gui_bar_item *item,
-                                    struct t_gui_window *window)
+                                    struct t_gui_window *window,
+                                    struct t_gui_buffer *buffer,
+                                    struct t_hashtable *extra_info)
 {
     struct t_plugin_script_cb *script_callback;
-    void *func_argv[3];
+    void *func_argv[5];
     char empty_arg[1] = { '\0' }, *ret;
 
     script_callback = (struct t_plugin_script_cb *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        func_argv[1] = API_PTR2STR(item);
-        func_argv[2] = API_PTR2STR(window);
+        if (strncmp (script_callback->function, "(extra)", 7) == 0)
+        {
+            /* new callback: data, item, window, buffer, extra_info */
+            func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+            func_argv[1] = API_PTR2STR(item);
+            func_argv[2] = API_PTR2STR(window);
+            func_argv[3] = API_PTR2STR(buffer);
+            func_argv[4] = extra_info;
 
-        ret = (char *)weechat_perl_exec (script_callback->script,
-                                         WEECHAT_SCRIPT_EXEC_STRING,
-                                         script_callback->function,
-                                         "sss", func_argv);
+            ret = (char *)weechat_perl_exec (script_callback->script,
+                                             WEECHAT_SCRIPT_EXEC_STRING,
+                                             script_callback->function + 7,
+                                             "ssssh", func_argv);
 
-        if (func_argv[1])
-            free (func_argv[1]);
-        if (func_argv[2])
-            free (func_argv[2]);
+            if (func_argv[1])
+                free (func_argv[1]);
+            if (func_argv[2])
+                free (func_argv[2]);
+            if (func_argv[3])
+                free (func_argv[3]);
+        }
+        else
+        {
+            /* old callback: data, item, window */
+            func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+            func_argv[1] = API_PTR2STR(item);
+            func_argv[2] = API_PTR2STR(window);
+
+            ret = (char *)weechat_perl_exec (script_callback->script,
+                                             WEECHAT_SCRIPT_EXEC_STRING,
+                                             script_callback->function,
+                                             "sss", func_argv);
+
+            if (func_argv[1])
+                free (func_argv[1]);
+            if (func_argv[2])
+                free (func_argv[2]);
+        }
 
         return ret;
     }
@@ -4823,6 +4871,7 @@ weechat_perl_api_init (pTHX)
     API_DEF_FUNC(iconv_from_internal);
     API_DEF_FUNC(gettext);
     API_DEF_FUNC(ngettext);
+    API_DEF_FUNC(strlen_screen);
     API_DEF_FUNC(string_match);
     API_DEF_FUNC(string_has_highlight);
     API_DEF_FUNC(string_has_highlight_regex);

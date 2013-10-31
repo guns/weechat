@@ -1,7 +1,7 @@
 WeeChat ChangeLog
 =================
 Sébastien Helleu <flashcode@flashtux.org>
-v0.4.1, 2013-05-20
+v0.4.2, 2013-10-06
 
 
 This document lists all changes for each version.
@@ -10,6 +10,125 @@ For a list of important changes that require manual action, please look at
 http://weechat.org/files/releasenotes/ReleaseNotes-devel.html[release notes]
 (file 'NEWS' in sources).
 
+
+Version 0.4.2 (2013-10-06)
+--------------------------
+
+* core: clear whole line before displaying content instead of clearing after
+  the end of content (bug #40115)
+* core: fix time displayed in status bar (it was one second late) (bug #40097)
+* core: fix memory leak on unhook of a print hook (if using tags)
+* core: fix computation of columns in output of /help (take care about size of
+  time/buffer/prefix)
+* core: display day change message dynamically (do not store it as a line in
+  buffer), split option weechat.look.day_change_time_format into two options
+  weechat.look.day_change_message_{1date|2dates}, new option
+  weechat.color.chat_day_change (task #12775)
+* core: add syntax "@buffer:item" in bar items to force the buffer used when
+  displaying the bar item (task #12717)
+* core: add search of regular expression in buffer, don't reset search type on
+  a new search, select where to search (messages/prefixes), add keys in search
+  context: alt+"c" (case (in)sensitive search), tab (search in
+  messages/prefixes)
+* core: add text emphasis in messages when searching text in buffer, new
+  options: weechat.look.emphasized_attributes, weechat.color.emphasized,
+  weechat.color.emphasized_bg
+* core: fix random crash on "/buffer close" with a buffer number (or a range of
+  buffers)
+* core: optimize the removal of lines in buffers (a lot faster to clear/close
+  buffers with lot of lines)
+* core: change color format for options weechat.look.buffer_time_format and
+  weechat.look.prefix_{action|error|join|network|quit} from `${xxx}` to
+  `${color:xxx}`
+* core: add secured data (encryption of passwords or private data): add new
+  command /secure and new file sec.conf (task #7395)
+* core: rename binary and man page from "weechat-curses" to "weechat"
+  (task #11027)
+* core: disable build of doc by default, add cmake option ENABLE_MAN to compile
+  man page (off by default)
+* core: add option "-o" for command /color
+* core: fix priority of logical operators in evaluation of expression
+  (AND takes precedence over the OR) and first evaluate sub-expressions between
+  parentheses
+* core: remove gap after read marker line when there is no bar on the right
+  (bug #39548)
+* core: add CA_FILE option in cmake and configure to setup default
+  value of option weechat.network.gnutls_ca_file (default is
+  "/etc/ssl/certs/ca-certificates.crt") (task #12725)
+* core: use "/dev/null" for stdin in hook_process instead of closing stdin
+  (bug #39538)
+* core: add option "scroll_beyond_end" for command /window (task #6745)
+* core: add options weechat.look.hotlist_prefix and weechat.look.hotlist_suffix
+  (task #12730)
+* core: add option weechat.look.key_bind_safe
+* core: fix char displayed at the intersection of three windows (bug #39331)
+* core: fix crash in evaluation of expression when reading a string in hdata
+  with a NULL value (bug #39419)
+* core: fix display bugs with some UTF-8 chars that truncates messages displayed
+  (for example U+26C4) (bug #39201)
+* core: update man page and add translations (in french, german, italian, and
+  japanese)
+* core: remove extra space after empty prefix (when prefix for action, error,
+  join, network or quit is set to empty string) (bug #39218)
+* core: add option weechat.network.proxy_curl (task #12651)
+* core: add "proxy" infolist and hdata
+* core: fix random crash on mouse actions (bug #39094)
+* core: set options weechat.look.color_inactive_{buffer|window} to "on" by
+  default
+* core: add infolist "layout" and hdata "layout", "layout_buffer" and
+  "layout_window"
+* core: fix line alignment when option weechat.look.buffer_time_format is set
+  to empty string
+* api: return hashtable item pointer in functions hashtable_set and
+  hashtable_set_with_size
+* api: change type of hashtable key hash to unsigned long
+* api: add "callback_free_key" in hashtable
+* api: add support of colors with format `${color:xxx}` in function
+  string_eval_expression and command /eval
+* api: add argument "options" in function string_eval_expression, add option
+  "-c" for command /eval (to evaluate a condition)
+* api: use pointer for infolist "hook" to return only one hook
+* api: add new function strlen_screen
+* plugins: remove the demo plugin
+* aspell: fix detection of word start/end when there are apostrophes or minus
+  chars before/after word
+* aspell: rename option aspell.look.color to aspell.color.misspelled, add option
+  aspell.color.suggestions
+* aspell: add support of enchant library (patch #6858)
+* irc: fix reconnection to server using IPv6 (bug #38819, bug #40166)
+* irc: add option irc.look.notice_welcome_redirect to automatically redirect
+  channel welcome notices to the channel buffer
+* irc: replace default prefix modes "qaohvu" by the standard ones "ov" when
+  PREFIX is not sent by server (bug #39802)
+* irc: use 6697 as default port for SSL servers created with URL "ircs://"
+  (bug #39621)
+* irc: display number of ops/halfops/voices on channel join only for supported
+  modes on server (bug #39582)
+* irc: fix self nick color in server messages after nick is changed with /nick
+  (bug #39415)
+* irc: add support of wildcards in commands (de)op/halfop/voice, split IRC
+  message sent if number of nicks is greater than server MODES (from message
+  005) (task #9221)
+* irc: add option irc.look.pv_tags
+* irc: fix error message on /invite without arguments (bug #39272)
+* irc: add support of special variables $nick/$channel/$server in commands
+  /allchan and /allserv
+* irc: add option irc.look.nick_color_hash: hash algorithm to find nick color
+  (patch #8062)
+* irc: fix multiple nicks in command /query (separated by commas): open one
+  buffer per nick
+* logger: add option "flush" for command /logger
+* lua: fix interpreter used in API functions (bug #39470)
+* relay: fix decoding of websocket frames when there are multiple frames in a
+  single message received (only the first one was decoded)
+* relay: add command "ping" in weechat protocol (task #12689)
+* relay: fix binding to an IP address (bug #39119)
+* rmodifier: add option "missing" for command /rmodifier
+* script: add info about things defined by script (like commands, options, ...)
+  in the detailed view of script (/script show)
+* scripts: add hdata with script callback
+* xfer: add option xfer.look.pv_tags
+* xfer: fix compilation on OpenBSD (bug #39071)
 
 Version 0.4.1 (2013-05-20)
 --------------------------

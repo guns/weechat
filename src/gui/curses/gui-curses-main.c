@@ -51,6 +51,7 @@
 #include "../gui-filter.h"
 #include "../gui-input.h"
 #include "../gui-layout.h"
+#include "../gui-line.h"
 #include "../gui-history.h"
 #include "../gui-mouse.h"
 #include "../gui-nicklist.h"
@@ -62,6 +63,63 @@ int gui_reload_config = 0;
 int gui_term_cols = 0;
 int gui_term_lines = 0;
 
+
+/*
+ * Gets a password from user (called on startup, when GUI is not initialized).
+ *
+ * The result is stored in "password" with max "size" bytes (including the
+ * final '\0').
+ */
+
+void
+gui_main_get_password (const char *prompt1, const char *prompt2,
+                       const char *prompt3,
+                       char *password, int size)
+{
+    int i, ch;
+
+    initscr ();
+    cbreak ();
+    noecho ();
+
+    clear();
+
+    mvaddstr (0, 0, prompt1);
+    mvaddstr (1, 0, prompt2);
+    mvaddstr (2, 0, prompt3);
+    mvaddstr (3, 0, "=> ");
+    refresh ();
+
+    memset (password, '\0', size);
+    i = 0;
+    while (i < size - 1)
+    {
+        ch = getch ();
+        if (ch == '\n')
+            break;
+        if (ch == 127)
+        {
+            if (i > 0)
+            {
+                i--;
+                password[i] = '\0';
+                mvaddstr (3, 3 + i, " ");
+                move (3, 3 + i);
+            }
+        }
+        else
+        {
+            password[i] = ch;
+            mvaddstr (3, 3 + i, "*");
+            i++;
+        }
+        refresh ();
+    }
+    password[i] = '\0';
+
+    refresh ();
+    endwin ();
+}
 
 /*
  * Pre-initializes GUI (called before gui_init).
@@ -252,6 +310,35 @@ gui_main_refreshs ()
     {
         gui_color_buffer_display ();
         gui_color_buffer_refresh_needed = 0;
+    }
+
+    /* compute max length for prefix/buffer if needed */
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        /* compute buffer/prefix max length for own_lines */
+        if (ptr_buffer->own_lines)
+        {
+            if (ptr_buffer->own_lines->buffer_max_length_refresh)
+            {
+                gui_line_compute_buffer_max_length (ptr_buffer,
+                                                    ptr_buffer->own_lines);
+            }
+            if (ptr_buffer->own_lines->prefix_max_length_refresh)
+                gui_line_compute_prefix_max_length (ptr_buffer->own_lines);
+        }
+
+        /* compute buffer/prefix max length for mixed_lines */
+        if (ptr_buffer->mixed_lines)
+        {
+            if (ptr_buffer->mixed_lines->buffer_max_length_refresh)
+            {
+                gui_line_compute_buffer_max_length (ptr_buffer,
+                                                    ptr_buffer->mixed_lines);
+            }
+            if (ptr_buffer->mixed_lines->prefix_max_length_refresh)
+                gui_line_compute_prefix_max_length (ptr_buffer->mixed_lines);
+        }
     }
 
     /* refresh window if needed */

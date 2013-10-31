@@ -828,6 +828,34 @@ logger_set_buffer (struct t_gui_buffer *buffer, const char *value)
 }
 
 /*
+ * Flushes all log files.
+ */
+
+void
+logger_flush ()
+{
+    struct t_logger_buffer *ptr_logger_buffer;
+
+    for (ptr_logger_buffer = logger_buffers; ptr_logger_buffer;
+         ptr_logger_buffer = ptr_logger_buffer->next_buffer)
+    {
+        if (ptr_logger_buffer->log_file && ptr_logger_buffer->flush_needed)
+        {
+            if (weechat_logger_plugin->debug >= 2)
+            {
+                weechat_printf_tags (NULL,
+                                     "no_log",
+                                     "%s: flush file %s",
+                                     LOGGER_PLUGIN_NAME,
+                                     ptr_logger_buffer->log_filename);
+            }
+            fflush (ptr_logger_buffer->log_file);
+            ptr_logger_buffer->flush_needed = 0;
+        }
+    }
+}
+
+/*
  * Callback for command "/logger".
  */
 
@@ -852,6 +880,12 @@ logger_command_cb (void *data, struct t_gui_buffer *buffer,
         {
             if (argc > 2)
                 logger_set_buffer (buffer, argv[2]);
+            return WEECHAT_RC_OK;
+        }
+
+        if (weechat_strcasecmp (argv[1], "flush") == 0)
+        {
+            logger_flush ();
             return WEECHAT_RC_OK;
         }
 
@@ -928,22 +962,14 @@ logger_backlog (struct t_gui_buffer *buffer, const char *filename, int lines)
 {
     const char *charset;
     struct t_logger_line *last_lines, *ptr_lines;
-    char *pos_message, *pos_tab, *error, *message, text_time[256], *text_time2;
-    struct timeval tv_time;
-    struct tm *local_time;
+    char *pos_message, *pos_tab, *error, *message;
     time_t datetime, time_now;
     struct tm tm_line;
-    int num_lines, old_mday, old_mon, old_year;
+    int num_lines;
 
     charset = weechat_info_get ("charset_terminal", "");
 
     weechat_buffer_set (buffer, "print_hooks_enabled", "0");
-
-    gettimeofday (&tv_time, NULL);
-    local_time = localtime (&tv_time.tv_sec);
-    old_mday = local_time->tm_mday;
-    old_mon = local_time->tm_mon;
-    old_year = local_time->tm_year;
 
     num_lines = 0;
     last_lines = logger_tail_file (filename, lines);
@@ -968,27 +994,7 @@ logger_backlog (struct t_gui_buffer *buffer, const char *filename, int lines)
                               weechat_config_string (logger_config_file_time_format),
                               &tm_line);
             if (error && !error[0] && (tm_line.tm_year > 0))
-            {
                 datetime = mktime (&tm_line);
-                if ((tm_line.tm_mday != old_mday)
-                    || (tm_line.tm_mon != old_mon)
-                    || (tm_line.tm_year != old_year))
-                {
-                    strftime (text_time, sizeof (text_time),
-                              weechat_config_string (weechat_config_get ("weechat.look.day_change_time_format")),
-                              &tm_line);
-                    text_time2 = weechat_iconv_to_internal (NULL, text_time);
-                    weechat_printf_tags (buffer,
-                                         "no_highlight,notify_none,logger_backlog_date",
-                                         _("\t\tDay changed to %s"),
-                                         (text_time2) ? text_time2 : text_time);
-                    if (text_time2)
-                        free (text_time2);
-                    old_mday = tm_line.tm_mday;
-                    old_mon = tm_line.tm_mon;
-                    old_year = tm_line.tm_year;
-                }
-            }
             pos_message[0] = '\t';
         }
         pos_message = (pos_message && (datetime != 0)) ?
@@ -1019,11 +1025,12 @@ logger_backlog (struct t_gui_buffer *buffer, const char *filename, int lines)
         logger_tail_free (last_lines);
     if (num_lines > 0)
     {
-        weechat_printf_tags (buffer, "no_highlight,notify_none,logger_backlog_end",
-                             _("%s===\t%s========== End of backlog (%d lines) =========="),
-                             weechat_color (weechat_config_string (logger_config_color_backlog_end)),
-                             weechat_color (weechat_config_string (logger_config_color_backlog_end)),
-                             num_lines);
+        weechat_printf_date_tags (buffer, datetime,
+                                  "no_highlight,notify_none,logger_backlog_end",
+                                  _("%s===\t%s========== End of backlog (%d lines) =========="),
+                                  weechat_color (weechat_config_string (logger_config_color_backlog_end)),
+                                  weechat_color (weechat_config_string (logger_config_color_backlog_end)),
+                                  num_lines);
         weechat_buffer_set (buffer, "unread", "");
     }
     weechat_buffer_set (buffer, "print_hooks_enabled", "1");
@@ -1279,29 +1286,11 @@ logger_print_cb (void *data, struct t_gui_buffer *buffer, time_t date,
 int
 logger_timer_cb (void *data, int remaining_calls)
 {
-    struct t_logger_buffer *ptr_logger_buffer;
-
     /* make C compiler happy */
     (void) data;
     (void) remaining_calls;
 
-    for (ptr_logger_buffer = logger_buffers; ptr_logger_buffer;
-         ptr_logger_buffer = ptr_logger_buffer->next_buffer)
-    {
-        if (ptr_logger_buffer->log_file && ptr_logger_buffer->flush_needed)
-        {
-            if (weechat_logger_plugin->debug >= 2)
-            {
-                weechat_printf_tags (NULL,
-                                     "no_log",
-                                     "%s: flush file %s",
-                                     LOGGER_PLUGIN_NAME,
-                                     ptr_logger_buffer->log_filename);
-            }
-            fflush (ptr_logger_buffer->log_file);
-            ptr_logger_buffer->flush_needed = 0;
-        }
-    }
+    logger_flush ();
 
     return WEECHAT_RC_OK;
 }
@@ -1330,12 +1319,14 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
                           N_("logger plugin configuration"),
                           N_("list"
                              " || set <level>"
+                             " || flush"
                              " || disable"),
                           N_("   list: show logging status for opened buffers\n"
                              "    set: set logging level on current buffer\n"
                              "  level: level for messages to be logged (0 = "
                              "logging disabled, 1 = a few messages (most "
                              "important) .. 9 = all messages)\n"
+                             "  flush: write all log files now\n"
                              "disable: disable logging on current buffer (set "
                              "level to 0)\n\n"
                              "Options \"logger.level.*\" and \"logger.mask.*\" "
@@ -1361,6 +1352,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
                              "    /set logger.mask.irc \"$server/$channel.weechatlog\""),
                           "list"
                           " || set 1|2|3|4|5|6|7|8|9"
+                          " || flush"
                           " || disable",
                           &logger_command_cb, NULL);
 

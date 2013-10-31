@@ -57,11 +57,16 @@
 #include "gui-curses.h"
 
 
+#define GUI_WINDOW_MAX_SAVED_STYLES 32
+
+
 int gui_window_current_style_fg;       /* current foreground color          */
 int gui_window_current_style_bg;       /* current background color          */
-int gui_window_current_style_attr;     /* current attributes (bold, ..)     */
 int gui_window_current_color_attr;     /* attr sum of last color(s) used    */
-int gui_window_saved_style[4];         /* current style saved               */
+int gui_window_current_emphasis;       /* 1 if text emphasis is enabled     */
+struct t_gui_window_saved_style gui_window_saved_style[GUI_WINDOW_MAX_SAVED_STYLES];
+                                       /* circular list of saved styles     */
+int gui_window_saved_style_index = 0;  /* index in list of savec styles     */
 
 
 /*
@@ -218,12 +223,28 @@ gui_window_clrtoeol (WINDOW *window)
  */
 
 void
-gui_window_save_style ()
+gui_window_save_style (WINDOW *window)
 {
-    gui_window_saved_style[0] = gui_window_current_style_fg;
-    gui_window_saved_style[1] = gui_window_current_style_bg;
-    gui_window_saved_style[2] = gui_window_current_style_attr;
-    gui_window_saved_style[3] = gui_window_current_color_attr;
+    struct t_gui_window_saved_style *ptr_saved_style;
+    attr_t *ptr_attrs;
+    short *ptr_pair;
+
+    /* get pointer on saved style */
+    ptr_saved_style = &gui_window_saved_style[gui_window_saved_style_index];
+
+    /* save current style */
+    ptr_saved_style->style_fg = gui_window_current_style_fg;
+    ptr_saved_style->style_bg = gui_window_current_style_bg;
+    ptr_saved_style->color_attr = gui_window_current_color_attr;
+    ptr_saved_style->emphasis = gui_window_current_emphasis;
+    ptr_attrs = &ptr_saved_style->attrs;
+    ptr_pair = &ptr_saved_style->pair;
+    wattr_get (window, ptr_attrs, ptr_pair, NULL);
+
+    /* increment style index (circular list) */
+    gui_window_saved_style_index++;
+    if (gui_window_saved_style_index >= GUI_WINDOW_MAX_SAVED_STYLES)
+        gui_window_saved_style_index = 0;
 }
 
 /*
@@ -231,12 +252,30 @@ gui_window_save_style ()
  */
 
 void
-gui_window_restore_style ()
+gui_window_restore_style (WINDOW *window)
 {
-    gui_window_current_style_fg = gui_window_saved_style[0];
-    gui_window_current_style_bg = gui_window_saved_style[1];
-    gui_window_current_style_attr = gui_window_saved_style[2];
-    gui_window_current_color_attr = gui_window_saved_style[3];
+    struct t_gui_window_saved_style *ptr_saved_style;
+
+    /* decrement style index (circular list) */
+    gui_window_saved_style_index--;
+    if (gui_window_saved_style_index < 0)
+        gui_window_saved_style_index = GUI_WINDOW_MAX_SAVED_STYLES - 1;
+
+    /* get pointer on saved style */
+    ptr_saved_style = &gui_window_saved_style[gui_window_saved_style_index];
+
+    /* restore style */
+    gui_window_current_style_fg = ptr_saved_style->style_fg;
+    gui_window_current_style_bg = ptr_saved_style->style_bg;
+    gui_window_current_color_attr = ptr_saved_style->color_attr;
+    gui_window_current_emphasis = ptr_saved_style->emphasis;
+    wattr_set (window, ptr_saved_style->attrs, ptr_saved_style->pair, NULL);
+    /*
+     * for unknown reason, the wattr_set function sometimes
+     * fails to set the color pair under FreeBSD, so we force
+     * it again with wcolor_set
+     */
+    wcolor_set (window, ptr_saved_style->pair, NULL);
 }
 
 /*
@@ -248,7 +287,6 @@ gui_window_reset_style (WINDOW *window, int weechat_color)
 {
     gui_window_current_style_fg = -1;
     gui_window_current_style_bg = -1;
-    gui_window_current_style_attr = 0;
     gui_window_current_color_attr = 0;
 
     wattroff (window, A_BOLD | A_UNDERLINE | A_REVERSE);
@@ -406,11 +444,10 @@ gui_window_set_custom_color_fg (WINDOW *window, int fg)
 void
 gui_window_set_custom_color_bg (WINDOW *window, int bg)
 {
-    int current_attr, current_fg;
+    int current_fg;
 
     if (bg >= 0)
     {
-        current_attr = gui_window_current_style_attr;
         current_fg = gui_window_current_style_fg;
 
         if ((bg > 0) && (bg & GUI_COLOR_EXTENDED_FLAG))
@@ -422,7 +459,6 @@ gui_window_set_custom_color_bg (WINDOW *window, int bg)
         else if ((bg & GUI_COLOR_EXTENDED_MASK) < GUI_CURSES_NUM_WEECHAT_COLORS)
         {
             bg &= GUI_COLOR_EXTENDED_MASK;
-            gui_window_set_color_style (window, current_attr);
             gui_window_set_color (window, current_fg,
                                   (gui_color_term_colors >= 16) ?
                                   gui_weechat_colors[bg].background : gui_weechat_colors[bg].foreground);
@@ -512,6 +548,56 @@ gui_window_set_custom_color_pair (WINDOW *window, int pair)
                                        A_BOLD | A_REVERSE | A_UNDERLINE);
         wattron (window, COLOR_PAIR(pair));
     }
+}
+
+/*
+ * Toggles text emphasis.
+ */
+
+void
+gui_window_toggle_emphasis ()
+{
+    gui_window_current_emphasis ^= 1;
+}
+
+/*
+ * Emphasizes some chars already displayed in a window, either using a color
+ * (from config options), or by doing an exclusive or (XOR) with attributes
+ * (like reverse video).
+ *
+ * It is used for example when searching a string in buffer.
+ */
+
+void
+gui_window_emphasize (WINDOW *window, int x, int y, int count)
+{
+    attr_t attrs, *ptr_attrs;
+    short pair, *ptr_pair;
+
+    if (config_emphasized_attributes == 0)
+    {
+        /* use color for emphasis (from config) */
+        mvwchgat (window, y, x, count,
+                  gui_color[GUI_COLOR_EMPHASIS]->attributes,
+                  gui_color_weechat_get_pair (GUI_COLOR_EMPHASIS), NULL);
+    }
+    else
+    {
+        /* exclusive or (XOR) with attributes */
+        ptr_attrs = &attrs;
+        ptr_pair = &pair;
+        wattr_get (window, ptr_attrs, ptr_pair, NULL);
+        if (config_emphasized_attributes & GUI_COLOR_EXTENDED_BOLD_FLAG)
+            attrs ^= A_BOLD;
+        if (config_emphasized_attributes & GUI_COLOR_EXTENDED_REVERSE_FLAG)
+            attrs ^= A_REVERSE;
+        if (config_emphasized_attributes & GUI_COLOR_EXTENDED_UNDERLINE_FLAG)
+            attrs ^= A_UNDERLINE;
+        mvwchgat (window, y, x, count, attrs, pair, NULL);
+    }
+
+    /* move the cursor after the text (mvwchgat does not move cursor) */
+    wmove (window, y, x + count);
 }
 
 /*
@@ -966,7 +1052,7 @@ gui_window_calculate_pos_size (struct t_gui_window *window)
 void
 gui_window_draw_separators (struct t_gui_window *window)
 {
-    int separator;
+    int separator_char, separator_horizontal, separator_vertical, x, width;
 
     /* remove separators */
     if (GUI_WINDOW_OBJECTS(window)->win_separator_horiz)
@@ -980,33 +1066,39 @@ gui_window_draw_separators (struct t_gui_window *window)
         GUI_WINDOW_OBJECTS(window)->win_separator_vertic = NULL;
     }
 
+    /* check if separators must be displayed */
+    separator_horizontal = (CONFIG_BOOLEAN(config_look_window_separator_horizontal)
+                            && (window->win_y + window->win_height <
+                                gui_window_get_height () - gui_bar_root_get_size (NULL, GUI_BAR_POSITION_BOTTOM) - 1));
+    separator_vertical = (CONFIG_BOOLEAN(config_look_window_separator_vertical)
+                          && (window->win_x > gui_bar_root_get_size (NULL, GUI_BAR_POSITION_LEFT)));
+
     /* create/draw horizontal separator */
-    if (CONFIG_BOOLEAN(config_look_window_separator_horizontal)
-        && (window->win_y + window->win_height <
-            gui_window_get_height () - gui_bar_root_get_size (NULL, GUI_BAR_POSITION_BOTTOM) - 1))
+    if (separator_horizontal)
     {
+        x = (separator_vertical) ? window->win_x - 1 : window->win_x;
+        width = (separator_vertical) ? window->win_width + 1 : window->win_width;
         GUI_WINDOW_OBJECTS(window)->win_separator_horiz = newwin (1,
-                                                                  window->win_width,
+                                                                  width,
                                                                   window->win_y + window->win_height,
-                                                                  window->win_x);
+                                                                  x);
         gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator_horiz,
                                       GUI_COLOR_SEPARATOR);
-        separator = ACS_HLINE;
+        separator_char = ACS_HLINE;
         if (CONFIG_STRING(config_look_separator_horizontal)
             && CONFIG_STRING(config_look_separator_horizontal)[0])
         {
-            separator = utf8_char_int (CONFIG_STRING(config_look_separator_horizontal));
-            if (separator > 127)
-                separator = ACS_VLINE;
+            separator_char = utf8_char_int (CONFIG_STRING(config_look_separator_horizontal));
+            if (separator_char > 127)
+                separator_char = ACS_VLINE;
         }
         mvwhline (GUI_WINDOW_OBJECTS(window)->win_separator_horiz, 0, 0,
-                  separator, window->win_width);
+                  separator_char, width);
         wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
     }
 
     /* create/draw vertical separator */
-    if (CONFIG_BOOLEAN(config_look_window_separator_vertical)
-        && (window->win_x > gui_bar_root_get_size (NULL, GUI_BAR_POSITION_LEFT)))
+    if (separator_vertical)
     {
         GUI_WINDOW_OBJECTS(window)->win_separator_vertic = newwin (window->win_height,
                                                                    1,
@@ -1014,16 +1106,16 @@ gui_window_draw_separators (struct t_gui_window *window)
                                                                    window->win_x - 1);
         gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator_vertic,
                                       GUI_COLOR_SEPARATOR);
-        separator = ACS_VLINE;
+        separator_char = ACS_VLINE;
         if (CONFIG_STRING(config_look_separator_vertical)
             && CONFIG_STRING(config_look_separator_vertical)[0])
         {
-            separator = utf8_char_int (CONFIG_STRING(config_look_separator_vertical));
-            if (separator > 127)
-                separator = ACS_VLINE;
+            separator_char = utf8_char_int (CONFIG_STRING(config_look_separator_vertical));
+            if (separator_char > 127)
+                separator_char = ACS_VLINE;
         }
         mvwvline (GUI_WINDOW_OBJECTS(window)->win_separator_vertic, 0, 0,
-                  separator, window->win_height);
+                  separator_char, window->win_height);
         wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
     }
 }
@@ -1089,7 +1181,6 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
             window->scroll->start_line = NULL;
             window->scroll->start_line_pos = 0;
             window->scroll->scrolling = 0;
-            window->scroll->reset_allowed = 1;
         }
         if (!gui_buffers_visited_frozen)
         {
@@ -1103,7 +1194,12 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
                 window->buffer->lines->last_read_line = window->buffer->lines->last_line;
                 window->buffer->lines->first_line_not_read = 0;
             }
-            if (buffer->lines->last_read_line == buffer->lines->last_line)
+            /*
+             * if there is no line displayed after last read line,
+             * then remove the read marker
+             */
+            if (buffer->lines->last_read_line
+                && !gui_line_get_next_displayed (buffer->lines->last_read_line))
             {
                 buffer->lines->last_read_line = NULL;
                 buffer->lines->first_line_not_read = 0;
@@ -1246,7 +1342,6 @@ gui_window_page_up (struct t_gui_window *window)
                                               (window->scroll->start_line) ?
                                               (-1) * (num_lines) :
                                               (-1) * (num_lines + window->win_chat_height - 1));
-                window->scroll->reset_allowed = 1;
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
             }
             break;
@@ -1289,7 +1384,8 @@ gui_window_page_down (struct t_gui_window *window)
     switch (window->buffer->type)
     {
         case GUI_BUFFER_TYPE_FORMATTED:
-            if (window->scroll->start_line)
+            if (window->scroll->start_line
+                && (window->scroll->start_line_pos >= 0))
             {
                 gui_chat_calculate_line_diff (window, &window->scroll->start_line,
                                               &window->scroll->start_line_pos,
@@ -1299,13 +1395,12 @@ gui_window_page_down (struct t_gui_window *window)
                 ptr_line = window->scroll->start_line;
                 line_pos = window->scroll->start_line_pos;
                 gui_chat_calculate_line_diff (window, &ptr_line, &line_pos,
-                                              window->win_chat_height - 1);
+                                              window->win_chat_height);
                 if (!ptr_line)
                 {
                     window->scroll->start_line = NULL;
                     window->scroll->start_line_pos = 0;
                 }
-                window->scroll->reset_allowed = 1;
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
             }
             break;
@@ -1344,7 +1439,6 @@ gui_window_scroll_up (struct t_gui_window *window)
                                               (-1) * CONFIG_INTEGER(config_look_scroll_amount) :
                                               (-1) * ( (window->win_chat_height - 1) +
                                                        CONFIG_INTEGER(config_look_scroll_amount)));
-                window->scroll->reset_allowed = 1;
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
             }
             break;
@@ -1380,7 +1474,8 @@ gui_window_scroll_down (struct t_gui_window *window)
     switch (window->buffer->type)
     {
         case GUI_BUFFER_TYPE_FORMATTED:
-            if (window->scroll->start_line)
+            if (window->scroll->start_line
+                && (window->scroll->start_line_pos >= 0))
             {
                 gui_chat_calculate_line_diff (window, &window->scroll->start_line,
                                               &window->scroll->start_line_pos,
@@ -1390,14 +1485,13 @@ gui_window_scroll_down (struct t_gui_window *window)
                 ptr_line = window->scroll->start_line;
                 line_pos = window->scroll->start_line_pos;
                 gui_chat_calculate_line_diff (window, &ptr_line, &line_pos,
-                                              window->win_chat_height - 1);
+                                              window->win_chat_height);
 
                 if (!ptr_line)
                 {
                     window->scroll->start_line = NULL;
                     window->scroll->start_line_pos = 0;
                 }
-                window->scroll->reset_allowed = 1;
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
             }
             break;
@@ -1430,7 +1524,6 @@ gui_window_scroll_top (struct t_gui_window *window)
             {
                 window->scroll->start_line = gui_line_get_first_displayed (window->buffer);
                 window->scroll->start_line_pos = 0;
-                window->scroll->reset_allowed = 1;
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
             }
             break;
@@ -1465,7 +1558,6 @@ gui_window_scroll_bottom (struct t_gui_window *window)
         case GUI_BUFFER_TYPE_FORMATTED:
             window->scroll->start_line = NULL;
             window->scroll->start_line_pos = 0;
-            window->scroll->reset_allowed = 1;
             gui_buffer_ask_chat_refresh (window->buffer, 2);
             break;
         case GUI_BUFFER_TYPE_FREE:
@@ -1485,6 +1577,25 @@ gui_window_scroll_bottom (struct t_gui_window *window)
             break;
         case GUI_BUFFER_NUM_TYPES:
             break;
+    }
+}
+
+/*
+ * Scrolls beyond the end of buffer (so that all lines become "hidden" above the
+ * top of window).
+ */
+
+void
+gui_window_scroll_beyond_end (struct t_gui_window *window)
+{
+    if (!gui_init_ok)
+        return;
+
+    if (window->buffer->lines->last_line)
+    {
+        window->scroll->start_line = window->buffer->lines->last_line;
+        window->scroll->start_line_pos = -1;
+        gui_buffer_ask_chat_refresh (window->buffer, 2);
     }
 }
 
@@ -1735,7 +1846,7 @@ gui_window_split_vertical (struct t_gui_window *window, int percentage)
 }
 
 /*
- * Resizes window.
+ * Resizes a window.
  */
 
 void

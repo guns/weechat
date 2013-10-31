@@ -261,6 +261,22 @@ weechat_python_api_ngettext (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+weechat_python_api_strlen_screen (PyObject *self, PyObject *args)
+{
+    char *string;
+    int value;
+
+    API_FUNC(1, "strlen_screen", API_RETURN_INT(0));
+    string = NULL;
+    if (!PyArg_ParseTuple (args, "s", &string))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    value = weechat_strlen_screen (string);
+
+    API_RETURN_INT(value);
+}
+
+static PyObject *
 weechat_python_api_string_match (PyObject *self, PyObject *args)
 {
     char *string, *mask;
@@ -381,14 +397,15 @@ static PyObject *
 weechat_python_api_string_eval_expression (PyObject *self, PyObject *args)
 {
     char *expr, *result;
-    struct t_hashtable *pointers, *extra_vars;
-    PyObject *dict, *dict2, *return_value;
+    struct t_hashtable *pointers, *extra_vars, *options;
+    PyObject *dict, *dict2, *dict3, *return_value;
 
     API_FUNC(1, "string_eval_expression", API_RETURN_EMPTY);
     expr = NULL;
     pointers = NULL;
     extra_vars = NULL;
-    if (!PyArg_ParseTuple (args, "sOO", &expr, &dict, &dict2))
+    options = NULL;
+    if (!PyArg_ParseTuple (args, "sOOO", &expr, &dict, &dict2, &dict3))
         API_WRONG_ARGS(API_RETURN_EMPTY);
     pointers = weechat_python_dict_to_hashtable (dict,
                                                  WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
@@ -398,13 +415,20 @@ weechat_python_api_string_eval_expression (PyObject *self, PyObject *args)
                                                    WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
                                                    WEECHAT_HASHTABLE_STRING,
                                                    WEECHAT_HASHTABLE_STRING);
+    options = weechat_python_dict_to_hashtable (dict3,
+                                                WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                                WEECHAT_HASHTABLE_STRING,
+                                                WEECHAT_HASHTABLE_STRING);
 
-    result = weechat_string_eval_expression (expr, pointers, extra_vars);
+    result = weechat_string_eval_expression (expr, pointers, extra_vars,
+                                             options);
 
     if (pointers)
         weechat_hashtable_free (pointers);
     if (extra_vars)
         weechat_hashtable_free (extra_vars);
+    if (options)
+        weechat_hashtable_free (options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -3911,29 +3935,60 @@ weechat_python_api_bar_item_search (PyObject *self, PyObject *args)
 
 char *
 weechat_python_api_bar_item_build_cb (void *data, struct t_gui_bar_item *item,
-                                      struct t_gui_window *window)
+                                      struct t_gui_window *window,
+                                      struct t_gui_buffer *buffer,
+                                      struct t_hashtable *extra_info)
 {
     struct t_plugin_script_cb *script_callback;
-    void *func_argv[3];
+    void *func_argv[5];
     char empty_arg[1] = { '\0' }, *ret;
 
     script_callback = (struct t_plugin_script_cb *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        func_argv[1] = API_PTR2STR(item);
-        func_argv[2] = API_PTR2STR(window);
+        if (strncmp (script_callback->function, "(extra)", 7) == 0)
+        {
+            /* new callback: data, item, window, buffer, extra_info */
+            func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+            func_argv[1] = API_PTR2STR(item);
+            func_argv[2] = API_PTR2STR(window);
+            func_argv[3] = API_PTR2STR(buffer);
+            func_argv[4] = weechat_python_hashtable_to_dict (extra_info);
 
-        ret = (char *)weechat_python_exec (script_callback->script,
-                                           WEECHAT_SCRIPT_EXEC_STRING,
-                                           script_callback->function,
-                                           "sss", func_argv);
+            ret = (char *)weechat_python_exec (script_callback->script,
+                                               WEECHAT_SCRIPT_EXEC_STRING,
+                                               script_callback->function + 7,
+                                               "ssssO", func_argv);
 
-        if (func_argv[1])
-            free (func_argv[1]);
-        if (func_argv[2])
-            free (func_argv[2]);
+            if (func_argv[1])
+                free (func_argv[1]);
+            if (func_argv[2])
+                free (func_argv[2]);
+            if (func_argv[3])
+                free (func_argv[3]);
+            if (func_argv[4])
+            {
+                Py_XDECREF((PyObject *)func_argv[4]);
+            }
+        }
+        else
+        {
+            /* old callback: data, item, window */
+            func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+            func_argv[1] = API_PTR2STR(item);
+            func_argv[2] = API_PTR2STR(window);
+
+            ret = (char *)weechat_python_exec (script_callback->script,
+                                               WEECHAT_SCRIPT_EXEC_STRING,
+                                               script_callback->function,
+                                               "sss", func_argv);
+
+            if (func_argv[1])
+                free (func_argv[1]);
+            if (func_argv[2])
+                free (func_argv[2]);
+        }
 
         return ret;
     }
@@ -4975,6 +5030,7 @@ PyMethodDef weechat_python_funcs[] =
     API_DEF_FUNC(iconv_from_internal),
     API_DEF_FUNC(gettext),
     API_DEF_FUNC(ngettext),
+    API_DEF_FUNC(strlen_screen),
     API_DEF_FUNC(string_match),
     API_DEF_FUNC(string_has_highlight),
     API_DEF_FUNC(string_has_highlight_regex),

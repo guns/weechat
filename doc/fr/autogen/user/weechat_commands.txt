@@ -1,9 +1,9 @@
 [[command_weechat_away]]
-[command]*`away`* basculer le statut absent::
+[command]*`away`* définir ou supprimer le statut d'absence::
 ........................................
 /away  [-all] [<message>]
 
-   -all: basculer le statut absent sur tous les serveurs connectés
+   -all: définir ou supprimer le statut d'absence sur tous les serveurs connectés
 message: message pour l'absence (si pas de message donné, le statut d'absence est supprimé)
 ........................................
 
@@ -125,12 +125,14 @@ Exemples:
 /color  alias <couleur> <nom>
         unalias <couleur>
         reset
+        -o
 
   alias: ajouter un alias pour une couleur
 unalias: supprimer un alias pour une couleur
 couleur: numéro de couleur (supérieur ou égal à 0, le max dépend du terminal, généralement 63 ou 255)
     nom: nom d'alias pour la couleur (par exemple: "orange")
   reset: réinitialiser toutes les paires de couleurs (requis quand il n'y a plus de paires de couleurs disponibles si la réinitialisation automatique est désactivée, voir l'option weechat.look.color_pairs_auto_reset)
+     -o: envoyer les infos terminal/couleurs sur le tampon courant comme entrée
 
 Sans paramètre, cette commande affiche les couleurs dans un nouveau tampon.
 
@@ -173,7 +175,7 @@ Exemples:
 ........................................
 
 [[command_weechat_debug]]
-[command]*`debug`* contrôle du debug pour le coeur/les extensions::
+[command]*`debug`* contrôle du debug pour le cœur/les extensions::
 ........................................
 /debug  list
         set <extension> <niveau>
@@ -184,7 +186,7 @@ Exemples:
 
      list: lister les extensions avec leur niveau de debug
       set: définir le niveau de debug pour l'extension
-extension: nom de l'extension ("core" pour le coeur de WeeChat)
+extension: nom de l'extension ("core" pour le cœur de WeeChat)
    niveau: niveau de debug pour l'extension
      dump: afficher les variables mémoire WeeChat dans le fichier log (les mêmes messages sont affichés lorsque WeeChat plante)
    buffer: afficher le contenu du tampon en valeurs hexadécimales dans le fichier log
@@ -205,9 +207,10 @@ infolists: afficher des infos sur les infolists
 [command]*`eval`* évaluer une expression et envoyer le résultat au tampon::
 ........................................
 /eval  [-n] <expression>
-       [-n] <expression1> <opérateur> <expression2>
+       [-n] -c <expression1> <opérateur> <expression2>
 
         -n: afficher le résultat sans envoyer au tampon (mode debug)
+        -c: évaluer comme une condition : utiliser les opérateurs et les parenthèses, retourner une valeur booléenne ("0" ou "1")
 expression: expression à évaluer, les variables avec le format ${variable} sont remplacées (voir ci-dessous)
  opérateur: un opérateur logique ou de comparaison :
             - opérateurs logiques :
@@ -230,9 +233,10 @@ Pour forcer une comparaison de chaînes, ajoutez des guillemets autour de chaque
   "50" > "100"  ==> 1
 
 Des variables sont remplacées dans l'expression, en utilisant le format ${variable}, la variable pouvant être, par ordre de priorité :
-  1. le nom d'une option (fichier.section.option)
-  2. le nom d'une variable locale du tampon
-  3. le nom d'un hdata/variable (la valeur est automatiquement convertie en chaîne), par défaut "window" et "buffer" pointent vers la fenêtre et le tampon courants.
+  1. une couleur (format: color:xxx)
+  2. une option (format: fichier.section.option)
+  3. une variable locale du tampon
+  4. un hdata/variable (la valeur est automatiquement convertie en chaîne), par défaut "window" et "buffer" pointent vers la fenêtre et le tampon courants.
 Le format du hdata peut être le suivant :
   hdata.var1.var2...: démarrer avec un hdata (le pointeur doit être connu), et demander les variables l'une après l'autre (d'autres hdata peuvent être suivis)
   hdata[list].var1.var2...: démarrer avec un hdata en utilisant une liste, par exemple :
@@ -241,19 +245,19 @@ Le format du hdata peut être le suivant :
 Pour le nom du hdata et des variables, voir la "Référence API extension", fonction "weechat_hdata_get".
 
 Exemples:
-  /eval -n ${weechat.look.scroll_amount}  ==> 3
-  /eval -n ${window}                      ==> 0x2549aa0
-  /eval -n ${window.buffer}               ==> 0x2549320
-  /eval -n ${window.buffer.full_name}     ==> core.weechat
-  /eval -n ${window.buffer.number}        ==> 1
-  /eval -n ${window.buffer.number} > 2    ==> 0
-  /eval -n ${window.win_width} > 100      ==> 1
-  /eval -n (8 > 12) || (5 > 2)            ==> 1
-  /eval -n (8 > 12) && (5 > 2)            ==> 0
-  /eval -n abcd =~ ^ABC                   ==> 1
-  /eval -n abcd =~ (?-i)^ABC              ==> 0
-  /eval -n abcd =~ (?-i)^abc              ==> 1
-  /eval -n abcd !~ abc                    ==> 0
+  /eval -n ${weechat.look.scroll_amount}   ==> 3
+  /eval -n ${window}                       ==> 0x2549aa0
+  /eval -n ${window.buffer}                ==> 0x2549320
+  /eval -n ${window.buffer.full_name}      ==> core.weechat
+  /eval -n ${window.buffer.number}         ==> 1
+  /eval -n -c ${window.buffer.number} > 2  ==> 0
+  /eval -n -c ${window.win_width} > 100    ==> 1
+  /eval -n -c (8 > 12) || (5 > 2)          ==> 1
+  /eval -n -c (8 > 12) && (5 > 2)          ==> 0
+  /eval -n -c abcd =~ ^ABC                 ==> 1
+  /eval -n -c abcd =~ (?-i)^ABC            ==> 0
+  /eval -n -c abcd =~ (?-i)^abc            ==> 1
+  /eval -n -c abcd !~ abc                  ==> 0
 ........................................
 
 [[command_weechat_filter]]
@@ -344,6 +348,8 @@ liste des actions:
   complete_previous: compléter le mot avec la complétion précédente
   search_text: chercher du texte dans le tampon
   search_switch_case: basculer la casse exacte pour la recherche
+  search_switch_regex: basculer le type de recherche: chaîne/expression régulière
+  search_switch_where: basculer la recherche dans les messages/préfixes
   search_previous: chercher la ligne précédente
   search_next: chercher la ligne suivante
   search_stop: arrêter la recherche
@@ -417,7 +423,7 @@ listdefault: afficher les touches par défaut
    resetall: restaurer les touches aux valeurs par défaut et supprimer TOUTES les touches personnelles (utiliser avec précaution !)
     missing: ajouter les touches manquantes (en utilisant les touches par défaut), pratique après installation d'une nouvelle version de WeeChat
 
-Lors de l'association d'une commande à une touche, il est recommandé d'utiliser la touche alt+k (ou Echap puis k), et puis de presser la touche à associer: cela insère le code de la touche dans la ligne de commande.
+Lors de l'association d'une commande à une touche, il est recommandé d'utiliser la touche alt+k (ou Échap puis k), et puis de presser la touche à associer: cela insère le code de la touche dans la ligne de commande.
 
 Pour le contexte "mouse" (possible aussi pour le contexte "cursor"), la touche a le format: "@zone:touche" ou "@zone1>zone2:touche" où la zone peut être :
           *: n'importe quelle zone à l'écran
@@ -608,6 +614,47 @@ fichier: fichier de configuration à sauvegarder (sans l'extension ".conf")
 Sans paramètre, tous les fichiers (WeeChat et extensions) sont sauvegardés.
 ........................................
 
+[[command_weechat_secure]]
+[command]*`secure`* gestion des données sécurisées (mots de passe ou données privées chiffrés dans le fichier sec.conf)::
+........................................
+/secure  passphrase <phrase de chiffrement>|-delete
+         decrypt <phrase de chiffrement>|-discard
+         set <nom> <valeur>
+         del <nom>
+
+passphrase: modifier la phrase de chiffrement (sans phrase de chiffrement, les données sont stockées en texte brut dans le fichier sec.conf)
+   -delete: supprimer la phrase de chiffrement
+   decrypt: déchiffrer les données toujours chiffrées
+  -discard: jeter toutes les données encore chiffrées
+       set: ajouter ou modifier une donnée sécurisée
+       del: supprimer une donnée sécurisée
+
+Sans paramètre, cette commande affiche les données sécurisées dans un nouveau tampon.
+
+Lorsqu'une phrase de chiffrement est utilisée (données chiffrées), elle est demandée au démarrage de WeeChat.
+Il est possible de définir la variable d'environnement WEECHAT_PASSPHRASE pour éviter la demande (cette même variable est utilisée par WeeChat sur le /upgrade).
+
+Les données sécurisées avec le format ${sec.data.xxx} peuvent être utilisées dans :
+  - le paramètre de ligne de commande "--run-command"
+  - les options weechat.startup.command_{before|after}_plugins
+  - les options de proxy: username, password
+  - les options de serveur irc: autojoin, command, password, sasl_{username|password}
+  - l'option relay.network.password
+  - la commande /eval.
+
+Exemples :
+  définir une phrase de chiffrement :
+    /secure passphrase ceci est ma phrase de chiffrement
+  chiffrer le mot de passe freenode SASL :
+    /secure set freenode motdepasse
+    /set irc.server.freenode.sasl_password "${sec.data.freenode}"
+  chiffrer le mot de passe oftc pour nickserv :
+    /secure set oftc motdepasse
+    /set irc.server.oftc.command "/msg nickserv identify ${sec.data.oftc}"
+  alias pour ghost du pseudo "pseudo" :
+    /alias ghost /eval /msg -server freenode nickserv ghost pseudo ${sec.data.freenode}
+........................................
+
 [[command_weechat_set]]
 [command]*`set`* modifier des options de configuration::
 ........................................
@@ -659,6 +706,7 @@ Exemples:
 /upgrade  [<chemin_vers_binaire>|-quit]
 
 chemin_vers_binaire: chemin vers le binaire WeeChat (par défaut le binaire courant)
+             -dummy: ne rien faire (option utilisée pour éviter une complétion accidentelle avec "-quit")
               -quit: fermer *TOUTES* les connexions, sauver la session et quitter, ce qui rend possible une restauration différée (voir ci-dessous)
 
 Cette commande met à jour et recharge une session de WeeChat qui tourne. Le nouveau binaire WeeChat doit avoir été compilé ou installé via un gestionnaire de paquet avant de lancer cette commande.
@@ -666,10 +714,10 @@ Cette commande met à jour et recharge une session de WeeChat qui tourne. Le nou
 Note: les connexions SSL sont perdues durant la mise à jour, car le rechargement de session SSL n'est pas possible actuellement avec GnuTLS. Il y a une reconnexion automatique après la mise à jour.
 
 Le processus de mise à jour comporte 4 étapes :
-  1. sauvegarder la session pour le coeur et les extensions (tampons, historique, ...)
+  1. sauvegarder la session pour le cœur et les extensions (tampons, historique, ...)
   2. décharger toutes les extensions (les fichiers de configuration (*.conf) sont écrits sur disque)
   3. sauvegarder la configuration WeeChat (weechat.conf)
-  4. exécuter le nouveau binaire WeeChat et recharger la session.<
+  4. exécuter le nouveau binaire WeeChat et recharger la session.
 
 Avec l'option "-quit", le processus est légèrement différent :
   1. fermer *TOUTES* les connexions
@@ -677,7 +725,7 @@ Avec l'option "-quit", le processus est légèrement différent :
   3. décharger les extensions
   4. sauvegarder la configuration WeeChat
   5. quitter WeeChat
-Et plus tard vous pouvez restaurer la session avec la commande: weechat-curses --upgrade
+Et plus tard vous pouvez restaurer la session avec la commande: weechat --upgrade
 IMPORTANT: vous devez restaurer la session avec exactement la même configuration (fichiers *.conf).
 Il est également possible de restaurer la session WeeChat sur une autre machine si vous y copiez le contenu du répertoire "~/.weechat".
 ........................................
@@ -738,7 +786,7 @@ Exemples:
          refresh
          scroll [-window <numéro>] [+/-]<valeur>[s|m|h|d|M|y]
          scroll_horiz [-window <numéro>] [+/-]<valeur>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <numéro>]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_beyond_end|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <numéro>]
          swap [-window <numéro>] [up|down|left|right]
          zoom [-window <numéro>]
 
@@ -765,6 +813,7 @@ Exemples:
   scroll_down: faire défiler de quelques lignes vers le bas
    scroll_top: faire défiler jusqu'au début du tampon
 scroll_bottom: faire défiler jusqu'en bas du tampon
+scroll_beyond_end: faire défiler au-delà de la fin du tampon
 scroll_previous_highlight: faire défiler jusqu'au highlight précédent
 scroll_next_highlight: faire défiler jusqu'au highlight suivant
 scroll_unread: faire défiler jusqu'au marqueur de données non lues

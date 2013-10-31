@@ -180,7 +180,7 @@ gui_filter_buffer (struct t_gui_buffer *buffer,
     }
 
     if (line_data)
-        gui_line_compute_prefix_max_length (line_data->buffer->lines);
+        line_data->buffer->lines->prefix_max_length_refresh = 1;
 
     if (buffer->lines->lines_hidden != lines_hidden)
     {
@@ -527,7 +527,7 @@ gui_filter_hdata_filter_cb (void *data, const char *hdata_name)
 }
 
 /*
- * Add a filter in an infolist.
+ * Adds a filter in an infolist.
  *
  * Returns:
  *   1: OK

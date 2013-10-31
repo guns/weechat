@@ -1,9 +1,10 @@
 [[command_rmodifier_rmodifier]]
-[command]*`rmodifier`* wandelt Schlüsselwörter mit regulären Ausdrücken (regelt die Sichtbarkeit von Texten in WeeChat)::
+[command]*`rmodifier`* wandelt Schlüsselwörter mit regulären Ausdrücken (regelt die Darstellung von Texten in WeeChat)::
 ........................................
 /rmodifier  list|listdefault
             add <name> <modifiers> <groups> <regex>
             del <name>|-all [<name>...]
+            missing
             default -yes
 
        list: zeigt alle rmodifier an
@@ -15,6 +16,7 @@ listdefault: zeigt die Standardeinstellung für rmodifier an
       regex: regulärer Ausdruck (zwischen Groß- und Kleinschreibung wird nicht unterschieden. Um zwischen Groß- und Kleinschreibung zu unterscheiden muss zu Beginn "(?-i)" genutzt werden)
         del: löscht einen rmodifier Eintrag
        -all: löscht alle rmodifiers Einträge
+    missing: fügt fehlende rmodifiers hinzu
     default: setzt die rmodifier auf seine Standardwerte zurück
 
 Beispiele:

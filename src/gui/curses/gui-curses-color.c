@@ -749,6 +749,23 @@ gui_color_buffer_display_timer ()
 }
 
 /*
+ * Put info about terminal and colors in buffer: $TERM, COLORS, COLOR_PAIRS,
+ * can_change_color.
+ */
+
+void
+gui_color_info_term_colors (char *buffer, int size)
+{
+    snprintf (buffer, size,
+              "$TERM=%s  COLORS: %d, COLOR_PAIRS: %d, "
+              "can_change_color: %s",
+              getenv ("TERM"),
+              gui_color_term_colors,
+              gui_color_term_color_pairs,
+              (gui_color_term_can_change_color) ? "yes" : "no");
+}
+
+/*
  * Displays content of color buffer.
  */
 
@@ -774,13 +791,8 @@ gui_color_buffer_display ()
 
     /* display terminal/colors infos */
     y = 0;
-    gui_chat_printf_y (gui_color_buffer, y++,
-                       "$TERM=%s  COLORS: %d, COLOR_PAIRS: %d, "
-                       "can_change_color: %s",
-                       getenv ("TERM"),
-                       gui_color_term_colors,
-                       gui_color_term_color_pairs,
-                       (gui_color_term_can_change_color) ? "yes" : "no");
+    gui_color_info_term_colors (str_line, sizeof (str_line));
+    gui_chat_printf_y (gui_color_buffer, y++, "%s", str_line);
 
     /* display palette of colors */
     y++;
@@ -933,8 +945,7 @@ gui_color_buffer_display ()
         }
 
         /* display palette colors */
-        if (hashtable_get_integer (gui_color_hash_palette_color,
-                                   "items_count") > 0)
+        if (gui_color_hash_palette_color->items_count > 0)
         {
             y++;
             gui_chat_printf_y (gui_color_buffer, y++,
@@ -1423,6 +1434,8 @@ gui_color_init_weechat ()
     gui_color_build (GUI_COLOR_CHAT_NICK_OFFLINE_HIGHLIGHT, CONFIG_COLOR(config_color_chat_nick_offline_highlight), CONFIG_COLOR(config_color_chat_nick_offline_highlight_bg));
     gui_color_build (GUI_COLOR_CHAT_NICK_PREFIX, CONFIG_COLOR(config_color_chat_nick_prefix), CONFIG_COLOR(config_color_chat_bg));
     gui_color_build (GUI_COLOR_CHAT_NICK_SUFFIX, CONFIG_COLOR(config_color_chat_nick_suffix), CONFIG_COLOR(config_color_chat_bg));
+    gui_color_build (GUI_COLOR_EMPHASIS, CONFIG_COLOR(config_color_emphasized), CONFIG_COLOR(config_color_emphasized_bg));
+    gui_color_build (GUI_COLOR_CHAT_DAY_CHANGE, CONFIG_COLOR(config_color_chat_day_change), CONFIG_COLOR(config_color_chat_bg));
 
     /*
      * define old nick colors for compatibility on /upgrade with previous

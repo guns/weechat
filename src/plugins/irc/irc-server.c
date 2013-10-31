@@ -99,8 +99,8 @@ char *irc_server_option_default[IRC_SERVER_NUM_OPTIONS] =
 char *irc_server_casemapping_string[IRC_SERVER_NUM_CASEMAPPING] =
 { "rfc1459", "strict-rfc1459", "ascii" };
 
-char *irc_server_prefix_modes_default = "qaohvu";
-char *irc_server_prefix_chars_default = "~&@%+-";
+char *irc_server_prefix_modes_default = "ov";
+char *irc_server_prefix_chars_default = "@+";
 char *irc_server_chanmodes_default    = "beI,k,l";
 
 const char *irc_server_send_default_tags = NULL;  /* default tags when       */
@@ -317,23 +317,32 @@ irc_server_strncasecmp (struct t_irc_server *server,
 int
 irc_server_sasl_enabled (struct t_irc_server *server)
 {
-    int sasl_mechanism;
-    const char *sasl_username, *sasl_password;
+    int sasl_mechanism, rc;
+    char *sasl_username, *sasl_password;
 
     sasl_mechanism = IRC_SERVER_OPTION_INTEGER(server,
                                                IRC_SERVER_OPTION_SASL_MECHANISM);
-    sasl_username = IRC_SERVER_OPTION_STRING(server,
-                                             IRC_SERVER_OPTION_SASL_USERNAME);
-    sasl_password = IRC_SERVER_OPTION_STRING(server,
-                                             IRC_SERVER_OPTION_SASL_PASSWORD);
+    sasl_username = weechat_string_eval_expression (IRC_SERVER_OPTION_STRING(server,
+                                                                             IRC_SERVER_OPTION_SASL_USERNAME),
+                                                    NULL, NULL, NULL);
+    sasl_password = weechat_string_eval_expression (IRC_SERVER_OPTION_STRING(server,
+                                                                             IRC_SERVER_OPTION_SASL_PASSWORD),
+                                                    NULL, NULL, NULL);
 
     /*
      * SASL is enabled if using mechanism "external"
      * or if both username AND password are set
      */
-    return ((sasl_mechanism == IRC_SASL_MECHANISM_EXTERNAL)
-            || (sasl_username && sasl_username[0]
-                && sasl_password && sasl_password[0])) ? 1 : 0;
+    rc = ((sasl_mechanism == IRC_SASL_MECHANISM_EXTERNAL)
+          || (sasl_username && sasl_username[0]
+              && sasl_password && sasl_password[0])) ? 1 : 0;
+
+    if (sasl_username)
+        free (sasl_username);
+    if (sasl_password)
+        free (sasl_password);
+
+    return rc;
 }
 
 /*
@@ -1022,6 +1031,7 @@ irc_server_alloc_with_url (const char *irc_url)
     char *irc_url2, *pos_server, *pos_nick, *pos_password;
     char *pos_address, *pos_port, *pos_channel, *pos;
     char *server_address, *server_nicks, *server_autojoin;
+    char default_port[16];
     int ipv6, ssl, length;
     struct t_irc_server *ptr_server;
 
@@ -1038,6 +1048,8 @@ irc_server_alloc_with_url (const char *irc_url)
 
     ipv6 = 0;
     ssl = 0;
+    snprintf (default_port, sizeof (default_port),
+              "%d", IRC_SERVER_DEFAULT_PORT);
 
     pos_server = strstr (irc_url2, "://");
     if (!pos_server || !pos_server[3])
@@ -1073,6 +1085,12 @@ irc_server_alloc_with_url (const char *irc_url)
     {
         ipv6 = 1;
         ssl = 1;
+    }
+
+    if (ssl)
+    {
+        snprintf (default_port, sizeof (default_port),
+                  "%d", IRC_SERVER_DEFAULT_PORT_SSL);
     }
 
     /* search for nick, password, address+port */
@@ -1131,15 +1149,14 @@ irc_server_alloc_with_url (const char *irc_url)
         if (pos_address && pos_address[0])
         {
             length = strlen (pos_address) + 1 +
-                ((pos_port) ? strlen (pos_port) : 0) + 1;
+                ((pos_port) ? strlen (pos_port) : 16) + 1;
             server_address = malloc (length);
             if (server_address)
             {
                 snprintf (server_address, length,
-                          "%s%s%s",
+                          "%s/%s",
                           pos_address,
-                          (pos_port && pos_port[0]) ? "/" : "",
-                          (pos_port && pos_port[0]) ? pos_port : "");
+                          (pos_port && pos_port[0]) ? pos_port : default_port);
                 weechat_config_option_set (ptr_server->options[IRC_SERVER_OPTION_ADDRESSES],
                                            server_address,
                                            1);
@@ -1168,9 +1185,11 @@ irc_server_alloc_with_url (const char *irc_url)
             }
         }
         if (pos_password && pos_password[0])
+        {
             weechat_config_option_set (ptr_server->options[IRC_SERVER_OPTION_PASSWORD],
                                        pos_password,
                                        1);
+        }
         weechat_config_option_set (ptr_server->options[IRC_SERVER_OPTION_AUTOCONNECT],
                                    "on",
                                    1);
@@ -3031,16 +3050,21 @@ irc_server_reconnect_schedule (struct t_irc_server *server)
 void
 irc_server_login (struct t_irc_server *server)
 {
-    const char *password, *username, *realname, *capabilities;
-    char *username2;
+    const char *username, *realname, *capabilities;
+    char *password, *username2;
 
-    password = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_PASSWORD);
+    password = weechat_string_eval_expression (IRC_SERVER_OPTION_STRING(server,
+                                                                        IRC_SERVER_OPTION_PASSWORD),
+                                               NULL, NULL, NULL);
     username = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_USERNAME);
     realname = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_REALNAME);
     capabilities = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_CAPABILITIES);
 
     if (password && password[0])
         irc_server_sendf (server, 0, NULL, "PASS %s", password);
+
+    if (password)
+        free (password);
 
     if (!server->nick)
     {
@@ -4027,8 +4051,7 @@ irc_server_disconnect (struct t_irc_server *server, int switch_address,
                         IRC_PLUGIN_NAME);
     }
 
-    if (reconnect)
-        server->current_retry++;
+    server->current_retry = 0;
 
     if (switch_address)
         irc_server_switch_address (server, 0);
@@ -4096,7 +4119,7 @@ void
 irc_server_autojoin_channels (struct t_irc_server *server)
 {
     struct t_irc_channel *ptr_channel;
-    const char *autojoin;
+    char *autojoin;
 
     /* auto-join after disconnection (only rejoins opened channels) */
     if (!server->disable_autojoin && server->reconnect_join && server->channels)
@@ -4128,9 +4151,13 @@ irc_server_autojoin_channels (struct t_irc_server *server)
     else
     {
         /* auto-join when connecting to server for first time */
-        autojoin = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_AUTOJOIN);
+        autojoin = weechat_string_eval_expression (IRC_SERVER_OPTION_STRING(server,
+                                                                            IRC_SERVER_OPTION_AUTOJOIN),
+                                                   NULL, NULL, NULL);
         if (!server->disable_autojoin && autojoin && autojoin[0])
             irc_command_join_server (server, autojoin, 0, 0);
+        if (autojoin)
+            free (autojoin);
     }
 
     server->disable_autojoin = 0;

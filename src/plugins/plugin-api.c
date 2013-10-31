@@ -40,6 +40,7 @@
 #include "../core/wee-hook.h"
 #include "../core/wee-infolist.h"
 #include "../core/wee-input.h"
+#include "../core/wee-proxy.h"
 #include "../core/wee-string.h"
 #include "../core/wee-url.h"
 #include "../core/wee-util.h"
@@ -56,6 +57,7 @@
 #include "../gui/gui-history.h"
 #include "../gui/gui-hotlist.h"
 #include "../gui/gui-key.h"
+#include "../gui/gui-layout.h"
 #include "../gui/gui-line.h"
 #include "../gui/gui-nicklist.h"
 #include "../gui/gui-window.h"
@@ -412,6 +414,8 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     struct t_gui_hotlist *ptr_hotlist;
     struct t_gui_key *ptr_key;
     struct t_weechat_plugin *ptr_plugin;
+    struct t_proxy *ptr_proxy;
+    struct t_gui_layout *ptr_layout;
     int context, number, i;
     char *error;
 
@@ -661,10 +665,14 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "hook") == 0)
     {
+        /* invalid hook pointer ? */
+        if (pointer && !hook_valid (pointer))
+            return NULL;
+
         ptr_infolist = infolist_new ();
         if (ptr_infolist)
         {
-            if (!hook_add_to_infolist (ptr_infolist, arguments))
+            if (!hook_add_to_infolist (ptr_infolist, pointer, arguments))
             {
                 infolist_free (ptr_infolist);
                 return NULL;
@@ -708,6 +716,23 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
                         infolist_free (ptr_infolist);
                         return NULL;
                     }
+                }
+            }
+            return ptr_infolist;
+        }
+    }
+    else if (string_strcasecmp (infolist_name, "layout") == 0)
+    {
+        ptr_infolist = infolist_new ();
+        if (ptr_infolist)
+        {
+            for (ptr_layout = gui_layouts; ptr_layout;
+                 ptr_layout = ptr_layout->next_layout)
+            {
+                if (!gui_layout_add_to_infolist (ptr_infolist,ptr_layout))
+                {
+                    infolist_free (ptr_infolist);
+                    return NULL;
                 }
             }
             return ptr_infolist;
@@ -772,6 +797,45 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
                         || string_match (ptr_plugin->name, arguments, 0))
                     {
                         if (!plugin_add_to_infolist (ptr_infolist, ptr_plugin))
+                        {
+                            infolist_free (ptr_infolist);
+                            return NULL;
+                        }
+                    }
+                }
+                return ptr_infolist;
+            }
+        }
+    }
+    else if (string_strcasecmp (infolist_name, "proxy") == 0)
+    {
+        /* invalid proxy pointer ? */
+        if (pointer && (!proxy_valid (pointer)))
+            return NULL;
+
+        ptr_infolist = infolist_new ();
+        if (ptr_infolist)
+        {
+            if (pointer)
+            {
+                /* build list with only one proxy */
+                if (!proxy_add_to_infolist (ptr_infolist, pointer))
+                {
+                    infolist_free (ptr_infolist);
+                    return NULL;
+                }
+                return ptr_infolist;
+            }
+            else
+            {
+                /* build list with all proxies matching arguments */
+                for (ptr_proxy = weechat_proxies; ptr_proxy;
+                     ptr_proxy = ptr_proxy->next_proxy)
+                {
+                    if (!arguments || !arguments[0]
+                        || string_match (ptr_proxy->name, arguments, 0))
+                    {
+                        if (!proxy_add_to_infolist (ptr_infolist, ptr_proxy))
                         {
                             infolist_free (ptr_infolist);
                             return NULL;
@@ -1094,7 +1158,7 @@ plugin_api_init ()
                    NULL,
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "hook", N_("list of hooks"),
-                   NULL,
+                   N_("hook pointer (optional)"),
                    N_("type,arguments (type is command/timer/.., arguments to "
                       "get only some hooks (can start or end with \"*\" as "
                       "wildcard), both are optional)"),
@@ -1108,6 +1172,10 @@ plugin_api_init ()
                    N_("context (\"default\", \"search\", \"cursor\" or "
                       "\"mouse\") (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
+    hook_infolist (NULL, "layout", N_("list of layouts"),
+                   NULL,
+                   NULL,
+                   &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "nicklist", N_("nicks in nicklist for a buffer"),
                    N_("buffer pointer"),
                    N_("nick_xxx or group_xxx to get only nick/group xxx "
@@ -1120,6 +1188,10 @@ plugin_api_init ()
     hook_infolist (NULL, "plugin", N_("list of plugins"),
                    N_("plugin pointer (optional)"),
                    N_("plugin name (can start or end with \"*\" as wildcard) (optional)"),
+                   &plugin_api_infolist_get_internal, NULL);
+    hook_infolist (NULL, "proxy", N_("list of proxies"),
+                   N_("proxy pointer (optional)"),
+                   N_("proxy name (can start or end with \"*\" as wildcard) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "url_options", N_("options for URL"),
                    NULL,
@@ -1159,6 +1231,12 @@ plugin_api_init ()
                 &gui_buffer_hdata_input_undo_cb, NULL);
     hook_hdata (NULL, "key", N_("a key (keyboard shortcut)"),
                 &gui_key_hdata_key_cb, NULL);
+    hook_hdata (NULL, "layout", N_("layout"),
+                &gui_layout_hdata_layout_cb, NULL);
+    hook_hdata (NULL, "layout_buffer", N_("buffer layout"),
+                &gui_layout_hdata_layout_buffer_cb, NULL);
+    hook_hdata (NULL, "layout_window", N_("window layout"),
+                &gui_layout_hdata_layout_window_cb, NULL);
     hook_hdata (NULL, "lines", N_("structure with lines"),
                 &gui_line_hdata_lines_cb, NULL);
     hook_hdata (NULL, "line", N_("structure with one line"),
@@ -1171,6 +1249,8 @@ plugin_api_init ()
                 &gui_nicklist_hdata_nick_cb, NULL);
     hook_hdata (NULL, "plugin", N_("plugin"),
                 &plugin_hdata_plugin_cb, NULL);
+    hook_hdata (NULL, "proxy", N_("proxy"),
+                &proxy_hdata_proxy_cb, NULL);
     hook_hdata (NULL, "window", N_("window"),
                 &gui_window_hdata_window_cb, NULL);
     hook_hdata (NULL, "window_scroll", N_("scroll info in window"),

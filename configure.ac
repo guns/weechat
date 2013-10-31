@@ -24,8 +24,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(WeeChat, 0.4.1, flashcode@flashtux.org)
-AC_CONFIG_SRCDIR([configure.in])
+AC_INIT(WeeChat, 0.4.2, flashcode@flashtux.org)
+AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE
 LICENSE="GPL3"
@@ -34,6 +34,7 @@ LICENSE="GPL3"
 AC_PROG_CC
 AC_PROG_MAKE_SET
 AC_GNU_SOURCE
+AC_PROG_LN_S
 AM_PROG_LIBTOOL
 
 # Files to generate
@@ -52,15 +53,12 @@ netbsd*)
 solaris*)
         LDFLAGS="$LDFLAGS -lsocket -lxnet"
         ;;
-cygwin*)
-        LDFLAGS="$LDFLAGS -no-undefined"
-        ;;
 esac
 
 # Gettext
-ALL_LINGUAS="fr es cs hu de ru pl it ja pt_BR"
+ALL_LINGUAS="fr es cs hu de ru pl it ja pt_BR tr"
 AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION([0.15])
+AM_GNU_GETTEXT_VERSION([0.18])
 
 # Checks for libraries
 AC_CHECK_LIB(ncurses, initscr, LIBNCURSES_FOUND=1, LIBNCURSES_FOUND=0)
@@ -104,7 +102,6 @@ AH_VERBATIM([HAVE_EAT_NEWLINE_GLITCH], [#undef HAVE_EAT_NEWLINE_GLITCH])
 AH_VERBATIM([PLUGIN_ALIAS],            [#undef PLUGIN_ALIAS])
 AH_VERBATIM([PLUGIN_ASPELL],           [#undef PLUGIN_ASPELL])
 AH_VERBATIM([PLUGIN_CHARSET],          [#undef PLUGIN_CHARSET])
-AH_VERBATIM([PLUGIN_DEMO],             [#undef PLUGIN_DEMO])
 AH_VERBATIM([PLUGIN_FIFO],             [#undef PLUGIN_FIFO])
 AH_VERBATIM([PLUGIN_IRC],              [#undef PLUGIN_IRC])
 AH_VERBATIM([PLUGIN_LOGGER],           [#undef PLUGIN_LOGGER])
@@ -118,8 +115,10 @@ AH_VERBATIM([PLUGIN_LUA],              [#undef PLUGIN_LUA])
 AH_VERBATIM([PLUGIN_TCL],              [#undef PLUGIN_TCL])
 AH_VERBATIM([PLUGIN_GUILE],            [#undef PLUGIN_GUILE])
 AH_VERBATIM([PLUGIN_XFER],             [#undef PLUGIN_XFER])
+AH_VERBATIM([MAN],                     [#undef MAN])
 AH_VERBATIM([DOC],                     [#undef DOC])
 AH_VERBATIM([WEECHAT_HOME],            [#define WEECHAT_HOME "~/.weechat"])
+AH_VERBATIM([CA_FILE],                 [#define CA_FILE "/etc/ssl/certs/ca-certificates.crt"])
 
 # Arguments for ./configure
 
@@ -128,8 +127,8 @@ AC_ARG_ENABLE(gnutls,       [  --disable-gnutls        turn off gnutls support (
 AC_ARG_ENABLE(largefile,    [  --disable-largefile     turn off Large File Support (default=on)],enable_largefile=$enableval,enable_largefile=yes)
 AC_ARG_ENABLE(alias,        [  --disable-alias         turn off Alias plugin (default=compiled)],enable_alias=$enableval,enable_alias=yes)
 AC_ARG_ENABLE(aspell,       [  --disable-aspell        turn off Aspell plugin (default=compiled)],enable_aspell=$enableval,enable_aspell=yes)
+AC_ARG_ENABLE(enchant,      [  --enable-enchant        turn on Enchant lib for Aspell plugin (default=off)],enable_enchant=$enableval,enable_enchant=no)
 AC_ARG_ENABLE(charset,      [  --disable-charset       turn off Charset plugin (default=compiled if found)],enable_charset=$enableval,enable_charset=yes)
-AC_ARG_ENABLE(demo,         [  --enable-demo           turn on Demo plugin (default=off)],enable_demo=$enableval,enable_demo=no)
 AC_ARG_ENABLE(fifo,         [  --disable-fifo          turn off Fifo plugin (default=compiled)],enable_fifo=$enableval,enable_fifo=yes)
 AC_ARG_ENABLE(irc,          [  --disable-irc           turn off IRC plugin (default=compiled)],enable_irc=$enableval,enable_irc=yes)
 AC_ARG_ENABLE(logger,       [  --disable-logger        turn off Logger plugin (default=compiled)],enable_logger=$enableval,enable_logger=yes)
@@ -149,18 +148,37 @@ AC_ARG_WITH(lua-inc,        [  --with-lua-inc=DIR,     lua include files are in 
 AC_ARG_WITH(lua-lib,        [  --with-lua-lib=DIR,     lua library files are in DIR (default=autodetect)],lua_lib=$withval,lua_lib='')
 AC_ARG_WITH(lua-suffix,     [  --with-lua-suffix=ARG   lua is suffixed with ARG (default=autodetect)],lua_suffix=$withval,lua_suffix='')
 AC_ARG_WITH(tclconfig,      [  --with-tclconfig=DIR    directory containing tcl configuration (tclConfig.sh)],tclconfig=$withval,tclconfig='')
-AC_ARG_ENABLE(doc,          [  --disable-doc           turn off documentation (default=built)],enable_doc=$enableval,enable_doc=yes)
+AC_ARG_ENABLE(man,          [  --enable-man            turn on build of man page (default=not built)],enable_man=$enableval,enable_man=no)
+AC_ARG_ENABLE(doc,          [  --enable-doc            turn on build of documentation (default=not built)],enable_doc=$enableval,enable_doc=no)
 AC_ARG_WITH(debug,          [  --with-debug            debugging: 0=no debug, 1=debug compilation (default=1)],debug=$withval,debug=1)
 
 AC_ARG_VAR(WEECHAT_HOME, [WeeChat home directory for config, logs, scripts.. (default is "~/.weechat")])
+AC_ARG_VAR(CA_FILE, [File containing the certificate authorities (default is "/etc/ssl/certs/ca-certificates.crt"). This is the default value of option "weechat.network.gnutls_ca_file".])
 
 if test "x$WEECHAT_HOME" = "x" ; then
     WEECHAT_HOME="~/.weechat"
 fi
 AC_DEFINE_UNQUOTED(WEECHAT_HOME, "$WEECHAT_HOME")
 
+if test "x$CA_FILE" = "x" ; then
+    CA_FILE="/etc/ssl/certs/ca-certificates.crt"
+fi
+AC_DEFINE_UNQUOTED(CA_FILE, "$CA_FILE")
+
 not_asked=""
 not_found=""
+
+# ------------------------------------------------------------------------------
+#                                  pkg-config
+# ------------------------------------------------------------------------------
+
+PKGCONFIG=""
+AC_CHECK_PROGS(PKGCONFIG, pkg-config)
+if test "x$PKGCONFIG" = "x"; then
+    AC_MSG_ERROR([
+*** "pkg-config" couldn't be found on your system.
+*** Try to install it with your software package manager.])
+fi
 
 # ------------------------------------------------------------------------------
 #                                dynamic loader
@@ -275,24 +293,35 @@ fi
 # ---------------------------------- aspell ------------------------------------
 
 if test "x$enable_aspell" = "xyes" ; then
-    ASPELL_CFLAGS=""
-    ASPELL_LFLAGS=""
+    ac_found_enchant_lib="no"
+    if test "x$enable_enchant" = "xyes" ; then
+        #PKG_CHECK_MODULES(ENCHANT, [enchant], [CFLAGS="$CFLAGS -DUSE_ENCHANT"],
+        PKG_CHECK_MODULES(ENCHANT, [enchant], ac_found_enchant_lib="yes", ac_found_enchant_lib="no")
+    fi
+    if test "x$ac_found_enchant_lib" = "xyes" ; then
+        CFLAGS="$CFLAGS -DUSE_ENCHANT"
+        ASPELL_LIB_USED="enchant"
+    else
+        ASPELL_CFLAGS=""
+        ASPELL_LFLAGS=""
 
-    AC_CHECK_HEADER(aspell.h,ac_found_aspell_header="yes",ac_found_aspell_header="no")
-    AC_CHECK_LIB(aspell,new_aspell_speller,ac_found_aspell_lib="yes",ac_found_aspell_lib="no")
+        AC_CHECK_HEADER(aspell.h,ac_found_aspell_header="yes",ac_found_aspell_header="no")
+        AC_CHECK_LIB(aspell,new_aspell_speller,ac_found_aspell_lib="yes",ac_found_aspell_lib="no")
 
-    AC_MSG_CHECKING(for aspell headers and librairies)
-    if test "x$ac_found_aspell_header" = "xno" -o "x$ac_found_aspell_lib" = "xno" ; then
-       AC_MSG_RESULT(no)
-       AC_MSG_WARN([
+        AC_MSG_CHECKING(for aspell headers and librairies)
+        if test "x$ac_found_aspell_header" = "xno" -o "x$ac_found_aspell_lib" = "xno" ; then
+            AC_MSG_RESULT(no)
+            AC_MSG_WARN([
 *** Aspell headers and/or libraries couldn't be found on your system.
 *** Try to install them with your software package manager.
 *** WeeChat will be built without Aspell support.])
-       enable_aspell="no"
-       not_found="$not_found aspell"
-    else
-        AC_MSG_RESULT(yes)
-        ASPELL_LFLAGS="$ASPELL_LFLAGS -laspell"
+            enable_aspell="no"
+            not_found="$not_found aspell"
+        else
+            AC_MSG_RESULT(yes)
+            ASPELL_LFLAGS="$ASPELL_LFLAGS -laspell"
+            ASPELL_LIB_USED="aspell"
+        fi
     fi
 else
     not_asked="$not_asked aspell"
@@ -314,18 +343,6 @@ if test "x$enable_charset" = "xyes" ; then
     AC_DEFINE(PLUGIN_CHARSET)
 else
     not_asked="$not_asked charset"
-fi
-
-# ---------------------------------- demo --------------------------------------
-
-if test "x$enable_demo" = "xyes" ; then
-    DEMO_CFLAGS=""
-    DEMO_LFLAGS=""
-    AC_SUBST(DEMO_CFLAGS)
-    AC_SUBST(DEMO_LFLAGS)
-    AC_DEFINE(PLUGIN_DEMO)
-else
-    not_asked="$not_asked demo"
 fi
 
 # ---------------------------------- fifo --------------------------------------
@@ -482,6 +499,9 @@ if test "x$enable_python" = "xyes" ; then
                    PYTHON_LFLAGS="-L$PYTHON_LIB $PYTHON_LFLAGS"
                    AC_MSG_RESULT(found)
                 elif test -r "$PYTHON_LIB/libpython$PYTHON_VERSION.a"; then
+                   PYTHON_LFLAGS="-L$PYTHON_LIB $PYTHON_LFLAGS"
+                   AC_MSG_RESULT(found)
+                elif test -r "$PYTHON_LIB/libpython$PYTHON_VERSION.dll.a"; then
                    PYTHON_LFLAGS="-L$PYTHON_LIB $PYTHON_LFLAGS"
                    AC_MSG_RESULT(found)
                 elif test -r "$PYTHON_SYSPREFIX/lib/libpython$PYTHON_VERSION.so"; then
@@ -933,44 +953,68 @@ AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LFLAGS)
 
 # ------------------------------------------------------------------------------
-#                               documentation
+#                           man page / documentation
 # ------------------------------------------------------------------------------
 
+msg_man=""
 msg_doc=""
 
-if test "x$enable_doc" = "xyes" ; then
+if test "x$enable_man" = "xno"; then
+    not_asked="$not_asked man"
+fi
+if test "x$enable_doc" = "xno"; then
+    not_asked="$not_asked doc"
+fi
+
+if test "x$enable_man" = "xyes" -o "x$enable_doc" = "xyes"; then
     DOC_ASCIIDOC8=""
     AC_CHECK_PROGS(ASCIIDOC, [asciidoc])
+    AC_CHECK_PROGS(A2X, [a2x])
     AC_CHECK_PROGS(SOURCEHIGHLIGHT, [source-highlight])
-    if test -n "$SOURCEHIGHLIGHT" -a -n "$ASCIIDOC"; then
+    if test -z "$A2X"; then
+        not_found="$not_found a2x(from asciidoc)"
+    fi
+    if test -z "$SOURCEHIGHLIGHT"; then
+        not_found="$not_found source-highlight(needed by asciidoc)"
+    fi
+    if test -n "$ASCIIDOC"; then
         AC_MSG_CHECKING([for asciidoc version])
         asciidoc_version=`$ASCIIDOC --version 2>/dev/null`
         case "${asciidoc_version}" in
         asciidoc' '8*)
                 DOC_ASCIIDOC8="yes"
                 AC_MSG_RESULT([${asciidoc_version}])
-                msg_doc="asciidoc(with source-highlight) $msg_doc"
-                AC_DEFINE(DOC)
+                if test "x$enable_man" = "xyes"; then
+                    if test -n "$A2X"; then
+                        msg_man="asciidoc(with a2x) $msg_man"
+                        AC_DEFINE(MAN)
+                    else
+                        enable_man="no"
+                    fi
+                fi
+                if test "x$enable_doc" = "xyes"; then
+                    if test -n "$SOURCEHIGHLIGHT"; then
+                        msg_doc="asciidoc(with source-highlight) $msg_doc"
+                        AC_DEFINE(DOC)
+                    else
+                        enable_doc="no"
+                    fi
+                fi
                 ;;
         *)
                 AC_MSG_RESULT([${asciidoc_version} (too old)])
                 not_found="$not_found asciidoc"
+                enable_man="no"
+                enable_doc="no"
                 ;;
         esac
     else
+        not_found="$not_found asciidoc"
+        enable_man="no"
         enable_doc="no"
     fi
-    if test -z "$ASCIIDOC"; then
-        not_found="$not_found asciidoc"
-    fi
-    if test -z "$SOURCEHIGHLIGHT"; then
-        not_found="$not_found source-highlight(needed by asciidoc)"
-    fi
-    AC_SUBST(DOC_ASCIIDOC8)
     AC_SUBST(ASCIIDOC)
-else
-    not_asked="$not_asked doc"
-    msg_doc=""
+    AC_SUBST(A2X)
 fi
 
 # ------------------------------------------------------------------------------
@@ -1056,7 +1100,6 @@ AM_CONDITIONAL(GUI_NCURSES,             test "$enable_ncurses" = "yes")
 AM_CONDITIONAL(PLUGIN_ALIAS,            test "$enable_alias" = "yes")
 AM_CONDITIONAL(PLUGIN_ASPELL,           test "$enable_aspell" = "yes")
 AM_CONDITIONAL(PLUGIN_CHARSET,          test "$enable_charset" = "yes")
-AM_CONDITIONAL(PLUGIN_DEMO,             test "$enable_demo" = "yes")
 AM_CONDITIONAL(PLUGIN_FIFO,             test "$enable_fifo" = "yes")
 AM_CONDITIONAL(PLUGIN_IRC,              test "$enable_irc" = "yes")
 AM_CONDITIONAL(PLUGIN_LOGGER,           test "$enable_logger" = "yes")
@@ -1070,6 +1113,7 @@ AM_CONDITIONAL(PLUGIN_LUA,              test "$enable_lua" = "yes")
 AM_CONDITIONAL(PLUGIN_TCL,              test "$enable_tcl" = "yes")
 AM_CONDITIONAL(PLUGIN_GUILE,            test "$enable_guile" = "yes")
 AM_CONDITIONAL(PLUGIN_XFER,             test "$enable_xfer" = "yes")
+AM_CONDITIONAL(MAN,                     test "$enable_man" = "yes")
 AM_CONDITIONAL(DOC,                     test "$enable_doc" = "yes")
 
 AC_OUTPUT([Makefile
@@ -1088,7 +1132,6 @@ AC_OUTPUT([Makefile
            src/plugins/alias/Makefile
            src/plugins/aspell/Makefile
            src/plugins/charset/Makefile
-           src/plugins/demo/Makefile
            src/plugins/fifo/Makefile
            src/plugins/irc/Makefile
            src/plugins/logger/Makefile
@@ -1127,13 +1170,10 @@ if test "x$enable_alias" = "xyes"; then
     listplugins="$listplugins alias"
 fi
 if test "x$enable_aspell" = "xyes"; then
-    listplugins="$listplugins aspell"
+    listplugins="$listplugins aspell($ASPELL_LIB_USED)"
 fi
 if test "x$enable_charset" = "xyes"; then
     listplugins="$listplugins charset"
-fi
-if test "x$enable_demo" = "xyes"; then
-    listplugins="$listplugins demo"
 fi
 if test "x$enable_fifo" = "xyes"; then
     listplugins="$listplugins fifo"
@@ -1194,6 +1234,11 @@ if test "x$debug" != "x0"; then
     msg_debug="yes"
 fi
 
+if test "x$msg_man" = "x"; then
+    msg_man="no"
+else
+    msg_man="yes: $msg_man"
+fi
 if test "x$msg_doc" = "x"; then
     msg_doc="no"
 else
@@ -1202,11 +1247,13 @@ fi
 
 echo ""
 echo "Enabled features:"
-echo "   Interfaces........... :$listgui"
-echo "   Plugins.............. :$listplugins"
-echo "   Optional features.... :$listoptional"
-echo "   Compile with debug... : $msg_debug"
-echo "   Documentation........ : $msg_doc"
+echo "   Interfaces............. :$listgui"
+echo "   Plugins................ :$listplugins"
+echo "   Optional features...... :$listoptional"
+echo "   Compile with debug..... : $msg_debug"
+echo "   Man page............... : $msg_man"
+echo "   Documentation.......... : $msg_doc"
+echo "   Certificate authorities : ${CA_FILE}"
 
 if test "x$not_asked" != "x" || test "x$not_found" != "x"; then
     echo ""

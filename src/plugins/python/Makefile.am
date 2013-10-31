@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(PYTHON_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(PYTHON_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -27,7 +27,7 @@ python_la_SOURCES = weechat-python.c \
                     weechat-python.h \
                     weechat-python-api.c \
                     weechat-python-api.h
-python_la_LDFLAGS = -module
+python_la_LDFLAGS = -module -no-undefined
 python_la_LIBADD  = ../lib_weechat_plugins_scripts.la $(PYTHON_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

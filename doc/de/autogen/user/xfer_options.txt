@@ -98,6 +98,11 @@
 ** Typ: integer
 ** Werte: 0 .. 256 (Standardwert: `20`)
 
+* [[option_xfer.look.pv_tags]] *xfer.look.pv_tags*
+** Beschreibung: `durch Kommata getrennte Liste von Schlagwörtern die für private Nachrichten genutzt werden sollen. Zum Beispiel: "notify_message", "notify_private" oder "notify_highlight"`
+** Typ: Zeichenkette
+** Werte: beliebige Zeichenkette (Standardwert: `"notify_private"`)
+
 * [[option_xfer.network.blocksize]] *xfer.network.blocksize*
 ** Beschreibung: `Blockgröße für versendete Pakete (in Bytes)`
 ** Typ: integer

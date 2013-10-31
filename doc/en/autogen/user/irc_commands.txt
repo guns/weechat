@@ -14,7 +14,7 @@ target: server
  -current: execute command for channels of current server only
  -exclude: exclude some channels ('*' is allowed at beginning or end of channel name, to exclude many channels)
   command: command to execute
-arguments: arguments for command
+arguments: arguments for command (special variables $nick, $channel and $server are replaced by their value)
 
 Examples:
   execute '/me is testing' on all channels:
@@ -32,13 +32,15 @@ Examples:
 
  -exclude: exclude some servers ('*' is allowed at beginning or end of server name, to exclude many servers)
   command: command to execute
-arguments: arguments for command
+arguments: arguments for command (special variables $nick, $channel and $server are replaced by their value)
 
 Examples:
   change nick on all servers:
     /allserv nick newnick
   set away on all servers:
     /allserv away I'm away
+  do a whois on my nick on all servers:
+    /allserv whois $nick
 ........................................
 
 [[command_irc_ban]]
@@ -119,18 +121,29 @@ Examples:
 [command]*`dehalfop`* remove channel half-operator status from nick(s)::
 ........................................
 /dehalfop  <nick> [<nick>...]
+
+nick: nick or mask (can start or end with "*" as wildcard)
+   *: remove channel half-operator status from everybody on channel except yourself
 ........................................
 
 [[command_irc_deop]]
 [command]*`deop`* remove channel operator status from nick(s)::
 ........................................
 /deop  <nick> [<nick>...]
+       * -yes
+
+nick: nick or mask (can start or end with "*" as wildcard)
+   *: remove channel operator status from everybody on channel except yourself
 ........................................
 
 [[command_irc_devoice]]
 [command]*`devoice`* remove voice from nick(s)::
 ........................................
 /devoice  <nick> [<nick>...]
+          * -yes
+
+nick: nick or mask (can start or end with "*" as wildcard)
+   *: remove voice from everybody on channel
 ........................................
 
 [[command_irc_die]]
@@ -156,6 +169,10 @@ target: server name
 [command]*`halfop`* give channel half-operator status to nick(s)::
 ........................................
 /halfop  <nick> [<nick>...]
+         * -yes
+
+nick: nick or mask (can start or end with "*" as wildcard)
+   *: give channel half-operator status to everybody on channel
 ........................................
 
 [[command_irc_ignore]]
@@ -420,6 +437,10 @@ Examples:
 [command]*`op`* give channel operator status to nick(s)::
 ........................................
 /op  <nick> [<nick>...]
+     * -yes
+
+nick: nick or mask (can start or end with "*" as wildcard)
+   *: give channel operator status to everybody on channel
 ........................................
 
 [[command_irc_oper]]
@@ -461,7 +482,7 @@ daemon2: forward message to this daemon
 [[command_irc_query]]
 [command]*`query`* send a private message to a nick::
 ........................................
-/query  [-server <server>] <nick> [<text>]
+/query  [-server <server>] <nick>[,<nick>...] [<text>]
 
 server: send to this server (internal name)
   nick: nick for private conversation
@@ -717,6 +738,9 @@ server: server name
 [command]*`voice`* give voice to nick(s)::
 ........................................
 /voice  <nick> [<nick>...]
+
+nick: nick or mask (can start or end with "*" as wildcard)
+   *: give voice to everybody on channel
 ........................................
 
 [[command_irc_wallchops]]

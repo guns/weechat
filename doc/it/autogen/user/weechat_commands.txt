@@ -1,9 +1,9 @@
 [[command_weechat_away]]
-[command]*`away`* attiva/disattiva lo stato di assenza::
+[command]*`away`* imposta o elimina lo stato di assenza::
 ........................................
 /away  [-all] [<messaggio>]
 
-     -all: attiva/disattiva lo stato di assenza su tutti i server connessi
+     -all: imposta o elimina lo stato di assenza su tutti i server connessi
 messaggio: messaggio di assenza (se non specificato, lo stato di assenza viene rimosso)
 ........................................
 
@@ -125,12 +125,14 @@ Esempi:
 /color  alias <colore> <nome>
         unalias <colore>
         reset
+        -o
 
   alias: aggiunge un alias per un colore
 unalias: elimina un alias
  colore: numero colore (maggiore o ugale a 0, il massimo dipende dal terminale, di solito 63 o 255)
    nome: nome alias per il colore (ad esempio: "arancione")
   reset: ripristina tutte le coppie di colore (richiesto quando non ci sono più coppie disponibili se il ripristino automatico è disabilitato, consultare l'opzione weechat.look.color_pairs_auto_reset)
+     -o: invia le informazioni sul terminale/colori su un nuovo buffer.
 
 Senza argomento, il comando mostra i colori in un nuovo buffer.
 
@@ -205,55 +207,57 @@ infolists: mostra informazioni sulle liste info
 [command]*`eval`* analizza l'espressione e invia il risultato al buffer::
 ........................................
 /eval  [-n] <espressione>
-       [-n] <espressione1> <operatore> <espressione2>
+       [-n] -c <espressione1> <operatore> <espressione2>
 
-         -n: mostra il risultato senza inviarlo al buffer (modalità debug)
-espressione: espressione da analizzare, le variabili con il formato ${variable} vengono sostituite (vedere sotto)
- operatore: operatore logico o di confronto:
-            - operatori logici:
-                &&  "and" booleano
-                ||  "or" booleano
-            - operatori di confronto:
-                ==  uguale
-                !=  non uguale
-                <=  minore o uguale
-                <   minore
-                >=  maggiore o uguale
-                >   maggiore
-                =~  corrisponde alla regex
-                !~  NON corrisponde alla regex
+        -n: display result without sending it to buffer (debug mode)
+        -c: evaluate as condition: use operators and parentheses, return a boolean value ("0" or "1")
+expression: expression to evaluate, variables with format ${variable} are replaced (see below)
+  operator: a logical or comparison operator:
+            - logical operators:
+                &&  boolean "and"
+                ||  boolean "or"
+            - comparison operators:
+                ==  equal
+                !=  not equal
+                <=  less or equal
+                <   less
+                >=  greater or equal
+                >   greater
+                =~  is matching regex
+                !~  is NOT matching regex
 
-Un'espressione è considerata come "true" se non è NULL, non vuota, e diversa da "0".
-Il confronto viene fatto usando gli interi se le due espressioni sono interi validi.
-Per forzare il confronto stringa, aggiungere un doppio apice all'espressione, ad esempio:
+An expression is considered as "true" if it is not NULL, not empty, and different from "0".
+The comparison is made using integers if the two expressions are valid integers.
+To force a string comparison, add double quotes around each expression, for example:
   50 > 100      ==> 0
   "50" > "100"  ==> 1
 
-Alcune variabili vengono sostituite nell'espressione, usando il formato ${variable}, la variabile può essere, in ordine di priorità :
-  1. il nome di un'opzione (file.sezione.opzione)
-  2. il nome di una variabile locale nel buffer
-  3. un nome/variabile hdata (il valore viene automaticamente convertito in stringa, per default "window" e "buffer" puntano alla finestra/buffer correnti.
-Il formato per hdata può essere uno dei seguenti:
-  hdata.var1.var2...: inizia con un hdata (il puntatore deve essere noto), e richiedere le variabili a seguire (possono seguire altri hdata)
-  hdata[list].var1.var2...: inizia con un hdata usando una lista, ad esempio:
-    ${buffer[gui_buffers].full_name}: nome completo del primo buffer nell'elenco collegato dei buffer
-    ${plugin[weechat_plugins].name}: nome del primo plugin nell'elenco collegato dei plugin
-Per il nome degli hdata e delle variabili, per favore consultare "Referenze API per Plugin", funzione "weechat_hdata_get".
+Some variables are replaced in expression, using the format ${variable}, variable can be, by order of priority :
+  1. a color (format: color:xxx)
+  2. an option (format: file.section.option)
+  3. a local variable in buffer
+  4. a hdata name/variable (the value is automatically converted to string), by default "window" and "buffer" point to current window/buffer.
+Format for hdata can be one of following:
+  hdata.var1.var2...: start with a hdata (pointer must be known), and ask variables one after one (other hdata can be followed)
+  hdata[list].var1.var2...: start with a hdata using a list, for example:
+    ${buffer[gui_buffers].full_name}: full name of first buffer in linked list of buffers
+    ${plugin[weechat_plugins].name}: name of first plugin in linked list of plugins
+For name of hdata and variables, please look at "Plugin API reference", function "weechat_hdata_get".
 
-Esempi:
-  /eval -n ${weechat.look.scroll_amount}  ==> 3
-  /eval -n ${window}                      ==> 0x2549aa0
-  /eval -n ${window.buffer}               ==> 0x2549320
-  /eval -n ${window.buffer.full_name}     ==> core.weechat
-  /eval -n ${window.buffer.number}        ==> 1
-  /eval -n ${window.buffer.number} > 2    ==> 0
-  /eval -n ${window.win_width} > 100      ==> 1
-  /eval -n (8 > 12) || (5 > 2)            ==> 1
-  /eval -n (8 > 12) && (5 > 2)            ==> 0
-  /eval -n abcd =~ ^ABC                   ==> 1
-  /eval -n abcd =~ (?-i)^ABC              ==> 0
-  /eval -n abcd =~ (?-i)^abc              ==> 1
-  /eval -n abcd !~ abc                    ==> 0
+Examples:
+  /eval -n ${weechat.look.scroll_amount}   ==> 3
+  /eval -n ${window}                       ==> 0x2549aa0
+  /eval -n ${window.buffer}                ==> 0x2549320
+  /eval -n ${window.buffer.full_name}      ==> core.weechat
+  /eval -n ${window.buffer.number}         ==> 1
+  /eval -n -c ${window.buffer.number} > 2  ==> 0
+  /eval -n -c ${window.win_width} > 100    ==> 1
+  /eval -n -c (8 > 12) || (5 > 2)          ==> 1
+  /eval -n -c (8 > 12) && (5 > 2)          ==> 0
+  /eval -n -c abcd =~ ^ABC                 ==> 1
+  /eval -n -c abcd =~ (?-i)^ABC            ==> 0
+  /eval -n -c abcd =~ (?-i)^abc            ==> 1
+  /eval -n -c abcd !~ abc                  ==> 0
 ........................................
 
 [[command_weechat_filter]]
@@ -344,6 +348,8 @@ list of actions:
   complete_previous: complete word with previous completion
   search_text: search text in buffer
   search_switch_case: switch exact case for search
+  search_switch_regex: switch search type: string/regular expression
+  search_switch_where: switch search in messages/prefixes
   search_previous: search previous line
   search_next: search next line
   search_stop: stop search
@@ -608,6 +614,47 @@ file: file di configurazione da salvare (senza estensione ".conf")
 Senza argomento, vengono salvati tutti i file (WeeChat e plugin).
 ........................................
 
+[[command_weechat_secure]]
+[command]*`secure`* gestione dei dati sensibili (password o file privati cifrati nel file sec.conf)::
+........................................
+/secure  passphrase <chiave di cifratura>|-delete
+         decrypt <chiave di cifratura|-discard
+         set <nome> <valore>
+         del <nome>
+
+passphrase: cambia la chiave di cifratura (senza la chiave di cifratura, i dati vengono salvati in chiaron nel file sec.conf)
+   -delete: elimina la chiave di cifratura
+   decrypt: decifra tutti i dati ancora cifrati (accade solo se la chiave di cifratura non è stata digitata all'avvio)
+  -discard: scarta tutti i dati ancora cifrati
+       set: aggiunge o modifica dati sicuri
+       del: elimina dati sicuri
+
+Senza argomento, questo comando mostra i dati messi al sicuro in un nuovo buffer.
+
+Quando viene usata una chiave di cifratura (dati cifrati), questa viene richiesta da WeeChat all'avvio.
+È possibile impostare la variabile d'ambiente "WEECHAT_PASSPHRASE" per prevenire il prompt (questa stessa variabile viene usata da WeeChat con il comando /upgrade).
+
+I dati messi al sicuro con il formato ${sec.data.xxx} possono essere usati in questo modo:
+  - argomento della riga di comando "--run-command"
+  - opzioni weechat.startup.command_{before|after}_plugins
+  - opzioni del proxy: nome utente, password
+  - opzioni del server irc: autojoin, comando, password, sasl_{username|password}
+  - opzione relay.network.password
+  - comando /eval.
+
+Esempi:
+  imposta una chiave di cifratura:
+    /secure passphrase questa è la mia chiave di cifratura
+  cifra la password SASL di freenode:
+    /secure set freenode miapassword
+    /set irc.server.freenode.sasl_password "${sec.data.freenode}"
+  cifra la password di oftc per nickserv:
+    /secure set oftc miapassword
+    /set irc.server.oftc.command "/msg nickserv identify ${sec.data.oftc}"
+  alias per il "ghost" del nick "mionick":
+    /alias ghost /eval /msg -server freenode nickserv ghost mionick ${sec.data.freenode}
+........................................
+
 [[command_weechat_set]]
 [command]*`set`* imposta le opzioni di configurazione::
 ........................................
@@ -659,6 +706,7 @@ Esempi:
 /upgrade  [<path_del_binario>|-quit]
 
 path_to_binary: path to WeeChat binary (default is current binary)
+        -dummy: do nothing (option used to prevent accidental completion with "-quit")
          -quit: close *ALL* connections, save session and quit WeeChat, which makes possible a delayed restoration (see below)
 
 This command upgrades and reloads a running WeeChat session. The new WeeChat binary must have been compiled or installed with a package manager before running this command.
@@ -677,9 +725,9 @@ With option "-quit", the process is slightly different:
   3. unload all plugins
   4. save WeeChat configuration
   5. quit WeeChat
-Then later you can restore session with command: weechat-curses --upgrade
+Then later you can restore session with command: weechat --upgrade
 IMPORTANT: you must restore the session with exactly same configuration (files *.conf).
-It is possible to restore WeeChat session on another machine if you copy the content of directory "~/.weechat"
+It is possible to restore WeeChat session on another machine if you copy the content of directory "~/.weechat".
 ........................................
 
 [[command_weechat_uptime]]
@@ -728,61 +776,62 @@ Esempi:
 [command]*`window`* gestione delle finestre::
 ........................................
 /window  list
-         -1|+1|b#|up|down|left|right [-window <numero>]
-         <numero>
-         splith|splitv [-window <numero>] [<pct>]
-         resize [-window <numero>] [+/-]<pct>
+         -1|+1|b#|up|down|left|right [-window <number>]
+         <number>
+         splith|splitv [-window <number>] [<pct>]
+         resize [-window <number>] [+/-]<pct>
          balance
-         merge [-window <numero>] [all]
-         page_up|page_down [-window <numero>]
+         merge [-window <number>] [all]
+         page_up|page_down [-window <number>]
          refresh
-         scroll [-window <numero>] [+/-]<value>[s|m|h|d|M|y]
-         scroll_horiz [-window <numero>] [+/-]<value>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <numero>]
-         swap [-window <numero>] [up|down|left|right]
-         zoom[-window <numero>]
+         scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]
+         scroll_horiz [-window <number>] [+/-]<value>[%]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_beyond_end|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
+         swap [-window <number>] [up|down|left|right]
+         zoom[-window <number>]
 
-         list: elenca le finestre aperte (senza argomento, questa lista viene visualizzata)
-           -1: salta alla finestra precedente
-           +1: salta alla finestra successiva
-           b#: salta alla finestra successiva che visualizza il buffer numero #
-           up: passa alla finestra superiore a quella corrente
-         down: passa alla finestra inferiore a quella attiva
-         left: passa alla finestra a sinistra
-        right: passa alla finestra a destra
-       numero: numero della finestra (consultare /window list)
-       splith: divide la finestra attiva orizzontalmente
-       splitv: divide la finestra attiva verticalmente
-       resize: ridimensiona finestra, la nuova dimensione è <pct> percentuale della finestra genitore
-      balance: bilancia le dimensioni tutte le finestre
-        merge: unisce la finestra con un'altra (all = mantiente una sola finestra)
-      page_up: scorre di una pagina in alto
-    page_down: scorre di una pagina in basso
-      refresh: aggiorna lo schermo
-       scroll: scorre di un numero di righe (+/-N) o in base al tempo: s=secondi, m=minuti, h=ore, d=giorni, M=mesi, y=anni
- scroll_horiz: scorre orizzontalmente un numero di colonne (+/-N) una percentuale della dimensione della finestra (questo scorrimento è possibile solo sui buffer con contenuto libero)
-    scroll_up: scorre di alcune righe in alto
-  scroll_down: scorre di alcune righe in basso
-   scroll_top: scorre fino all'inizio del buffer
-scroll_bottom: scorre fino alla fine del buffer buffer
-scroll_previous_highlight: passa alla notifica precedente
-    scroll_next_highlight: passa alla notifica successiva
-    	     scroll_unread: passa al segnalibro non letto
-         swap: scambia i buffer di due finestra (con direzione opzionale per la finestra di destinazione)
-         zoom: ingrandimento sulla finestra
+         list: list opened windows (without argument, this list is displayed)
+           -1: jump to previous window
+           +1: jump to next window
+           b#: jump to next window displaying buffer number #
+           up: switch to window above current one
+         down: switch to window below current one
+         left: switch to window on the left
+        right: switch to window on the right
+       number: window number (see /window list)
+       splith: split current window horizontally
+       splitv: split current window vertically
+       resize: resize window size, new size is <pct> percentage of parent window
+      balance: balance the sizes of all windows
+        merge: merge window with another (all = keep only one window)
+      page_up: scroll one page up
+    page_down: scroll one page down
+      refresh: refresh screen
+       scroll: scroll a number of lines (+/-N) or with time: s=seconds, m=minutes, h=hours, d=days, M=months, y=years
+ scroll_horiz: scroll horizontally a number of columns (+/-N) or percentage of window size (this scrolling is possible only on buffers with free content)
+    scroll_up: scroll a few lines up
+  scroll_down: scroll a few lines down
+   scroll_top: scroll to top of buffer
+scroll_bottom: scroll to bottom of buffer
+scroll_beyond_end: scroll beyond the end of buffer
+scroll_previous_highlight: scroll to previous highlight
+scroll_next_highlight: scroll to next highlight
+scroll_unread: scroll to unread marker
+         swap: swap buffers of two windows (with optional direction for target window)
+         zoom: zoom on window
 
-Per splith e splitv, pct è una percentuale che rappresenta la dimensione della nuova finestra, calcolata con la finestra attiva come riferimento per la dimensione. Per esempio 25 vuol dire creare una finestra di dimensione = dimensione_attuale / 4
+For splith and splitv, pct is a percentage which represents size of new window, computed with current window as size reference. For example 25 means create a new window with size = current_size / 4
 
-Esempi:
-  salta alla finestra che visualizza il buffer #1:
+Examples:
+  jump to window displaying buffer #1:
     /window b1
-  scorre di due righe in alto:
+  scroll 2 lines up:
     /window scroll -2
-  scorre all'indietro di due giorni:
+  scroll 2 days up:
     /window scroll -2d
-  scorre all'inizio del giorno attuale:
-     /window scroll -d
-  zoom sulla finestra #2:
+  scroll to beginning of current day:
+    /window scroll -d
+  zoom on window #2:
     /window zoom -window 2
 ........................................
 

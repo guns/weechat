@@ -47,6 +47,10 @@ struct t_weechat_plugin *weechat_aspell_plugin = NULL;
 
 int aspell_enabled = 0;
 
+#ifdef USE_ENCHANT
+EnchantBroker *broker = NULL;
+#endif
+
 /*
  * aspell supported languages, updated on 2012-07-05
  * URL: ftp://ftp.gnu.org/gnu/aspell/dict/0index.html
@@ -410,7 +414,11 @@ weechat_aspell_check_word (struct t_gui_buffer *buffer,
     {
         for (i = 0; speller_buffer->spellers[i]; i++)
         {
+#ifdef USE_ENCHANT
+            if (enchant_dict_check (speller_buffer->spellers[i], word, strlen (word)) == 0)
+#else
             if (aspell_speller_check (speller_buffer->spellers[i], word, -1) == 1)
+#endif
                 return 1;
         }
     }
@@ -434,8 +442,13 @@ weechat_aspell_get_suggestions (struct t_aspell_speller_buffer *speller_buffer,
     int i, size, max_suggestions, num_suggestions;
     char *suggestions, *suggestions2;
     const char *ptr_word;
+#ifdef USE_ENCHANT
+    char **elements;
+    size_t num_elements;
+#else
     const AspellWordList *list;
     AspellStringEnumeration *elements;
+#endif
 
     max_suggestions = weechat_config_integer (weechat_aspell_config_check_suggestions);
     if (max_suggestions < 0)
@@ -451,6 +464,37 @@ weechat_aspell_get_suggestions (struct t_aspell_speller_buffer *speller_buffer,
     {
         for (i = 0; speller_buffer->spellers[i]; i++)
         {
+#ifdef USE_ENCHANT
+            elements = enchant_dict_suggest (speller_buffer->spellers[i], word,
+                                             -1, &num_elements);
+            if (elements)
+            {
+                if (num_elements > 0)
+                {
+                    num_suggestions = 0;
+                    while ((ptr_word = elements[num_suggestions]) != NULL)
+                    {
+                        size += strlen (ptr_word) + ((suggestions[0]) ? 1 : 0);
+                        suggestions2 = realloc (suggestions, size);
+                        if (!suggestions2)
+                        {
+                            free (suggestions);
+                            enchant_dict_free_string_list (speller_buffer->spellers[i],
+                                                           elements);
+                            return NULL;
+                        }
+                        suggestions = suggestions2;
+                        if (suggestions[0])
+                            strcat (suggestions, (num_suggestions == 0) ? "/" : ",");
+                        strcat (suggestions, ptr_word);
+                        num_suggestions++;
+                        if ((max_suggestions >= 0) && (num_suggestions == max_suggestions))
+                            break;
+                    }
+                }
+                enchant_dict_free_string_list (speller_buffer->spellers[i], elements);
+            }
+#else
             list = aspell_speller_suggest (speller_buffer->spellers[i], word, -1);
             if (list)
             {
@@ -476,6 +520,7 @@ weechat_aspell_get_suggestions (struct t_aspell_speller_buffer *speller_buffer,
                 }
                 delete_aspell_string_enumeration (elements);
             }
+#endif
         }
     }
 
@@ -500,14 +545,14 @@ weechat_aspell_modifier_cb (void *data, const char *modifier,
     long unsigned int value;
     struct t_gui_buffer *buffer;
     struct t_aspell_speller_buffer *ptr_speller_buffer;
-    char *result, *ptr_string, *pos_space, *ptr_end, save_end;
+    char *result, *ptr_string, *pos_space, *ptr_end, *ptr_end_valid, save_end;
     char *word_for_suggestions, *old_suggestions, *suggestions;
     char *word_and_suggestions;
     const char *color_normal, *color_error, *ptr_suggestions;
     int utf8_char_int, char_size;
     int length, index_result, length_word, word_ok;
     int length_color_normal, length_color_error, rc;
-    int input_pos, current_pos, word_start_pos, word_end_pos;
+    int input_pos, current_pos, word_start_pos, word_end_pos, word_end_pos_valid;
 
     /* make C compiler happy */
     (void) data;
@@ -576,7 +621,7 @@ weechat_aspell_modifier_cb (void *data, const char *modifier,
 
     color_normal = weechat_color ("bar_fg");
     length_color_normal = strlen (color_normal);
-    color_error = weechat_color (weechat_config_string (weechat_aspell_config_look_color));
+    color_error = weechat_color (weechat_config_string (weechat_aspell_config_color_misspelled));
     length_color_error = strlen (color_error);
 
     length = strlen (string);
@@ -627,11 +672,9 @@ weechat_aspell_modifier_cb (void *data, const char *modifier,
         current_pos = 0;
         while (ptr_string[0])
         {
-            /* find start of word */
+            /* find start of word: it must start with an alphanumeric char */
             utf8_char_int = weechat_utf8_char_int (ptr_string);
-            while ((!iswalnum (utf8_char_int) && (utf8_char_int != '\'')
-                    && (utf8_char_int != '-'))
-                   || iswspace (utf8_char_int))
+            while ((!iswalnum (utf8_char_int)) || iswspace (utf8_char_int))
             {
                 char_size = weechat_utf8_char_size (ptr_string);
                 memcpy (result + index_result, ptr_string, char_size);
@@ -647,19 +690,29 @@ weechat_aspell_modifier_cb (void *data, const char *modifier,
 
             word_start_pos = current_pos;
             word_end_pos = current_pos;
+            word_end_pos_valid = current_pos;
 
-            /* find end of word */
+            /* find end of word: ' and - allowed in word, but not at the end */
+            ptr_end_valid = ptr_string;
             ptr_end = weechat_utf8_next_char (ptr_string);
             utf8_char_int = weechat_utf8_char_int (ptr_end);
             while (iswalnum (utf8_char_int) || (utf8_char_int == '\'')
                    || (utf8_char_int == '-'))
             {
-                ptr_end = weechat_utf8_next_char (ptr_end);
                 word_end_pos++;
+                if (iswalnum (utf8_char_int))
+                {
+                    /* pointer to last alphanumeric char in the word */
+                    ptr_end_valid = ptr_end;
+                    word_end_pos_valid = word_end_pos;
+                }
+                ptr_end = weechat_utf8_next_char (ptr_end);
                 if (!ptr_end[0])
                     break;
                 utf8_char_int = weechat_utf8_char_int (ptr_end);
             }
+            ptr_end = weechat_utf8_next_char (ptr_end_valid);
+            word_end_pos = word_end_pos_valid;
             word_ok = 0;
             if (weechat_aspell_string_is_url (ptr_string))
             {
@@ -876,6 +929,13 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     weechat_plugin = plugin;
 
+#ifdef USE_ENCHANT
+    /* acquire enchant broker */
+    broker = enchant_broker_init ();
+    if (!broker)
+        return WEECHAT_RC_ERROR;
+#endif
+
     if (!weechat_aspell_speller_init ())
         return WEECHAT_RC_ERROR;
 
@@ -925,6 +985,11 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     weechat_aspell_config_free ();
 
     weechat_aspell_speller_end ();
+
+#ifdef USE_ENCHANT
+    /* release enchant broker */
+    enchant_broker_free (broker);
+#endif
 
     return WEECHAT_RC_OK;
 }

@@ -67,16 +67,36 @@ hashtable_get_type (const char *type)
 }
 
 /*
- * Hashes a key (default callback).
+ * Hashes a string using a variant of djb2 hash.
  *
- * Returns an unsigned integer between 0 and size-1.
+ * Returns the hash of the string.
  */
 
-unsigned int
+unsigned long
+hashtable_hash_key_djb2 (const char *string)
+{
+    unsigned long hash;
+    const char *ptr_string;
+
+    hash = 5381;
+    for (ptr_string = string; ptr_string[0]; ptr_string++)
+    {
+        hash ^= (hash << 5) + (hash >> 2) + (int)(ptr_string[0]);
+    }
+
+    return hash;
+}
+
+/*
+ * Hashes a key (default callback).
+ *
+ * Returns the hash of the key, depending on the type.
+ */
+
+unsigned long
 hashtable_hash_key_default_cb (struct t_hashtable *hashtable, const void *key)
 {
     unsigned long hash;
-    const char *ptr_key;
 
     hash = 0;
 
@@ -86,12 +106,7 @@ hashtable_hash_key_default_cb (struct t_hashtable *hashtable, const void *key)
             hash = (unsigned long)(*((int *)key));
             break;
         case HASHTABLE_STRING:
-            /* variant of djb2 hash */
-            hash = 5381;
-            for (ptr_key = (const char *)key; ptr_key[0]; ptr_key++)
-            {
-                hash ^= (hash << 5) + (hash >> 2) + (int)(ptr_key[0]);
-            }
+            hash = hashtable_hash_key_djb2 ((const char *)key);
             break;
         case HASHTABLE_POINTER:
             hash = (unsigned long)((void *)key);
@@ -105,7 +120,7 @@ hashtable_hash_key_default_cb (struct t_hashtable *hashtable, const void *key)
             break;
     }
 
-    return hash % hashtable->size;
+    return hash;
 }
 
 /*
@@ -218,6 +233,7 @@ hashtable_new (int size,
         new_hashtable->callback_keycmp = (callback_keycmp) ?
             callback_keycmp : &hashtable_keycmp_default_cb;
 
+        new_hashtable->callback_free_key = NULL;
         new_hashtable->callback_free_value = NULL;
     }
     return new_hashtable;
@@ -288,18 +304,28 @@ void
 hashtable_free_key (struct t_hashtable *hashtable,
                     struct t_hashtable_item *item)
 {
-    switch (hashtable->type_keys)
+    if (hashtable->callback_free_key)
     {
-        case HASHTABLE_INTEGER:
-        case HASHTABLE_STRING:
-        case HASHTABLE_BUFFER:
-        case HASHTABLE_TIME:
-            free (item->key);
-            break;
-        case HASHTABLE_POINTER:
-            break;
-        case HASHTABLE_NUM_TYPES:
-            break;
+        (void) (hashtable->callback_free_key) (hashtable,
+                                               item->key,
+                                               item->value);
+    }
+    else
+    {
+        switch (hashtable->type_keys)
+        {
+            case HASHTABLE_INTEGER:
+            case HASHTABLE_STRING:
+            case HASHTABLE_BUFFER:
+            case HASHTABLE_TIME:
+                if (item->key)
+                    free (item->key);
+                break;
+            case HASHTABLE_POINTER:
+                break;
+            case HASHTABLE_NUM_TYPES:
+                break;
+        }
     }
 }
 
@@ -325,7 +351,8 @@ hashtable_free_value (struct t_hashtable *hashtable,
             case HASHTABLE_STRING:
             case HASHTABLE_BUFFER:
             case HASHTABLE_TIME:
-                free (item->value);
+                if (item->value)
+                    free (item->value);
                 break;
             case HASHTABLE_POINTER:
                 break;
@@ -340,28 +367,26 @@ hashtable_free_value (struct t_hashtable *hashtable,
  *
  * The size arguments are used only for type "buffer".
  *
- * Returns:
- *   1: OK
- *   0: error
+ * Returns pointer to item created/updated, NULL if error.
  */
 
-int
+struct t_hashtable_item *
 hashtable_set_with_size (struct t_hashtable *hashtable,
                          const void *key, int key_size,
                          const void *value, int value_size)
 {
-    unsigned int hash;
+    unsigned long hash;
     struct t_hashtable_item *ptr_item, *pos_item, *new_item;
 
     if (!hashtable || !key
         || ((hashtable->type_keys == HASHTABLE_BUFFER) && (key_size <= 0))
         || ((hashtable->type_values == HASHTABLE_BUFFER) && (value_size <= 0)))
     {
-        return 0;
+        return NULL;
     }
 
     /* search position for item in hashtable */
-    hash = hashtable->callback_hash_key (hashtable, key);
+    hash = hashtable->callback_hash_key (hashtable, key) % hashtable->size;
     pos_item = NULL;
     for (ptr_item = hashtable->htable[hash];
          ptr_item
@@ -378,13 +403,13 @@ hashtable_set_with_size (struct t_hashtable *hashtable,
         hashtable_alloc_type (hashtable->type_values,
                               value, value_size,
                               &ptr_item->value, &ptr_item->value_size);
-        return 1;
+        return ptr_item;
     }
 
     /* create new item */
     new_item = malloc (sizeof (*new_item));
     if (!new_item)
-        return 0;
+        return NULL;
 
     /* set key and value */
     hashtable_alloc_type (hashtable->type_keys,
@@ -416,7 +441,7 @@ hashtable_set_with_size (struct t_hashtable *hashtable,
 
     hashtable->items_count++;
 
-    return 1;
+    return new_item;
 }
 
 /*
@@ -425,12 +450,10 @@ hashtable_set_with_size (struct t_hashtable *hashtable,
  * Note: this function can be called *only* if key AND value are *not* of type
  * "buffer".
  *
- * Returns:
- *   1: OK
- *   0: error
+ * Returns pointer to item created/updated, NULL if error.
  */
 
-int
+struct t_hashtable_item *
 hashtable_set (struct t_hashtable *hashtable,
                const void *key, const void *value)
 {
@@ -446,15 +469,15 @@ hashtable_set (struct t_hashtable *hashtable,
 
 struct t_hashtable_item *
 hashtable_get_item (struct t_hashtable *hashtable, const void *key,
-                    unsigned int *hash)
+                    unsigned long *hash)
 {
-    unsigned int key_hash;
+    unsigned long key_hash;
     struct t_hashtable_item *ptr_item;
 
     if (!hashtable || !key)
         return NULL;
 
-    key_hash = hashtable->callback_hash_key (hashtable, key);
+    key_hash = hashtable->callback_hash_key (hashtable, key) % hashtable->size;
     if (hash)
         *hash = key_hash;
     for (ptr_item = hashtable->htable[key_hash];
@@ -659,6 +682,7 @@ hashtable_dup (struct t_hashtable *hashtable)
                                    hashtable->callback_keycmp);
     if (new_hashtable)
     {
+        new_hashtable->callback_free_key = hashtable->callback_free_key;
         new_hashtable->callback_free_value = hashtable->callback_free_value;
         hashtable_map (hashtable,
                        &hashtable_duplicate_map_cb,
@@ -1000,7 +1024,9 @@ hashtable_set_pointer (struct t_hashtable *hashtable, const char *property,
 {
     if (hashtable && property)
     {
-        if (string_strcasecmp (property, "callback_free_value") == 0)
+        if (string_strcasecmp (property, "callback_free_key") == 0)
+            hashtable->callback_free_key = pointer;
+        else if (string_strcasecmp (property, "callback_free_value") == 0)
             hashtable->callback_free_value = pointer;
     }
 }
@@ -1083,7 +1109,7 @@ hashtable_add_to_infolist (struct t_hashtable *hashtable,
 void
 hashtable_remove_item (struct t_hashtable *hashtable,
                        struct t_hashtable_item *item,
-                       unsigned int hash)
+                       unsigned long hash)
 {
     if (!hashtable || !item)
         return;
@@ -1113,7 +1139,7 @@ void
 hashtable_remove (struct t_hashtable *hashtable, const void *key)
 {
     struct t_hashtable_item *ptr_item;
-    unsigned int hash;
+    unsigned long hash;
 
     if (!hashtable || !key)
         return;
@@ -1184,6 +1210,9 @@ hashtable_print_log (struct t_hashtable *hashtable, const char *name)
                 hashtable_type_string[hashtable->type_values]);
     log_printf ("  callback_hash_key. . . : 0x%lx", hashtable->callback_hash_key);
     log_printf ("  callback_keycmp. . . . : 0x%lx", hashtable->callback_keycmp);
+    log_printf ("  callback_free_key. . . : 0x%lx", hashtable->callback_free_key);
+    log_printf ("  callback_free_value. . : 0x%lx", hashtable->callback_free_value);
+    log_printf ("  keys_values. . . . . . : '%s'",  hashtable->keys_values);
 
     for (i = 0; i < hashtable->size; i++)
     {
@@ -1238,5 +1267,4 @@ hashtable_print_log (struct t_hashtable *hashtable, const char *name)
             log_printf ("      next_item. . . . . : 0x%lx", ptr_item->next_item);
         }
     }
-    log_printf ("  keys_values. . . . . . : '%s'", hashtable->keys_values);
 }

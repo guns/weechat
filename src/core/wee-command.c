@@ -45,6 +45,7 @@
 #include "wee-list.h"
 #include "wee-log.h"
 #include "wee-proxy.h"
+#include "wee-secure.h"
 #include "wee-string.h"
 #include "wee-upgrade.h"
 #include "wee-utf8.h"
@@ -62,6 +63,7 @@
 #include "../gui/gui-input.h"
 #include "../gui/gui-key.h"
 #include "../gui/gui-layout.h"
+#include "../gui/gui-line.h"
 #include "../gui/gui-main.h"
 #include "../gui/gui-mouse.h"
 #include "../gui/gui-window.h"
@@ -508,7 +510,8 @@ command_buffer_display_localvar (void *data,
 
 COMMAND_CALLBACK(buffer)
 {
-    struct t_gui_buffer *ptr_buffer, *ptr_buffer2, *weechat_buffer;
+    struct t_gui_buffer *ptr_buffer, *ptr_buffer2, *ptr_prev_buffer;
+    struct t_gui_buffer *weechat_buffer;
     long number, number1, number2;
     char *error, *value, *pos, *str_number1, *pos_number2;
     int i, target_buffer, error_main_buffer, num_buffers;
@@ -797,9 +800,10 @@ COMMAND_CALLBACK(buffer)
                     num_buffers = 0;
                     for (i = number2; i >= number1; i--)
                     {
-                        for (ptr_buffer = last_gui_buffer; ptr_buffer;
-                             ptr_buffer = ptr_buffer->prev_buffer)
+                        ptr_buffer = last_gui_buffer;
+                        while (ptr_buffer)
                         {
+                            ptr_prev_buffer = ptr_buffer->prev_buffer;
                             if (ptr_buffer->number == i)
                             {
                                 num_buffers++;
@@ -812,6 +816,7 @@ COMMAND_CALLBACK(buffer)
                                     gui_buffer_close (ptr_buffer);
                                 }
                             }
+                            ptr_buffer = ptr_prev_buffer;
                         }
                     }
                     /*
@@ -842,7 +847,13 @@ COMMAND_CALLBACK(buffer)
     if (string_strcasecmp (argv[1], "notify") == 0)
     {
         COMMAND_MIN_ARGS(3, "buffer notify");
-        config_weechat_notify_set (buffer, argv_eol[2]);
+        if (!config_weechat_notify_set (buffer, argv_eol[2]))
+        {
+            gui_chat_printf (NULL,
+                             _("%sError: unable to set notify level \"%s\""),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             argv_eol[2]);
+        }
         return WEECHAT_RC_OK;
     }
 
@@ -1051,6 +1062,14 @@ COMMAND_CALLBACK(color)
     if (argc == 1)
     {
         gui_color_buffer_open ();
+        return WEECHAT_RC_OK;
+    }
+
+    /* send terminal/colors info to buffer */
+    if (string_strcasecmp (argv[1], "-o") == 0)
+    {
+        gui_color_info_term_colors (str_color, sizeof (str_color));
+        input_data (buffer, str_color);
         return WEECHAT_RC_OK;
     }
 
@@ -1462,8 +1481,9 @@ COMMAND_CALLBACK(debug)
 
 COMMAND_CALLBACK(eval)
 {
-    int print_only, i;
-    char *result, *ptr_args, **commands;
+    int i, print_only, condition;
+    char *result, *ptr_args, *expr, **commands;
+    struct t_hashtable *options;
 
     /* make C compiler happy */
     (void) buffer;
@@ -1471,42 +1491,75 @@ COMMAND_CALLBACK(eval)
     (void) argv;
 
     print_only = 0;
+    condition = 0;
 
     if (argc < 2)
         return WEECHAT_RC_OK;
 
     ptr_args = argv_eol[1];
-    if (string_strcasecmp (argv[1], "-n") == 0)
+    for (i = 1; i < argc; i++)
     {
-        print_only = 1;
-        ptr_args = argv_eol[2];
+        if (string_strcasecmp (argv[i], "-n") == 0)
+        {
+            print_only = 1;
+            ptr_args = argv_eol[i + 1];
+        }
+        else if (string_strcasecmp (argv[i], "-c") == 0)
+        {
+            condition = 1;
+            ptr_args = argv_eol[i + 1];
+        }
+        else
+        {
+            ptr_args = argv_eol[i];
+            break;
+        }
     }
 
     if (ptr_args)
     {
-        result = eval_expression (ptr_args, NULL, NULL);
+        options = NULL;
+        if (condition)
+        {
+            options = hashtable_new (32,
+                                     WEECHAT_HASHTABLE_STRING,
+                                     WEECHAT_HASHTABLE_POINTER,
+                                     NULL,
+                                     NULL);
+            if (options)
+                hashtable_set (options, "type", "condition");
+        }
+
+        result = NULL;
         if (print_only)
         {
-            gui_chat_printf_date_tags (NULL, 0, "no_log", ">> %s", ptr_args);
-            if (result)
+            expr = string_remove_quotes (ptr_args, "\"");
+            if (expr)
             {
-                gui_chat_printf_date_tags (NULL, 0, "no_log", "== %s[%s%s%s]",
-                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
-                                           GUI_COLOR(GUI_COLOR_CHAT),
-                                           result,
-                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
-            }
-            else
-            {
-                gui_chat_printf_date_tags (NULL, 0, "no_log", "== %s<%s%s%s>",
-                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
-                                           GUI_COLOR(GUI_COLOR_CHAT),
-                                           _("error"),
-                                           GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
+                result = eval_expression (expr, NULL, NULL, options);
+                gui_chat_printf_date_tags (NULL, 0, "no_log", ">> %s", ptr_args);
+                if (result)
+                {
+                    gui_chat_printf_date_tags (NULL, 0, "no_log", "== %s[%s%s%s]",
+                                               GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
+                                               GUI_COLOR(GUI_COLOR_CHAT),
+                                               result,
+                                               GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
+                }
+                else
+                {
+                    gui_chat_printf_date_tags (NULL, 0, "no_log", "== %s<%s%s%s>",
+                                               GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
+                                               GUI_COLOR(GUI_COLOR_CHAT),
+                                               _("error"),
+                                               GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
+                }
+                free (expr);
             }
         }
         else
         {
+            result = eval_expression (ptr_args, NULL, NULL, options);
             if (result)
             {
                 commands = string_split_command (result, ';');
@@ -1528,6 +1581,8 @@ COMMAND_CALLBACK(eval)
         }
         if (result)
             free (result);
+        if (options)
+            hashtable_free (options);
     }
 
     return WEECHAT_RC_OK;
@@ -1849,6 +1904,7 @@ command_help_list_plugin_commands (struct t_weechat_plugin *plugin,
     struct t_hook *ptr_hook;
     struct t_weelist *list;
     struct t_weelist_item *item;
+    struct t_gui_buffer *ptr_buffer;
     int command_found, length, max_length, list_size;
     int cols, lines, col, line, index;
     char str_format[64], str_command[256], str_line[2048];
@@ -1889,6 +1945,10 @@ command_help_list_plugin_commands (struct t_weechat_plugin *plugin,
     }
     else
     {
+        ptr_buffer = gui_buffer_search_main ();
+        if (!ptr_buffer)
+            return;
+
         max_length = -1;
         list = weelist_new ();
 
@@ -1923,14 +1983,33 @@ command_help_list_plugin_commands (struct t_weechat_plugin *plugin,
                              plugin_get_name (plugin),
                              GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS));
 
-            snprintf (str_format, sizeof (str_format),
-                      " %%-%ds", max_length);
-
-            /* auto compute number of columns, max size is 90% of chat width */
-            cols = ((gui_current_window->win_chat_width * 90) / 100) / (max_length + 1);
-            if (cols == 0)
-                cols = 1;
+            /* auto compute number of columns according to current chat width */
+            cols = 1;
+            length = gui_current_window->win_chat_width -
+                (gui_chat_time_length + 1 +
+                 ptr_buffer->lines->buffer_max_length + 1 +
+                 ptr_buffer->lines->prefix_max_length + 1 +
+                 gui_chat_strlen_screen (CONFIG_STRING(config_look_prefix_suffix)) + 1);
+            if (length > 0)
+            {
+                cols = length / (max_length + 2);
+                if (cols == 0)
+                    cols = 1;
+            }
             lines = ((list_size - 1) / cols) + 1;
+
+            /* build format according to number of columns */
+            if (lines == 1)
+            {
+                snprintf (str_format, sizeof (str_format), "  %%s");
+            }
+            else
+            {
+                snprintf (str_format, sizeof (str_format),
+                          "  %%-%ds", max_length);
+            }
+
+            /* display lines with commands, in columns */
             for (line = 0; line < lines; line++)
             {
                 str_line[0] = '\0';
@@ -1951,7 +2030,7 @@ command_help_list_plugin_commands (struct t_weechat_plugin *plugin,
                         }
                     }
                 }
-                gui_chat_printf (NULL, " %s", str_line);
+                gui_chat_printf (NULL, "%s", str_line);
             }
         }
 
@@ -2451,6 +2530,10 @@ COMMAND_CALLBACK(input)
             gui_input_search_next (buffer);
         else if (string_strcasecmp (argv[1], "search_switch_case") == 0)
             gui_input_search_switch_case (buffer);
+        else if (string_strcasecmp (argv[1], "search_switch_regex") == 0)
+            gui_input_search_switch_regex (buffer);
+        else if (string_strcasecmp (argv[1], "search_switch_where") == 0)
+            gui_input_search_switch_where (buffer);
         else if (string_strcasecmp (argv[1], "search_stop") == 0)
             gui_input_search_stop (buffer);
         else if (string_strcasecmp (argv[1], "delete_previous_char") == 0)
@@ -2876,6 +2959,19 @@ COMMAND_CALLBACK(key)
         }
 
         /* bind new key */
+        if (CONFIG_BOOLEAN(config_look_key_bind_safe)
+            && !gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, argv[2]))
+        {
+            gui_chat_printf (NULL,
+                             _("%sError: it is not safe to bind key \"%s\" because "
+                               "it does not start with a ctrl or meta code (tip: "
+                               "use alt-k to find key codes); if you want to "
+                               "bind this key anyway, turn off option "
+                               "weechat.look.key_bind_safe"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             argv[2]);
+            return WEECHAT_RC_OK;
+        }
         gui_key_verbose = 1;
         ptr_new_key = gui_key_bind (NULL, GUI_KEY_CONTEXT_DEFAULT,
                                     argv[2], argv_eol[3]);
@@ -2932,6 +3028,19 @@ COMMAND_CALLBACK(key)
         }
 
         /* bind new key */
+        if (CONFIG_BOOLEAN(config_look_key_bind_safe)
+            && !gui_key_is_safe (GUI_KEY_CONTEXT_DEFAULT, argv[3]))
+        {
+            gui_chat_printf (NULL,
+                             _("%sError: it is not safe to bind key \"%s\" because "
+                               "it does not start with a ctrl or meta code (tip: "
+                               "use alt-k to find key codes); if you want to "
+                               "bind this key anyway, turn off option "
+                               "weechat.look.key_bind_safe"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             argv[3]);
+            return WEECHAT_RC_OK;
+        }
         gui_key_verbose = 1;
         ptr_new_key = gui_key_bind (NULL, context,
                                     argv[3], argv_eol[4]);
@@ -4440,6 +4549,168 @@ COMMAND_CALLBACK(save)
 }
 
 /*
+ * Displays a secured data.
+ */
+
+void
+command_secure_display_data (void *data,
+                             struct t_hashtable *hashtable,
+                             const void *key, const void *value)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) hashtable;
+    (void) value;
+
+    if (key)
+        gui_chat_printf (NULL, "  %s", key);
+}
+
+/*
+ * Callback for command "/secure": manage secured data
+ */
+
+COMMAND_CALLBACK(secure)
+{
+    int passphrase_was_set, count_encrypted;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) buffer;
+
+    /* list of secured data */
+    if (argc == 1)
+    {
+        secure_buffer_open ();
+        return WEECHAT_RC_OK;
+    }
+
+    count_encrypted = secure_hashtable_data_encrypted->items_count;
+
+    /* decrypt data still encrypted */
+    if (string_strcasecmp (argv[1], "decrypt") == 0)
+    {
+        COMMAND_MIN_ARGS(3, "secure decrypt");
+        if (count_encrypted == 0)
+        {
+            gui_chat_printf (NULL, _("There is no encrypted data"));
+            return WEECHAT_RC_OK;
+        }
+        if (strcmp (argv[2], "-discard") == 0)
+        {
+            hashtable_remove_all (secure_hashtable_data_encrypted);
+            gui_chat_printf (NULL, _("All encrypted data has been deleted"));
+            return WEECHAT_RC_OK;
+        }
+        if (secure_decrypt_data_not_decrypted (argv_eol[2]) > 0)
+        {
+            gui_chat_printf (NULL,
+                             _("Encrypted data has been successfully decrypted"));
+            if (secure_passphrase)
+                free (secure_passphrase);
+            secure_passphrase = strdup (argv_eol[2]);
+        }
+        else
+        {
+            gui_chat_printf (NULL,
+                             _("%sFailed to decrypt data (wrong passphrase?)"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+        }
+        return WEECHAT_RC_OK;
+    }
+
+    if (count_encrypted > 0)
+    {
+        gui_chat_printf (NULL,
+                         _("%sYou must decrypt data still encrypted before "
+                           "doing any operation on secured data or passphrase"),
+                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
+        return WEECHAT_RC_OK;
+    }
+
+    /* set the passphrase */
+    if (string_strcasecmp (argv[1], "passphrase") == 0)
+    {
+        COMMAND_MIN_ARGS(3, "secure passphrase");
+        passphrase_was_set = 0;
+        if (secure_passphrase)
+        {
+            free (secure_passphrase);
+            secure_passphrase = NULL;
+            passphrase_was_set = 1;
+        }
+        if (strcmp (argv[2], "-delete") == 0)
+        {
+            gui_chat_printf (NULL,
+                             (passphrase_was_set) ?
+                             _("Passphrase deleted") : _("Passphrase is not set"));
+            if (passphrase_was_set)
+            {
+                if (secure_hashtable_data->items_count > 0)
+                    command_save_file (secure_config_file);
+                secure_buffer_display ();
+            }
+        }
+        else
+        {
+            secure_passphrase = strdup (argv_eol[2]);
+            gui_chat_printf (NULL,
+                             (passphrase_was_set) ?
+                             _("Passphrase changed") : _("Passphrase added"));
+            if (secure_hashtable_data->items_count > 0)
+                command_save_file (secure_config_file);
+            secure_buffer_display ();
+        }
+        return WEECHAT_RC_OK;
+    }
+
+    /* set a secured data */
+    if (string_strcasecmp (argv[1], "set") == 0)
+    {
+        COMMAND_MIN_ARGS(4, "secure set");
+        hashtable_set (secure_hashtable_data, argv[2], argv_eol[3]);
+        gui_chat_printf (NULL, _("Secured data \"%s\" set"), argv[2]);
+        command_save_file (secure_config_file);
+        secure_buffer_display ();
+        return WEECHAT_RC_OK;
+    }
+
+    /* delete a secured data */
+    if (string_strcasecmp (argv[1], "del") == 0)
+    {
+        COMMAND_MIN_ARGS(3, "secure del");
+        if (hashtable_has_key (secure_hashtable_data, argv[2]))
+        {
+            hashtable_remove (secure_hashtable_data, argv[2]);
+            gui_chat_printf (NULL, _("Secured data \"%s\" deleted"), argv[2]);
+            command_save_file (secure_config_file);
+            secure_buffer_display ();
+        }
+        else
+        {
+            gui_chat_printf (NULL,
+                             _("%sSecured data \"%s\" not found"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             argv[2]);
+        }
+        return WEECHAT_RC_OK;
+    }
+
+    /* toggle values on secured data buffer */
+    if (string_strcasecmp (argv[1], "toggle_values") == 0)
+    {
+        if (secure_buffer)
+        {
+            secure_buffer_display_values ^= 1;
+            secure_buffer_display ();
+        }
+        return WEECHAT_RC_OK;
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Displays a configuration section.
  */
 
@@ -5014,6 +5285,9 @@ COMMAND_CALLBACK(upgrade)
     (void) data;
     (void) buffer;
 
+    if ((argc > 1) && (string_strcasecmp (argv[1], "-dummy") == 0))
+        return WEECHAT_RC_OK;
+
     /*
      * it is forbidden to upgrade while there are some background process
      * (hook type "process" or "connect")
@@ -5114,6 +5388,14 @@ COMMAND_CALLBACK(upgrade)
         return WEECHAT_RC_OK;
     }
 
+    /*
+     * set passphrase in environment var, so that it will not be asked to user
+     * when starting the new binary
+     */
+    if (secure_passphrase)
+        setenv (SECURE_ENV_PASSPHRASE, secure_passphrase, 1);
+
+    /* execute binary */
     exec_args[0] = ptr_binary;
     exec_args[3] = strdup (weechat_home);
     execvp (exec_args[0], exec_args);
@@ -5121,7 +5403,8 @@ COMMAND_CALLBACK(upgrade)
     /* this code should not be reached if execvp is OK */
     string_iconv_fprintf (stderr, "\n\n*****\n");
     string_iconv_fprintf (stderr,
-                          _("***** Error: exec failed (program: \"%s\"), exiting WeeChat"),
+                          _("***** Error: exec failed (program: \"%s\"), "
+                            "exiting WeeChat"),
                           exec_args[0]);
     string_iconv_fprintf (stderr, "\n*****\n\n");
 
@@ -5582,6 +5865,13 @@ COMMAND_CALLBACK(window)
         return WEECHAT_RC_OK;
     }
 
+    /* scroll beyond the end of buffer */
+    if (string_strcasecmp (argv[1], "scroll_beyond_end") == 0)
+    {
+        gui_window_scroll_beyond_end (ptr_win);
+        return WEECHAT_RC_OK;
+    }
+
     /* scroll to previous highlight */
     if (string_strcasecmp (argv[1], "scroll_previous_highlight") == 0)
     {
@@ -5819,9 +6109,9 @@ void
 command_init ()
 {
     hook_command (NULL, "away",
-                  N_("toggle away status"),
+                  N_("set or remove away status"),
                   N_("[-all] [<message>]"),
-                  N_("   -all: toggle away status on all connected "
+                  N_("   -all: set or remove away status on all connected "
                      "servers\n"
                      "message: message for away (if no message is "
                      "given, away status is removed)"),
@@ -5982,7 +6272,8 @@ command_init ()
                   N_("define color aliases and display palette of colors"),
                   N_("alias <color> <name>"
                      " || unalias <color>"
-                     " || reset"),
+                     " || reset"
+                     " || -o"),
                   N_("  alias: add an alias for a color\n"
                      "unalias: delete an alias\n"
                      "  color: color number (greater than or equal to 0, max "
@@ -5990,7 +6281,9 @@ command_init ()
                      "   name: alias name for color (for example: \"orange\")\n"
                      "  reset: reset all color pairs (required when no more "
                      "color pairs are available if automatic reset is disabled, "
-                     "see option weechat.look.color_pairs_auto_reset)\n\n"
+                     "see option weechat.look.color_pairs_auto_reset)\n"
+                     "     -o: send terminal/colors info to current buffer as "
+                     "input\n\n"
                      "Without argument, this command displays colors in a new "
                      "buffer.\n\n"
                      "Examples:\n"
@@ -6000,7 +6293,8 @@ command_init ()
                      "    /color unalias 214"),
                   "alias %(palette_colors)"
                   " || unalias %(palette_colors)"
-                  " || reset",
+                  " || reset"
+                  " || -o",
                   &command_color, NULL);
     /*
      * give high priority (50000) so that an alias will not take precedence
@@ -6086,9 +6380,11 @@ command_init ()
     hook_command (NULL, "eval",
                   N_("evaluate expression and send result to buffer"),
                   N_("[-n] <expression>"
-                     " || [-n] <expression1> <operator> <expression2>"),
+                     " || [-n] -c <expression1> <operator> <expression2>"),
                   N_("        -n: display result without sending it to buffer "
                      "(debug mode)\n"
+                     "        -c: evaluate as condition: use operators and "
+                     "parentheses, return a boolean value (\"0\" or \"1\")\n"
                      "expression: expression to evaluate, variables with format "
                      "${variable} are replaced (see below)\n"
                      "  operator: a logical or comparison operator:\n"
@@ -6114,9 +6410,10 @@ command_init ()
                      "  \"50\" > \"100\"  ==> 1\n\n"
                      "Some variables are replaced in expression, using the "
                      "format ${variable}, variable can be, by order of priority :\n"
-                     "  1. the name of an option (file.section.option)\n"
-                     "  2. the name of a local variable in buffer\n"
-                     "  3. a hdata name/variable (the value is automatically "
+                     "  1. a color (format: color:xxx)\n"
+                     "  2. an option (format: file.section.option)\n"
+                     "  3. a local variable in buffer\n"
+                     "  4. a hdata name/variable (the value is automatically "
                      "converted to string), by default \"window\" and \"buffer\" "
                      "point to current window/buffer.\n"
                      "Format for hdata can be one of following:\n"
@@ -6132,20 +6429,20 @@ command_init ()
                      "For name of hdata and variables, please look at \"Plugin "
                      "API reference\", function \"weechat_hdata_get\".\n\n"
                      "Examples:\n"
-                     "  /eval -n ${weechat.look.scroll_amount}  ==> 3\n"
-                     "  /eval -n ${window}                      ==> 0x2549aa0\n"
-                     "  /eval -n ${window.buffer}               ==> 0x2549320\n"
-                     "  /eval -n ${window.buffer.full_name}     ==> core.weechat\n"
-                     "  /eval -n ${window.buffer.number}        ==> 1\n"
-                     "  /eval -n ${window.buffer.number} > 2    ==> 0\n"
-                     "  /eval -n ${window.win_width} > 100      ==> 1\n"
-                     "  /eval -n (8 > 12) || (5 > 2)            ==> 1\n"
-                     "  /eval -n (8 > 12) && (5 > 2)            ==> 0\n"
-                     "  /eval -n abcd =~ ^ABC                   ==> 1\n"
-                     "  /eval -n abcd =~ (?-i)^ABC              ==> 0\n"
-                     "  /eval -n abcd =~ (?-i)^abc              ==> 1\n"
-                     "  /eval -n abcd !~ abc                    ==> 0"),
-                  "-n",
+                     "  /eval -n ${weechat.look.scroll_amount}   ==> 3\n"
+                     "  /eval -n ${window}                       ==> 0x2549aa0\n"
+                     "  /eval -n ${window.buffer}                ==> 0x2549320\n"
+                     "  /eval -n ${window.buffer.full_name}      ==> core.weechat\n"
+                     "  /eval -n ${window.buffer.number}         ==> 1\n"
+                     "  /eval -n -c ${window.buffer.number} > 2  ==> 0\n"
+                     "  /eval -n -c ${window.win_width} > 100    ==> 1\n"
+                     "  /eval -n -c (8 > 12) || (5 > 2)          ==> 1\n"
+                     "  /eval -n -c (8 > 12) && (5 > 2)          ==> 0\n"
+                     "  /eval -n -c abcd =~ ^ABC                 ==> 1\n"
+                     "  /eval -n -c abcd =~ (?-i)^ABC            ==> 0\n"
+                     "  /eval -n -c abcd =~ (?-i)^abc            ==> 1\n"
+                     "  /eval -n -c abcd !~ abc                  ==> 0"),
+                  "-n|-c -n|-c",
                   &command_eval, NULL);
     hook_command (NULL, "filter",
                   N_("filter messages in buffers, to hide/show them according "
@@ -6253,6 +6550,8 @@ command_init ()
                      "completion\n"
                      "  search_text: search text in buffer\n"
                      "  search_switch_case: switch exact case for search\n"
+                     "  search_switch_regex: switch search type: string/regular expression\n"
+                     "  search_switch_where: switch search in messages/prefixes\n"
                      "  search_previous: search previous line\n"
                      "  search_next: search next line\n"
                      "  search_stop: stop search\n"
@@ -6578,6 +6877,55 @@ command_init ()
                      "saved."),
                   "%(config_files)|%*",
                   &command_save, NULL);
+    hook_command (NULL, "secure",
+                  N_("manage secured data (passwords or private data encrypted "
+                     "in file sec.conf)"),
+                  N_("passphrase <passphrase>|-delete"
+                     " || decrypt <passphrase>|-discard"
+                     " || set <name> <value>"
+                     " || del <name>"),
+                  N_("passphrase: change the passphrase (without passphrase, "
+                     "data is stored as plain text in file sec.conf)\n"
+                     "   -delete: delete passphrase\n"
+                     "   decrypt: decrypt data still encrypted (it happens only "
+                     "if passphrase was not given on startup)\n"
+                     "  -discard: discard all data still encrypted\n"
+                     "       set: add or change secured data\n"
+                     "       del: delete secured data\n\n"
+                     "Without argument, this command displays secured data "
+                     "in a new buffer.\n\n"
+                     "When a passphrase is used (data encrypted), it is asked "
+                     "by WeeChat on startup.\n"
+                     "It is possible to set environment variable "
+                     "\"WEECHAT_PASSPHRASE\" to prevent the prompt (this same "
+                     "variable is used by WeeChat on /upgrade).\n\n"
+                     "Secured data with format ${sec.data.xxx} can be used in:\n"
+                     "  - command line argument \"--run-command\"\n"
+                     "  - options weechat.startup.command_{before|after}_plugins\n"
+                     "  - proxy options: username, password\n"
+                     "  - irc server options: autojoin, command, password, "
+                     "sasl_{username|password}\n"
+                     "  - option relay.network.password\n"
+                     "  - command /eval.\n\n"
+                     "Examples:\n"
+                     "  set a passphrase:\n"
+                     "    /secure passphrase this is my passphrase\n"
+                     "  encrypt freenode SASL password:\n"
+                     "    /secure set freenode mypassword\n"
+                     "    /set irc.server.freenode.sasl_password "
+                     "\"${sec.data.freenode}\"\n"
+                     "  encrypt oftc password for nickserv:\n"
+                     "    /secure set oftc mypassword\n"
+                     "    /set irc.server.oftc.command \"/msg nickserv identify "
+                     "${sec.data.oftc}\"\n"
+                     "  alias to ghost the nick \"mynick\":\n"
+                     "    /alias ghost /eval /msg -server freenode nickserv "
+                     "ghost mynick ${sec.data.freenode}"),
+                  "passphrase -delete"
+                  " || decrypt -discard"
+                  " || set %(secured_data)"
+                  " || del %(secured_data)",
+                  &command_secure, NULL);
     hook_command (NULL, "set",
                   N_("set config options"),
                   N_("[<option> [<value>]] || diff [<option> [<option>...]]"),
@@ -6624,6 +6972,8 @@ command_init ()
                   N_("[<path_to_binary>|-quit]"),
                   N_("path_to_binary: path to WeeChat binary (default is "
                      "current binary)\n"
+                     "        -dummy: do nothing (option used to prevent "
+                     "accidental completion with \"-quit\")\n"
                      "         -quit: close *ALL* connections, save session "
                      "and quit WeeChat, which makes possible a delayed "
                      "restoration (see below)\n\n"
@@ -6650,12 +7000,12 @@ command_init ()
                      "  4. save WeeChat configuration\n"
                      "  5. quit WeeChat\n"
                      "Then later you can restore session with command: "
-                     "weechat-curses --upgrade\n"
+                     "weechat --upgrade\n"
                      "IMPORTANT: you must restore the session with exactly "
                      "same configuration (files *.conf).\n"
                      "It is possible to restore WeeChat session on another "
-                     "machine if you copy the content of directory \"~/.weechat\""),
-                  "%(filename)",
+                     "machine if you copy the content of directory \"~/.weechat\"."),
+                  "%(filename)|-dummy|-quit",
                   &command_upgrade, NULL);
     hook_command (NULL, "uptime",
                   N_("show WeeChat uptime"),
@@ -6713,7 +7063,7 @@ command_init ()
                      " || scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]"
                      " || scroll_horiz [-window <number>] [+/-]<value>[%]"
                      " || scroll_up|scroll_down|scroll_top|"
-                     "scroll_bottom|scroll_previous_highlight|"
+                     "scroll_bottom|scroll_beyond_end|scroll_previous_highlight|"
                      "scroll_next_highlight|scroll_unread [-window <number>]"
                      " || swap [-window <number>] [up|down|left|right]"
                      " || zoom[-window <number>]"),
@@ -6746,6 +7096,7 @@ command_init ()
                      "  scroll_down: scroll a few lines down\n"
                      "   scroll_top: scroll to top of buffer\n"
                      "scroll_bottom: scroll to bottom of buffer\n"
+                     "scroll_beyond_end: scroll beyond the end of buffer\n"
                      "scroll_previous_highlight: scroll to previous highlight\n"
                      "scroll_next_highlight: scroll to next highlight\n"
                      "scroll_unread: scroll to unread marker\n"
@@ -6787,6 +7138,7 @@ command_init ()
                   " || scroll_down -window %(windows_numbers)"
                   " || scroll_top -window %(windows_numbers)"
                   " || scroll_bottom -window %(windows_numbers)"
+                  " || scroll_beyond_end -window %(windows_numbers)"
                   " || scroll_previous_highlight -window %(windows_numbers)"
                   " || scroll_next_highlight -window %(windows_numbers)"
                   " || scroll_unread  -window %(windows_numbers)"
@@ -6804,12 +7156,16 @@ command_init ()
 void
 command_exec_list (const char *command_list)
 {
-    char **commands, **ptr_cmd;
+    char *command_list2, **commands, **ptr_cmd;
     struct t_gui_buffer *weechat_buffer;
 
-    if (command_list && command_list[0])
+    if (!command_list || !command_list[0])
+        return;
+
+    command_list2 = eval_expression (command_list, NULL, NULL, NULL);
+    if (command_list2 && command_list2[0])
     {
-        commands = string_split_command (command_list, ';');
+        commands = string_split_command (command_list2, ';');
         if (commands)
         {
             weechat_buffer = gui_buffer_search_main ();
@@ -6820,6 +7176,8 @@ command_exec_list (const char *command_list)
             string_free_split_command (commands);
         }
     }
+    if (command_list2)
+        free (command_list2);
 }
 
 /*

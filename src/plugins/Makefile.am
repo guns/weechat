@@ -18,7 +18,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\"
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\"
 
 noinst_LIBRARIES = lib_weechat_plugins.a
 
@@ -49,10 +49,6 @@ endif
 
 if PLUGIN_CHARSET
 charset_dir = charset
-endif
-
-if PLUGIN_DEMO
-demo_dir = demo
 endif
 
 if PLUGIN_FIFO
@@ -107,10 +103,10 @@ if PLUGIN_GUILE
 guile_dir = guile
 endif
 
-SUBDIRS = . $(alias_dir) $(aspell_dir) $(charset_dir) $(demo_dir) $(fifo_dir) \
-            $(irc_dir) $(logger_dir) $(relay_dir) $(rmodifier_dir) $(script_dir) \
-            $(xfer_dir) $(perl_dir) $(python_dir) $(ruby_dir) $(lua_dir) \
-            $(tcl_dir) $(guile_dir)
+SUBDIRS = . $(alias_dir) $(aspell_dir) $(charset_dir) $(fifo_dir) $(irc_dir) \
+            $(logger_dir) $(relay_dir) $(rmodifier_dir) $(script_dir) $(xfer_dir) \
+            $(perl_dir) $(python_dir) $(ruby_dir) $(lua_dir) $(tcl_dir) \
+            $(guile_dir)
 
 EXTRA_DIST = CMakeLists.txt
 

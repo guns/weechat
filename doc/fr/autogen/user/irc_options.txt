@@ -218,6 +218,11 @@
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
+* [[option_irc.look.nick_color_hash]] *irc.look.nick_color_hash*
+** description: `algorithme de hash utilisé pour trouver la couleur du pseudo: djb2 = variante de djb2 (la position des lettres compte: les anagrammes d'un pseudo ont une couleur différente), sum = somme des lettres`
+** type: entier
+** valeurs: djb2, sum (valeur par défaut: `sum`)
+
 * [[option_irc.look.nick_color_stop_chars]] *irc.look.nick_color_stop_chars*
 ** description: `caractères utilisés pour l'arrêt dans le pseudo lors du calcul de la couleur avec les lettres du pseudo (au moins un caractère en dehors de cette liste doit être dans la chaîne avant de s'arrêter) (exemple: le pseudo "|nick|away" avec "|" dans les caractères retournera la couleur du pseudo "|nick")`
 ** type: chaîne
@@ -248,13 +253,18 @@
 ** type: entier
 ** valeurs: auto, never, always (valeur par défaut: `auto`)
 
+* [[option_irc.look.notice_welcome_redirect]] *irc.look.notice_welcome_redirect*
+** description: `rediriger automatiquement les notices de bienvenue sur le canal vers le tampon du canal; de telles notices ont le pseudo comme cible mais le nom du canal au début du message de notice, par exemple les notices envoyées par le serveur freenode qui ressemblent à: "[#canal] Bienvenue sur ce canal..."`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
+
 * [[option_irc.look.notify_tags_ison]] *irc.look.notify_tags_ison*
-** description: `liste des tags (séparés par des virgules) utilisés dans les messages affichés par notify lorsqu'un pseudo a rejoint ou quitté le serveur (résultat de la commande ison), par exemple: "notify_highlight", "notify_message" ou "notify_private"`
+** description: `liste des tags (séparés par des virgules) utilisés dans les messages affichés par notify lorsqu'un pseudo a rejoint ou quitté le serveur (résultat de la commande ison), par exemple: "notify_message", "notify_private" ou "notify_highlight"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"notify_message"`)
 
 * [[option_irc.look.notify_tags_whois]] *irc.look.notify_tags_whois*
-** description: `liste des tags (séparés par des virgules) utilisés dans les messages affichés par notify lorsque le statut d'absence d'un pseudo change (résultat de la commande whois), par exemple: "notify_highlight", "notify_message" ou "notify_private"`
+** description: `liste des tags (séparés par des virgules) utilisés dans les messages affichés par notify lorsque le statut d'absence d'un pseudo change (résultat de la commande whois), par exemple: "notify_message", "notify_private" ou "notify_highlight"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"notify_message"`)
 
@@ -267,6 +277,11 @@
 ** description: `mélanger les tampons privés`
 ** type: entier
 ** valeurs: independent, merge_by_server, merge_all (valeur par défaut: `independent`)
+
+* [[option_irc.look.pv_tags]] *irc.look.pv_tags*
+** description: `liste des tags (séparés par des virgules) utilisés dans les messages privés, par exemple: "notify_message", "notify_private" ou "notify_highlight"`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"notify_private"`)
 
 * [[option_irc.look.raw_messages]] *irc.look.raw_messages*
 ** description: `nombre de messages bruts à sauvegarder en mémoire lorsque le tampon des données brutes est fermé (ces messages seront affichés lors de l'ouverture du tampon des données brutes)`
@@ -284,7 +299,7 @@
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_irc.look.smart_filter_delay]] *irc.look.smart_filter_delay*
-** description: `délai pour filtrer les messages join/part/quit (en minutes)`
+** description: `délai pour filtrer les messages join/part/quit (en minutes): si le pseudo n'a pas parlé durant les N dernières minutes, le join/part/quit est filtré`
 ** type: entier
 ** valeurs: 1 .. 10080 (valeur par défaut: `5`)
 
@@ -399,7 +414,7 @@
 ** valeurs: on, off (valeur par défaut: `off`)
 
 * [[option_irc.server_default.autojoin]] *irc.server_default.autojoin*
-** description: `liste des canaux (séparés par des virgules) à rejoindre lorsque connecté au serveur (exemple: "#chan1,#chan2,#chan3 key1,key2")`
+** description: `liste des canaux (séparés par des virgules) à rejoindre lorsque connecté au serveur (exemple: "#chan1,#chan2,#chan3 key1,key2") (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -439,7 +454,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_irc.server_default.command]] *irc.server_default.command*
-** description: `commande(s) à exécuter lorsque connecté au serveur (plusieurs commandes doivent être séparées par ";", utilisez "\;" pour un point-virgule, les variables spéciales $nick, $channel et $server sont remplacées par leur valeur)`
+** description: `commande(s) à exécuter lorsque connecté au serveur (plusieurs commandes doivent être séparées par ";", utilisez "\;" pour un point-virgule, les variables spéciales $nick, $channel et $server sont remplacées par leur valeur) (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -484,12 +499,12 @@
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_irc.server_default.password]] *irc.server_default.password*
-** description: `mot de passe pour le serveur`
+** description: `mot de passe pour le serveur (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_irc.server_default.proxy]] *irc.server_default.proxy*
-** description: `proxy utilisé pour ce serveur (optionnel)`
+** description: `nom du proxy utilisé pour ce serveur (optionnel, le proxy doit être défini avec la commande /proxy)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -504,7 +519,7 @@
 ** valeurs: plain, dh-blowfish, dh-aes, external (valeur par défaut: `plain`)
 
 * [[option_irc.server_default.sasl_password]] *irc.server_default.sasl_password*
-** description: `mot de passe pour l'authentification SASL`
+** description: `mot de passe pour l'authentification SASL (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -514,7 +529,7 @@
 ** valeurs: 1 .. 3600 (valeur par défaut: `15`)
 
 * [[option_irc.server_default.sasl_username]] *irc.server_default.sasl_username*
-** description: `nom d'utilisateur pour l'authentification SASL`
+** description: `nom d'utilisateur pour l'authentification SASL (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 

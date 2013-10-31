@@ -23,6 +23,11 @@
 ** type: color
 ** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `white`)
 
+* [[option_weechat.color.chat_day_change]] *weechat.color.chat_day_change*
+** description: `text color for message displayed when the day has changed`
+** type: color
+** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `cyan`)
+
 * [[option_weechat.color.chat_delimiters]] *weechat.color.chat_delimiters*
 ** description: `text color for delimiters`
 ** type: color
@@ -187,6 +192,16 @@
 ** description: `text color for values`
 ** type: color
 ** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `cyan`)
+
+* [[option_weechat.color.emphasized]] *weechat.color.emphasized*
+** description: `text color for emphasized text (for example when searching text); this option is used only if option weechat.look.emphasized_attributes is an empty string (default value)`
+** type: color
+** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `yellow`)
+
+* [[option_weechat.color.emphasized_bg]] *weechat.color.emphasized_bg*
+** description: `background color for emphasized text (for example when searching text); used only if option weechat.look.emphasized_attributes is an empty string (default value)`
+** type: color
+** values: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "_" for underline (default value: `magenta`)
 
 * [[option_weechat.color.input_actions]] *weechat.color.input_actions*
 ** description: `text color for actions in input line`
@@ -399,7 +414,7 @@
 ** values: none, highlight, message, all (default value: `all`)
 
 * [[option_weechat.look.buffer_time_format]] *weechat.look.buffer_time_format*
-** description: `time format for each line displayed in buffers (see man strftime for date/time specifiers), colors are allowed with format "${color}", for example french time: "${lightblue}%H${white}%M${lightred}%S"`
+** description: `time format for each line displayed in buffers (see man strftime for date/time specifiers) (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval); for example time using grayscale (requires support of 256 colors): "${color:252}%H${color:245}%M${color:240}%S"`
 ** type: string
 ** values: any string (default value: `"%H:%M:%S"`)
 
@@ -411,7 +426,7 @@
 * [[option_weechat.look.color_inactive_buffer]] *weechat.look.color_inactive_buffer*
 ** description: `use a different color for lines in inactive buffer (when line is from a merged buffer not selected)`
 ** type: boolean
-** values: on, off (default value: `off`)
+** values: on, off (default value: `on`)
 
 * [[option_weechat.look.color_inactive_message]] *weechat.look.color_inactive_message*
 ** description: `use a different color for inactive message (when window is not current window, or if line is from a merged buffer not selected)`
@@ -436,7 +451,7 @@
 * [[option_weechat.look.color_inactive_window]] *weechat.look.color_inactive_window*
 ** description: `use a different color for lines in inactive window (when window is not current window)`
 ** type: boolean
-** values: on, off (default value: `off`)
+** values: on, off (default value: `on`)
 
 * [[option_weechat.look.color_nick_offline]] *weechat.look.color_nick_offline*
 ** description: `use a different color for offline nicks (not in nicklist any more)`
@@ -468,15 +483,25 @@
 ** type: boolean
 ** values: on, off (default value: `on`)
 
-* [[option_weechat.look.day_change_time_format]] *weechat.look.day_change_time_format*
-** description: `time format for date displayed when day changed`
+* [[option_weechat.look.day_change_message_1date]] *weechat.look.day_change_message_1date*
+** description: `message displayed when the day has changed, with one date displayed (for example at beginning of buffer) (see man strftime for date/time specifiers) (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
 ** type: string
-** values: any string (default value: `"%a, %d %b %Y"`)
+** values: any string (default value: `"-- %a, %d %b %Y --"`)
+
+* [[option_weechat.look.day_change_message_2dates]] *weechat.look.day_change_message_2dates*
+** description: `message displayed when the day has changed, with two dates displayed (between two messages); the second date specifiers must start with two "%" because strftime is called two times on this string (see man strftime for date/time specifiers) (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
+** type: string
+** values: any string (default value: `"-- %%a, %%d %%b %%Y (%a, %d %b %Y) --"`)
 
 * [[option_weechat.look.eat_newline_glitch]] *weechat.look.eat_newline_glitch*
 ** description: `if set, the eat_newline_glitch will be set to 0; this is used to not add new line char at end of each line, and then not break text when you copy/paste text from WeeChat to another application (this option is disabled by default because it can cause serious display bugs)`
 ** type: boolean
 ** values: on, off (default value: `off`)
+
+* [[option_weechat.look.emphasized_attributes]] *weechat.look.emphasized_attributes*
+** description: `attributes for emphasized text: one or more attribute chars ("*" for bold, "!" for reverse, "_" for underline); if the string is empty, the colors weechat.color.emphasized* are used`
+** type: string
+** values: any string (default value: `""`)
 
 * [[option_weechat.look.highlight]] *weechat.look.highlight*
 ** description: `comma separated list of words to highlight; case insensitive comparison (use "(?-i)" at beginning of words to make them case sensitive), words may begin or end with "*" for partial match; example: "test,(?-i)*toto*,flash*"`
@@ -533,6 +558,11 @@
 ** type: boolean
 ** values: on, off (default value: `off`)
 
+* [[option_weechat.look.hotlist_prefix]] *weechat.look.hotlist_prefix*
+** description: `text displayed at the beginning of the hotlist`
+** type: string
+** values: any string (default value: `"H: "`)
+
 * [[option_weechat.look.hotlist_short_names]] *weechat.look.hotlist_short_names*
 ** description: `if set, uses short names to display buffer names in hotlist (start after first '.' in name)`
 ** type: boolean
@@ -542,6 +572,11 @@
 ** description: `hotlist sort type (group_time_asc (default), group_time_desc, group_number_asc, group_number_desc, number_asc, number_desc)`
 ** type: integer
 ** values: group_time_asc, group_time_desc, group_number_asc, group_number_desc, number_asc, number_desc (default value: `group_time_asc`)
+
+* [[option_weechat.look.hotlist_suffix]] *weechat.look.hotlist_suffix*
+** description: `text displayed at the end of the hotlist`
+** type: string
+** values: any string (default value: `""`)
 
 * [[option_weechat.look.hotlist_unique_numbers]] *weechat.look.hotlist_unique_numbers*
 ** description: `keep only unique numbers in hotlist (this applies only on hotlist items where name is NOT displayed after number)`
@@ -593,6 +628,11 @@
 ** type: boolean
 ** values: on, off (default value: `on`)
 
+* [[option_weechat.look.key_bind_safe]] *weechat.look.key_bind_safe*
+** description: `allow only binding of "safe" keys (beginning with a ctrl or meta code)`
+** type: boolean
+** values: on, off (default value: `on`)
+
 * [[option_weechat.look.mouse]] *weechat.look.mouse*
 ** description: `enable mouse support`
 ** type: boolean
@@ -629,7 +669,7 @@
 ** values: -1 .. 2147483647 (default value: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
-** description: `prefix for action messages, colors are allowed with format "${color}"`
+** description: `prefix for action messages (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
 ** type: string
 ** values: any string (default value: `" *"`)
 
@@ -679,22 +719,22 @@
 ** values: on, off (default value: `on`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
-** description: `prefix for error messages, colors are allowed with format "${color}"`
+** description: `prefix for error messages (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
 ** type: string
 ** values: any string (default value: `"=!="`)
 
 * [[option_weechat.look.prefix_join]] *weechat.look.prefix_join*
-** description: `prefix for join messages, colors are allowed with format "${color}"`
+** description: `prefix for join messages (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
 ** type: string
 ** values: any string (default value: `"-->"`)
 
 * [[option_weechat.look.prefix_network]] *weechat.look.prefix_network*
-** description: `prefix for network messages, colors are allowed with format "${color}"`
+** description: `prefix for network messages (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
 ** type: string
 ** values: any string (default value: `"--"`)
 
 * [[option_weechat.look.prefix_quit]] *weechat.look.prefix_quit*
-** description: `prefix for quit messages, colors are allowed with format "${color}"`
+** description: `prefix for quit messages (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval)`
 ** type: string
 ** values: any string (default value: `"<--"`)
 
@@ -769,7 +809,7 @@
 ** values: on, off (default value: `on`)
 
 * [[option_weechat.look.time_format]] *weechat.look.time_format*
-** description: `time format for dates converted to strings and displayed in messages`
+** description: `time format for dates converted to strings and displayed in messages (see man strftime for date/time specifiers)`
 ** type: string
 ** values: any string (default value: `"%a, %d %b %Y %T"`)
 
@@ -798,6 +838,11 @@
 ** type: integer
 ** values: 1 .. 2147483647 (default value: `30`)
 
+* [[option_weechat.network.proxy_curl]] *weechat.network.proxy_curl*
+** description: `name of proxy used for download of URLs with Curl (used to download list of scripts and in scripts calling function hook_process); the proxy must be defined with command /proxy`
+** type: string
+** values: any string (default value: `""`)
+
 * [[option_weechat.plugin.autoload]] *weechat.plugin.autoload*
 ** description: `comma separated list of plugins to load automatically at startup, "*" means all plugins found, a name beginning with "!" is a negative value to prevent a plugin from being loaded, names can start or end with "*" to match several plugins (examples: "*" or "*,!lua,!tcl")`
 ** type: string
@@ -824,12 +869,12 @@
 ** values: on, off (default value: `on`)
 
 * [[option_weechat.startup.command_after_plugins]] *weechat.startup.command_after_plugins*
-** description: `command executed when WeeChat starts, after loading plugins`
+** description: `command executed when WeeChat starts, after loading plugins (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 
 * [[option_weechat.startup.command_before_plugins]] *weechat.startup.command_before_plugins*
-** description: `command executed when WeeChat starts, before loading plugins`
+** description: `command executed when WeeChat starts, before loading plugins (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 

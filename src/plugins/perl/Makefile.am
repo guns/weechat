@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(PERL_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(PERL_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -27,7 +27,7 @@ perl_la_SOURCES = weechat-perl.c \
                   weechat-perl.h \
                   weechat-perl-api.c \
                   weechat-perl-api.h
-perl_la_LDFLAGS = -module
+perl_la_LDFLAGS = -module -no-undefined
 perl_la_LIBADD = ../lib_weechat_plugins_scripts.la $(PERL_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

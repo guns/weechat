@@ -380,7 +380,6 @@ gui_window_scroll_init (struct t_gui_window_scroll *window_scroll,
     window_scroll->scrolling = 0;
     window_scroll->start_col = 0;
     window_scroll->lines_after = 0;
-    window_scroll->reset_allowed = 0;
     window_scroll->prev_scroll = NULL;
     window_scroll->next_scroll = NULL;
 }
@@ -440,8 +439,7 @@ gui_window_scroll_remove_not_scrolled (struct t_gui_window *window)
                 && (ptr_scroll->start_line_pos == 0)
                 && (ptr_scroll->scrolling == 0)
                 && (ptr_scroll->start_col == 0)
-                && (ptr_scroll->lines_after == 0)
-                && (ptr_scroll->reset_allowed == 0))
+                && (ptr_scroll->lines_after == 0))
             {
                 gui_window_scroll_free (window, ptr_scroll);
             }
@@ -859,6 +857,51 @@ gui_window_coords_init_line (struct t_gui_window *window, int line)
     window->coords[line].buffer_x2 = -1;
     window->coords[line].prefix_x1 = -1;
     window->coords[line].prefix_x2 = -1;
+}
+
+/*
+ * Removes a line from coordinates: each time the line is found in the array
+ * "coords", it is reinitialized.
+ */
+
+void
+gui_window_coords_remove_line (struct t_gui_window *window,
+                               struct t_gui_line *line)
+{
+    int i;
+
+    if (!window->coords)
+        return;
+
+    for (i = 0; i < window->coords_size; i++)
+    {
+        if (window->coords[i].line == line)
+            gui_window_coords_init_line (window, i);
+    }
+}
+
+/*
+ * Removes a line from coordinates: each time a line with data == line_data is
+ * found in the array "coords", it is reinitialized.
+ */
+
+void
+gui_window_coords_remove_line_data (struct t_gui_window *window,
+                                    struct t_gui_line_data *line_data)
+{
+    int i;
+
+    if (!window->coords)
+        return;
+
+    for (i = 0; i < window->coords_size; i++)
+    {
+        if (window->coords[i].line
+            && (window->coords[i].line->data == line_data))
+        {
+            gui_window_coords_init_line (window, i);
+        }
+    }
 }
 
 /*
@@ -1459,9 +1502,7 @@ gui_window_search_text (struct t_gui_window *window)
                 gui_line_get_last_displayed (window->buffer);
             while (ptr_line)
             {
-                if (gui_line_search_text (ptr_line,
-                                          window->buffer->input_buffer,
-                                          window->buffer->text_search_exact))
+                if (gui_line_search_text (window->buffer, ptr_line))
                 {
                     window->scroll->start_line = ptr_line;
                     window->scroll->start_line_pos = 0;
@@ -1484,9 +1525,7 @@ gui_window_search_text (struct t_gui_window *window)
                 gui_line_get_first_displayed (window->buffer);
             while (ptr_line)
             {
-                if (gui_line_search_text (ptr_line,
-                                          window->buffer->input_buffer,
-                                          window->buffer->text_search_exact))
+                if (gui_line_search_text (window->buffer, ptr_line))
                 {
                     window->scroll->start_line = ptr_line;
                     window->scroll->start_line_pos = 0;
@@ -1510,8 +1549,10 @@ void
 gui_window_search_start (struct t_gui_window *window)
 {
     window->buffer->text_search = GUI_TEXT_SEARCH_BACKWARD;
-    window->buffer->text_search_exact = 0;
+    if (window->buffer->text_search_where == 0)
+        window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
     window->buffer->text_search_found = 0;
+    gui_input_search_compile_regex (window->buffer);
     if (window->buffer->text_search_input)
     {
         free (window->buffer->text_search_input);
@@ -1534,6 +1575,7 @@ gui_window_search_restart (struct t_gui_window *window)
     window->scroll->start_line_pos = 0;
     window->buffer->text_search = GUI_TEXT_SEARCH_BACKWARD;
     window->buffer->text_search_found = 0;
+    gui_input_search_compile_regex (window->buffer);
     if (gui_window_search_text (window))
         window->buffer->text_search_found = 1;
     else
@@ -1556,6 +1598,12 @@ gui_window_search_stop (struct t_gui_window *window)
 {
     window->buffer->text_search = GUI_TEXT_SEARCH_DISABLED;
     window->buffer->text_search = 0;
+    if (window->buffer->text_search_regex_compiled)
+    {
+        regfree (window->buffer->text_search_regex_compiled);
+        free (window->buffer->text_search_regex_compiled);
+        window->buffer->text_search_regex_compiled = NULL;
+    }
     gui_input_delete_line (window->buffer);
     if (window->buffer->text_search_input)
     {
@@ -1684,7 +1732,6 @@ gui_window_hdata_window_scroll_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_window_scroll, scrolling, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_window_scroll, start_col, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_window_scroll, lines_after, INTEGER, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_window_scroll, reset_allowed, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_window_scroll, prev_scroll, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_window_scroll, next_scroll, POINTER, 0, NULL, hdata_name);
     }
@@ -1836,7 +1883,6 @@ gui_window_print_log ()
             log_printf ("    scrolling . . . . . : %d",    ptr_scroll->scrolling);
             log_printf ("    start_col . . . . . : %d",    ptr_scroll->start_col);
             log_printf ("    lines_after . . . . : %d",    ptr_scroll->lines_after);
-            log_printf ("    reset_allowed . . . : %d",    ptr_scroll->reset_allowed);
             log_printf ("    prev_scroll . . . . : 0x%lx", ptr_scroll->prev_scroll);
             log_printf ("    next_scroll . . . . : 0x%lx", ptr_scroll->next_scroll);
         }

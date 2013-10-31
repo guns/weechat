@@ -29,6 +29,8 @@ SET(WEECHAT_SOURCES
 ./src/core/wee-network.h
 ./src/core/wee-proxy.c
 ./src/core/wee-proxy.h
+./src/core/wee-secure.c
+./src/core/wee-secure.h
 ./src/core/wee-string.c
 ./src/core/wee-string.h
 ./src/core/wee-upgrade.c
@@ -111,7 +113,6 @@ SET(WEECHAT_SOURCES
 ./src/plugins/aspell/weechat-aspell-speller.c
 ./src/plugins/aspell/weechat-aspell-speller.h
 ./src/plugins/charset/charset.c
-./src/plugins/demo/demo.c
 ./src/plugins/fifo/fifo.c
 ./src/plugins/fifo/fifo.h
 ./src/plugins/fifo/fifo-info.c

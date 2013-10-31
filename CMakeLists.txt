@@ -33,7 +33,7 @@ ENDIF(PREFIX)
 
 SET(VERSION_MAJOR "0")
 SET(VERSION_MINOR "4")
-SET(VERSION_PATCH "1")
+SET(VERSION_PATCH "2")
 SET(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 SET(LICENSE "GPL3")
 SET(PKG_STRING "${PROJECT_NAME} ${VERSION}")
@@ -69,8 +69,8 @@ OPTION(ENABLE_GNUTLS    "Enable SSLv3/TLS support"                  ON)
 OPTION(ENABLE_LARGEFILE "Enable Large File Support"                 ON)
 OPTION(ENABLE_ALIAS     "Enable Alias plugin"                       ON)
 OPTION(ENABLE_ASPELL    "Enable Aspell plugin"                      ON)
+OPTION(ENABLE_ENCHANT   "Enable Enchant lib for Aspell plugin"      OFF)
 OPTION(ENABLE_CHARSET   "Enable Charset plugin"                     ON)
-OPTION(ENABLE_DEMO      "Enable Demo plugin"                        OFF)
 OPTION(ENABLE_FIFO      "Enable FIFO plugin"                        ON)
 OPTION(ENABLE_IRC       "Enable IRC plugin"                         ON)
 OPTION(ENABLE_LOGGER    "Enable Logger plugin"                      ON)
@@ -86,16 +86,26 @@ OPTION(ENABLE_LUA       "Enable Lua scripting language"             ON)
 OPTION(ENABLE_TCL       "Enable Tcl scripting language"             ON)
 OPTION(ENABLE_GUILE     "Enable Scheme (guile) scripting language"  ON)
 OPTION(ENABLE_XFER      "Enable Xfer plugin"                        ON)
-OPTION(ENABLE_DOC       "Enable Documentation"                      ON)
+OPTION(ENABLE_MAN       "Enable build of man page"                  OFF)
+OPTION(ENABLE_DOC       "Enable build of documentation"             OFF)
 
+# option WEECHAT_HOME
 IF(NOT DEFINED WEECHAT_HOME OR "${WEECHAT_HOME}" STREQUAL "")
   SET(WEECHAT_HOME "~/.weechat")
 ENDIF(NOT DEFINED WEECHAT_HOME OR "${WEECHAT_HOME}" STREQUAL "")
-
 SET(WEECHAT_HOME "${WEECHAT_HOME}" CACHE
   STRING "WeeChat home directory for config, logs, scripts.. (default is \"~/.weechat\")"
   FORCE)
 MARK_AS_ADVANCED(CLEAR WEECHAT_HOME)
+
+# option CA_FILE
+IF(NOT DEFINED CA_FILE OR "${CA_FILE}" STREQUAL "")
+  SET(CA_FILE "/etc/ssl/certs/ca-certificates.crt")
+ENDIF(NOT DEFINED CA_FILE OR "${CA_FILE}" STREQUAL "")
+SET(CA_FILE "${CA_FILE}" CACHE
+  STRING "File containing the certificate authorities (default is \"/etc/ssl/certs/ca-certificates.crt\"). This is the default value of option \"weechat.network.gnutls_ca_file\"."
+  FORCE)
+MARK_AS_ADVANCED(CLEAR CA_FILE)
 
 IF(ENABLE_NLS)
   ADD_SUBDIRECTORY( po )
@@ -158,7 +168,7 @@ SET(CPACK_SOURCE_IGNORE_FILES "/\\\\.git" "/build/" "/m4/"
   "/install-sh$" "/missing$" "/intl/" "/libtool$" "/\\\\.libs/"
   "/ltmain\\\\.sh$" "/\\\\.deps/" "/html/" "/html1/" "/Makefile$"
   "/Makefile\\\\.in$" "stamp" "/po/.*\\\\.header$" "\\\\.gmo$" "~$" "\\\\.o$"
-  "\\\\.lo$" "\\\\.a$" "\\\\.la$" "\\\\.lai$" "\\\\.Plo$" "/weechat-curses$"
+  "\\\\.lo$" "\\\\.a$" "\\\\.la$" "\\\\.lai$" "\\\\.Plo$" "/weechat$"
 )
 
 INCLUDE(CPack)

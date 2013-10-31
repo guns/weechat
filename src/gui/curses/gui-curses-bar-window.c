@@ -204,6 +204,10 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
                         gui_window_string_apply_color_pair ((unsigned char **)&string,
                                                             GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar);
                         break;
+                    case GUI_COLOR_EMPHASIS_CHAR: /* emphasis */
+                        string++;
+                        gui_window_toggle_emphasis ();
+                        break;
                     case GUI_COLOR_BAR_CHAR: /* bar color */
                         switch (string[1])
                         {
@@ -357,12 +361,18 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
                         output = string_iconv_from_internal (NULL, utf_char);
                         if (low_char)
                             wattron (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar, A_REVERSE);
-                        wprintw (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar, "%s",
+                        waddstr (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
                                  (output) ? output : utf_char);
                         if (low_char)
                             wattroff (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar, A_REVERSE);
                         if (output)
                             free (output);
+
+                        if (gui_window_current_emphasis)
+                        {
+                            gui_window_emphasize (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
+                                                  *x, *y, size_on_screen);
+                        }
 
                         *x += size_on_screen;
                     }
@@ -436,6 +446,8 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
     index_item = -1;
     index_subitem = -1;
     index_line = 0;
+
+    gui_window_current_emphasis = 0;
 
     filling = gui_bar_get_filling (bar_window->bar);
 
@@ -671,7 +683,7 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
                     gui_window_set_custom_color_fg_bg (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
                                                        CONFIG_COLOR(config_color_bar_more),
                                                        CONFIG_COLOR(bar_window->bar->options[GUI_BAR_OPTION_COLOR_BG]));
-                    mvwprintw (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
+                    mvwaddstr (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
                                y, x, ptr_string);
                 }
             }
@@ -690,7 +702,7 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
                     gui_window_set_custom_color_fg_bg (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
                                                        CONFIG_COLOR(config_color_bar_more),
                                                        CONFIG_COLOR(bar_window->bar->options[GUI_BAR_OPTION_COLOR_BG]));
-                    mvwprintw (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
+                    mvwaddstr (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
                                y, x, ptr_string);
                 }
             }

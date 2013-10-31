@@ -3,11 +3,13 @@
 ........................................
 /logger  list
          set <level>
+         flush
          disable
 
-   list: zeigt, für geöffnete Buffer, den Status der Protokollierung an
+   list: zeigt den Status der Protokollierung aller geöffneten Buffer an
     set: legt den Level fest, nach dem der aktuelle Buffer protokolliert werden soll
-  level: legt fest, welche Nachrichten protokolliert werden sollen (0 = nichts protokollieren, 1 = nur die wichtigsten Nachrichten protokollieren .. 9 = protokolliere alle Nachrichten)
+  level: legt fest, welche Nachrichten protokolliert werden sollen (0 = nichts protokollieren, 1 = nur die wichtigsten Nachrichten protokollieren .. 9 = alle Nachrichten werden protokolliert)
+  flush: sichert alle Protokolle umgehend
 disable: die Protokollierung wird für den aktuellen Buffer ausgeschaltet (der Level wird auf 0 gestellt)
 
 Die Optionen "logger.level.*" und "logger.mask.*" können genutzt werden um den Level der Protokollierung festzulegen und um eine Maske für einen oder mehrere Buffer zu definieren.

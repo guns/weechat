@@ -23,6 +23,11 @@
 ** type: couleur
 ** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `white`)
 
+* [[option_weechat.color.chat_day_change]] *weechat.color.chat_day_change*
+** description: `couleur du texte pour le message affiché lorsque le jour a changé`
+** type: couleur
+** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `cyan`)
+
 * [[option_weechat.color.chat_delimiters]] *weechat.color.chat_delimiters*
 ** description: `couleur du texte pour les délimiteurs`
 ** type: couleur
@@ -187,6 +192,16 @@
 ** description: `couleur du texte pour les valeurs`
 ** type: couleur
 ** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `cyan`)
+
+* [[option_weechat.color.emphasized]] *weechat.color.emphasized*
+** description: `couleur du texte pour le texte mis en valeur (par exemple lors de la recherche de texte); cette option est utilisée seulement si l'option weechat.look.emphasized_attributes est une chaîne vide (valeur par défaut)`
+** type: couleur
+** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `yellow`)
+
+* [[option_weechat.color.emphasized_bg]] *weechat.color.emphasized_bg*
+** description: `couleur du fond pour le texte mis en valeur (par exemple lors de la recherche de texte); cette option est utilisée seulement si l'option weechat.look.emphasized_attributes est une chaîne vide (valeur par défaut)`
+** type: couleur
+** valeurs: un nom de couleur WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numéro de couleur du terminal ou un alias; des attributs sont autorisés avant la couleur (seulement pour la couleur du texte, pas le fond) : "*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné (valeur par défaut: `magenta`)
 
 * [[option_weechat.color.input_actions]] *weechat.color.input_actions*
 ** description: `couleur du texte pour les actions dans la ligne de saisie`
@@ -399,7 +414,7 @@
 ** valeurs: none, highlight, message, all (valeur par défaut: `all`)
 
 * [[option_weechat.look.buffer_time_format]] *weechat.look.buffer_time_format*
-** description: `format de date/heure pour chaque ligne affichée dans les tampons (voir man strftime pour le format de date/heure), les couleurs sont autorisées avec le format "${couleur}", par exemple l'heure française: "${lightblue}%H${white}%M${lightred}%S"`
+** description: `format de date/heure pour chaque ligne affichée dans les tampons (voir man strftime pour le format de date/heure) (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval); par exemple l'heure avec des niveaux de gris (requiert le support de 256 couleurs): "${color:252}%H${color:245}%M${color:240}%S"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"%H:%M:%S"`)
 
@@ -411,7 +426,7 @@
 * [[option_weechat.look.color_inactive_buffer]] *weechat.look.color_inactive_buffer*
 ** description: `utiliser une couleur différente pour les lignes dans un tampon inactif (si la ligne est d'un tampon mélangé et le tampon n'est pas sélectionné)`
 ** type: booléen
-** valeurs: on, off (valeur par défaut: `off`)
+** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.look.color_inactive_message]] *weechat.look.color_inactive_message*
 ** description: `utiliser une couleur différente pour un message inactif (quand la fenêtre n'est pas la fenêtre courante, ou si la ligne est d'un tampon mélangé et le tampon n'est pas sélectionné)`
@@ -436,7 +451,7 @@
 * [[option_weechat.look.color_inactive_window]] *weechat.look.color_inactive_window*
 ** description: `utiliser une couleur différente pour les lignes dans une fenêtre inactive (quand la fenêtre n'est pas la fenêtre courante)`
 ** type: booléen
-** valeurs: on, off (valeur par défaut: `off`)
+** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.look.color_nick_offline]] *weechat.look.color_nick_offline*
 ** description: `utiliser une couleur différente pour les pseudos déconnectés (qui ne sont plus dans la liste de pseudos)`
@@ -468,15 +483,25 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
-* [[option_weechat.look.day_change_time_format]] *weechat.look.day_change_time_format*
-** description: `format de date pour la date affichée quand le jour a changé`
+* [[option_weechat.look.day_change_message_1date]] *weechat.look.day_change_message_1date*
+** description: `message affiché lorsque le jour a changé, avec une date affichée (par exemple au début d'un tampon) (voir man strftime pour le format de date/heure) (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
 ** type: chaîne
-** valeurs: toute chaîne (valeur par défaut: `"%a, %d %b %Y"`)
+** valeurs: toute chaîne (valeur par défaut: `"-- %a, %d %b %Y --"`)
+
+* [[option_weechat.look.day_change_message_2dates]] *weechat.look.day_change_message_2dates*
+** description: `message affiché lorsque le jour a changé, avec deux dates affichées (entre deux messages); les formats pour la seconde date doivent démarrer par deux "%" car strftime est appelé deux fois sur cette chaîne (voir man strftime pour le format de date/heure) (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"-- %%a, %%d %%b %%Y (%a, %d %b %Y) --"`)
 
 * [[option_weechat.look.eat_newline_glitch]] *weechat.look.eat_newline_glitch*
 ** description: `si activé, le eat_newline_glitch sera positionné à 0; cela est utilisé pour ne pas ajouter de nouvelle ligne à la fin de chaque ligne, et donc ne pas couper le texte quand vous copiez/collez du texte depuis WeeChat vers une autre application (cette option est désactivée par défaut car elle peut causer de sérieux problèmes d'affichages)`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
+
+* [[option_weechat.look.emphasized_attributes]] *weechat.look.emphasized_attributes*
+** description: `attributs pour le texte mis en valeur: un ou plusieurs caractères d'attributs ("*" pour du gras, "!" pour la vidéo inverse, "_" pour du souligné); si la chaîne est vide, les couleurs weechat.color.emphasized* sont utilisées`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_weechat.look.highlight]] *weechat.look.highlight*
 ** description: `liste des mots pour la notification séparés par des virgules; la comparaison est insensible à la casse (utilisez "(?-i)" au début des mots pour les rendre sensibles à la casse), les mots peuvent commencer ou se terminer par "*" pour une comparaison partielle; exemple: "test,(?-i)*toto*,flash*"`
@@ -484,7 +509,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_weechat.look.highlight_regex]] *weechat.look.highlight_regex*
-** description: `expression régulière utilisée pour vérifier si un message a un "highlight" ou non, au moins une correspondance dans la chaîne doit être entourée de caractères de mot (alpha-numérique, "-", "_" ou "|"), l'expression régulière est insensible à la casse (utilisez "(?-i)" au début pour la rendre sensible à la casse), exemples: "flashcode|flashy", "(?-i)FlashCode|flashy"`
+** description: `expression régulière utilisée pour vérifier si un message a un "highlight" ou non, au moins une correspondance dans la chaîne doit être entourée de caractères de mot (alphanumérique, "-", "_" ou "|"), l'expression régulière est insensible à la casse (utilisez "(?-i)" au début pour la rendre sensible à la casse), exemples: "flashcode|flashy", "(?-i)FlashCode|flashy"`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
@@ -533,6 +558,11 @@
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `off`)
 
+* [[option_weechat.look.hotlist_prefix]] *weechat.look.hotlist_prefix*
+** description: `chaîne affichée au début de la hotlist`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `"H: "`)
+
 * [[option_weechat.look.hotlist_short_names]] *weechat.look.hotlist_short_names*
 ** description: `si défini, utilise des noms courts pour afficher les noms de tampons dans la hotlist (commence après le premier '.' dans le nom)`
 ** type: booléen
@@ -542,6 +572,11 @@
 ** description: `type de tri pour la liste d'activité (group_time_asc (par défaut), group_time_desc, group_number_asc, group_number_desc, number_asc, number_desc)`
 ** type: entier
 ** valeurs: group_time_asc, group_time_desc, group_number_asc, group_number_desc, number_asc, number_desc (valeur par défaut: `group_time_asc`)
+
+* [[option_weechat.look.hotlist_suffix]] *weechat.look.hotlist_suffix*
+** description: `chaîne affichée à la fin de la hotlist`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_weechat.look.hotlist_unique_numbers]] *weechat.look.hotlist_unique_numbers*
 ** description: `garde seulement des numéros uniques dans la hotlist (cela s'applique seulement aux éléments de la hotlist où le nom n'est PAS affiché après le numéro)`
@@ -574,7 +609,7 @@
 ** valeurs: toute chaîne (valeur par défaut: `"*"`)
 
 * [[option_weechat.look.item_time_format]] *weechat.look.item_time_format*
-** description: `format de date/heure pour l'objet de barre \"time\" (voir man strftime pour le format de date/heure)`
+** description: `format de date/heure pour l'objet de barre "time" (voir man strftime pour le format de date/heure)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"%H:%M"`)
 
@@ -590,6 +625,11 @@
 
 * [[option_weechat.look.jump_smart_back_to_buffer]] *weechat.look.jump_smart_back_to_buffer*
 ** description: `retourner au tampon initial après avoir atteint la fin de la hotlist`
+** type: booléen
+** valeurs: on, off (valeur par défaut: `on`)
+
+* [[option_weechat.look.key_bind_safe]] *weechat.look.key_bind_safe*
+** description: `autoriser seulement l'association de touches "sûres" (commençant par un code ctrl ou meta)`
 ** type: booléen
 ** valeurs: on, off (valeur par défaut: `on`)
 
@@ -629,7 +669,7 @@
 ** valeurs: -1 .. 2147483647 (valeur par défaut: `1`)
 
 * [[option_weechat.look.prefix_action]] *weechat.look.prefix_action*
-** description: `préfixe pour les messages d'action, les couleurs sont autorisées avec le format "${couleur}"`
+** description: `préfixe pour les messages d'action (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `" *"`)
 
@@ -679,22 +719,22 @@
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.look.prefix_error]] *weechat.look.prefix_error*
-** description: `préfixe pour les messages d'erreur, les couleurs sont autorisées avec le format "${couleur}"`
+** description: `préfixe pour les messages d'erreur (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"=!="`)
 
 * [[option_weechat.look.prefix_join]] *weechat.look.prefix_join*
-** description: `préfixe pour les messages d'arrivée, les couleurs sont autorisées avec le format "${couleur}"`
+** description: `préfixe pour les messages d'arrivée (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"-->"`)
 
 * [[option_weechat.look.prefix_network]] *weechat.look.prefix_network*
-** description: `préfixe pour les messages réseau, les couleurs sont autorisées avec le format "${couleur}"`
+** description: `préfixe pour les messages réseau (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"--"`)
 
 * [[option_weechat.look.prefix_quit]] *weechat.look.prefix_quit*
-** description: `préfixe pour les messages de départ, les couleurs sont autorisées avec le format "${couleur}"`
+** description: `préfixe pour les messages de départ (note: le contenu est évalué, donc vous pouvez utiliser des couleurs avec le format "${color:xxx}", voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"<--"`)
 
@@ -769,7 +809,7 @@
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.look.time_format]] *weechat.look.time_format*
-** description: `format de date/heure pour les dates converties en chaînes et affichées dans les messages`
+** description: `format de date/heure pour les dates converties en chaînes et affichées dans les messages (voir man strftime pour le format de date/heure)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `"%a, %d %b %Y %T"`)
 
@@ -798,6 +838,11 @@
 ** type: entier
 ** valeurs: 1 .. 2147483647 (valeur par défaut: `30`)
 
+* [[option_weechat.network.proxy_curl]] *weechat.network.proxy_curl*
+** description: `nom du proxy utilisé pour télécharger les URLs avec Curl (utilisé pour télécharger la liste des scripts et dans les scripts appelant la fonction hook_process); le proxy doit être défini avec la commande /proxy`
+** type: chaîne
+** valeurs: toute chaîne (valeur par défaut: `""`)
+
 * [[option_weechat.plugin.autoload]] *weechat.plugin.autoload*
 ** description: `liste des extensions à charger automatiquement au démarrage (séparées par des virgules), "*" signifie toutes les extensions trouvées, un nom commençant par "!" est une valeur négative pour empêcher une extension d'être chargée, les noms peuvent commencer ou se terminer par "*" pour indiquer plusieurs extensions (exemples: "*" ou "*,!lua,!tcl")`
 ** type: chaîne
@@ -824,12 +869,12 @@
 ** valeurs: on, off (valeur par défaut: `on`)
 
 * [[option_weechat.startup.command_after_plugins]] *weechat.startup.command_after_plugins*
-** description: `commande exécutée quand WeeChat démarre, après le chargement des extensions`
+** description: `commande exécutée quand WeeChat démarre, après le chargement des extensions (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 
 * [[option_weechat.startup.command_before_plugins]] *weechat.startup.command_before_plugins*
-** description: `commande exécutée quand WeeChat démarre, avant le chargement des extensions`
+** description: `commande exécutée quand WeeChat démarre, avant le chargement des extensions (note: le contenu est évalué, voir /help eval)`
 ** type: chaîne
 ** valeurs: toute chaîne (valeur par défaut: `""`)
 

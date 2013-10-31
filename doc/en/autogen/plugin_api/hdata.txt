@@ -1,6 +1,22 @@
-[width="100%",cols="^1,^2,5,5,5,5",options="header"]
+[width="100%",cols="^1,^2,4,8,4,4",options="header"]
 |========================================
 | Plugin | Name | Description | Variables | Update allowed | Lists
+
+| guile | guile_callback | callback of a script |
+  'script' (pointer, hdata: "guile_script") +
+  'function' (string) +
+  'data' (string) +
+  'config_file' (pointer, hdata: "config_file") +
+  'config_section' (pointer, hdata: "config_section") +
+  'config_option' (pointer, hdata: "config_option") +
+  'hook' (pointer) +
+  'buffer' (pointer, hdata: "buffer") +
+  'bar_item' (pointer, hdata: "bar_item") +
+  'upgrade_file' (pointer) +
+  'prev_callback' (pointer, hdata: "guile_callback") +
+  'next_callback' (pointer, hdata: "guile_callback") |
+ |
+  -
 
 | guile | guile_script | list of scripts |
   'filename' (string) +
@@ -12,7 +28,7 @@
   'description' (string) +
   'shutdown_func' (string) +
   'charset' (string) +
-  'callbacks' (pointer) +
+  'callbacks' (pointer, hdata: "guile_callback") +
   'unloading' (integer) +
   'prev_script' (pointer, hdata: "guile_script") +
   'next_script' (pointer, hdata: "guile_script") |
@@ -206,6 +222,22 @@
   'irc_servers' +
   'last_irc_server'
 
+| lua | lua_callback | callback of a script |
+  'script' (pointer, hdata: "lua_script") +
+  'function' (string) +
+  'data' (string) +
+  'config_file' (pointer, hdata: "config_file") +
+  'config_section' (pointer, hdata: "config_section") +
+  'config_option' (pointer, hdata: "config_option") +
+  'hook' (pointer) +
+  'buffer' (pointer, hdata: "buffer") +
+  'bar_item' (pointer, hdata: "bar_item") +
+  'upgrade_file' (pointer) +
+  'prev_callback' (pointer, hdata: "lua_callback") +
+  'next_callback' (pointer, hdata: "lua_callback") |
+ |
+  -
+
 | lua | lua_script | list of scripts |
   'filename' (string) +
   'interpreter' (pointer) +
@@ -216,13 +248,29 @@
   'description' (string) +
   'shutdown_func' (string) +
   'charset' (string) +
-  'callbacks' (pointer) +
+  'callbacks' (pointer, hdata: "lua_callback") +
   'unloading' (integer) +
   'prev_script' (pointer, hdata: "lua_script") +
   'next_script' (pointer, hdata: "lua_script") |
  |
   'last_script' +
   'scripts'
+
+| perl | perl_callback | callback of a script |
+  'script' (pointer, hdata: "perl_script") +
+  'function' (string) +
+  'data' (string) +
+  'config_file' (pointer, hdata: "config_file") +
+  'config_section' (pointer, hdata: "config_section") +
+  'config_option' (pointer, hdata: "config_option") +
+  'hook' (pointer) +
+  'buffer' (pointer, hdata: "buffer") +
+  'bar_item' (pointer, hdata: "bar_item") +
+  'upgrade_file' (pointer) +
+  'prev_callback' (pointer, hdata: "perl_callback") +
+  'next_callback' (pointer, hdata: "perl_callback") |
+ |
+  -
 
 | perl | perl_script | list of scripts |
   'filename' (string) +
@@ -234,13 +282,29 @@
   'description' (string) +
   'shutdown_func' (string) +
   'charset' (string) +
-  'callbacks' (pointer) +
+  'callbacks' (pointer, hdata: "perl_callback") +
   'unloading' (integer) +
   'prev_script' (pointer, hdata: "perl_script") +
   'next_script' (pointer, hdata: "perl_script") |
  |
   'last_script' +
   'scripts'
+
+| python | python_callback | callback of a script |
+  'script' (pointer, hdata: "python_script") +
+  'function' (string) +
+  'data' (string) +
+  'config_file' (pointer, hdata: "config_file") +
+  'config_section' (pointer, hdata: "config_section") +
+  'config_option' (pointer, hdata: "config_option") +
+  'hook' (pointer) +
+  'buffer' (pointer, hdata: "buffer") +
+  'bar_item' (pointer, hdata: "bar_item") +
+  'upgrade_file' (pointer) +
+  'prev_callback' (pointer, hdata: "python_callback") +
+  'next_callback' (pointer, hdata: "python_callback") |
+ |
+  -
 
 | python | python_script | list of scripts |
   'filename' (string) +
@@ -252,13 +316,29 @@
   'description' (string) +
   'shutdown_func' (string) +
   'charset' (string) +
-  'callbacks' (pointer) +
+  'callbacks' (pointer, hdata: "python_callback") +
   'unloading' (integer) +
   'prev_script' (pointer, hdata: "python_script") +
   'next_script' (pointer, hdata: "python_script") |
  |
   'last_script' +
   'scripts'
+
+| ruby | ruby_callback | callback of a script |
+  'script' (pointer, hdata: "ruby_script") +
+  'function' (string) +
+  'data' (string) +
+  'config_file' (pointer, hdata: "config_file") +
+  'config_section' (pointer, hdata: "config_section") +
+  'config_option' (pointer, hdata: "config_option") +
+  'hook' (pointer) +
+  'buffer' (pointer, hdata: "buffer") +
+  'bar_item' (pointer, hdata: "bar_item") +
+  'upgrade_file' (pointer) +
+  'prev_callback' (pointer, hdata: "ruby_callback") +
+  'next_callback' (pointer, hdata: "ruby_callback") |
+ |
+  -
 
 | ruby | ruby_script | list of scripts |
   'filename' (string) +
@@ -270,7 +350,7 @@
   'description' (string) +
   'shutdown_func' (string) +
   'charset' (string) +
-  'callbacks' (pointer) +
+  'callbacks' (pointer, hdata: "ruby_callback") +
   'unloading' (integer) +
   'prev_script' (pointer, hdata: "ruby_script") +
   'next_script' (pointer, hdata: "ruby_script") |
@@ -306,6 +386,22 @@
   'last_script_repo' +
   'scripts_repo'
 
+| tcl | tcl_callback | callback of a script |
+  'script' (pointer, hdata: "tcl_script") +
+  'function' (string) +
+  'data' (string) +
+  'config_file' (pointer, hdata: "config_file") +
+  'config_section' (pointer, hdata: "config_section") +
+  'config_option' (pointer, hdata: "config_option") +
+  'hook' (pointer) +
+  'buffer' (pointer, hdata: "buffer") +
+  'bar_item' (pointer, hdata: "bar_item") +
+  'upgrade_file' (pointer) +
+  'prev_callback' (pointer, hdata: "tcl_callback") +
+  'next_callback' (pointer, hdata: "tcl_callback") |
+ |
+  -
+
 | tcl | tcl_script | list of scripts |
   'filename' (string) +
   'interpreter' (pointer) +
@@ -316,7 +412,7 @@
   'description' (string) +
   'shutdown_func' (string) +
   'charset' (string) +
-  'callbacks' (pointer) +
+  'callbacks' (pointer, hdata: "tcl_callback") +
   'unloading' (integer) +
   'prev_script' (pointer, hdata: "tcl_script") +
   'next_script' (pointer, hdata: "tcl_script") |
@@ -330,6 +426,7 @@
   'items_count' (integer) +
   'items_subcount' (pointer) +
   'items_array' (pointer) +
+  'items_buffer' (pointer) +
   'items_prefix' (pointer) +
   'items_name' (pointer) +
   'items_suffix' (pointer) +
@@ -433,6 +530,9 @@
   'num_history' (integer) +
   'text_search' (integer) +
   'text_search_exact' (integer) +
+  'text_search_regex' (integer) +
+  'text_search_regex_compiled' (pointer) +
+  'text_search_where' (integer) +
   'text_search_found' (integer) +
   'text_search_input' (string) +
   'highlight_words' (string) +
@@ -619,6 +719,41 @@
   'last_gui_key_mouse' +
   'last_gui_key_search'
 
+| weechat | layout | layout |
+  'name' (string) +
+  'layout_buffers' (pointer, hdata: "layout_buffer") +
+  'last_layout_buffer' (pointer, hdata: "layout_buffer") +
+  'layout_windows' (pointer, hdata: "layout_window") +
+  'internal_id' (integer) +
+  'internal_id_current_window' (integer) +
+  'prev_layout' (pointer, hdata: "layout") +
+  'next_layout' (pointer, hdata: "layout") |
+ |
+  'gui_layout_current' +
+  'gui_layouts' +
+  'last_gui_layout'
+
+| weechat | layout_buffer | buffer layout |
+  'plugin_name' (string) +
+  'buffer_name' (string) +
+  'number' (integer) +
+  'prev_layout' (pointer, hdata: "layout_buffer") +
+  'next_layout' (pointer, hdata: "layout_buffer") |
+ |
+  -
+
+| weechat | layout_window | window layout |
+  'internal_id' (integer) +
+  'parent_node' (pointer, hdata: "layout_window") +
+  'split_pct' (integer) +
+  'split_horiz' (integer) +
+  'child1' (pointer, hdata: "layout_window") +
+  'child2' (pointer, hdata: "layout_window") +
+  'plugin_name' (string) +
+  'buffer_name' (string) |
+ |
+  -
+
 | weechat | line | structure with one line |
   'data' (pointer, hdata: "line_data") +
   'prev_line' (pointer, hdata: "line") +
@@ -655,7 +790,9 @@
   'first_line_not_read' (integer) +
   'lines_hidden' (integer) +
   'buffer_max_length' (integer) +
-  'prefix_max_length' (integer) |
+  'buffer_max_length_refresh' (integer) +
+  'prefix_max_length' (integer) +
+  'prefix_max_length_refresh' (integer) |
  |
   -
 
@@ -702,6 +839,15 @@
   'last_weechat_plugin' +
   'weechat_plugins'
 
+| weechat | proxy | proxy |
+  'name' (string) +
+  'options' (pointer) +
+  'prev_proxy' (pointer, hdata: "proxy") +
+  'next_proxy' (pointer, hdata: "proxy") |
+ |
+  'last_weechat_proxy' +
+  'weechat_proxies'
+
 | weechat | window | window |
   'number' (integer) +
   'win_x' (integer) +
@@ -740,7 +886,6 @@
   'scrolling' (integer) +
   'start_col' (integer) +
   'lines_after' (integer) +
-  'reset_allowed' (integer) +
   'prev_scroll' (pointer, hdata: "window_scroll") +
   'next_scroll' (pointer, hdata: "window_scroll") |
  |

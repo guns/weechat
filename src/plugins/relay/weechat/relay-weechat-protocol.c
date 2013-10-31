@@ -165,7 +165,7 @@ relay_weechat_protocol_is_sync (struct t_relay_client *ptr_client,
 
 RELAY_WEECHAT_PROTOCOL_CALLBACK(init)
 {
-    char **options, *pos;
+    char **options, *pos, *password;
     int num_options, i, compression;
 
     RELAY_WEECHAT_PROTOCOL_MIN_ARGS(1);
@@ -182,10 +182,13 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(init)
                 pos++;
                 if (strcmp (options[i], "password") == 0)
                 {
-                    if (strcmp (weechat_config_string (relay_config_network_password),
-                                pos) == 0)
+                    password = weechat_string_eval_expression (weechat_config_string (relay_config_network_password),
+                                                               NULL, NULL, NULL);
+                    if (password)
                     {
-                        RELAY_WEECHAT_DATA(client, password_ok) = 1;
+                        if (strcmp (password, pos) == 0)
+                            RELAY_WEECHAT_DATA(client, password_ok) = 1;
+                        free (password);
                     }
                 }
                 else if (strcmp (options[i], "compression") == 0)
@@ -1091,6 +1094,34 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(test)
 }
 
 /*
+ * Callback for command "ping" (from client).
+ *
+ * Message looks like:
+ *   ping
+ *   ping 1370802127000
+ */
+
+RELAY_WEECHAT_PROTOCOL_CALLBACK(ping)
+{
+    struct t_relay_weechat_msg *msg;
+
+    RELAY_WEECHAT_PROTOCOL_MIN_ARGS(0);
+
+    msg = relay_weechat_msg_new ("_pong");
+    if (msg)
+    {
+        relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_STRING);
+        relay_weechat_msg_add_string (msg, (argc > 0) ? argv_eol[0] : "");
+
+        /* send message */
+        relay_weechat_msg_send (client, msg);
+        relay_weechat_msg_free (msg);
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Callback for command "quit" (from client).
  *
  * Message looks like:
@@ -1125,6 +1156,7 @@ relay_weechat_protocol_recv (struct t_relay_client *client, const char *data)
           { "sync", &relay_weechat_protocol_cb_sync },
           { "desync", &relay_weechat_protocol_cb_desync },
           { "test", &relay_weechat_protocol_cb_test },
+          { "ping", &relay_weechat_protocol_cb_ping },
           { "quit", &relay_weechat_protocol_cb_quit },
           { NULL, NULL }
         };

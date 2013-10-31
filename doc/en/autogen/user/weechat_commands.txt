@@ -1,9 +1,9 @@
 [[command_weechat_away]]
-[command]*`away`* toggle away status::
+[command]*`away`* set or remove away status::
 ........................................
 /away  [-all] [<message>]
 
-   -all: toggle away status on all connected servers
+   -all: set or remove away status on all connected servers
 message: message for away (if no message is given, away status is removed)
 ........................................
 
@@ -125,12 +125,14 @@ Examples:
 /color  alias <color> <name>
         unalias <color>
         reset
+        -o
 
   alias: add an alias for a color
 unalias: delete an alias
   color: color number (greater than or equal to 0, max depends on terminal, commonly 63 or 255)
    name: alias name for color (for example: "orange")
   reset: reset all color pairs (required when no more color pairs are available if automatic reset is disabled, see option weechat.look.color_pairs_auto_reset)
+     -o: send terminal/colors info to current buffer as input
 
 Without argument, this command displays colors in a new buffer.
 
@@ -205,9 +207,10 @@ infolists: display infos about infolists
 [command]*`eval`* evaluate expression and send result to buffer::
 ........................................
 /eval  [-n] <expression>
-       [-n] <expression1> <operator> <expression2>
+       [-n] -c <expression1> <operator> <expression2>
 
         -n: display result without sending it to buffer (debug mode)
+        -c: evaluate as condition: use operators and parentheses, return a boolean value ("0" or "1")
 expression: expression to evaluate, variables with format ${variable} are replaced (see below)
   operator: a logical or comparison operator:
             - logical operators:
@@ -230,9 +233,10 @@ To force a string comparison, add double quotes around each expression, for exam
   "50" > "100"  ==> 1
 
 Some variables are replaced in expression, using the format ${variable}, variable can be, by order of priority :
-  1. the name of an option (file.section.option)
-  2. the name of a local variable in buffer
-  3. a hdata name/variable (the value is automatically converted to string), by default "window" and "buffer" point to current window/buffer.
+  1. a color (format: color:xxx)
+  2. an option (format: file.section.option)
+  3. a local variable in buffer
+  4. a hdata name/variable (the value is automatically converted to string), by default "window" and "buffer" point to current window/buffer.
 Format for hdata can be one of following:
   hdata.var1.var2...: start with a hdata (pointer must be known), and ask variables one after one (other hdata can be followed)
   hdata[list].var1.var2...: start with a hdata using a list, for example:
@@ -241,19 +245,19 @@ Format for hdata can be one of following:
 For name of hdata and variables, please look at "Plugin API reference", function "weechat_hdata_get".
 
 Examples:
-  /eval -n ${weechat.look.scroll_amount}  ==> 3
-  /eval -n ${window}                      ==> 0x2549aa0
-  /eval -n ${window.buffer}               ==> 0x2549320
-  /eval -n ${window.buffer.full_name}     ==> core.weechat
-  /eval -n ${window.buffer.number}        ==> 1
-  /eval -n ${window.buffer.number} > 2    ==> 0
-  /eval -n ${window.win_width} > 100      ==> 1
-  /eval -n (8 > 12) || (5 > 2)            ==> 1
-  /eval -n (8 > 12) && (5 > 2)            ==> 0
-  /eval -n abcd =~ ^ABC                   ==> 1
-  /eval -n abcd =~ (?-i)^ABC              ==> 0
-  /eval -n abcd =~ (?-i)^abc              ==> 1
-  /eval -n abcd !~ abc                    ==> 0
+  /eval -n ${weechat.look.scroll_amount}   ==> 3
+  /eval -n ${window}                       ==> 0x2549aa0
+  /eval -n ${window.buffer}                ==> 0x2549320
+  /eval -n ${window.buffer.full_name}      ==> core.weechat
+  /eval -n ${window.buffer.number}         ==> 1
+  /eval -n -c ${window.buffer.number} > 2  ==> 0
+  /eval -n -c ${window.win_width} > 100    ==> 1
+  /eval -n -c (8 > 12) || (5 > 2)          ==> 1
+  /eval -n -c (8 > 12) && (5 > 2)          ==> 0
+  /eval -n -c abcd =~ ^ABC                 ==> 1
+  /eval -n -c abcd =~ (?-i)^ABC            ==> 0
+  /eval -n -c abcd =~ (?-i)^abc            ==> 1
+  /eval -n -c abcd !~ abc                  ==> 0
 ........................................
 
 [[command_weechat_filter]]
@@ -344,6 +348,8 @@ list of actions:
   complete_previous: complete word with previous completion
   search_text: search text in buffer
   search_switch_case: switch exact case for search
+  search_switch_regex: switch search type: string/regular expression
+  search_switch_where: switch search in messages/prefixes
   search_previous: search previous line
   search_next: search next line
   search_stop: stop search
@@ -608,6 +614,47 @@ file: configuration file to save (without extension ".conf")
 Without argument, all files (WeeChat and plugins) are saved.
 ........................................
 
+[[command_weechat_secure]]
+[command]*`secure`* manage secured data (passwords or private data encrypted in file sec.conf)::
+........................................
+/secure  passphrase <passphrase>|-delete
+         decrypt <passphrase>|-discard
+         set <name> <value>
+         del <name>
+
+passphrase: change the passphrase (without passphrase, data is stored as plain text in file sec.conf)
+   -delete: delete passphrase
+   decrypt: decrypt data still encrypted (it happens only if passphrase was not given on startup)
+  -discard: discard all data still encrypted
+       set: add or change secured data
+       del: delete secured data
+
+Without argument, this command displays secured data in a new buffer.
+
+When a passphrase is used (data encrypted), it is asked by WeeChat on startup.
+It is possible to set environment variable "WEECHAT_PASSPHRASE" to prevent the prompt (this same variable is used by WeeChat on /upgrade).
+
+Secured data with format ${sec.data.xxx} can be used in:
+  - command line argument "--run-command"
+  - options weechat.startup.command_{before|after}_plugins
+  - proxy options: username, password
+  - irc server options: autojoin, command, password, sasl_{username|password}
+  - option relay.network.password
+  - command /eval.
+
+Examples:
+  set a passphrase:
+    /secure passphrase this is my passphrase
+  encrypt freenode SASL password:
+    /secure set freenode mypassword
+    /set irc.server.freenode.sasl_password "${sec.data.freenode}"
+  encrypt oftc password for nickserv:
+    /secure set oftc mypassword
+    /set irc.server.oftc.command "/msg nickserv identify ${sec.data.oftc}"
+  alias to ghost the nick "mynick":
+    /alias ghost /eval /msg -server freenode nickserv ghost mynick ${sec.data.freenode}
+........................................
+
 [[command_weechat_set]]
 [command]*`set`* set config options::
 ........................................
@@ -659,6 +706,7 @@ Examples:
 /upgrade  [<path_to_binary>|-quit]
 
 path_to_binary: path to WeeChat binary (default is current binary)
+        -dummy: do nothing (option used to prevent accidental completion with "-quit")
          -quit: close *ALL* connections, save session and quit WeeChat, which makes possible a delayed restoration (see below)
 
 This command upgrades and reloads a running WeeChat session. The new WeeChat binary must have been compiled or installed with a package manager before running this command.
@@ -677,9 +725,9 @@ With option "-quit", the process is slightly different:
   3. unload all plugins
   4. save WeeChat configuration
   5. quit WeeChat
-Then later you can restore session with command: weechat-curses --upgrade
+Then later you can restore session with command: weechat --upgrade
 IMPORTANT: you must restore the session with exactly same configuration (files *.conf).
-It is possible to restore WeeChat session on another machine if you copy the content of directory "~/.weechat"
+It is possible to restore WeeChat session on another machine if you copy the content of directory "~/.weechat".
 ........................................
 
 [[command_weechat_uptime]]
@@ -738,7 +786,7 @@ Examples:
          refresh
          scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]
          scroll_horiz [-window <number>] [+/-]<value>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_beyond_end|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
          swap [-window <number>] [up|down|left|right]
          zoom[-window <number>]
 
@@ -765,6 +813,7 @@ Examples:
   scroll_down: scroll a few lines down
    scroll_top: scroll to top of buffer
 scroll_bottom: scroll to bottom of buffer
+scroll_beyond_end: scroll beyond the end of buffer
 scroll_previous_highlight: scroll to previous highlight
 scroll_next_highlight: scroll to next highlight
 scroll_unread: scroll to unread marker

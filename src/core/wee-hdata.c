@@ -40,6 +40,7 @@ struct t_hashtable *weechat_hdata = NULL;
 /* hashtables used in hdata_search() for evaluating expression */
 struct t_hashtable *hdata_search_pointers = NULL;
 struct t_hashtable *hdata_search_extra_vars = NULL;
+struct t_hashtable *hdata_search_options = NULL;
 
 char *hdata_type_string[8] =
 { "other", "char", "integer", "long", "string", "pointer", "time",
@@ -104,9 +105,7 @@ hdata_new (struct t_weechat_plugin *plugin, const char *hdata_name,
                                              WEECHAT_HASHTABLE_POINTER,
                                              NULL,
                                              NULL);
-        hashtable_set_pointer (new_hdata->hash_var,
-                               "callback_free_value",
-                               &hdata_free_var);
+        new_hdata->hash_var->callback_free_value = &hdata_free_var;
         new_hdata->hash_list = hashtable_new (32,
                                               WEECHAT_HASHTABLE_STRING,
                                               WEECHAT_HASHTABLE_POINTER,
@@ -508,6 +507,17 @@ hdata_search (struct t_hdata *hdata, void *pointer, const char *search, int move
                                                  NULL);
     }
 
+    if (!hdata_search_options)
+    {
+        hdata_search_options = hashtable_new (32,
+                                              WEECHAT_HASHTABLE_STRING,
+                                              WEECHAT_HASHTABLE_STRING,
+                                              NULL,
+                                              NULL);
+        if (hdata_search_options)
+            hashtable_set (hdata_search_options, "type", "condition");
+    }
+
     while (pointer)
     {
         /* set pointer in hashtable (used for evaluating expression) */
@@ -515,7 +525,8 @@ hdata_search (struct t_hdata *hdata, void *pointer, const char *search, int move
 
         /* evaluate expression */
         result = eval_expression (search, hdata_search_pointers,
-                                  hdata_search_extra_vars);
+                                  hdata_search_extra_vars,
+                                  hdata_search_options);
         rc = eval_is_true (result);
         if (result)
             free (result);
@@ -1137,5 +1148,10 @@ hdata_end ()
     {
         hashtable_free (hdata_search_extra_vars);
         hdata_search_extra_vars = NULL;
+    }
+    if (hdata_search_options)
+    {
+        hashtable_free (hdata_search_options);
+        hdata_search_options = NULL;
     }
 }

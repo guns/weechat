@@ -1,9 +1,9 @@
 [[command_weechat_away]]
-[command]*`away`* 離席、着席の切り替え::
+[command]*`away`* 離席状態の切り替え::
 ........................................
 /away  [-all] [<message>]
 
-   -all: 全ての接続済みサーバに対して離席状態を変更
+   -all: 全ての接続済みサーバに対して離席状態を切り替え
 message: 離席メッセージ (メッセージが無い場合は、離席状態を解除)
 ........................................
 
@@ -80,7 +80,7 @@ message: 離席メッセージ (メッセージが無い場合は、離席状態
    merge: 現在のバッファを他のバッファにマージ (2 つのバッファのチャットエリアが一緒になります)
           (デフォルトでは ctrl-x でマージバッファの切り替え)
  unmerge: 同じ番号を持つ他のバッファとのマージを解除
-   close: バッファを閉じる (番号/範囲または名前のオプションを受け付けます)
+   close: バッファを閉じる (番号/範囲または名前は任意)
   notify: 現在のバッファの通知レベルを設定: このレベルでバッファがホットリストに追加されるかどうかを定義します:
                none: 通知しない
           highlight: ハイライトがあった場合のみ通知
@@ -125,12 +125,14 @@ localvar: 現在のバッファのローカル変数を表示
 /color  alias <color> <name>
         unalias <color>
         reset
+        -o
 
   alias: ある色に別名を追加
 unalias: 別名の削除
   color: カラー番号 (0 以上、最大値はターミナル依存、多くの場合 63 か 255)
    name: カラーの別名 (例えば: "orange")
   reset: 全てのカラーペアをリセット (自動的なリセットが無効化されており、これ以上のカラーペアが利用できない場合に必要、オプション weechat.look.color_pairs_auto_reset を参照)
+     -o: 端末/色情報を現在の入力としてバッファに送る
 
 引数無しの場合、コマンドは新しいバッファに色を表示します。
 
@@ -187,7 +189,7 @@ stop: カーソルモードを終了
    plugin: プラグインの名前 ("core" は WeeChat コアを意味する)
     level: プラグインのデバッグレベル (0 はデバッグの無効化)
      dump: WeeChat ログファイルにメモリダンプを保存 (WeeChat がクラッシュした場合と同じダンプが書き込まれます)
-   buffer: ログファイルに 16 進値でバッファ内容をダンプ
+   buffer: ログファイルに 16 進値でバッファの内容をダンプ
     color: 現在の色ペアに関する情報を表示
    cursor: カーソルモードのデバッグを切り替え
      dirs: ディレクトリを表示
@@ -205,9 +207,10 @@ infolists: infolist に関する情報を表示
 [command]*`eval`* 式を評価して結果をバッファに送信::
 ........................................
 /eval  [-n] <expression>
-       [-n] <expression1> <operator> <expression2>
+       [-n] -c <expression1> <operator> <expression2>
 
         -n: 結果をバッファに送信せずに表示 (デバッグモード)
+        -c: 条件として評価: 演算子と括弧をを使い、ブール値 ("0" または "1") を返します
 expression: 評価する式、フォーマット、${variable} 型のフォーマットの変数は置換されます (以下を参照)
   operator: 論理演算子や比較演算子:
             - 論理演算子:
@@ -230,9 +233,10 @@ expression: 評価する式、フォーマット、${variable} 型のフォー�
   "50" > "100"  ==> 1
 
 式中の ${variable} 型のフォーマットの変数は置換さます。変数は以下の優先順位に従います。
-  1. オプションの名前 (file.section.option)
-  2. バッファのローカル変数の名前
-  3. hdata の名前/変数 (値は自動的に文字列に変換されます)、デフォルトでは "window" と "buffer" は現在のウィンドウ/バッファを指します。
+  1. 色の名前 (フォーマット: color:xxx)
+  2. オプションの名前 (file.section.option)
+  3. バッファのローカル変数の名前
+  4. hdata の名前/変数 (値は自動的に文字列に変換されます)、デフォルトでは "window" と "buffer" は現在のウィンドウ/バッファを指します。
 hdata のフォーマットは以下の 1 つです:
   hdata.var1.var2...: hdata (ポインタは既知) で始まり、1 個ずつ変数を続ける (他の hdata を続けることも可能)
   hdata(list).var1.var2...: リストを使って hdata を始める、例:
@@ -241,19 +245,19 @@ hdata のフォーマットは以下の 1 つです:
 hdata と変数の名前については、"プラグイン API リファレンス" の "weechat_hdata_get" 関数を参照してください。
 
 例:
-  /eval -n ${weechat.look.scroll_amount}  ==> 3
-  /eval -n ${window}                      ==> 0x2549aa0
-  /eval -n ${window.buffer}               ==> 0x2549320
-  /eval -n ${window.buffer.full_name}     ==> core.weechat
-  /eval -n ${window.buffer.number}        ==> 1
-  /eval -n ${window.buffer.number} > 2    ==> 0
-  /eval -n ${window.win_width} > 100      ==> 1
-  /eval -n (8 > 12) || (5 > 2)            ==> 1
-  /eval -n (8 > 12) && (5 > 2)            ==> 0
-  /eval -n abcd =~ ^ABC                   ==> 1
-  /eval -n abcd =~ (?-i)^ABC              ==> 0
-  /eval -n abcd =~ (?-i)^abc              ==> 1
-  /eval -n abcd !~ abc                    ==> 0
+  /eval -n ${weechat.look.scroll_amount}   ==> 3
+  /eval -n ${window}                       ==> 0x2549aa0
+  /eval -n ${window.buffer}                ==> 0x2549320
+  /eval -n ${window.buffer.full_name}      ==> core.weechat
+  /eval -n ${window.buffer.number}         ==> 1
+  /eval -n -c ${window.buffer.number} > 2  ==> 0
+  /eval -n -c ${window.win_width} > 100    ==> 1
+  /eval -n -c (8 > 12) || (5 > 2)          ==> 1
+  /eval -n -c (8 > 12) && (5 > 2)          ==> 0
+  /eval -n -c abcd =~ ^ABC                 ==> 1
+  /eval -n -c abcd =~ (?-i)^ABC            ==> 0
+  /eval -n -c abcd =~ (?-i)^abc            ==> 1
+  /eval -n -c abcd !~ abc                  ==> 0
 ........................................
 
 [[command_weechat_filter]]
@@ -344,6 +348,8 @@ value: 表示する履歴エントリの数
   complete_previous: 一つ前の補完候補で単語を補完
   search_text: バッファ内のテキストを検索
   search_switch_case: 完全一致検索に変更
+  search_switch_regex: 検索タイプの切り替え: 文字列/正規表現
+  search_switch_where: 検索範囲の切り替え: メッセージ/プレフィックス
   search_previous: 一つ前の行を検索
   search_next: 次の行を検索
   search_stop: 検索を終了
@@ -374,8 +380,8 @@ value: 表示する履歴エントリの数
   jump_previously_visited_buffer: 一つ前に訪れたバッファに移動
   jump_next_visited_buffer: 次に訪れたバッファに移動
   hotlist_clear: ホットリストを消去
-  grab_key: キーを横取りする (オプション引数: 最後の横取りからの遅延時間、デフォルトは 500 ミリ秒)
-  grab_key_command: あるコマンドに関連してキーを横取りする (オプション引数: 最後の横取りからの遅延時間、デフォルトは 500 ミリ秒)
+  grab_key: キーを横取り (任意引数: 最後の横取りからの遅延時間、デフォルトは 500 ミリ秒)
+  grab_key_command: あるコマンドに関連してキーを横取り (任意引数: 最後の横取りからの遅延時間、デフォルトは 500 ミリ秒)
   grab_mouse: grab マウスイベントコードを横取り
   grab_mouse_area: 範囲指定のマウスイベントコードを横取り
   set_unread: 全てのバッファに対して未読マーカーを設定
@@ -608,6 +614,47 @@ file: 保存する設定ファイル (拡張子 ".conf" は不要)
 引数無しでは、全てのファイル (WeeChat とプラグイン) が保存されます。
 ........................................
 
+[[command_weechat_secure]]
+[command]*`secure`* 保護データを管理します (パスワードやプライベートデータは暗号化されて sec.conf ファイルに保存)::
+........................................
+/secure  passphrase <passphrase>|-delete
+         decrypt <passphrase>|-discard
+         set <name> <value>
+         del <name>
+
+passphrase: change the passphrase (without passphrase, data is stored as plain text in file sec.conf)
+   -delete: delete passphrase
+   decrypt: decrypt data still encrypted (it happens only if passphrase was not given on startup)
+  -discard: discard all data still encrypted
+       set: add or change secured data
+       del: delete secured data
+
+Without argument, this command displays secured data in a new buffer.
+
+When a passphrase is used (data encrypted), it is asked by WeeChat on startup.
+It is possible to set environment variable "WEECHAT_PASSPHRASE" to prevent the prompt (this same variable is used by WeeChat on /upgrade).
+
+Secured data with format ${sec.data.xxx} can be used in:
+  - command line argument "--run-command"
+  - options weechat.startup.command_{before|after}_plugins
+  - proxy options: username, password
+  - irc server options: autojoin, command, password, sasl_{username|password}
+  - option relay.network.password
+  - command /eval.
+
+Examples:
+  set a passphrase:
+    /secure passphrase this is my passphrase
+  encrypt freenode SASL password:
+    /secure set freenode mypassword
+    /set irc.server.freenode.sasl_password "${sec.data.freenode}"
+  encrypt oftc password for nickserv:
+    /secure set oftc mypassword
+    /set irc.server.oftc.command "/msg nickserv identify ${sec.data.oftc}"
+  alias to ghost the nick "mynick":
+    /alias ghost /eval /msg -server freenode nickserv ghost mynick ${sec.data.freenode}
+........................................
+
 [[command_weechat_set]]
 [command]*`set`* オプションの設定::
 ........................................
@@ -659,6 +706,7 @@ option: オプションの名前 ("*" で始めるか終わるかすれば大量
 /upgrade  [<path_to_binary>|-quit]
 
 path_to_binary: WeeChat バイナリへのパス (デフォルトは現在のバイナリ)
+        -dummy: 何もしない (補完された "-quit" オプションを不用意に使わないためのオプション)
          -quit: *すべての*接続を閉じ、セッションを保存して WeeChat を終了。遅延復帰 (詳しくは後述) が可能になります。
 
 このコマンドは起動中の WeeChat セッションのアップグレードと再読み込みを行います。このコマンドを実行する前に、新しい WeeChat バイナリをコンパイルするか、パッケージマネージャでインストールしなければいけません。
@@ -677,7 +725,7 @@ path_to_binary: WeeChat バイナリへのパス (デフォルトは現在のバ
   3. すべてのプラグインをアンロード
   4. WeeChat 設定を保存
   5. WeeChat を終了
-この後、セッションを回復させるには weechat-curses --upgrade を使ってください。
+この後、セッションを回復させるには weechat --upgrade を使ってください。
 重要: 完全に同一の設定で (*.conf ファイルで) セッションを回復させてください。
 "~/.weechat" ディレクトリの内容をコピーすれば異なるマシンで WeeChat のセッションを回復することも可能です。
 ........................................
@@ -706,7 +754,7 @@ path_to_binary: WeeChat バイナリへのパス (デフォルトは現在のバ
 /wait  <number>[<unit>] <command>
 
  number: 遅延時間 (整数)
-   unit: オプション、値は:
+   unit: 任意、値は:
            ms: ミリ秒
             s: 秒 (デフォルト)
             m: 分
@@ -738,7 +786,7 @@ command: 実行するコマンド (コマンドが '/' で始まらない場合�
          refresh
          scroll [-window <number>] [+/-]<value>[s|m|h|d|M|y]
          scroll_horiz [-window <number>] [+/-]<value>[%]
-         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
+         scroll_up|scroll_down|scroll_top|scroll_bottom|scroll_beyond_end|scroll_previous_highlight|scroll_next_highlight|scroll_unread [-window <number>]
          swap [-window <number>] [up|down|left|right]
          zoom[-window <number>]
 
@@ -765,10 +813,11 @@ command: 実行するコマンド (コマンドが '/' で始まらない場合�
   scroll_down: 数行分下方向にスクロール
    scroll_top: バッファの一番上にスクロール
 scroll_bottom: バッファの一番下にスクロール
+scroll_beyond_end: バッファの末尾を越えてスクロール
 scroll_previous_highlight: 一つ前のハイライトにスクロール
 scroll_next_highlight: 次のハイライトにスクロール
 scroll_unread: 未読マーカにスクロール
-         swap: 2 つのウィンドウのバッファを入れ替え (ターゲットウィンドウの方向が引数)
+         swap: 2 つのウィンドウのバッファを入れ替え (ターゲットウィンドウの方向を任意指定)
          zoom: ウィンドウを拡大
 
 splith と splitv に関しては、pct は新しいウィンドウのパーセンテージで、現在のウィンドウサイズに対する割合で計算されます。例えば、25 は size = current_size / 4 の新しいウィンドウを作成します。

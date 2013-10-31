@@ -296,6 +296,25 @@ weechat_ruby_api_ngettext (VALUE class, VALUE single, VALUE plural,
 }
 
 static VALUE
+weechat_ruby_api_strlen_screen (VALUE class, VALUE string)
+{
+    char *c_string;
+    int value;
+
+    API_FUNC(1, "strlen_screen", API_RETURN_INT(0));
+    if (NIL_P (string))
+        API_WRONG_ARGS(API_RETURN_INT(0));
+
+    Check_Type (string, T_STRING);
+
+    c_string = StringValuePtr (string);
+
+    value = weechat_strlen_screen (c_string);
+
+    API_RETURN_INT(value);
+}
+
+static VALUE
 weechat_ruby_api_string_match (VALUE class, VALUE string, VALUE mask,
                                VALUE case_sensitive)
 {
@@ -444,19 +463,22 @@ weechat_ruby_api_string_input_for_buffer (VALUE class, VALUE string)
 
 static VALUE
 weechat_ruby_api_string_eval_expression (VALUE class, VALUE expr,
-                                         VALUE pointers, VALUE extra_vars)
+                                         VALUE pointers, VALUE extra_vars,
+                                         VALUE options)
 {
     char *c_expr, *result;
-    struct t_hashtable *c_pointers, *c_extra_vars;
+    struct t_hashtable *c_pointers, *c_extra_vars, *c_options;
     VALUE return_value;
 
     API_FUNC(1, "string_eval_expression", API_RETURN_EMPTY);
-    if (NIL_P (expr) || NIL_P (pointers) || NIL_P (extra_vars))
+    if (NIL_P (expr) || NIL_P (pointers) || NIL_P (extra_vars)
+        || NIL_P (options))
         API_WRONG_ARGS(API_RETURN_EMPTY);
 
     Check_Type (expr, T_STRING);
     Check_Type (pointers, T_HASH);
     Check_Type (extra_vars, T_HASH);
+    Check_Type (options, T_HASH);
 
     c_expr = StringValuePtr (expr);
     c_pointers = weechat_ruby_hash_to_hashtable (pointers,
@@ -467,13 +489,20 @@ weechat_ruby_api_string_eval_expression (VALUE class, VALUE expr,
                                                    WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
                                                    WEECHAT_HASHTABLE_STRING,
                                                    WEECHAT_HASHTABLE_STRING);
+    c_options = weechat_ruby_hash_to_hashtable (options,
+                                                WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
+                                                WEECHAT_HASHTABLE_STRING,
+                                                WEECHAT_HASHTABLE_STRING);
 
-    result = weechat_string_eval_expression (c_expr, c_pointers, c_extra_vars);
+    result = weechat_string_eval_expression (c_expr, c_pointers, c_extra_vars,
+                                             c_options);
 
     if (c_pointers)
         weechat_hashtable_free (c_pointers);
     if (c_extra_vars)
         weechat_hashtable_free (c_extra_vars);
+    if (c_options)
+        weechat_hashtable_free (c_options);
 
     API_RETURN_STRING_FREE(result);
 }
@@ -4561,29 +4590,56 @@ weechat_ruby_api_bar_item_search (VALUE class, VALUE name)
 
 char *
 weechat_ruby_api_bar_item_build_cb (void *data, struct t_gui_bar_item *item,
-                                    struct t_gui_window *window)
+                                    struct t_gui_window *window,
+                                    struct t_gui_buffer *buffer,
+                                    struct t_hashtable *extra_info)
 {
     struct t_plugin_script_cb *script_callback;
-    void *func_argv[3];
+    void *func_argv[5];
     char empty_arg[1] = { '\0' }, *ret;
 
     script_callback = (struct t_plugin_script_cb *)data;
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
-        func_argv[1] = API_PTR2STR(item);
-        func_argv[2] = API_PTR2STR(window);
+        if (strncmp (script_callback->function, "(extra)", 7) == 0)
+        {
+            /* new callback: data, item, window, buffer, extra_info */
+            func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+            func_argv[1] = API_PTR2STR(item);
+            func_argv[2] = API_PTR2STR(window);
+            func_argv[3] = API_PTR2STR(buffer);
+            func_argv[4] = extra_info;
 
-        ret = (char *)weechat_ruby_exec (script_callback->script,
-                                         WEECHAT_SCRIPT_EXEC_STRING,
-                                         script_callback->function,
-                                         "sss", func_argv);
+            ret = (char *)weechat_ruby_exec (script_callback->script,
+                                             WEECHAT_SCRIPT_EXEC_STRING,
+                                             script_callback->function + 7,
+                                             "ssssh", func_argv);
 
-        if (func_argv[1])
-            free (func_argv[1]);
-        if (func_argv[2])
-            free (func_argv[2]);
+            if (func_argv[1])
+                free (func_argv[1]);
+            if (func_argv[2])
+                free (func_argv[2]);
+            if (func_argv[3])
+                free (func_argv[3]);
+        }
+        else
+        {
+            /* old callback: data, item, window */
+            func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
+            func_argv[1] = API_PTR2STR(item);
+            func_argv[2] = API_PTR2STR(window);
+
+            ret = (char *)weechat_ruby_exec (script_callback->script,
+                                             WEECHAT_SCRIPT_EXEC_STRING,
+                                             script_callback->function,
+                                             "sss", func_argv);
+
+            if (func_argv[1])
+                free (func_argv[1]);
+            if (func_argv[2])
+                free (func_argv[2]);
+        }
 
         return ret;
     }
@@ -5918,6 +5974,7 @@ weechat_ruby_api_init (VALUE ruby_mWeechat)
     API_DEF_FUNC(iconv_from_internal, 2);
     API_DEF_FUNC(gettext, 1);
     API_DEF_FUNC(ngettext, 3);
+    API_DEF_FUNC(strlen_screen, 1);
     API_DEF_FUNC(string_match, 3);
     API_DEF_FUNC(string_has_highlight, 2);
     API_DEF_FUNC(string_has_highlight_regex, 2);
@@ -5925,7 +5982,7 @@ weechat_ruby_api_init (VALUE ruby_mWeechat)
     API_DEF_FUNC(string_remove_color, 2);
     API_DEF_FUNC(string_is_command_char, 1);
     API_DEF_FUNC(string_input_for_buffer, 1);
-    API_DEF_FUNC(string_eval_expression, 3);
+    API_DEF_FUNC(string_eval_expression, 4);
     API_DEF_FUNC(mkdir_home, 2);
     API_DEF_FUNC(mkdir, 2);
     API_DEF_FUNC(mkdir_parents, 2);

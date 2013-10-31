@@ -22,31 +22,9 @@ Sébastien Helleu <flashcode@flashtux.org>
 [[why_choose_weechat]]
 === WeeChat を選ぶ理由は何ですか? X-Chat や Irssi は最高なのに... ===
 
-なぜなら WeeChat はとても軽量で新しい機能を持っているからです。
-いくつかの機能 (バージョン ≥ 0.3.x):
+WeeChat は非常に軽く、革新的な機能を備えているからです。
 
-* プラグインでマルチプロトコルをサポート (IRC、Jabber)
-* Curses の他に多くのリモート GUI をサポート(近日公開)
-* 256 色サポート
-* 多くの言語で利用可能
-* プラグインによる拡張 (C 言語、Perl、Python、Ruby、Lua、Tcl)
-* 任意の内容を持てるバッファ
-* タグや正規表現を用いた表示制限フィルタ
-* 水平垂直方向のウィンドウ分割
-* カスタマイズと拡張可能なバー
-* 組み込み済みのニックネームリスト
-* バッファリスト (buffers.pl スクリプト)
-* IRC プロキシ
-* IRC コマンドのリダイレクト
-* バッファ内のインクリメンタルテキスト検索、ハイライト部分へのジャンプ
-* リモート操作用の FIFO パイプ
-* aspell サポート
-* 2 つの文字セット (エンコード/デコード)
-* ゼロからの開発 (他のどんなクライアントにも基づかない)
-* マルチプラットフォーム
-* GPL に準拠してフリー
-
-こののページに関するより詳しい情報: http://www.weechat.org/features
+こののページに関するより詳しい情報: http://weechat.org/about/features
 
 [[compilation_install]]
 == コンパイル / インストール ==
@@ -54,9 +32,12 @@ Sébastien Helleu <flashcode@flashtux.org>
 [[gui]]
 === WeeChat には多くの GUI があると聞きました。コンパイル/利用方法を教えてください。 ===
 
-今のところ利用可能なのは Curses GUI だけです。
+いくつかのリモート GUI を使うことができます:
 
-その他の GUI はリモートクライアントとして利用可能になる予定です(現在開発中)。
+* http://weechat.org/download/devel[QWeeChat] (Qt)
+* https://github.com/ubergeek42/weechat-android[weechat-android] (Android)
+* https://github.com/the-kenny/weechat.el[weechat.el] (Emacs)
+* https://github.com/eirikb/weecloud[weecloud] (Web)
 
 [[compile_git]]
 === git リポジトリをクローンした後に WeeChat をコンパイルできません。 ===
@@ -88,8 +69,8 @@ autotools を使って (cmake を使わずに) コンパイルする場合、
 
 これは良くある問題です。以下の内容をよく読んで、*全ての* 解決策をチェックしてください:
 
-* weechat-curses が libncursesw にリンクされていることの確認 (警告: 全てではありませんが、
-  ほとんどのディストリビューションで必要です): `ldd /path/to/weechat-curses`
+* weechat が libncursesw にリンクされていることの確認 (警告: 全てではありませんが、
+  ほとんどのディストリビューションで必要です): `ldd /path/to/weechat`
 * `/plugin` コマンドで "Charset" プラグインがロード済みであることの確認
   (ロードされていない場合、"weechat-plugins" パッケージが必要かもしれません) 。
 * `/charset` コマンドの出力を確認 (core バッファ上で)。
@@ -102,6 +83,8 @@ autotools を使って (cmake を使わずに) コンパイルする場合、
    rxvt-unicode を推奨)
 ** screen を使っている場合は、UTF-8 モードで起動されていることを確認
    (~/.screenrc に "`defutf8 on`" の記述があるか又は `screen -U` のようにして起動)。
+* 'weechat.look.eat_newline_glitch' オプションが off であることを確認してください
+  (このオプションは表示上のバグを引き起こす可能性があります)
 
 [NOTE]
 WeeChat は UTF-8 ロケールを推奨します。ISO 又はその他のロケールを使う場合、
@@ -264,7 +247,7 @@ WeeChat ≥ 0.3.6 では、"eat_newline_glitch" オプションを有効化で�
 このオプションには表示上の問題を引き起こす可能性があります。
 表示上の問題が起きた場合はこのオプションを無効化してください。
 
-別の解決策として、スクリプトを利用することもできます: http://www.weechat.org/scripts/stable/tag/url
+別の解決策として、スクリプトを利用することもできます: http://weechat.org/scripts/stable/tag/url
 
 [[change_locale_without_quit]]
 === WeeChat が出力するメッセージの言語を、再起動せずに変更したいです。このようなことは可能ですか。 ===
@@ -481,6 +464,21 @@ gnutls ハンドシェイクに関するエラーの場合、Diffie-Hellman キ�
 /connect freenode
 ----------------------------------------
 
+[[irc_oauth]]
+=== どうすれば "oauth" が必要なサーバに接続出来ますか? ===
+
+'twitch' などの一部のサーバは接続するために oauth が必要です。
+
+oauth を使うにはパスワードを "oauth:XXXX" のように指定してください。
+
+以下のコマンドでサーバを作成し、接続することができます
+(名前とアドレスは適当な値に変更してください):
+
+----------------------------------------
+/server add name irc.server.org -password="oauth:XXXX"
+/connect name
+----------------------------------------
+
 [[irc_sasl]]
 === どうすればチャンネル参加前にニックネーム認証を行うことができますか。 ===
 
@@ -634,7 +632,7 @@ WeeChat 0.3.3 以下では、オプション名が 'irc.network.away_check' と
 /set plugins.var.perl.launcher.signal.weechat_highlight "/path/to/command arguments"
 ----------------------------------------
 
-この問題に対するその他のスクリプトは: http://www.weechat.org/scripts/stable/tag/notify/
+この問題に対するその他のスクリプトは: http://weechat.org/scripts/stable/tag/notify/
 
 [[irc_target_buffer]]
 === どうすればマージされたバッファ内であるコマンドを発行するターゲットバッファを変更できますか。 ===
@@ -703,7 +701,7 @@ OpenBSD では、プラグインファイル名の末尾が ".so.0.0" です (Li
   * 新機能のリクエスト: https://savannah.nongnu.org/task/?group=weechat
   * パッチ送信: https://savannah.nongnu.org/patch/?group=weechat
 . メールで開発者に連絡、開発者のメールアドレスはサポートページを参照:
-  http://www.weechat.org/about
+  http://weechat.org/dev/support
   ("support" メーリングリストを購読して送信することもできます)
 
 [[gdb_error_threads]]
@@ -712,7 +710,7 @@ OpenBSD では、プラグインファイル名の末尾が ".so.0.0" です (Li
 gdb で WeeChat を実行する場合、以下のエラーが出るかもしれません:
 
 ----------------------------------------
-$ gdb /path/to/weechat-curses
+$ gdb /path/to/weechat
 (gdb) run
 [Thread debugging using libthread_db enabled]
 Cannot find new threads: generic error
@@ -722,14 +720,14 @@ Cannot find new threads: generic error
 (システム上の libpthread と WeeChat へのパスを変更):
 
 ----------------------------------------
-$ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat-curses
+$ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat
 (gdb) run
 ----------------------------------------
 
 [[supported_os]]
 === WeeChat をサポートするプラットフォームのリストを教えてください。他のオペレーティングシステムへの移植予定はありますか。 ===
 
-完全なリストはこのページにあります: http://www.weechat.org/download
+完全なリストはこのページにあります: http://weechat.org/download
 
 我々は可能な限り多くのプラットフォームに移植することに最善を尽くしています。
 我々が持っていない OS で WeeChat をテストすることを歓迎します。
@@ -740,10 +738,10 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /path/to/weechat-curses
 多くの課題があります (テスト、コード、ドキュメント作成、...)。
 
 IRC かメールで連絡を取り、サポートページを確認してください:
-http://www.weechat.org/support
+http://weechat.org/dev/support
 
 [[donate]]
 === WeeChat 開発者にお金か何かを贈りたいのですが。 ===
 
 開発補助のためお金を贈ることができます。
-詳しいことは http://www.weechat.org/donate に載っています。
+詳しいことは http://weechat.org/about/donate に載っています。

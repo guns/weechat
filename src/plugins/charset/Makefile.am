@@ -17,14 +17,14 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(CHARSET_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(CHARSET_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
 lib_LTLIBRARIES = charset.la
 
 charset_la_SOURCES = charset.c
-charset_la_LDFLAGS = -module
+charset_la_LDFLAGS = -module -no-undefined
 charset_la_LIBADD  = $(CHARSET_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

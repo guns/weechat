@@ -14,7 +14,7 @@ target: Server
  -current: führt einen Befehl aus der an alle Channels des aktuellen Servers gesendet wird
  -exclude: dient zum Ausschluss ausgewählter Channels ('*' wird zu Beginn oder am Ende des Channel-Namens akzeptiert, um mehrere Channels auszuschließen)
   command: Befehl der ausgeführt werden soll
-arguments: Argumente des Befehls
+arguments: Argumente für Befehl (Variablen die genutzt werden können: $nick, $channel und $server)
 
 Beispiele:
   Führe den Befehl '/me Ich teste gerade etwas...' für alle Channels aus:
@@ -32,13 +32,15 @@ Beispiele:
 
  -exclude: dient zum Ausschluss ausgewählter Server ('*' wird zu Beginn oder am Ende des Servernamens akzeptiert, um mehrere Server auszuschließen)
   command: Befehl der ausgeführt werden soll
-arguments: Argumente des Befehls
+arguments: Argumente für Befehl (Variablen die genutzt werden können: $nick, $channel und $server)
 
 Beispiele:
-  Ändere den Nick auf allen Servern:
+  ändere den Nick auf allen Servern:
     /allserv nick newnick
-  Setzt den Status, auf allen Servern,auf abwesend:
+  setzt den Status, auf allen Servern,auf abwesend:
     /allserv away I'm away
+  führt ein whois mit meinem nick auf allen Servern aus:
+    /allserv whois $nick
 ........................................
 
 [[command_irc_ban]]
@@ -119,18 +121,29 @@ Beispiel:
 [command]*`dehalfop`* halb-Operator-Privilegien einem oder mehreren Nick(s) entziehen::
 ........................................
 /dehalfop  <nick> [<nick>...]
+
+nick: Nick oder Maske (darf mit einem "*" als Platzhalter beginnen oder enden)
+   *: entzieht allen Nicks im Channel den half-operator-Status, ausgenommen sich selber
 ........................................
 
 [[command_irc_deop]]
 [command]*`deop`* Operator-Privilegien einem oder mehreren Nicknamen entziehen::
 ........................................
 /deop  <nick> [<nick>...]
+       * -yes
+
+nick: Nick oder Maske (darf mit einem "*" als Platzhalter beginnen oder enden)
+   *: entzieht allen Nicks im Channel den Operator-Status, ausgenommen sich selber
 ........................................
 
 [[command_irc_devoice]]
 [command]*`devoice`* Voice-Privilegien einem oder mehreren Nicknamen entziehen::
 ........................................
 /devoice  <nick> [<nick>...]
+          * -yes
+
+nick: Nick oder Maske (darf mit einem "*" als Platzhalter beginnen oder enden)
+   *: entzieht allen Nicks im Channel den voice-Status
 ........................................
 
 [[command_irc_die]]
@@ -156,6 +169,10 @@ reason: Begründung der Trennung
 [command]*`halfop`* halb-Operator Status an Nick(s) vergeben::
 ........................................
 /halfop  <nick> [<nick>...]
+         * -yes
+
+nick: Nick oder Maske (darf mit einem "*" als Platzhalter beginnen oder enden)
+   *: vergibt an alle Nicks im Channel den half-operator-Status
 ........................................
 
 [[command_irc_ignore]]
@@ -420,6 +437,10 @@ Beispiele:
 [command]*`op`* Channel-Operator Status an Nicknamen vergeben::
 ........................................
 /op  <nick> [<nick>...]
+     * -yes
+
+nick: Nick oder Maske (darf mit einem "*" als Platzhalter beginnen oder enden)
+   *: vergibt an alle Nicks im Channel den Operator-Status
 ........................................
 
 [[command_irc_oper]]
@@ -461,7 +482,7 @@ Daemon2: Nachricht an diesen Daemon weiterleiten
 [[command_irc_query]]
 [command]*`query`* Eine private Nachricht an einen Nick schicken::
 ........................................
-/query  [-server <server>] <nick> [<text>]
+/query  [-server <server>] <nick>[,<nick>...] [<text>]
 
 server: an diesen Server senden (interner Name)
   nick: Nickname für privaten Chat
@@ -505,11 +526,11 @@ data: unbearbeitete (RAW) Daten die gesendet werden sollen
 ........................................
 /rehash  [<option>]
 
-option: zusätzliche Option, die von manchen Servern berücksichtigt wird.
+option: zusätzliche Option, die von manchen Servern berücksichtigt wird
 ........................................
 
 [[command_irc_restart]]
-[command]*`restart`* Den Server dazu bringen sich selbst neu zu starten::
+[command]*`restart`* Server dazu bringen sich selbst neu zu starten::
 ........................................
 /restart  [<target>]
 
@@ -517,7 +538,7 @@ target: Servername
 ........................................
 
 [[command_irc_sajoin]]
-[command]*`sajoin`* Zwingt einen User einen oder mehrere Channel zu betreten::
+[command]*`sajoin`* zwingt einen User einen oder mehrere Channel zu betreten::
 ........................................
 /sajoin  <nick> <channel>[,<channel>...]
 
@@ -717,6 +738,9 @@ server: Servername
 [command]*`voice`* Voice an Nick(s) vergeben::
 ........................................
 /voice  <nick> [<nick>...]
+
+nick: Nick oder Maske (darf mit einem "*" als Platzhalter beginnen oder enden)
+   *: vergibt an alle Nicks im Channel den voice-Status
 ........................................
 
 [[command_irc_wallchops]]
@@ -737,7 +761,7 @@ text: Text der gesendet werden soll
 ........................................
 
 [[command_irc_who]]
-[command]*`who`* Sendet eine Anfrage die eine Anzahl von Informationen zurück gibt.::
+[command]*`who`* sendet eine Anfrage die eine Anzahl von Informationen zurück gibt::
 ........................................
 /who  [<mask> [o]]
 

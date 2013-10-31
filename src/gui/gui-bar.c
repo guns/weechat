@@ -381,7 +381,7 @@ gui_bar_check_conditions_for_window (struct t_gui_bar *bar,
     int rc;
     char str_modifier[256], str_window[128], *str_displayed, *result;
     const char *conditions;
-    struct t_hashtable *pointers, *extra_vars;
+    struct t_hashtable *pointers, *extra_vars, *options;
 
     /* check bar condition(s) */
     conditions = CONFIG_STRING(bar->options[GUI_BAR_OPTION_CONDITIONS]);
@@ -426,7 +426,16 @@ gui_bar_check_conditions_for_window (struct t_gui_bar *bar,
             hashtable_set (extra_vars, "nicklist",
                            (window->buffer && window->buffer->nicklist) ? "1" : "0");
         }
-        result = eval_expression (conditions, pointers, extra_vars);
+        options = hashtable_new (32,
+                                 WEECHAT_HASHTABLE_STRING,
+                                 WEECHAT_HASHTABLE_POINTER,
+                                 NULL,
+                                 NULL);
+        if (options)
+            hashtable_set (options, "type", "condition");
+
+        result = eval_expression (conditions, pointers, extra_vars, options);
+
         rc = eval_is_true (result);
         if (result)
             free (result);
@@ -434,6 +443,8 @@ gui_bar_check_conditions_for_window (struct t_gui_bar *bar,
             hashtable_free (pointers);
         if (extra_vars)
             hashtable_free (extra_vars);
+        if (options)
+            hashtable_free (options);
         if (!rc)
             return 0;
     }
@@ -698,6 +709,8 @@ gui_bar_free_items_arrays (struct t_gui_bar *bar)
             string_free_split (bar->items_array[i]);
         for (j = 0; j < bar->items_subcount[i]; j++)
         {
+            if (bar->items_buffer[i][j])
+                free (bar->items_buffer[i][j]);
             if (bar->items_prefix[i][j])
                 free (bar->items_prefix[i][j]);
             if (bar->items_name[i][j])
@@ -705,6 +718,8 @@ gui_bar_free_items_arrays (struct t_gui_bar *bar)
             if (bar->items_suffix[i][j])
                 free (bar->items_suffix[i][j]);
         }
+        if (bar->items_buffer[i])
+            free (bar->items_buffer[i]);
         if (bar->items_prefix[i])
             free (bar->items_prefix[i]);
         if (bar->items_name[i])
@@ -716,6 +731,11 @@ gui_bar_free_items_arrays (struct t_gui_bar *bar)
     {
         free (bar->items_array);
         bar->items_array = NULL;
+    }
+    if (bar->items_buffer)
+    {
+        free (bar->items_buffer);
+        bar->items_buffer = NULL;
     }
     if (bar->items_prefix)
     {
@@ -760,6 +780,7 @@ gui_bar_set_items_array (struct t_gui_bar *bar, const char *items)
             bar->items_count = count;
             bar->items_subcount = malloc (count * sizeof (*bar->items_subcount));
             bar->items_array = malloc (count * sizeof (*bar->items_array));
+            bar->items_buffer = malloc (count * sizeof (*bar->items_buffer));
             bar->items_prefix = malloc (count * sizeof (*bar->items_prefix));
             bar->items_name = malloc (count * sizeof (*bar->items_name));
             bar->items_suffix = malloc (count * sizeof (*bar->items_suffix));
@@ -769,6 +790,8 @@ gui_bar_set_items_array (struct t_gui_bar *bar, const char *items)
                                                     &(bar->items_subcount[i]));
                 if (bar->items_subcount[i] > 0)
                 {
+                    bar->items_buffer[i] = malloc (bar->items_subcount[i] *
+                                                   sizeof (*(bar->items_buffer[i])));
                     bar->items_prefix[i] = malloc (bar->items_subcount[i] *
                                                    sizeof (*(bar->items_prefix[i])));
                     bar->items_name[i] = malloc (bar->items_subcount[i] *
@@ -777,10 +800,11 @@ gui_bar_set_items_array (struct t_gui_bar *bar, const char *items)
                                                    sizeof (*(bar->items_suffix[i])));
                     for (j = 0; j < bar->items_subcount[i]; j++)
                     {
-                        gui_bar_item_set_prefix_name_suffix (bar->items_array[i][j],
-                                                             &bar->items_prefix[i][j],
-                                                             &bar->items_name[i][j],
-                                                             &bar->items_suffix[i][j]);
+                        gui_bar_item_get_vars (bar->items_array[i][j],
+                                               &bar->items_buffer[i][j],
+                                               &bar->items_prefix[i][j],
+                                               &bar->items_name[i][j],
+                                               &bar->items_suffix[i][j]);
                     }
                 }
             }
@@ -1483,7 +1507,9 @@ gui_bar_create_option (const char *bar_name, int index_option, const char *value
                     weechat_config_file, weechat_config_section_bar,
                     option_name, "string",
                     N_("items of bar, they can be separated by comma (space "
-                       "between items) or \"+\" (glued items)"),
+                       "between items) or \"+\" (glued items); special syntax "
+                       "\"@buffer:item\" can be used to force buffer used when "
+                       "displaying the bar item"),
                     NULL, 0, 0, gui_bar_default_items (bar_name), value, 0,
                     NULL, NULL, &gui_bar_config_change_items, NULL, NULL, NULL);
                 break;
@@ -1581,6 +1607,7 @@ gui_bar_alloc (const char *name)
         }
         new_bar->items_count = 0;
         new_bar->items_array = NULL;
+        new_bar->items_buffer = NULL;
         new_bar->items_prefix = NULL;
         new_bar->items_name = NULL;
         new_bar->items_suffix = NULL;
@@ -1640,6 +1667,7 @@ gui_bar_new_with_options (const char *name,
         new_bar->items_count = 0;
         new_bar->items_subcount = NULL;
         new_bar->items_array = NULL;
+        new_bar->items_buffer = NULL;
         new_bar->items_prefix = NULL;
         new_bar->items_name = NULL;
         new_bar->items_suffix = NULL;
@@ -2287,6 +2315,7 @@ gui_bar_hdata_bar_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_bar, items_count, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_bar, items_subcount, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_bar, items_array, POINTER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_bar, items_buffer, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_bar, items_prefix, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_bar, items_name, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_bar, items_suffix, POINTER, 0, NULL, NULL);
@@ -2365,6 +2394,11 @@ gui_bar_add_to_infolist (struct t_infolist *infolist,
                                           bar->items_array[i][j]))
                 return 0;
             snprintf (option_name, sizeof (option_name),
+                      "items_buffer_%05d_%05d", i + 1, j + 1);
+            if (!infolist_new_var_string (ptr_item, option_name,
+                                          bar->items_buffer[i][j]))
+                return 0;
+            snprintf (option_name, sizeof (option_name),
                       "items_prefix_%05d_%05d", i + 1, j + 1);
             if (!infolist_new_var_string (ptr_item, option_name,
                                           bar->items_prefix[i][j]))
@@ -2433,9 +2467,10 @@ gui_bar_print_log ()
             for (j = 0; j < ptr_bar->items_subcount[i]; j++)
             {
                 log_printf ("    items_array[%03d][%03d]: '%s' "
-                            "(prefix: '%s', name: '%s', suffix: '%s')",
+                            "(buffer: '%s', prefix: '%s', name: '%s', suffix: '%s')",
                             i, j,
                             ptr_bar->items_array[i][j],
+                            ptr_bar->items_buffer[i][j],
                             ptr_bar->items_prefix[i][j],
                             ptr_bar->items_name[i][j],
                             ptr_bar->items_suffix[i][j]);

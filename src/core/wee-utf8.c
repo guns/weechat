@@ -424,7 +424,16 @@ utf8_strlen_screen (const char *string)
     }
 
     if (mbstowcs (ptr_wstring, string, num_char) != (size_t)(-1))
+    {
         length = wcswidth (ptr_wstring, num_char);
+        /*
+         * if the char is non-printable, wcswidth returns -1
+         * (for example the length of the snowman without snow (U+26C4) == -1)
+         * => in this case, consider the length is 1, to prevent any display bug
+         */
+        if (length < 0)
+            length = 1;
+    }
     else
         length = utf8_strlen (string);
 

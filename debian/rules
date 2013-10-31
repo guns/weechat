@@ -14,6 +14,8 @@ $(BUILDDIR)/Makefile:
 	mkdir -p $(BUILDDIR)
 	cd $(BUILDDIR) && \
 	cmake .. \
+		-DENABLE_MAN:BOOL=ON \
+		-DENABLE_DOC:BOOL=ON \
 		-DCMAKE_INSTALL_PREFIX:FILEPATH=/usr \
 		-DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \
 		-DCMAKE_C_FLAGS_RELWITHDEBINFO:STRING="$(CFLAGS) -D_FORTIFY_SOURCE=2" \
@@ -23,6 +25,13 @@ $(BUILDDIR)/Makefile:
 
 override_dh_auto_build: $(BUILDDIR)/Makefile
 	dh_auto_build
+
+# Create a symbolic link weechat-curses -> weechat
+# This link is created for compatibility with old versions on /upgrade.
+# It may be removed in future.
+override_dh_auto_install:
+	dh_auto_install
+	ln -s weechat $(CURDIR)/debian/weechat-curses/usr/bin/weechat-curses
 
 override_dh_auto_configure:
 	# the package also has autotools buildsys and

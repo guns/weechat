@@ -26,31 +26,9 @@ pasuje ono do WeeChat!).
 Dlaczego wybrać WeeChat? X-Chat i Irssi są takie dobre...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Ponieważ WeeChat jest lekki i posiada wiele nowych możliwości.
-Niektóre cechy (wersja ≥ 0.3.x):
+Ponieważ Weechat jest bardzo lekki i posiada innowacyjne funkcje.
 
-* wsparcie dla wielu protokołów dzięki wtyczką (IRC, Jabber)
-* wiele zdalnych GUI w dodatku do Courses (już niedługo)
-* wsparcie dla 256 kolorów
-* dostępny w wielu językach
-* rozszerzalny dzięki wtyczką (C, Perl, Python, Ruby, Lua, Tcl)
-* bufory z wolną zawartością
-* filtrowanie po tagach i wyrażeniach regularnych
-* poziome i pionowe dzielenie okien
-* paski które możemy tworzyć i dostosowywać do własnych potrzeb
-* natywna lista nicków
-* lista buforów (skrypt buffers.pl)
-* proxy IRC
-* przekierowanie części komend IRC
-* przyrostowe wyszukiwanie tekstu w buforach, przeskakiwanie do podświetleń
-* strumień FIFO do zdalnej kontroli
-* wsparcie dla aspell
-* podwójny zestaw znaków (kodowanie/dekodowanie)
-* tworzony od podstaw (nie bazuje na żadnym innym kliencie)
-* multiplatformowy
-* 100% GPL i wolny
-
-Więcej informacji na stronie: http://www.weechat.org/features
+Więcej informacji na stronie: http://weechat.org/about/features
 
 [[compilation_install]]
 Kompilacja / instalacja
@@ -60,9 +38,12 @@ Kompilacja / instalacja
 Słyszałem o wielu GUI dla WeeChat. Jak mogę je skompilować/użyć?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Obecnie dostępne jest tylko GUI Courses.
+Dostępne jest kilka zdalnych GUI:
 
-Pozostałe będą dostępne jako zdalne klienty (obecnie rozwijane).
+* http://weechat.org/download/devel[QWeeChat] (Qt)
+* https://github.com/ubergeek42/weechat-android[weechat-android] (Android)
+* https://github.com/the-kenny/weechat.el[weechat.el] (Emacs)
+* https://github.com/eirikb/weecloud[weecloud] (Web)
 
 [[compile_git]]
 Nie mogę skompilować WeeChat po sklonowaniu repozytorium git, dlaczego?
@@ -98,8 +79,8 @@ Nie widzę niektórych znaków diakrytycznych, co mogę zrobić?
 
 Jest to częsty problem, przeczytaj i sprawdź *WSZYSTKIE* poniższe rozwiązania:
 
-* sprawdź czy weechat-curses jest zlinkowany z libncursesw (uwaga: wymagane na
-  większości dystrybucji ale nie wszystkich): `ldd /ścieżka/do/weechat-curses`
+* sprawdź czy weechat jest zlinkowany z libncursesw (uwaga: wymagane na
+  większości dystrybucji ale nie wszystkich): `ldd /ścieżka/do/weechat`
 * sprawdź czy wtyczka "Charset" jest załadowana za pomocą komendy `/plugin`
   (jeśli nie jest, to najprawdopodobniej potrzebujesz pakietu "weechat-plugins")
 * sprawdź wyjście komendy `/charset` (w głównym buforze). Powinieneś zobaczyć
@@ -113,6 +94,8 @@ Jest to częsty problem, przeczytaj i sprawdź *WSZYSTKIE* poniższe rozwiązani
    dla UTF-8 jest rxvt-unicode)
 ** jeśli korzystasz ze screena, sprawdź czy jest uruchomiony z trybem UTF-8
    ("`defutf8 on`" w ~/.screenrc lub `screen -U` uruchamiając screena)
+* sprawdź czy opcja 'weechat.look.eat_newline_glitch' jest wyłączona (ta opcja
+  może powodować błędy wyświetlania)
 
 [NOTE]
 UTF-8 jest zalecany dla WeeChat. Jeśli korzystasz z lokalizacji ISO lub innych,
@@ -285,7 +268,7 @@ zaznaczania urli):
 Ta opcja może spowodować pojawienie się błędów. Jeśli doświadczysz takich problemów
 wyłącz tą opcję.
 
-Innym rozwiązaniem jest użycie skryptu: http://www.weechat.org/scripts/stable/tag/url
+Innym rozwiązaniem jest użycie skryptu: http://weechat.org/scripts/stable/tag/url
 
 [[change_locale_without_quit]]
 Chcę zmienić język komunikatów wyświetlanych przez WeeChat, ale bez jego zamykania, czy jest to możliwe?
@@ -520,6 +503,22 @@ Ustaw port serwera, SSL, dhkey_size, następnie się połącz:
 /connect freenode
 ----------------------------------------
 
+[[irc_oauth]]
+Jak połączyć się z serwerem wymagającym "oauth"?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Niektóre serwery jak 'twitch' wymagają oauth do połączenia.
+
+Oauth to po prostu hasło w postaci "oauth:hasło".
+
+W celu dodania takiego serwera i połączenia się z nim należ wykonać nastepujące
+polecenia (należy zastąpić nazwę i adres odpowiednimi wartościami):
+
+----------------------------------------
+/server add nazwa irc.server.org -password="oauth:hasło"
+/connect nazwa
+----------------------------------------
+
 [[irc_sasl]]
 Jak mogę się zidentyfikować przed wejściem na kanały?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -681,7 +680,7 @@ Dla 'launcher.pl', należ przeprowadzić konfigurację:
 /set plugins.var.perl.launcher.signal.weechat_highlight "/ścieżka/do/komendy argumenty"
 ----------------------------------------
 
-Inne podobne skrypty: http://www.weechat.org/scripts/stable/tag/notify/
+Inne podobne skrypty: http://weechat.org/scripts/stable/tag/notify/
 
 [[irc_target_buffer]]
 Jak mogę zmienić docelowy bufor dla komendy w połączonym buforze (jak bufor z serwerami)?
@@ -758,7 +757,7 @@ Są 3 możliwości:
   * poprosić o nową możliwość: https://savannah.nongnu.org/task/?group=weechat
   * wysłać patch: https://savannah.nongnu.org/patch/?group=weechat
 . możesz napisać do deweloperów, na stronie wsparcia możesz znaleźć ich maile:
-  http://www.weechat.org/about
+  http://weechat.org/dev/support
   (możesz się zapisać na listę mailingową "support" i na niej pisać)
 
 [[gdb_error_threads]]
@@ -768,7 +767,7 @@ Kiedy uruchamiam WeeChat pod gdb dostaję komunikat o wątkach, co mogę z tym z
 Podczas uruchamiania WeeChat pod gdb, można spotkać się z takim błędem:
 
 ----------------------------------------
-$ gdb /scieżka/do/weechat-curses
+$ gdb /scieżka/do/weechat
 (gdb) run
 [Thread debugging using libthread_db enabled]
 Cannot find new threads: generic error
@@ -778,7 +777,7 @@ Cannot find new threads: generic error
 WeeChat na właściwe dla naszego systemu):
 
 ----------------------------------------
-$ LD_PRELOAD=/lib/libpthread.so.0 gdb /ścieżka/do/weechat-curses
+$ LD_PRELOAD=/lib/libpthread.so.0 gdb /ścieżka/do/weechat
 (gdb) run
 ----------------------------------------
 
@@ -786,7 +785,7 @@ $ LD_PRELOAD=/lib/libpthread.so.0 gdb /ścieżka/do/weechat-curses
 Jaka jest lista platform wspieranych przez WeeChat? Czy będzie przeportowany na inne systemy operacyjne?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pełną listę można znaleźć na stronie: http://www.weechat.org/download
+Pełną listę można znaleźć na stronie: http://weechat.org/download
 
 Robimy co w naszej mocy, aby WeeChat działał na tylu platformach ile to tylko
 możliwe. Mile widziana jest pomoc w testowaniu dla systemów, których nie mamy.
@@ -798,11 +797,11 @@ Chcę pomóc programistą WeeChat. Co mogę zrobić?
 Jest wiele zadań do zrobienia (testowanie, kod, dokumentacja, ...)
 
 Skontaktuj się z nami na IRC lub mailowo, szczegóły:
-http://www.weechat.org/support
+http://weechat.org/dev/support
 
 [[donate]]
 Czy mogę dać pieniądze albo inne rzeczy deweloperom WeeChat?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tak możesz dać nam pieniądze, aby wspomóc rozwój.
-Szczegóły na http://www.weechat.org/donate
+Szczegóły na http://weechat.org/about/donate

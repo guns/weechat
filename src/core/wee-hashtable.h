@@ -23,10 +23,12 @@
 struct t_hashtable;
 struct t_infolist_item;
 
-typedef unsigned int (t_hashtable_hash_key)(struct t_hashtable *hashtable,
-                                            const void *key);
+typedef unsigned long (t_hashtable_hash_key)(struct t_hashtable *hashtable,
+                                             const void *key);
 typedef int (t_hashtable_keycmp)(struct t_hashtable *hashtable,
                                  const void *key1, const void *key2);
+typedef void (t_hashtable_free_key)(struct t_hashtable *hashtable,
+                                    void *key, const void *value);
 typedef void (t_hashtable_free_value)(struct t_hashtable *hashtable,
                                       const void *key, void *value);
 typedef void (t_hashtable_map)(void *data,
@@ -38,9 +40,9 @@ typedef void (t_hashtable_map_string)(void *data,
 
 /*
  * Hashtable is a structure with an array "htable", each entry is a pointer
- * to a linked list, and it is read with hashed key (as unsigned int).
+ * to a linked list, and it is read with hashed key (as unsigned long).
  * Keys with same hashed key are grouped in a linked list pointed by htable.
- * htable is not sorted, linked list is sorted.
+ * The htable is not sorted, the linked list is sorted.
  *
  * Example of a hashtable with size 8 and 6 items added inside, items are:
  * "weechat", "fast", "light", "extensible", "chat", "client"
@@ -102,6 +104,7 @@ struct t_hashtable
     /* callbacks */
     t_hashtable_hash_key *callback_hash_key;     /* hash key to int value   */
     t_hashtable_keycmp *callback_keycmp;         /* compare two keys        */
+    t_hashtable_free_key *callback_free_key;     /* callback to free key    */
     t_hashtable_free_value *callback_free_value; /* callback to free value  */
 
     /* keys/values as string */
@@ -109,16 +112,23 @@ struct t_hashtable
                                        /* never asked)                      */
 };
 
+extern unsigned long hashtable_hash_key_djb2 (const char *string);
 extern struct t_hashtable *hashtable_new (int size,
                                           const char *type_keys,
                                           const char *type_values,
                                           t_hashtable_hash_key *hash_key_cb,
                                           t_hashtable_keycmp *keycmp_cb);
-extern int hashtable_set_with_size (struct t_hashtable *hashtable,
-                                    const void *key, int key_size,
-                                    const void *value, int value_size);
-extern int hashtable_set (struct t_hashtable *hashtable, const void *key,
-                          const void *value);
+extern struct t_hashtable_item *hashtable_set_with_size (struct t_hashtable *hashtable,
+                                                         const void *key,
+                                                         int key_size,
+                                                         const void *value,
+                                                         int value_size);
+extern struct t_hashtable_item *hashtable_set (struct t_hashtable *hashtable,
+                                               const void *key,
+                                               const void *value);
+extern struct t_hashtable_item *hashtable_get_item (struct t_hashtable *hashtable,
+                                                    const void *key,
+                                                    unsigned long *hash);
 extern void *hashtable_get (struct t_hashtable *hashtable, const void *key);
 extern int hashtable_has_key (struct t_hashtable *hashtable, const void *key);
 extern void hashtable_map (struct t_hashtable *hashtable,

@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(RUBY_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(RUBY_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -27,7 +27,7 @@ ruby_la_SOURCES = weechat-ruby.c \
                   weechat-ruby.h \
                   weechat-ruby-api.c \
                   weechat-ruby-api.h
-ruby_la_LDFLAGS = -module
+ruby_la_LDFLAGS = -module -no-undefined
 ruby_la_LIBADD  = ../lib_weechat_plugins_scripts.la $(RUBY_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

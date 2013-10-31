@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(ZLIB_CFLAGS) $(GCRYPT_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(ZLIB_CFLAGS) $(GCRYPT_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -40,7 +40,7 @@ script_la_SOURCES = script.c \
                     script-repo.c \
                     script-repo.h
 
-script_la_LDFLAGS = -module
+script_la_LDFLAGS = -module -no-undefined
 script_la_LIBADD  = $(SCRIPT_LFLAGS) $(ZLIB_LFLAGS) $(GCRYPT_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

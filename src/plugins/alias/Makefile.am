@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(ALIAS_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(ALIAS_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -29,7 +29,7 @@ alias_la_SOURCES = alias.c \
                    alias-config.h \
                    alias-info.c \
                    alias-info.h
-alias_la_LDFLAGS = -module
+alias_la_LDFLAGS = -module -no-undefined
 alias_la_LIBADD  = $(ALIAS_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

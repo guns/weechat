@@ -4,6 +4,7 @@
 /rmodifier  list|listdefault
             add <name> <modifiers> <groups> <regex>
             del <name>|-all [<name>...]
+            missing
             default -yes
 
        list: 全ての rmodifier をリストアップ
@@ -11,10 +12,11 @@ listdefault: デフォルトの rmodifier をリストアップ
         add: rmodifier を追加
        name: rmodifier の名前
   modifiers: rmodifier のコンマ区切りリスト
-     groups: 正規表現にマッチするグループに対するアクション (括弧内): グループ (1 から 9) のコンマ区切りリスト、グループを隠すにはオプションで番号の後ろに "*" をつける
+     groups: 正規表現にマッチするグループに対するアクション (括弧内): グループ (1 から 9) のコンマ区切りリスト、グループを隠すには番号の後ろに任意で "*" をつける
       regex: 正規表現 (大文字小文字の区別無し、"(?-i)" で始めれば区別有り)
         del: rmodifier を削除
        -all: 全ての rmodifier を削除
+    missing: 見つからない rmodifier を追加
     default: デフォルトの rmodifier に戻す
 
 例:

@@ -94,7 +94,7 @@
 ** valori: on, off (valore predefinito: `on`)
 
 * [[option_irc.look.ctcp_time_format]] *irc.look.ctcp_time_format*
-** descrizione: `formato dell'ora in risposta al messaggio CTCP TIME (consultare man strftime per gli specificatori data/ora)`
+** descrizione: `formato dell'ora in risposta al messaggio CTCP TIME (consultare man strftime per i dettagli su data/ora)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"%a, %d %b %Y %T %z"`)
 
@@ -218,6 +218,11 @@
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
+* [[option_irc.look.nick_color_hash]] *irc.look.nick_color_hash*
+** descrizione: `hash algorithm used to find the color for a nick: djb2 = variant of djb2 (position of letters matters: anagrams of a nick have different color), sum = sum of letters`
+** tipo: intero
+** valori: djb2, sum (valore predefinito: `sum`)
+
 * [[option_irc.look.nick_color_stop_chars]] *irc.look.nick_color_stop_chars*
 ** descrizione: `caratteri usati per interrompere il calcolo del colore con le lettere del nick (almeno un carattere al di fuori di questa lista deve essere nella lista prima di interromperlo) (esempio: nick "|nick|away" con "|" nei caratteri restituisce il colore del nick "|nick")`
 ** tipo: stringa
@@ -248,13 +253,18 @@
 ** tipo: intero
 ** valori: auto, never, always (valore predefinito: `auto`)
 
+* [[option_irc.look.notice_welcome_redirect]] *irc.look.notice_welcome_redirect*
+** descrizione: `automatically redirect channel welcome notices to the channel buffer; such notices have the nick as target but a channel name in beginning of notice message, for example notices sent by freenode server which look like: "[#channel] Welcome to this channel..."`
+** tipo: bool
+** valori: on, off (valore predefinito: `on`)
+
 * [[option_irc.look.notify_tags_ison]] *irc.look.notify_tags_ison*
-** descrizione: `elenco separato da virgole di tag usati nei messaggi stampati dalle notifiche quando un nick entra o esce da un server (risultato del comando ison), ad esempio: "notify_highlight", "notify_message" o "notify_private"`
+** descrizione: `elenco separato da virgole di tag usati nei messaggi mostrati dalle notifiche quando un nick entra o esce da un server (risultato del comando ison), ad esempio: "notify_message", "notify_private" o "notify_highlight"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"notify_message"`)
 
 * [[option_irc.look.notify_tags_whois]] *irc.look.notify_tags_whois*
-** descrizione: `elenco separato da virgole di tag usati nei messaggi stampati dalle notifiche quando un nick cambia lo stato di assenza (risultato del comando whois), ad esempio: "notify_highligh", "notify_message" o "notify_private"`
+** descrizione: `elenco separato da virgole di tag usati nei messaggi stampati dalle notifiche quando un nick cambia lo stato di assenza (risultato del comando whois), ad esempio: "notify_message", "notify_private" o "notify_highlight"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"notify_message"`)
 
@@ -267,6 +277,11 @@
 ** descrizione: `unisci i buffer privati`
 ** tipo: intero
 ** valori: independent, merge_by_server, merge_all (valore predefinito: `independent`)
+
+* [[option_irc.look.pv_tags]] *irc.look.pv_tags*
+** descrizione: `elenco separato da virgole di tag usati nei messaggi privati, ad esempio: "notify_message", "notify_private" o "notify_highlight"`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `"notify_private"`)
 
 * [[option_irc.look.raw_messages]] *irc.look.raw_messages*
 ** descrizione: `numero di messaggi raw da salvare in memoria quando il buffer dei dati raw viene chiuso (i messaggi verranno visualizzati all'apertura del buffer dei dati raw)`
@@ -284,7 +299,7 @@
 ** valori: on, off (valore predefinito: `on`)
 
 * [[option_irc.look.smart_filter_delay]] *irc.look.smart_filter_delay*
-** descrizione: `ritardo per il filtraggio dei messaggi di entrata/uscita/abbandono (in minuti)`
+** descrizione: `delay for filtering join/part/quit messages (in minutes): if the nick did not speak during the last N minutes, the join/part/quit is filtered`
 ** tipo: intero
 ** valori: 1 .. 10080 (valore predefinito: `5`)
 
@@ -399,7 +414,7 @@
 ** valori: on, off (valore predefinito: `off`)
 
 * [[option_irc.server_default.autojoin]] *irc.server_default.autojoin*
-** descrizione: `elenco separato da virgole di canali in cui entrare quando si è connessi al server (esempio: "#canale1", #canale2, #canale3 chiave1,chiave2")`
+** descrizione: `elenco separato da virgole di canali in cui entrare quando si è connessi al server (esempio: "#canale1", #canale2, #canale3 chiave1,chiave2") (nota: il contenuto viene valutato, consultare /help eval)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -439,7 +454,7 @@
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_irc.server_default.command]] *irc.server_default.command*
-** descrizione: `comando(i) da eseguire quando si è connessi al server (più comandi vanno separati da ":", usare ";" per un punto e virgola, le variabili speciali $nick, $canale e $server vengono sostituite dai loro valori)`
+** descrizione: `comando(i) da eseguire quando si è connessi al server (più comandi vanno separati da ";", usare "\;" per un punto e virgola, le variabili speciali $nick, $canale e $server vengono sostituite dai loro valori) (nota: il contenuto viene valutato, consultare /help eval)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -484,12 +499,12 @@
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_irc.server_default.password]] *irc.server_default.password*
-** descrizione: `password per il server`
+** descrizione: `password per il server (nota: il contenuto viene valutato, consultare /help eval)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_irc.server_default.proxy]] *irc.server_default.proxy*
-** descrizione: `proxy usato per il server (opzionale)`
+** descrizione: `nome del proxy usato per questo server (opzionale, il proxy deve essere definito con il comando /proxy)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -504,7 +519,7 @@
 ** valori: plain, dh-blowfish, dh-aes, external (valore predefinito: `plain`)
 
 * [[option_irc.server_default.sasl_password]] *irc.server_default.sasl_password*
-** descrizione: `password per l'autenticazione SASL`
+** descrizione: `password per l'autenticazione SASL (nota: il contenuto viene valutato, consultare /help eval)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -514,7 +529,7 @@
 ** valori: 1 .. 3600 (valore predefinito: `15`)
 
 * [[option_irc.server_default.sasl_username]] *irc.server_default.sasl_username*
-** descrizione: `nome utente per l'autenticazione SASL`
+** descrizione: `nome utente per l'autenticazione SASL (nota: il contenuto viene valutato, consultare /help eval)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 

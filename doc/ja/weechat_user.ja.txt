@@ -5,7 +5,7 @@ Sébastien Helleu <flashcode@flashtux.org>
 このマニュアルは WeeChat チャットクライアントについての文書で、これは WeeChat の一部です。
 
 この文書の最新版は以下のページにあります:
-http://www.weechat.org/doc
+http://weechat.org/doc
 
 
 [[introduction]]
@@ -31,7 +31,7 @@ WeeChat (Wee Enhanced Environment for Chat) はフリーのチャットクライ
 * マルチプラットフォーム (GNU/Linux、*BSD、MacOS X、Windows 等)
 * 完全な GPL、フリーソフトウェア
 
-WeeChat のホームページ: http://www.weechat.org/
+WeeChat のホームページ: http://weechat.org/
 
 [[pre-requisites]]
 === 事前に必要なもの ===
@@ -78,24 +78,26 @@ WeeChat は cmake または autotools を使ってコンパイルできます (c
 
 [width="100%",cols="5,^3,^3,13",options="header"]
 |========================================
-| パッケージ ^(1)^       | バージョン  | 必須     | 機能
-| cmake                  |             | *yes*    | ビルド (autotools でも可能ですが、cmake を推奨します)
-| libncursesw5-dev ^(2)^ |             | *yes*    | ncurses インターフェイス
-| libcurl4-gnutls-dev    |             | *yes*    | URL 転送
-| zlib1g-dev             |             | *yes*    | relay プラグインでパケットを圧縮 (weechat プロトコル)、スクリプトプラグイン
-| libgcrypt11-dev        |             | *yes*    | IRC SASL 認証 (DH-BLOWFISH/DH-AES)、スクリプトプラグイン
-| libgnutls-dev          | ≥ 2.2.0     |          | IRC サーバへの SSL 接続
-| gettext                |             |          | 国際化 (メッセージの翻訳; ベース言語は英語です)
-| ca-certificates        |             |          | SSL 接続に必要な証明書、relay プラグインで SSL サポート
-| libaspell-dev          |             |          | aspell プラグイン
-| python-dev             | ≥ 2.5 ^(3)^ |          | python プラグイン
-| libperl-dev            |             |          | perl プラグイン
-| ruby1.9.1-dev          | ≥ 1.8       |          | ruby プラグイン
-| liblua5.1-0-dev        |             |          | lua プラグイン
-| tcl-dev                | ≥ 8.5       |          | tcl プラグイン
-| guile-2.0-dev          | ≥ 2.0       |          | guile (scheme) プラグイン
-| asciidoc               | ≥ 8.5.0     |          | 文書の生成 (HTML ファイル)
-| source-highlight       |             |          | HTML 文書に含まれるソースコードのシンタックスハイライト
+| パッケージ ^(1)^                    | バージョン  | 必須  | 機能
+| cmake                               |             | *yes* | ビルド (autotools でも可能ですが、cmake を推奨します)
+| libncursesw5-dev ^(2)^              |             | *yes* | ncurses インターフェイス
+| libcurl4-gnutls-dev                 |             | *yes* | URL 転送
+| zlib1g-dev                          |             | *yes* | relay プラグインでパケットを圧縮 (weechat プロトコル)、スクリプトプラグイン
+| libgcrypt11-dev                     |             | *yes* | 保護データ、IRC SASL 認証 (DH-BLOWFISH/DH-AES)、スクリプトプラグイン
+| libgnutls-dev                       | ≥ 2.2.0     |       | IRC サーバへの SSL 接続
+| gettext                             |             |       | 国際化 (メッセージの翻訳; ベース言語は英語です)
+| ca-certificates                     |             |       | SSL 接続に必要な証明書、relay プラグインで SSL サポート
+| libaspell-dev または libenchant-dev |             |       | aspell プラグイン
+| python-dev                          | ≥ 2.5 ^(3)^ |       | python プラグイン
+| libperl-dev                         |             |       | perl プラグイン
+| ruby1.9.1-dev                       | ≥ 1.8       |       | ruby プラグイン
+| liblua5.1-0-dev                     |             |       | lua プラグイン
+| tcl-dev                             | ≥ 8.5       |       | tcl プラグイン
+| guile-2.0-dev                       | ≥ 2.0       |       | guile (scheme) プラグイン
+| asciidoc                            | ≥ 8.5.0     |       | man ページと文書のビルド
+| source-highlight                    |             |       | 文書中のソースに対するシンタックスハイライト
+| xsltproc,
+  docbook-xml, docbook-xsl            |             |       | man ページのビルド
 |========================================
 
 [NOTE]
@@ -129,6 +131,120 @@ $ make
 $ make install
 ----------------------------------------
 
+cmake に対するオプションを指定するには、以下のフォーマットを使ってください: "-DOPTION=VALUE".
+
+よく利用されるオプションのリスト:
+
+[width="100%",cols="2m,2,5m,12",options="header"]
+|========================================
+| オプション | 値 | デフォルト値 | 説明
+
+| CMAKE_BUILD_TYPE | `Debug`, `Release`, `RelWithDebInfo`, `MinSizeRel` | |
+  ビルド形式: WeeChat の開発版を使っている場合は
+  `Debug` (または `RelWithDebInfo`) を推奨します。
+
+| PREFIX | directory | /usr/local |
+  WeeChat をインストールするディレクトリ。
+
+| WEECHAT_HOME | directory | ~/.weechat |
+  WeeChat 実行時のホームディレクトリ。
+
+| CA_FILE | file | /etc/ssl/certs/ca-certificates.crt |
+  認証局を含むファイル。これは
+  <<option_weechat.network.gnutls_ca_file,weechat.network.gnutls_ca_file>>
+  オプションのデフォルト値です。
+
+| ENABLE_ALIAS | `ON`, `OFF` | ON |
+  <<alias_plugin,Alias プラグイン>>のコンパイル。
+
+| ENABLE_ASPELL | `ON`, `OFF` | ON |
+  <<aspell_plugin,Aspell プラグイン>>のコンパイル。
+
+| ENABLE_CHARSET | `ON`, `OFF` | ON |
+  <<charset_plugin,Charset プラグイン>>のコンパイル。
+
+| ENABLE_MAN | `ON`, `OFF` | OFF |
+  man ページのコンパイル。
+
+| ENABLE_DOC | `ON`, `OFF` | OFF |
+  文書のコンパイル
+  (コンパイルには時間がかかります。文書を含めたバイナリパッケージをビルドする場合、オンラインで文書を見ることができない場合だけに推奨します)。
+
+| ENABLE_ENCHANT | `ON`, `OFF` | OFF |
+  Enchant と含めた <<aspell_plugin,Aspell プラグイン>>のコンパイル。
+
+| ENABLE_FIFO | `ON`, `OFF` | ON |
+  <<fifo_plugin,Fifo プラグイン>>のコンパイル。
+
+| ENABLE_GNUTLS | `ON`, `OFF` | ON |
+  Gnutls の有効化 (SSL 用)。
+
+| ENABLE_GUILE | `ON`, `OFF` | ON |
+  <<scripts_plugins,Guile プラグイン>> (Scheme) のコンパイル。
+
+| ENABLE_IRC | `ON`, `OFF` | ON |
+  <<irc_plugin,IRC プラグイン>>のコンパイル
+
+| ENABLE_LARGEFILE | `ON`, `OFF` | ON |
+  巨大ファイルのサポート。
+
+| ENABLE_LOGGER | `ON`, `OFF` | ON |
+  <<logger_plugin,Logger プラグイン>>のコンパイル。
+
+| ENABLE_LUA | `ON`, `OFF` | ON |
+  <<scripts_plugins,Lua プラグイン>>のコンパイル。
+
+| ENABLE_NCURSES | `ON`, `OFF` | ON |
+  Ncurses インターフェイスのコンパイル。
+
+| ENABLE_NLS | `ON`, `OFF` | ON |
+  NLS の有効化 (翻訳).
+
+| ENABLE_PERL | `ON`, `OFF` | ON |
+  <<scripts_plugins,Perl プラグイン>>のコンパイル。
+
+| ENABLE_PYTHON | `ON`, `OFF` | ON |
+  <<scripts_plugins,Python プラグイン>>のコンパイル。
+
+| ENABLE_PYTHON3 | `ON`, `OFF` | OFF |
+  Python 3 を使った <<scripts_plugins,Python プラグイン>>のコンパイル
+  (多くのスクリプトは Python 3 と互換性がないため*非推奨* です)。
+
+| ENABLE_RELAY | `ON`, `OFF` | ON |
+  <<relay_plugin,リレープラグイン>>のコンパイル
+
+| ENABLE_RMODIFIER | `ON`, `OFF` | ON |
+  <<rmodifier_plugin,Rmodifier プラグイン>>のコンパイル
+
+| ENABLE_RUBY | `ON`, `OFF` | ON |
+  <<scripts_plugins,Ruby プラグイン>>のコンパイル
+
+| ENABLE_SCRIPT | `ON`, `OFF` | ON |
+  <<scripts_plugins,スクリプトプラグイン>>のコンパイル
+
+| ENABLE_SCRIPTS | `ON`, `OFF` | ON |
+  すべての<<scripts_plugins,スクリプトプラグイン>>
+  (Python、Perl、Ruby、Lua、Tcl、Guile) のコンパイル
+
+| ENABLE_TCL | `ON`, `OFF` | ON |
+  <<scripts_plugins,Tcl プラグイン>>のコンパイル
+
+| ENABLE_XFER | `ON`, `OFF` | ON |
+  <<xfer_plugin,Xfer プラグイン>>のコンパイル
+|========================================
+
+その他のオプションは以下のコマンドで確認してください:
+
+----------------------------------------
+$ cmake -LA
+----------------------------------------
+
+Curses インターフェイスを使う場合は以下のコマンドを使ってください:
+
+----------------------------------------
+$ ccmake ..
+----------------------------------------
+
 [[compile_with_autotools]]
 ==== autotools によるコンパイル ====
 
@@ -153,6 +269,13 @@ $ ./autogen.sh
 $ ./configure --prefix=/path/to/directory
 $ make
 $ make install
+----------------------------------------
+
+'configure'
+スクリプトに対してオプションを指定することができます、オプションを表示するには以下のコマンドを使ってください:
+
+----------------------------------------
+$ ./configure --help
 ----------------------------------------
 
 [[git_sources]]
@@ -226,16 +349,16 @@ WeeChat がクラッシュすると、'core' または 'core.12345' ファイル
 このファイルは WeeChat を起動したディレクトリに作られます (これは
 WeeChat がインストールされているディレクトリでは*ありません*!)。
 
-例えば、'weechat-curses' が '/usr/bin/' にインストールされ、'core' ファイルが
+例えば、'weechat' が '/usr/bin/' にインストールされ、'core' ファイルが
 '/home/xxx/' にある場合、以下のコマンドで gdb を起動してください:
 
 ----------------------------------------
-gdb /usr/bin/weechat-curses /home/xxx/core
+gdb /usr/bin/weechat /home/xxx/core
 ----------------------------------------
 
 [NOTE]
 バイナリパッケージ 'weechat-dbg' をインストールした場合 (例えば Debian で)、WeeChat
-バイナリへのパスは '/usr/lib/debug/usr/bin/weechat-curses' のようになります。
+バイナリへのパスは '/usr/lib/debug/usr/bin/weechat' のようになります。
 
 gdb の中で `bt full` コマンドを実行するとバックトレースが表示されます。
 以下のような出力が得られるはずです:
@@ -275,10 +398,10 @@ Copying output to /tmp/crash.txt.
 ==== 起動した WeeChat のデバッグ ====
 
 起動している WeeChat をデバッグするには (例えば WeeChat がフリーズしているような場合)、gdb
-の引数にプロセス番号を与えて起動します ('12345' は weechat-curses プロセスの PID に変更してください):
+の引数にプロセス番号を与えて起動します ('12345' は weechat プロセスの PID に変更してください):
 
 ----------------------------------------
-gdb /usr/bin/weechat-curses 12345
+gdb /usr/bin/weechat 12345
 ----------------------------------------
 
 クラッシュが起きた場合と同様に、`bt full` コマンドを使ってください:
@@ -295,45 +418,12 @@ gdb /usr/bin/weechat-curses 12345
 
 コマンドライン引数:
 
--a, --no-connect::
-    WeeChat の起動時にサーバへの自動接続を行わない
-
--c, --colors::
-    ターミナルにデフォルトカラーを表示
-
--d, --dir 'path'::
-    WeeChat のホームディレクトリを path に設定 (設定ファイル、ログ、
-    ユーザプラグイン、スクリプトに利用される)、初期値は '~/.weechat' 。
-    (注意: パスが存在しない場合は WeeChat がディレクトリを作成します)
-
--h, --help::
-    ヘルプを表示
-
--k, --keys::
-    WeeChat の デフォルトキーを表示
-
--l, --license::
-    WeeChat ライセンスを表示
-
--p, --no-plugin::
-    プラグインの自動ロードを止める
-
--r, --run-command::
-    起動後にコマンドを実行 (複数のコマンドを指定するにはセミコロンで各コマンドを区切る)
-
--s, --no-script::
-    スクリプトの自動ロードを止める
-
--v, --version::
-    WeeChat のバージョンを表示
-
-plugin:option::
-    プラグインに渡すオプション (各プラグインのドキュメントを参照)
+include::cmdline_options.ja.txt[]
 
 WeeChat を起動させるには、以下コマンドを実行:
 
 ----------------------------------------
-$ weechat-curses
+$ weechat
 ----------------------------------------
 
 初めて WeeChat を起動する場合、デフォルトのオプションで設定ファイルが作成されます。
@@ -416,7 +506,7 @@ WeeChat を起動したターミナルの例:
 | input_paste  | [Paste 7 lines ? [ctrl-Y] Yes [ctrl-N] No] | 行をペーストする場合にユーザへ行われる質問
 | input_prompt | [@Flashy]                                  | 入力プロンプト (irc プラグインの場合はニックネーム)
 | away         | (away)                                     | 離席状態表示
-| input_search | [Text search]                              | テキスト検索表示
+| input_search | [Search (~ str,msg)]                       | 検索インジケータ ("`~`": 大文字小文字を区別しない、"`==`": 大文字小文字を区別する、"`str`": 検索文字列、"`regex`": 検索正規表現、"`msg`": メッセージ部分から検索、"`pre`": プレフィックス部分から検索、"`pre\|msg`": プレフィックス部分とメッセージ部分から検索)
 | input_text   | hi peter!                                  | 入力テキスト
 |========================================
 
@@ -618,6 +708,10 @@ WeeChat を起動したターミナルの例:
 
 バーアイテムのリストは `/bar listitems` コマンドで表示されます。
 
+アイテム名の前または後に文字を表示させることができます (英数字以外の文字、"-"
+または "_")。この文字はバー ('color_delim' オプション)
+で定義された区切り文字の色をつけてアイテムの前または後に表示されます。
+
 アイテムを含むバーの例 "[time],buffer_number+:+buffer_plugin+.+buffer_name":
 
 ........................................
@@ -625,6 +719,20 @@ WeeChat を起動したターミナルの例:
 │[12:55] 3:irc/freenode.#weechat                                                          │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ........................................
+
+特殊構文を使うことで、バーアイテム: "@buffer:item"
+("buffer" はバッファの完全な名前、"item" はバーアイテムの名前)
+を表示する際に強制的に指定されたバッファを利用することが可能です。
+
+これはルートバーに現在のウィンドウで表示されない (またはどこにも表示されない)
+特定のバッファのアイテムを表示させる際に便利です。
+
+例: bitlbee のニックネームリストをルートバーに表示させる
+(バーが 'bitlist' で bitlbee サーバが 'bitlbee' の場合):
+
+----------------------------------------
+/set weechat.bar.bitlist.items "@irc.bitlbee.&bitlbee:buffer_nicklist"
+----------------------------------------
 
 [[bar_filling]]
 ==== フィリング ====
@@ -907,7 +1015,9 @@ irc サーバ "freenode" に含まれる全てのバッファに対して設定�
 [width="100%",cols="^.^3,.^10,.^5l",options="header"]
 |========================================
 | キー         | 説明 | コマンド
-| @k(C-)@k(r)  | 大文字小文字を区別して検索 | /input search_switch_case
+| @k(C-)@k(r)  | 検索タイプを切り替え: 文字列 (デフォルト)、正規表現 | /input search_switch_regex
+| @k(A-)@k(c)  | 大文字小文字を区別して検索 | /input search_switch_case
+| @k(Tab)      | 検索範囲: メッセージ (デフォルト)、プレフィックス、プレフィックスとメッセージ | /input search_switch_where
 | @k(↑)        | 前のキーワードで検索 | /input search_previous
 | @k(↓)        | 次のキーワードで検索 | /input search_next
 | @k(Enter) .3+| 検索を終了 .3+| /input search_stop
@@ -1212,7 +1322,7 @@ WeeChat ではバーやチャットエリアにおけるテキスト表示に 25
 ^(1)^ 端末が 256 ペア以上の表示をサポートしていても、WeeChat
 では ncurses の制限により 256 ペア以上の表示は行えません。
 
-`weechat-curses --colors` を実行するか、`/color` コマンドをin WeeChat
+`weechat --colors` を実行するか、`/color` コマンドをin WeeChat
 の中で実行することで、色表示の制限を確認できます。
 
 256 色を利用したい場合に推奨される 'TERM' 環境変数の値は:
@@ -1335,24 +1445,67 @@ WeeChat はスクリーンに色が表示された時点で色ペアを動的に
 /set weechat.color.status_time *99999
 ----------------------------------------
 
+[[options_and_commands]]
+=== オプションとコマンド ===
+
+[[sec_options]]
+==== 保護データのオプション (sec.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド                       | 説明
+| crypt      | /set sec.crypt.*                   | 暗号化に関するオプション
+| data       | <<command_weechat_secure,/secure>> | 保護データ
+|========================================
+
+オプション:
+
+include::autogen/user/sec_options.txt[]
+
 [[weechat_options]]
-=== WeeChat オプション (weechat.conf) ===
+==== WeeChat オプション (weechat.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド                              | 説明
+| debug      | <<command_weechat_debug,/debug set>>      +
+               /set weechat.debug.*                      | core とプラグインのデバッグレベル (オプションをセクションに追加/削除出来ます)
+| startup    | /set weechat.startup.*                    | 起動オプション
+| look       | /set weechat.look.*                       | 外観
+| palette    | <<command_weechat_color,/color alias>>    +
+               /set weechat.palette.*                    | 色の別名 (オプションをセクションに追加/削除出来ます)
+| color      | /set weechat.color.*                      | 色
+| completion | /set weechat.completion.*                 | 補完オプション
+| history    | /set weechat.history.*                    | 履歴オプション (コマンドとバッファ)
+| proxy      | <<command_weechat_proxy,/proxy>>          +
+               /set weechat.proxy.*                      | プロキシオプション
+| network    | /set weechat.network.*                    | ネットワーク/SSL オプション
+| bar        | <<command_weechat_bar,/bar>>              +
+               /set weechat.bar.*                        | バーオプション
+| layout     | <<command_weechat_layout,/layout>>        | レイアウト
+| notify     | <<command_weechat_buffer,/buffer notify>> | バッファに対する通知レベル (オプションをセクションに追加/削除出来ます)
+| filter     | <<command_weechat_filter,/filter>>        | フィルタ
+| key        | <<command_weechat_key,/key>>              | デフォルトコンテキストのキー
+| key_search | <<command_weechat_key,/key>>              | 検索コンテキストのキー
+| key_cursor | <<command_weechat_key,/key>>              | カーソルコンテキストのキー
+| key_mouse  | <<command_weechat_key,/key>>              | マウスコンテキストのキー
+|========================================
+
+オプション:
 
 include::autogen/user/weechat_options.txt[]
 
 [[weechat_commands]]
-=== WeeChat コマンド ===
+==== WeeChat コマンド ====
 
 include::autogen/user/weechat_commands.txt[]
 
 [[plugins]]
 == プラグイン ==
-
-API を使ったプラグインやスクリプトの開発についてより詳しく学ぶには、'WeeChat
-プラグイン API リファレンス' 又は 'WeeChat スクリプト製作ガイド' を参照してください。
-
-[[plugins_in_weechat]]
-=== WeeChat におけるプラグイン ===
 
 プラグインとは動的ライブラリのことで、C 言語で書かれてコンパイルされています。
 プラグインは WeeChat によって読み込まれます。
@@ -1387,12 +1540,12 @@ GNU/Linux の場合、プラグインファイルは ".so" という拡張子を
 | alias     | コマンドの別名を定義
 | aspell    | コマンドラインのスペルチェック
 | charset   | バッファの文字コードに従ってデコード/エンコード
-| demo      | デモプラグイン (デフォルトではコンパイルされません)
 | fifo      | 外部から WeeChat にコマンドを送信するための FIFO パイプ
 | irc       | IRC チャットプロトコル
 | logger    | バッファの内容をファイルに保存
-| relay     | ネットワーク経由でデータを中継 (IRC プロキシ)
+| relay     | ネットワーク経由でデータを中継
 | rmodifier | 正規表現を用いた文字列の置換
+| script    | スクリプトマネージャ
 | python    | Python スクリプト API
 | perl      | Perl スクリプト API
 | ruby      | Ruby スクリプト API
@@ -1401,6 +1554,9 @@ GNU/Linux の場合、プラグインファイルは ".so" という拡張子を
 | guile     | Guile (scheme) スクリプト API
 | xfer      | ファイル転送とダイレクトチャット
 |========================================
+
+API を使ったプラグインやスクリプトの開発についてより詳しく学ぶには、'WeeChat
+プラグイン API リファレンス' 又は 'WeeChat スクリプト製作ガイド' を参照してください。
 
 [[alias_plugin]]
 === Alias プラグイン ===
@@ -1421,6 +1577,20 @@ Aspell プラグインを使うことで、コマンドラインに入力した�
 
 [[aspell_options]]
 ==== オプション (aspell.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド                              | 説明
+| color      | /set aspell.color.*                       | 色
+| check      | /set aspell.check.*                       | スペルチェックの操作コマンド
+| dict       | <<command_aspell_aspell,/aspell setdict>> +
+               /set aspell.dict.*                        | バッファが利用するディレクトリ (オプションをセクションに追加/削除出来ます)
+| option     | /set aspell.option.*                      | <<aspell_speller_options,Speller オプション>> (オプションをセクションに追加/削除出来ます)
+|========================================
+
+オプション:
 
 include::autogen/user/aspell_options.txt[]
 
@@ -1511,6 +1681,20 @@ charset: terminal: ISO-8859-15, internal: UTF-8
 
 [[charset_options]]
 ==== オプション (charset.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド                              | 説明
+| default    | /set charset.default.*                      | デフォルトのデコード/エンコード文字セット
+| decode     | <<command_charset_charset,/charset decode>> +
+               /set charset.decode.*                       | バッファのデコード文字セット (オプションをセクションに追加/削除出来ます)
+| encode     | <<command_charset_charset,/charset encode>> +
+               /set charset.encode.*                       | バッファのエンコード文字セット (オプションをセクションに追加/削除出来ます)
+|========================================
+
+オプション:
 
 include::autogen/user/charset_options.txt[]
 
@@ -1652,11 +1836,29 @@ irc[6][s]://[nick[:password]@]irc.example.org[:port][/channel][,channel[...]]
 で稼働中の IRC サーバ上の '#weechat' と '#toto' チャンネルに参加する例:
 
 ----------------------------------------
-$ weechat-curses irc://nono@irc.freenode.net/#weechat,#toto
+$ weechat irc://nono@irc.freenode.net/#weechat,#toto
 ----------------------------------------
 
 [[irc_options]]
 ==== オプション (irc.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション     | 操作コマンド                   | 説明
+| look           | /set irc.look.*                | 外観
+| color          | /set irc.color.*               | 色
+| network        | /set irc.network.*             | ネットワークオプション
+| msgbuffer      | /set irc.msgbuffer.*           | <<irc_target_buffer,IRC メッセージのターゲットバッファ>> (オプションをセクションに追加/削除出来ます)
+| ctcp           | /set irc.ctcp.*                | <<irc_ctcp_replies,CTCP 応答>> (オプションをセクションに追加/削除出来ます)
+| ignore         | <<command_irc_ignore,/ignore>> | 無視ユーザ
+| server_default | /set irc.server_default.*      | サーバに対するデフォルト値 (サーバオプションが定義されていない場合に利用されます)
+| server         | <<command_irc_server,/server>> +
+                   /set irc.server.*              | サーバ
+|========================================
+
+オプション:
 
 include::autogen/user/irc_options.txt[]
 
@@ -1890,22 +2092,22 @@ CTCP 応答時に自動的に WeeChat によって展開されます:
 
 [width="100%",cols="^2l,4,8l",options="header"]
 |========================================
-| コード       | 説明                                     | 値/例
-| $clientinfo  | サポートしている CTCP オプションのリスト | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
-| $version     | WeeChat バージョン                       | 0.4.0-dev
-| $versiongit  | WeeChat バージョン + git バージョン      | 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
-| $git         | git バージョン                           | v0.3.9-104-g7eb5cc4
-| $compilation | WeeChat コンパイル日時                   | Dec 16 2012
-| $osinfo      | OS に関する情報                          | Linux 2.6.32-5-amd64 / x86_64
-| $site        | WeeChat ウェブサイト                     | http://www.weechat.org/
-| $download    | WeeChat ウェブサイトのダウンロードページ | http://www.weechat.org/download
-| $time        | 現在の日時                               | Sun, 16 Dec 2012 10:40:48 +0100
-| $username    | IRC サーバのユーザネーム                 | ログイン名
-| $realname    | IRC サーバのリアルネーム                 | John Doe
+| コード       | 説明                                      | 値/例
+| $clientinfo  | サポートしている CTCP オプションのリスト  | ACTION DCC CLIENTINFO FINGER PING SOURCE TIME USERINFO VERSION
+| $version     | WeeChat バージョン                        | 0.4.0-dev
+| $versiongit  | WeeChat バージョン + git バージョン ^(1)^ | 0.4.0-dev (git: v0.3.9-104-g7eb5cc4)
+| $git         | git バージョン ^(1)^                      | v0.3.9-104-g7eb5cc4
+| $compilation | WeeChat コンパイル日時                    | Dec 16 2012
+| $osinfo      | OS に関する情報                           | Linux 2.6.32-5-amd64 / x86_64
+| $site        | WeeChat ウェブサイト                      | http://www.weechat.org/
+| $download    | WeeChat ウェブサイトのダウンロードページ  | http://www.weechat.org/download
+| $time        | 現在の日時                                | Sun, 16 Dec 2012 10:40:48 +0100
+| $username    | IRC サーバのユーザネーム                  | ログイン名
+| $realname    | IRC サーバのリアルネーム                  | John Doe
 |========================================
 
 [NOTE]
-git バージョンとは `git describe` コマンドの出力です。git リポジトリで
+^(1)^ git バージョンとは `git describe` コマンドの出力です。git リポジトリで
 WeeChat をコンパイルし、git がインストールされている場合のみ値が設定されます。
 
 CTCP オプションが設定されていない (デフォルトの) 場合、CTCP 応答は以下のようになります:
@@ -2058,6 +2260,20 @@ Logger プラグインを使うことで、バッファの内容をファイル�
 [[logger_options]]
 ==== オプション (logger.conf) ====
 
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド        | 説明
+| look       | /set logger.look.*  | 外観
+| color      | /set logger.color.* | 色
+| file       | /set logger.file.*  | ログファイルのオプション
+| level      | /set logger.level.* | バッファのログレベル (オプションをセクションに追加/削除出来ます)
+| mask       | /set logger.mask.*  | バッファのファイル名マスク (オプションをセクションに追加/削除出来ます)
+|========================================
+
+オプション:
+
 include::autogen/user/logger_options.txt[]
 
 [[logger_commands]]
@@ -2198,6 +2414,21 @@ Relay プラグインはネットワークを介して異なるプロトコル�
 [[relay_options]]
 ==== オプション (relay.conf) ====
 
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド                       | 説明
+| look       | /set relay.look.*                  | 外観
+| color      | /set relay.color.*                 | 色
+| network    | /set relay.network.*               | ネットワークオプション
+| irc        | /set relay.irc.*                   | 特定の irc プロトコルのオプション (irc プロキシ)
+| port       | <<command_relay_relay,/relay add>> +
+               /set relay.port.*                  | リレーに使うポート(irc や weechat プロトコル) (オプションをセクションに追加/削除出来ます)
+|========================================
+
+オプション:
+
 include::autogen/user/relay_options.txt[]
 
 [[relay_commands]]
@@ -2316,6 +2547,18 @@ Rmodifier プラグインは正規表現を使って文字列を置換します�
 [[rmodifier_options]]
 ==== オプション (rmodifier.conf) ====
 
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド                                   | 説明
+| look       | /set rmodifier.look.*                          | 外観
+| modifier   | <<command_rmodifier_rmodifier,/rmodifier add>> +
+               /set rmodifier.modifier.*                      | rmodifier
+|========================================
+
+オプション:
+
 include::autogen/user/rmodifier_options.txt[]
 
 [[rmodifier_commands]]
@@ -2362,14 +2605,14 @@ API リファレンス' の 'weechat_hook_modifier' 関数を参照してくだ�
 `/oper nick ********` のように表示されます。
 
 [[scripts_plugins]]
-=== Scripts プラグイン ===
+=== スクリプトプラグイン ===
 
 WeeChat は 6 種類のスクリプトプラグインを備えています: Python、Perl、Ruby、Lua、Tcl、Guile
 (scheme)。
 これらのプラグインでそれぞれの言語で書かれたスクリプトのロード、実行、アンロードができます。
 
 "スクリプト" と呼ばれるほかのプラグインはスクリプトマネージャで、任意の言語で書かれたスクリプトをロード
-/ アンロードしたり、WeeChat スクリプトリポジトリ (http://www.weechat.org/scripts から参照可能)
+/ アンロードしたり、WeeChat スクリプトリポジトリ (http://weechat.org/scripts から参照可能)
 のスクリプトをインストール / 削除するために利用します。
 
 スクリプトの書き方やスクリプト用の WeeChat API についての詳しい情報は、
@@ -2377,6 +2620,18 @@ WeeChat は 6 種類のスクリプトプラグインを備えています: Pyth
 
 [[script_options]]
 ==== スクリプトオプション (script.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド          | 説明
+| look       | /set script.look.*    | 外観
+| color      | /set script.color.*   | 色
+| scripts    | /set script.scripts.* | スクリプトのダウンロードに関するオプション
+|========================================
+
+オプション:
 
 include::autogen/user/script_options.txt[]
 
@@ -2426,6 +2681,19 @@ Xfer プラグインの機能:
 
 [[xfer_options]]
 ==== オプション (xfer.conf) ====
+
+セクション:
+
+[width="100%",cols="3m,6m,16",options="header"]
+|========================================
+| セクション | 操作コマンド        | 説明
+| look       | /set xfer.look.*    | 外観
+| color      | /set xfer.color.*   | 色
+| network    | /set xfer.network.* | ネットワークオプション
+| file       | /set xfer.file.*    | ファイルの送信/受信に関するオプション
+|========================================
+
+オプション:
 
 include::autogen/user/xfer_options.txt[]
 

@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(LOGGER_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(LOGGER_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -33,7 +33,7 @@ logger_la_SOURCES = logger.c \
                     logger-info.h \
                     logger-tail.c \
                     logger-tail.h
-logger_la_LDFLAGS = -module
+logger_la_LDFLAGS = -module -no-undefined
 logger_la_LIBADD  = $(LOGGER_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

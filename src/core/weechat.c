@@ -56,11 +56,13 @@
 #include "wee-completion.h"
 #include "wee-config.h"
 #include "wee-debug.h"
+#include "wee-eval.h"
 #include "wee-hdata.h"
 #include "wee-hook.h"
 #include "wee-log.h"
 #include "wee-network.h"
 #include "wee-proxy.h"
+#include "wee-secure.h"
 #include "wee-string.h"
 #include "wee-upgrade.h"
 #include "wee-utf8.h"
@@ -132,59 +134,19 @@ weechat_display_usage (char *exec_name)
                           exec_name, exec_name);
     string_iconv_fprintf (stdout, "\n");
     string_iconv_fprintf (stdout,
-                          _("  -a, --no-connect   disable auto-connect to servers at startup\n"
-                            "  -c, --colors       display default colors in terminal\n"
-                            "  -d, --dir <path>   set WeeChat home directory (default: ~/.weechat)\n"
-                            "  -h, --help         this help\n"
-                            "  -k, --keys         display WeeChat default keys\n"
-                            "  -l, --license      display WeeChat license\n"
-                            "  -p, --no-plugin    don't load any plugin at startup\n"
-                            "  -r, --run-command  run command(s) after startup\n"
-                            "                     (many commands can be separated by semicolons)\n"
-                            "  -s, --no-script    don't load any script at startup\n"
-                            "  -v, --version      display WeeChat version\n"
-                            "  plugin:option      option for plugin\n"
-                            "                     for example, irc plugin can connect\n"
-                            "                     to server with url like:\n"
-                            "                     irc[6][s]://[nickname[:password]@]"
-                            "irc.example.org[:port][/#channel1][,#channel2[...]]\n"
-                            "                     (look at plugins documentation for more information\n"
-                            "                     about possible options)\n"));
+                          _("  -a, --no-connect         disable auto-connect to servers at startup\n"
+                            "  -c, --colors             display default colors in terminal\n"
+                            "  -d, --dir <path>         set WeeChat home directory (default: ~/.weechat)\n"
+                            "  -h, --help               display this help\n"
+                            "  -l, --license            display WeeChat license\n"
+                            "  -p, --no-plugin          don't load any plugin at startup\n"
+                            "  -r, --run-command <cmd>  run command(s) after startup\n"
+                            "                           (many commands can be separated by semicolons)\n"
+                            "  -s, --no-script          don't load any script at startup\n"
+                            "      --upgrade            upgrade WeeChat using session files (see /help upgrade in WeeChat)\n"
+                            "  -v, --version            display WeeChat version\n"
+                            "  plugin:option            option for plugin (see man weechat)\n"));
     string_iconv_fprintf(stdout, "\n");
-}
-
-/*
- * Displays WeeChat default keys on standard output.
- */
-
-void
-weechat_display_keys ()
-{
-    struct t_gui_key *ptr_key;
-    char *expanded_name;
-    int i;
-
-    for (i = 0; i < GUI_KEY_NUM_CONTEXTS; i++)
-    {
-        gui_key_default_bindings (i);
-        string_iconv_fprintf (stdout,
-                              /* TRANSLATORS: first "%s" is "weechat" */
-                              _("%s default keys (context: \"%s\"):\n"),
-                              (gui_key_context_string[i] && gui_key_context_string[i][0]) ?
-                              _(gui_key_context_string[i]) : "",
-                              version_get_name ());
-        string_iconv_fprintf (stdout, "\n");
-        for (ptr_key = gui_keys[i]; ptr_key; ptr_key = ptr_key->next_key)
-        {
-            expanded_name = gui_key_get_expanded_name (ptr_key->key);
-            string_iconv_fprintf (stdout,
-                                  "* %s => %s\n",
-                                  (expanded_name) ? expanded_name : ptr_key->key,
-                                  ptr_key->command);
-            if (expanded_name)
-                free (expanded_name);
-        }
-    }
 }
 
 /*
@@ -231,12 +193,6 @@ weechat_parse_args (int argc, char *argv[])
                 || (strcmp (argv[i], "--help") == 0))
         {
             weechat_display_usage (argv[0]);
-            weechat_shutdown (EXIT_SUCCESS, 0);
-        }
-        else if ((strcmp (argv[i], "-k") == 0)
-            || (strcmp (argv[i], "--keys") == 0))
-        {
-            weechat_display_keys ();
             weechat_shutdown (EXIT_SUCCESS, 0);
         }
         else if ((strcmp (argv[i], "-l") == 0)
@@ -486,14 +442,19 @@ main (int argc, char *argv[])
     command_init ();                    /* initialize WeeChat commands      */
     completion_init ();                 /* add core completion hooks        */
     gui_key_init ();                    /* init keys                        */
-    if (!config_weechat_init ())        /* init options with default values */
+    network_init_gcrypt ();             /* init gcrypt                      */
+    if (!secure_init ())                /* init secured data options (sec.*)*/
+        exit (EXIT_FAILURE);
+    if (!config_weechat_init ())        /* init WeeChat options (weechat.*) */
         exit (EXIT_FAILURE);
     weechat_parse_args (argc, argv);    /* parse command line args          */
     weechat_create_home_dir ();         /* create WeeChat home directory    */
     log_init ();                        /* init log file                    */
-    if (config_weechat_read () < 0)     /* read WeeChat configuration       */
+    if (secure_read () < 0)             /* read secured data options        */
         exit (EXIT_FAILURE);
-    network_init ();                    /* init networking                  */
+    if (config_weechat_read () < 0)     /* read WeeChat options             */
+        exit (EXIT_FAILURE);
+    network_init_gnutls ();             /* init GnuTLS                      */
     gui_main_init ();                   /* init WeeChat interface           */
     if (weechat_upgrading)
     {
@@ -516,14 +477,18 @@ main (int argc, char *argv[])
     gui_layout_save_on_exit ();         /* save layout                      */
     plugin_end ();                      /* end plugin interface(s)          */
     if (CONFIG_BOOLEAN(config_look_save_config_on_exit))
-        (void) config_weechat_write (NULL); /* save WeeChat config file     */
+        (void) config_weechat_write (); /* save WeeChat config file         */
+    (void) secure_write ();             /* save secured data                */
     gui_main_end (1);                   /* shut down WeeChat GUI            */
     proxy_free_all ();                  /* free all proxies                 */
-    config_weechat_free ();             /* free weechat.conf and vars       */
+    config_weechat_free ();             /* free WeeChat options             */
+    secure_free ();                     /* free secured data options        */
     config_file_free_all ();            /* free all configuration files     */
     gui_key_end ();                     /* remove all keys                  */
     unhook_all ();                      /* remove all hooks                 */
     hdata_end ();                       /* end hdata                        */
+    eval_end ();                        /* end eval                         */
+    string_end ();                      /* end string                       */
     weechat_shutdown (EXIT_SUCCESS, 0); /* quit WeeChat (oh no, why?)       */
 
     return EXIT_SUCCESS;                /* make C compiler happy            */

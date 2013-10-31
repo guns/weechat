@@ -156,7 +156,7 @@ debug_sigsegv ()
                               weechat_home);
     string_iconv_fprintf (stderr, "***\n");
     string_iconv_fprintf (stderr, "*** Please help WeeChat developers to fix this bug:\n");
-    string_iconv_fprintf (stderr, "***   1. If you have a core file, please run:  gdb weechat-curses core\n");
+    string_iconv_fprintf (stderr, "***   1. If you have a core file, please run:  gdb /path/to/weechat core\n");
     string_iconv_fprintf (stderr, "***      then issue \"bt\" command and send result to developers\n");
     string_iconv_fprintf (stderr, "***      To enable core files with bash shell: ulimit -c 10000\n");
     string_iconv_fprintf (stderr, "***   2. Otherwise send backtrace (below) and weechat.log\n");
@@ -369,10 +369,8 @@ debug_hdata_map_cb (void *data, struct t_hashtable *hashtable,
     gui_chat_printf (NULL,
                      "  hdata 0x%lx: \"%s\", %d vars, %d lists:",
                      ptr_hdata, (const char *)key,
-                     hashtable_get_integer (ptr_hdata->hash_var,
-                                            "items_count"),
-                     hashtable_get_integer (ptr_hdata->hash_list,
-                                            "items_count"));
+                     ptr_hdata->hash_var->items_count,
+                     ptr_hdata->hash_list->items_count);
 
     /* display lists */
     hashtable_map (ptr_hdata->hash_list,
@@ -412,7 +410,7 @@ debug_hdata ()
 {
     int count;
 
-    count = hashtable_get_integer (weechat_hdata, "items_count");
+    count = weechat_hdata->items_count;
 
     gui_chat_printf (NULL, "");
     gui_chat_printf (NULL, "%d hdata in memory", count);

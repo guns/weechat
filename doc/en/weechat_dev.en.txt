@@ -6,7 +6,7 @@ Sébastien Helleu <flashcode@flashtux.org>
 This manual documents WeeChat chat client, it is part of WeeChat.
 
 Latest version of this document can be found on this page:
-http://www.weechat.org/doc
+http://weechat.org/doc
 
 
 [[introduction]]
@@ -55,7 +55,6 @@ The main WeeChat directories are:
 |       alias/     | Alias plugin
 |       aspell/    | Aspell plugin
 |       charset/   | Charset plugin
-|       demo/      | Demo plugin
 |       fifo/      | Fifo plugin (FIFO pipe used to remotely send commands to WeeChat)
 |       irc/       | IRC plugin
 |       logger/    | Logger plugin (write messages displayed to files)
@@ -96,7 +95,7 @@ WeeChat "core" reside in following directories:
 |    wee-command.c              | WeeChat core commands
 |    wee-completion.c           | Completion on command line
 |    wee-config-file.c          | Configuration file management
-|    wee-config.c               | Configuration options for WeeChat core (options weechat.*)
+|    wee-config.c               | Configuration options for WeeChat core (file weechat.conf)
 |    wee-debug.c                | Some debug functions
 |    wee-eval.c                 | Evaluate expressions with references to internal vars
 |    wee-hashtable.c            | Hashtables
@@ -108,6 +107,7 @@ WeeChat "core" reside in following directories:
 |    wee-log.c                  | Write to WeeChat log file (weechat.log)
 |    wee-network.c              | Network functions (connection to servers, proxy)
 |    wee-proxy.c                | Proxy management
+|    wee-secure.c               | Secured data options (file sec.conf)
 |    wee-string.c               | Functions on strings
 |    wee-upgrade-file.c         | Internal upgrade system
 |    wee-upgrade.c              | Upgrade for WeeChat core (buffers, lines, history, ...)
@@ -163,20 +163,18 @@ Plugins
 |    weechat-plugin.h               | Header designed to be distributed with WeeChat plugins, in order to compile them
 |    alias/                         | Alias plugin
 |       alias.c                     | Main alias functions
-|       alias-config.c              | Alias config options
+|       alias-config.c              | Alias config options (file alias.conf)
 |       alias-info.c                | Alias info/infolists/hdata
 |    aspell/                        | Aspell plugin
 |       weechat-aspell.c            | Main aspell functions
 |       weechat-aspell-bar-item.c   | Aspell bar items
 |       weechat-aspell-command.c    | Aspell commands
 |       weechat-aspell-completion.c | Aspell completions
-|       weechat-aspell-config.c     | Aspell config options
+|       weechat-aspell-config.c     | Aspell config options (file aspell.conf)
 |       weechat-aspell-info.c       | Aspell info/infolists/hdata
 |       weechat-aspell-speller.c    | Spellers management
 |    charset/                       | Charset plugin
 |       charset.c                   | Charset functions
-|    demo/                          | Demo plugin
-|       demo.c                      | Demo functions
 |    fifo/                          | Fifo plugin
 |       fifo.c                      | Main fifo functions
 |       fifo-info.c                 | Fifo info/infolists/hdata
@@ -191,7 +189,7 @@ Plugins
 |       irc-color.c                 | Color functions
 |       irc-command.c               | IRC commands
 |       irc-completion.c            | IRC completions
-|       irc-config.c                | IRC config options
+|       irc-config.c                | IRC config options (file irc.conf)
 |       irc-ctcp.c                  | IRC CTCP
 |       irc-debug.c                 | IRC debug functions
 |       irc-ignore.c                | IRC Ignore
@@ -211,7 +209,7 @@ Plugins
 |    logger/                        | Logger plugin
 |       logger.c                    | Main logger functions
 |       logger-buffer.c             | Logger buffer list management
-|       logger-config.c             | Logger config options
+|       logger-config.c             | Logger config options (file logger.conf)
 |       logger-info.c               | Logger info/infolists/hdata
 |       logger-tail.c               | Return last lines of a file
 |    lua/                           | Lua plugin
@@ -229,7 +227,7 @@ Plugins
 |       relay-client.c              | Clients of relay
 |       relay-command.c             | Relay commands
 |       relay-completion.c          | Relay completions
-|       relay-config.c              | Relay config options
+|       relay-config.c              | Relay config options (file relay.conf)
 |       relay-info.c                | Relay info/infolists/hdata
 |       relay-network.c             | Network functions for relay
 |       relay-raw.c                 | Relay raw buffer
@@ -247,7 +245,7 @@ Plugins
 |       rmodifier.c                 | Main rmodifier functions
 |       rmodifier-command.c         | Rmodifier commands
 |       rmodifier-completion.c      | Rmodifier completions
-|       rmodifier-config.c          | Rmodifier config options
+|       rmodifier-config.c          | Rmodifier config options (file rmodifier.conf)
 |       rmodifier-debug.c           | Rmodifier debug functions
 |       rmodifier-info.c            | Rmodifier info/infolists/hdata
 |    ruby/                          | Ruby plugin
@@ -259,7 +257,7 @@ Plugins
 |       script-buffer.c             | Buffer for scripts manager
 |       script-command.c            | Commands for scripts manager
 |       script-completion.c         | Completions for scripts manager
-|       script-config.c             | Config options for scripts manager
+|       script-config.c             | Config options for scripts manager (file script.conf)
 |       script-info.c               | Script manager info/infolists/hdata
 |       script-repo.c               | Download and read repository file
 |    tcl/                           | Tcl plugin
@@ -271,7 +269,7 @@ Plugins
 |       xfer-chat.c                 | Xfer DCC chat
 |       xfer-command.c              | Xfer commands
 |       xfer-completion.c           | Xfer completions
-|       xfer-config.c               | Xfer config options
+|       xfer-config.c               | Xfer config options (file xfer.conf)
 |       xfer-dcc.c                  | Xfer DCC file
 |       xfer-file.c                 | File functions for xfer
 |       xfer-info.c                 | Xfer info/infolists/hdata
@@ -292,8 +290,8 @@ Documentation files:
 |    asciidoc.conf                    | Asciidoc configuration file (some macros)
 |    asciidoc.css                     | Asciidoc style
 |    docgen.py                        | Python script to build files in "autogen/" directory (see below)
-|    weechat-curses.1                 | Weechat man page
 |    XX/                              | Documentation for language XX (languages: en, fr, de, it, ...)
+|       weechat.1.XX.txt              | Man page
 |       weechat_quickstart.XX.txt     | Quickstart guide
 |       weechat_user.XX.txt           | User's guide
 |       weechat_faq.XX.txt            | FAQ
@@ -301,10 +299,11 @@ Documentation files:
 |       weechat_scripting.XX.txt      | Scripting guide
 |       weechat_tester.XX.txt         | Tester's guide
 |       weechat_dev.XX.txt            | Developer's guide (this document)
-|       weechat_relay_protocol.en.txt | Relay protocol
+|       weechat_relay_protocol.XX.txt | Relay protocol
+|       cmdline_options.XX.txt        | Command-line options (file included in man page and user's guide)
 |       autogen/                      | Files auto-built with script docgen.py (do *NEVER* update manually!)
-|          user/                      | Files auto-built for user's guide
-|          plugin_api/                | Files auto-built for plugin API
+|          user/                      | Files auto-built for user's guide (do *NEVER* update manually!)
+|          plugin_api/                | Files auto-built for plugin API (do *NEVER* update manually!)
 |========================================
 
 Translations for WeeChat and plugins are done with gettext, files are in 'po/' directory:
@@ -773,6 +772,7 @@ All combinations are summarized in this table:
 | @h(19) + "b" + "#"                   | @h(19)`b#`             | input bar   | Move cursor char char (used only in item "input_text")
 | @h(19) + "b" + "i"                   | @h(19)`bi`             | bars        | Start item
 | @h(19) + "b" + "l" (lower L)         | @h(19)`bl`             | bars        | Start line item
+| @h(19) + "E"                         | @h(19)`E`              | chat + bars | Emphasize text _(new in version 0.4.2)_
 | @h(19) + @h(1C)                      | @h(19)@h(1C)           | chat + bars | Reset color (keep attributes)
 | @h(1A) + ATTR                        | @h(1A)`*`              | chat + bars | Set attribute
 | @h(1B) + ATTR                        | @h(1B)`*`              | chat + bars | Remove attribute
@@ -824,6 +824,10 @@ Color codes using options (see 't_gui_color_enum', in file 'src/gui/gui-color.h'
 | 37   | weechat.color.chat_prefix_buffer_inactive_buffer _(new in version 0.3.6)_
 | 38   | weechat.color.chat_nick_offline _(new in version 0.3.9)_
 | 39   | weechat.color.chat_nick_offline_highlight _(new in version 0.3.9)_
+| 40   | weechat.color.chat_nick_prefix _(new in version 0.4.1)_
+| 41   | weechat.color.chat_nick_suffix _(new in version 0.4.1)_
+| 42   | weechat.color.emphasis _(new in version 0.4.2)_
+| 43   | weechat.color.chat_day_change _(new in version 0.4.2)_
 |========================================
 
 WeeChat colors are:
@@ -831,23 +835,23 @@ WeeChat colors are:
 [width="40%",cols="^1m,6",options="header"]
 |========================================
 | Code | Color
-| 00   | default (terminal foreground/background)
-| 01   | black
-| 02   | dark gray
-| 03   | dark red
-| 04   | light red
-| 05   | dark green
-| 06   | light green
-| 07   | brown
-| 08   | yellow
-| 09   | dark blue
-| 10   | light blue
-| 11   | dark magenta
-| 12   | light magenta
-| 13   | dark cyan
-| 14   | light cyan
-| 15   | gray
-| 16   | white
+| 00   | Default (terminal foreground/background)
+| 01   | Black
+| 02   | Dark gray
+| 03   | Dark red
+| 04   | Light red
+| 05   | Dark green
+| 06   | Light green
+| 07   | Brown
+| 08   | Yellow
+| 09   | Dark blue
+| 10   | Light blue
+| 11   | Dark magenta
+| 12   | Light magenta
+| 13   | Dark cyan
+| 14   | Light cyan
+| 15   | Gray
+| 16   | White
 |========================================
 
 Examples of color codes:
@@ -855,13 +859,13 @@ Examples of color codes:
 [width="50%",cols="1,2",options="header"]
 |========================================
 | Code                     | Description
-| @h(19)`01`               | color of option "01" (chat text)
-| @h(19)`*08,03`           | yellow on red
-| @h(19)`*@00214`          | orange (extended color 214)
-| @h(19)`*@*_00214,@00017` | bold underlined orange (214) on dark blue (17)
-| @h(1A)`_`                | set underline
-| @h(1B)`_`                | remove underline
-| @h(1C)`bD`               | reset attributes and color
+| @h(19)`01`               | Color of option "01" (chat text)
+| @h(19)`*08,03`           | Yellow on red
+| @h(19)`*@00214`          | Orange (extended color 214)
+| @h(19)`*@*_00214,@00017` | Bold underlined orange (214) on dark blue (17)
+| @h(1A)`_`                | Set underline
+| @h(1B)`_`                | Remove underline
+| @h(1C)`bD`               | Reset attributes and color
 |========================================
 
 [[plugin_internals]]

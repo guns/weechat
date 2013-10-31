@@ -218,6 +218,11 @@
 ** type: string
 ** values: any string (default value: `""`)
 
+* [[option_irc.look.nick_color_hash]] *irc.look.nick_color_hash*
+** description: `hash algorithm used to find the color for a nick: djb2 = variant of djb2 (position of letters matters: anagrams of a nick have different color), sum = sum of letters`
+** type: integer
+** values: djb2, sum (default value: `sum`)
+
 * [[option_irc.look.nick_color_stop_chars]] *irc.look.nick_color_stop_chars*
 ** description: `chars used to stop in nick when computing color with letters of nick (at least one char outside this list must be in string before stopping) (example: nick "|nick|away" with "|" in chars will return color of nick "|nick")`
 ** type: string
@@ -248,13 +253,18 @@
 ** type: integer
 ** values: auto, never, always (default value: `auto`)
 
+* [[option_irc.look.notice_welcome_redirect]] *irc.look.notice_welcome_redirect*
+** description: `automatically redirect channel welcome notices to the channel buffer; such notices have the nick as target but a channel name in beginning of notice message, for example notices sent by freenode server which look like: "[#channel] Welcome to this channel..."`
+** type: boolean
+** values: on, off (default value: `on`)
+
 * [[option_irc.look.notify_tags_ison]] *irc.look.notify_tags_ison*
-** description: `comma separated list of tags used in messages printed by notify when a nick joins or quits server (result of command ison), for example: "notify_highlight", "notify_message" or "notify_private"`
+** description: `comma separated list of tags used in messages displayed by notify when a nick joins or quits server (result of command ison), for example: "notify_message", "notify_private" or "notify_highlight"`
 ** type: string
 ** values: any string (default value: `"notify_message"`)
 
 * [[option_irc.look.notify_tags_whois]] *irc.look.notify_tags_whois*
-** description: `comma separated list of tags used in messages printed by notify when a nick away status changes (result of command whois), for example: "notify_highlight", "notify_message" or "notify_private"`
+** description: `comma separated list of tags used in messages displayed by notify when a nick away status changes (result of command whois), for example: "notify_message", "notify_private" or "notify_highlight"`
 ** type: string
 ** values: any string (default value: `"notify_message"`)
 
@@ -267,6 +277,11 @@
 ** description: `merge private buffers`
 ** type: integer
 ** values: independent, merge_by_server, merge_all (default value: `independent`)
+
+* [[option_irc.look.pv_tags]] *irc.look.pv_tags*
+** description: `comma separated list of tags used in private messages, for example: "notify_message", "notify_private" or "notify_highlight"`
+** type: string
+** values: any string (default value: `"notify_private"`)
 
 * [[option_irc.look.raw_messages]] *irc.look.raw_messages*
 ** description: `number of raw messages to save in memory when raw data buffer is closed (messages will be displayed when opening raw data buffer)`
@@ -284,7 +299,7 @@
 ** values: on, off (default value: `on`)
 
 * [[option_irc.look.smart_filter_delay]] *irc.look.smart_filter_delay*
-** description: `delay for filtering join/part/quit messages (in minutes)`
+** description: `delay for filtering join/part/quit messages (in minutes): if the nick did not speak during the last N minutes, the join/part/quit is filtered`
 ** type: integer
 ** values: 1 .. 10080 (default value: `5`)
 
@@ -399,7 +414,7 @@
 ** values: on, off (default value: `off`)
 
 * [[option_irc.server_default.autojoin]] *irc.server_default.autojoin*
-** description: `comma separated list of channels to join when connected to server (example: "#chan1,#chan2,#chan3 key1,key2")`
+** description: `comma separated list of channels to join when connected to server (example: "#chan1,#chan2,#chan3 key1,key2") (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 
@@ -439,7 +454,7 @@
 ** values: any string (default value: `""`)
 
 * [[option_irc.server_default.command]] *irc.server_default.command*
-** description: `command(s) to run when connected to server (many commands should be separated by ";", use "\;" for a semicolon, special variables $nick, $channel and $server are replaced by their value)`
+** description: `command(s) to run when connected to server (many commands should be separated by ";", use "\;" for a semicolon, special variables $nick, $channel and $server are replaced by their value) (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 
@@ -484,12 +499,12 @@
 ** values: any string (default value: `""`)
 
 * [[option_irc.server_default.password]] *irc.server_default.password*
-** description: `password for server`
+** description: `password for server (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 
 * [[option_irc.server_default.proxy]] *irc.server_default.proxy*
-** description: `proxy used for this server (optional)`
+** description: `name of proxy used for this server (optional, proxy must be defined with command /proxy)`
 ** type: string
 ** values: any string (default value: `""`)
 
@@ -504,7 +519,7 @@
 ** values: plain, dh-blowfish, dh-aes, external (default value: `plain`)
 
 * [[option_irc.server_default.sasl_password]] *irc.server_default.sasl_password*
-** description: `password for SASL authentication`
+** description: `password for SASL authentication (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 
@@ -514,7 +529,7 @@
 ** values: 1 .. 3600 (default value: `15`)
 
 * [[option_irc.server_default.sasl_username]] *irc.server_default.sasl_username*
-** description: `username for SASL authentication`
+** description: `username for SASL authentication (note: content is evaluated, see /help eval)`
 ** type: string
 ** values: any string (default value: `""`)
 

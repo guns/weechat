@@ -14,7 +14,7 @@ cible: serveur
   -current: exécuter la commande pour les canaux du serveur courant seulement
   -exclude: exclure certains canaux ('*' est autorisé au début ou à la fin du nom du canal, pour exclure plusieurs canaux)
   commande: commande à exécuter
-paramètres: paramètres pour la commande
+paramètres: paramètres pour la commande (les variables spéciales $nick, $channel et $server sont remplacées par leur valeur)
 
 Exemples:
   exécuter '/me teste' sur tous les canaux:
@@ -32,13 +32,15 @@ Exemples:
 
   -exclude: exclude certains serveurs ('*' est autorisé en début ou fin du nom du serveur, pour exclure plusieurs serveurs)
   commande: commande à exécuter
-paramètres: paramètres pour la commande
+paramètres: paramètres pour la commande (les variables spéciales $nick, $channel et $server sont remplacées par leur valeur)
 
 Exemples:
   changer de pseudo sur tous les serveurs:
     /allserv nick newnick
   positionner l'absence sur tous les serveurs:
     /allserv away Je suis absent
+  faire un whois sur mon pseudo sur tous les serveurs:
+    /allserv whois $nick
 ........................................
 
 [[command_irc_ban]]
@@ -119,18 +121,29 @@ Exemples:
 [command]*`dehalfop`* retirer le statut de demi-opérateur du canal à/aux pseudo(s)::
 ........................................
 /dehalfop  <pseudo> [<pseudo>...]
+
+pseudo: pseudo ou masque (peut démarrer ou se terminer par "*" comme joker)
+     *: retirer le statut de demi-opérateur de tout le monde sur le canal excepté vous-même
 ........................................
 
 [[command_irc_deop]]
 [command]*`deop`* retirer le statut d'opérateur du canal à/aux pseudo(s)::
 ........................................
 /deop  <pseudo> [<pseudo>...]
+       * -yes
+
+pseudo: pseudo ou masque (peut démarrer ou se terminer par "*" comme joker)
+     *: retirer le statut d'opérateur de tout le monde sur le canal excepté vous-même
 ........................................
 
 [[command_irc_devoice]]
 [command]*`devoice`* retirer la voix du/des pseudo(s)::
 ........................................
 /devoice  <pseudo> [<pseudo>...]
+          * -yes
+
+pseudo: pseudo ou masque (peut démarrer ou se terminer par "*" comme joker)
+     *: retirer la voix de tout le monde sur le canal
 ........................................
 
 [[command_irc_die]]
@@ -156,6 +169,10 @@ cible: nom du serveur
 [command]*`halfop`* donner le statut de demi-opérateur à un/des pseudo(s)::
 ........................................
 /halfop  <pseudo> [<pseudo>...]
+         * -yes
+
+pseudo: pseudo ou masque (peut démarrer ou se terminer par "*" comme joker)
+     *: donner le statut de demi-opérateur à tout le monde sur le canal
 ........................................
 
 [[command_irc_ignore]]
@@ -399,7 +416,7 @@ serveur: envoyer à ce serveur (nom interne)
          del <pseudo>|-all [<serveur>]
 
     add: ajouter une notification
- pasudo: pseudo
+ pseudo: pseudo
 serveur: nom interne du serveur (par défaut le serveur courant)
   -away: notifier quand le message d'absence est changé (en faisant un whois sur le pseudo)
     del: supprimer une notification
@@ -417,9 +434,13 @@ Exemples:
 ........................................
 
 [[command_irc_op]]
-[command]*`op`* donner le statut opérateur à un/des pseudo(s)::
+[command]*`op`* donner le statut d'opérateur à un/des pseudo(s)::
 ........................................
 /op  <pseudo> [<pseudo>...]
+     * -yes
+
+pseudo: pseudo ou masque (peut démarrer ou se terminer par "*" comme joker)
+     *: donner le statut d'opérateur à tout le monde sur le canal
 ........................................
 
 [[command_irc_oper]]
@@ -461,7 +482,7 @@ démon2: faire suivre le message à ce démon
 [[command_irc_query]]
 [command]*`query`* envoyer un message privé à un pseudo::
 ........................................
-/query  [-server <serveur>] <pseudo> [<texte>]
+/query  [-server <serveur>] <pseudo>[,<pseudo>...] [<texte>]
 
 serveur: envoyer à ce serveur (nom interne)
  pseudo: pseudo pour la conversation privée
@@ -526,7 +547,7 @@ pseudo: pseudo
 ........................................
 
 [[command_irc_samode]]
-[command]*`samode`* changer le mode du canal, sans avoir le statut opérateur::
+[command]*`samode`* changer le mode du canal, sans avoir le statut d'opérateur::
 ........................................
 /samode  <canal> <mode>
 
@@ -717,6 +738,9 @@ serveur: nom du serveur
 [command]*`voice`* donner la voix à/aux pseudo(s)::
 ........................................
 /voice  <pseudo> [<pseudo>...]
+
+pseudo: pseudo ou masque (peut démarrer ou se terminer par "*" comme joker)
+     *: donner la voix à tout le monde sur le canal
 ........................................
 
 [[command_irc_wallchops]]

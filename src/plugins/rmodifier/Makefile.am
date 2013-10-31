@@ -17,7 +17,7 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-INCLUDES = -DLOCALEDIR=\"$(datadir)/locale\" $(RMODIFIER_CFLAGS)
+AM_CPPFLAGS = -DLOCALEDIR=\"$(datadir)/locale\" $(RMODIFIER_CFLAGS)
 
 libdir = ${weechat_libdir}/plugins
 
@@ -35,7 +35,7 @@ rmodifier_la_SOURCES = rmodifier.c \
                        rmodifier-debug.h \
                        rmodifier-info.c \
                        rmodifier-info.h
-rmodifier_la_LDFLAGS = -module
+rmodifier_la_LDFLAGS = -module -no-undefined
 rmodifier_la_LIBADD  = $(RMODIFIER_LFLAGS)
 
 EXTRA_DIST = CMakeLists.txt

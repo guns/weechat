@@ -68,7 +68,9 @@ gui_lines_alloc ()
         new_lines->first_line_not_read = 0;
         new_lines->lines_hidden = 0;
         new_lines->buffer_max_length = 0;
+        new_lines->buffer_max_length_refresh = 0;
         new_lines->prefix_max_length = CONFIG_INTEGER(config_look_prefix_align_min);
+        new_lines->prefix_max_length_refresh = 0;
     }
 
     return new_lines;
@@ -82,6 +84,40 @@ void
 gui_lines_free (struct t_gui_lines *lines)
 {
     free (lines);
+}
+
+/*
+ * Allocates array with tags in a line_data.
+ */
+
+void
+gui_line_tags_alloc (struct t_gui_line_data *line_data, const char *tags)
+{
+    if (tags)
+    {
+        line_data->tags_array = string_split_shared (tags, ",", 0, 0,
+                                                     &line_data->tags_count);
+    }
+    else
+    {
+        line_data->tags_count = 0;
+        line_data->tags_array = NULL;
+    }
+}
+
+/*
+ * Frees array with tags in a line_data.
+ */
+
+void
+gui_line_tags_free (struct t_gui_line_data *line_data)
+{
+    if (line_data->tags_array)
+    {
+        string_free_split_shared (line_data->tags_array);
+        line_data->tags_count = 0;
+        line_data->tags_array = NULL;
+    }
 }
 
 /*
@@ -210,7 +246,7 @@ gui_line_get_align (struct t_gui_buffer *buffer, struct t_gui_line *line,
     int length_time, length_buffer, length_suffix, prefix_length, prefix_is_nick;
 
     /* return immediately if line has no time (not aligned) */
-    if (!line->data->str_time || !line->data->str_time[0])
+    if (line->data->date == 0)
         return 0;
 
     /* return immediately if alignment for end of lines is "time" */
@@ -396,37 +432,70 @@ gui_line_get_next_displayed (struct t_gui_line *line)
  */
 
 int
-gui_line_search_text (struct t_gui_line *line, const char *text,
-                      int case_sensitive)
+gui_line_search_text (struct t_gui_buffer *buffer, struct t_gui_line *line)
 {
     char *prefix, *message;
     int rc;
 
-    if (!line || !line->data->message || !text || !text[0])
+    if (!line || !line->data->message
+        || !buffer->input_buffer || !buffer->input_buffer[0])
+    {
         return 0;
+    }
 
     rc = 0;
 
-    if (line->data->prefix)
+    if ((buffer->text_search_where & GUI_TEXT_SEARCH_IN_PREFIX)
+        && line->data->prefix)
     {
         prefix = gui_color_decode (line->data->prefix, NULL);
         if (prefix)
         {
-            if ((case_sensitive && (strstr (prefix, text)))
-                || (!case_sensitive && (string_strcasestr (prefix, text))))
+            if (buffer->text_search_regex)
+            {
+                if (buffer->text_search_regex_compiled)
+                {
+                    if (regexec (buffer->text_search_regex_compiled,
+                                 prefix, 0, NULL, 0) == 0)
+                    {
+                        rc = 1;
+                    }
+                }
+            }
+            else if ((buffer->text_search_exact
+                      && (strstr (prefix, buffer->input_buffer)))
+                     || (!buffer->text_search_exact
+                         && (string_strcasestr (prefix, buffer->input_buffer))))
+            {
                 rc = 1;
+            }
             free (prefix);
         }
     }
 
-    if (!rc)
+    if (!rc && (buffer->text_search_where & GUI_TEXT_SEARCH_IN_MESSAGE))
     {
         message = gui_color_decode (line->data->message, NULL);
         if (message)
         {
-            if ((case_sensitive && (strstr (message, text)))
-                || (!case_sensitive && (string_strcasestr (message, text))))
+            if (buffer->text_search_regex)
+            {
+                if (buffer->text_search_regex_compiled)
+                {
+                    if (regexec (buffer->text_search_regex_compiled,
+                                 message, 0, NULL, 0) == 0)
+                    {
+                        rc = 1;
+                    }
+                }
+            }
+            else if ((buffer->text_search_exact
+                      && (strstr (message, buffer->input_buffer)))
+                     || (!buffer->text_search_exact
+                         && (string_strcasestr (message, buffer->input_buffer))))
+            {
                 rc = 1;
+            }
             free (message);
         }
     }
@@ -711,6 +780,7 @@ gui_line_compute_buffer_max_length (struct t_gui_buffer *buffer,
     const char *short_name;
 
     lines->buffer_max_length = 0;
+
     for (ptr_buffer = gui_buffers; ptr_buffer;
          ptr_buffer = ptr_buffer->next_buffer)
     {
@@ -722,6 +792,8 @@ gui_line_compute_buffer_max_length (struct t_gui_buffer *buffer,
                 lines->buffer_max_length = length;
         }
     }
+
+    lines->buffer_max_length_refresh = 0;
 }
 
 /*
@@ -749,6 +821,8 @@ gui_line_compute_prefix_max_length (struct t_gui_lines *lines)
                 lines->prefix_max_length = prefix_length;
         }
     }
+
+    lines->prefix_max_length_refresh = 0;
 }
 
 /*
@@ -792,7 +866,7 @@ gui_line_remove_from_list (struct t_gui_buffer *buffer,
 {
     struct t_gui_window *ptr_win;
     struct t_gui_window_scroll *ptr_scroll;
-    int i, update_prefix_max_length, prefix_length, prefix_is_nick;
+    int prefix_length, prefix_is_nick;
 
     for (ptr_win = gui_windows; ptr_win; ptr_win = ptr_win->next_window)
     {
@@ -808,22 +882,15 @@ gui_line_remove_from_list (struct t_gui_buffer *buffer,
             }
         }
         /* remove line from coords */
-        if (ptr_win->coords)
-        {
-            for (i = 0; i < ptr_win->coords_size; i++)
-            {
-                if (ptr_win->coords[i].line == line)
-                    gui_window_coords_init_line (ptr_win, i);
-            }
-        }
+        gui_window_coords_remove_line (ptr_win, line);
     }
 
     gui_line_get_prefix_for_display (line, NULL, &prefix_length, NULL,
                                      &prefix_is_nick);
     if (prefix_is_nick)
         prefix_length += config_length_nick_prefix_suffix;
-    update_prefix_max_length =
-        (prefix_length == lines->prefix_max_length);
+    if (prefix_length == lines->prefix_max_length)
+        lines->prefix_max_length_refresh = 1;
 
     /* move read marker if it was on line we are removing */
     if (lines->last_read_line == line)
@@ -838,10 +905,9 @@ gui_line_remove_from_list (struct t_gui_buffer *buffer,
     {
         if (line->data->str_time)
             free (line->data->str_time);
-        if (line->data->tags_array)
-            string_free_split (line->data->tags_array);
+        gui_line_tags_free (line->data);
         if (line->data->prefix)
-            free (line->data->prefix);
+            string_shared_free (line->data->prefix);
         if (line->data->message)
             free (line->data->message);
         free (line->data);
@@ -860,10 +926,6 @@ gui_line_remove_from_list (struct t_gui_buffer *buffer,
     lines->lines_count--;
 
     free (line);
-
-    /* compute "prefix_max_length" if needed */
-    if (update_prefix_max_length)
-        gui_line_compute_prefix_max_length (lines);
 }
 
 /*
@@ -1061,19 +1123,10 @@ gui_line_add (struct t_gui_buffer *buffer, time_t date,
     new_line->data->date = date;
     new_line->data->date_printed = date_printed;
     new_line->data->str_time = gui_chat_get_time_string (date);
-    if (tags)
-    {
-        new_line->data->tags_array = string_split (tags, ",", 0, 0,
-                                                   &new_line->data->tags_count);
-    }
-    else
-    {
-        new_line->data->tags_count = 0;
-        new_line->data->tags_array = NULL;
-    }
+    gui_line_tags_alloc (new_line->data, tags);
     new_line->data->refresh_needed = 0;
     new_line->data->prefix = (prefix) ?
-        strdup (prefix) : ((date != 0) ? strdup ("") : NULL);
+        (char *)string_shared_get (prefix) : ((date != 0) ? (char *)string_shared_get ("") : NULL);
     new_line->data->prefix_length = (prefix) ?
         gui_chat_strlen_screen (prefix) : 0;
     new_line->data->message = (message) ? strdup (message) : strdup ("");
@@ -1184,6 +1237,7 @@ gui_line_add_y (struct t_gui_buffer *buffer, int y, const char *message)
 {
     struct t_gui_line *ptr_line, *new_line;
     struct t_gui_line_data *new_line_data;
+    struct t_gui_window *ptr_win;
 
     /* search if line exists for "y" */
     for (ptr_line = buffer->own_lines->first_line; ptr_line;
@@ -1256,7 +1310,16 @@ gui_line_add_y (struct t_gui_buffer *buffer, int y, const char *message)
 
     /* set message for line */
     if (ptr_line->data->message)
+    {
+        /* remove line from coords if the content is changing */
+        for (ptr_win = gui_windows; ptr_win; ptr_win = ptr_win->next_window)
+        {
+            gui_window_coords_remove_line (ptr_win, ptr_line);
+        }
+
+        /* free message in line */
         free (ptr_line->data->message);
+    }
     ptr_line->data->message = (message) ? strdup (message) : strdup ("");
 
     /* check if line is filtered or not */
@@ -1279,8 +1342,8 @@ void
 gui_line_clear (struct t_gui_line *line)
 {
     if (line->data->prefix)
-        free (line->data->prefix);
-    line->data->prefix = strdup ("");
+        string_shared_free (line->data->prefix);
+    line->data->prefix = (char *)string_shared_get ("");
 
     if (line->data->message)
         free (line->data->message);
@@ -1357,11 +1420,9 @@ gui_line_mix_buffers (struct t_gui_buffer *buffer)
         }
     }
 
-    /* compute "prefix_max_length" for mixed lines */
-    gui_line_compute_prefix_max_length (new_lines);
-
-    /* compute "buffer_max_length" for mixed lines */
-    gui_line_compute_buffer_max_length (buffer, new_lines);
+    /* ask refresh of prefix/buffer max length for mixed lines */
+    new_lines->prefix_max_length_refresh = 1;
+    new_lines->buffer_max_length_refresh = 1;
 
     /* free old mixed lines */
     if (ptr_buffer_found->mixed_lines)
@@ -1404,7 +1465,9 @@ gui_line_hdata_lines_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_lines, first_line_not_read, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_lines, lines_hidden, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_lines, buffer_max_length, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, buffer_max_length_refresh, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_lines, prefix_max_length, INTEGER, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_lines, prefix_max_length_refresh, INTEGER, 0, NULL, NULL);
     }
     return hdata;
 }
@@ -1444,7 +1507,8 @@ gui_line_hdata_line_data_update_cb (void *data,
 {
     const char *value;
     struct t_gui_line_data *line_data;
-    int rc;
+    struct t_gui_window *ptr_win;
+    int rc, update_coords;
 
     /* make C compiler happy */
     (void) data;
@@ -1452,6 +1516,7 @@ gui_line_hdata_line_data_update_cb (void *data,
     line_data = (struct t_gui_line_data *)pointer;
 
     rc = 0;
+    update_coords = 0;
 
     if (hashtable_has_key (hashtable, "date"))
     {
@@ -1463,6 +1528,7 @@ gui_line_hdata_line_data_update_cb (void *data,
                 free (line_data->str_time);
             line_data->str_time = gui_chat_get_time_string (line_data->date);
             rc++;
+            update_coords = 1;
         }
     }
 
@@ -1479,18 +1545,8 @@ gui_line_hdata_line_data_update_cb (void *data,
     if (hashtable_has_key (hashtable, "tags_array"))
     {
         value = hashtable_get (hashtable, "tags_array");
-        if (line_data->tags_array)
-            string_free_split (line_data->tags_array);
-        if (value)
-        {
-            line_data->tags_array = string_split (value, ",", 0, 0,
-                                                  &line_data->tags_count);
-        }
-        else
-        {
-            line_data->tags_count = 0;
-            line_data->tags_array = NULL;
-        }
+        gui_line_tags_free (line_data);
+        gui_line_tags_alloc (line_data, value);
         rc++;
     }
 
@@ -1500,8 +1556,9 @@ gui_line_hdata_line_data_update_cb (void *data,
         hdata_set (hdata, pointer, "prefix", value);
         line_data->prefix_length = (line_data->prefix) ?
             gui_chat_strlen_screen (line_data->prefix) : 0;
-        gui_line_compute_prefix_max_length (line_data->buffer->lines);
+        line_data->buffer->lines->prefix_max_length_refresh = 1;
         rc++;
+        update_coords = 1;
     }
 
     if (hashtable_has_key (hashtable, "message"))
@@ -1509,10 +1566,18 @@ gui_line_hdata_line_data_update_cb (void *data,
         value = hashtable_get (hashtable, "message");
         hdata_set (hdata, pointer, "message", value);
         rc++;
+        update_coords = 1;
     }
 
     if (rc > 0)
     {
+        if (update_coords)
+        {
+            for (ptr_win = gui_windows; ptr_win; ptr_win = ptr_win->next_window)
+            {
+                gui_window_coords_remove_line_data (ptr_win, line_data);
+            }
+        }
         gui_filter_buffer (line_data->buffer, line_data);
         gui_buffer_ask_chat_refresh (line_data->buffer, 1);
     }
@@ -1639,13 +1704,15 @@ gui_lines_print_log (struct t_gui_lines *lines)
 {
     if (lines)
     {
-        log_printf ("    first_line. . . . . . : 0x%lx", lines->first_line);
-        log_printf ("    last_line . . . . . . : 0x%lx", lines->last_line);
-        log_printf ("    last_read_line. . . . : 0x%lx", lines->last_read_line);
-        log_printf ("    lines_count . . . . . : %d",    lines->lines_count);
-        log_printf ("    first_line_not_read . : %d",    lines->first_line_not_read);
-        log_printf ("    lines_hidden. . . . . : %d",    lines->lines_hidden);
-        log_printf ("    buffer_max_length . . : %d",    lines->buffer_max_length);
-        log_printf ("    prefix_max_length . . : %d",    lines->prefix_max_length);
+        log_printf ("    first_line . . . . . . . : 0x%lx", lines->first_line);
+        log_printf ("    last_line. . . . . . . . : 0x%lx", lines->last_line);
+        log_printf ("    last_read_line . . . . . : 0x%lx", lines->last_read_line);
+        log_printf ("    lines_count. . . . . . . : %d",    lines->lines_count);
+        log_printf ("    first_line_not_read. . . : %d",    lines->first_line_not_read);
+        log_printf ("    lines_hidden . . . . . . : %d",    lines->lines_hidden);
+        log_printf ("    buffer_max_length. . . . : %d",    lines->buffer_max_length);
+        log_printf ("    buffer_max_length_refresh: %d",    lines->buffer_max_length_refresh);
+        log_printf ("    prefix_max_length. . . . : %d",    lines->prefix_max_length);
+        log_printf ("    prefix_max_length_refresh: %d",    lines->prefix_max_length_refresh);
     }
 }

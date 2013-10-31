@@ -48,17 +48,21 @@
 
 | weechat | history | history of commands | buffer pointer (if not set, return global history) (optional) | -
 
-| weechat | hook | list of hooks | - | type,arguments (type is command/timer/.., arguments to get only some hooks (can start or end with "*" as wildcard), both are optional)
+| weechat | hook | list of hooks | hook pointer (optional) | type,arguments (type is command/timer/.., arguments to get only some hooks (can start or end with "*" as wildcard), both are optional)
 
 | weechat | hotlist | list of buffers in hotlist | - | -
 
 | weechat | key | list of key bindings | - | context ("default", "search", "cursor" or "mouse") (optional)
+
+| weechat | layout | list of layouts | - | -
 
 | weechat | nicklist | nicks in nicklist for a buffer | buffer pointer | nick_xxx or group_xxx to get only nick/group xxx (optional)
 
 | weechat | option | list of options | - | option name (can start or end with "*" as wildcard) (optional)
 
 | weechat | plugin | list of plugins | plugin pointer (optional) | plugin name (can start or end with "*" as wildcard) (optional)
+
+| weechat | proxy | list of proxies | proxy pointer (optional) | proxy name (can start or end with "*" as wildcard) (optional)
 
 | weechat | url_options | options for URL | - | -
 

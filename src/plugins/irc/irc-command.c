@@ -39,6 +39,7 @@
 #include "irc-config.h"
 #include "irc-ignore.h"
 #include "irc-input.h"
+#include "irc-message.h"
 #include "irc-msgbuffer.h"
 #include "irc-nick.h"
 #include "irc-notify.h"
@@ -50,34 +51,190 @@
 
 /*
  * Sends mode change for many nicks on a channel.
+ *
+ * Argument "set" is "+" or "-", mode can be "o", "h", "v", or any other mode
+ * supported by server.
+ *
+ * Many messages can be sent if the number of nicks is greater than the server
+ * limit (number of modes allowed in a single message). In this case, the first
+ * message is sent with high priority, and subsequent messages are sent with low
+ * priority.
  */
 
 void
-irc_command_mode_nicks (struct t_irc_server *server, const char *channel,
-                        const char *set, const char *mode, int argc, char **argv)
+irc_command_mode_nicks (struct t_irc_server *server,
+                        struct t_irc_channel *channel,
+                        const char *command,
+                        const char *set, const char *mode,
+                        int argc, char **argv)
 {
-    int i, length;
-    char *command;
+    int i, arg_yes, max_modes, modes_added, msg_priority, prefix_found;
+    long number;
+    char *error, prefix, modes[128+1], nicks[1024];
+    const char *ptr_modes;
+    struct t_irc_nick *ptr_nick;
+    struct t_hashtable *nicks_sent;
 
-    length = 0;
-    for (i = 1; i < argc; i++)
-        length += strlen (argv[i]) + 1;
-    length += strlen (channel) + (argc * strlen (mode)) + 32;
-    command = malloc (length);
-    if (command)
+    if (argc < 2)
+        return;
+
+    arg_yes = 0;
+    if ((argc > 2) && (strcmp (argv[argc - 1], "-yes") == 0))
     {
-        snprintf (command, length, "MODE %s %s", channel, set);
-        for (i = 1; i < argc; i++)
-            strcat (command, mode);
+        argc--;
+        arg_yes = 1;
+    }
+
+    if (!arg_yes)
+    {
         for (i = 1; i < argc; i++)
         {
-            strcat (command, " ");
-            strcat (command, argv[i]);
+            if (strcmp (argv[i], "*") == 0)
+            {
+                weechat_printf (NULL,
+                                _("%s%s: \"-yes\" argument is required for "
+                                  "nick \"*\" (security reason), see /help %s"),
+                                weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                                command);
+                return;
+            }
         }
-        irc_server_sendf (server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
-                          "%s", command);
-        free (command);
     }
+
+    /* default is 4 modes max (if server did not send the info) */
+    max_modes = 4;
+
+    /*
+     * look for the max modes supported in one command by the server
+     * (in isupport value, with the format: "MODES=4")
+     */
+    ptr_modes = irc_server_get_isupport_value (server, "MODES");
+    if (ptr_modes)
+    {
+        error = NULL;
+        number = strtol (ptr_modes, &error, 10);
+        if (error && !error[0])
+        {
+            max_modes = number;
+            if (max_modes < 1)
+                max_modes = 1;
+            if (max_modes > 128)
+                max_modes = 128;
+            max_modes = (number >= 1) ? number : 1;
+        }
+    }
+
+    /* get prefix for the mode (example: prefix == '@' for mode 'o') */
+    prefix = irc_server_get_prefix_char_for_mode (server, mode[0]);
+
+    /*
+     * first message has high priority and subsequent messages have low priority
+     * (so for example in case of "/op *" sent as multiple messages, the user
+     * can still send some messages which will have higher priority than the
+     * "MODE" messages we are sending now)
+     */
+    msg_priority = IRC_SERVER_SEND_OUTQ_PRIO_HIGH;
+
+    modes_added = 0;
+    modes[0] = '\0';
+    nicks[0] = '\0';
+
+    nicks_sent = weechat_hashtable_new (128,
+                                        WEECHAT_HASHTABLE_STRING,
+                                        WEECHAT_HASHTABLE_STRING,
+                                        NULL,
+                                        NULL);
+    if (!nicks_sent)
+        return;
+
+    for (ptr_nick = channel->nicks; ptr_nick; ptr_nick = ptr_nick->next_nick)
+    {
+        /* if nick was already sent, ignore it */
+        if (weechat_hashtable_has_key (nicks_sent, ptr_nick->name))
+            continue;
+
+        for (i = 1; i < argc; i++)
+        {
+            if (weechat_string_match (ptr_nick->name, argv[i], 0))
+            {
+                /*
+                 * self nick is excluded if both conditions are true:
+                 * - set+mode is "-o" or "-h" (commands /deop, /dehalfop)
+                 * - one wildcard is used in argument
+                 *   (for example: "/deop *" or "/deop fl*")
+                 */
+                if (set[0] == '-'
+                    && (mode[0] == 'o' || mode[0] == 'h')
+                    && argv[i][0]
+                    && ((argv[i][0] == '*')
+                        || (argv[i][strlen (argv[i]) - 1] == '*'))
+                    && (strcmp (server->nick, ptr_nick->name) == 0))
+                {
+                    continue;
+                }
+
+                /*
+                 * check if the nick mode is already OK, according to
+                 * set/mode asked: if already OK, then the nick is ignored
+                 */
+                if (prefix != ' ')
+                {
+                    prefix_found = (strchr (ptr_nick->prefixes, prefix) != NULL);
+                    if (((set[0] == '+') && prefix_found)
+                        || ((set[0] == '-') && !prefix_found))
+                    {
+                        /*
+                         * mode +X and nick has already +X or mode -X and nick
+                         * does not have +X
+                         */
+                        continue;
+                    }
+                }
+
+                /*
+                 * if we reached the max number of modes allowed, send the MODE
+                 * command now and flush the modes/nicks strings
+                 */
+                if (modes_added == max_modes)
+                {
+                    irc_server_sendf (server, msg_priority, NULL,
+                                      "MODE %s %s%s %s",
+                                      channel->name, set, modes, nicks);
+                    modes[0] = '\0';
+                    nicks[0] = '\0';
+                    modes_added = 0;
+                    /* subsequent messages will have low priority */
+                    msg_priority = IRC_SERVER_SEND_OUTQ_PRIO_LOW;
+                }
+
+                /* add one mode letter (after +/-) and add the nick in nicks */
+                if (strlen (nicks) + 1 + strlen (ptr_nick->name) + 1 < sizeof (nicks))
+                {
+                    strcat (modes, mode);
+                    if (nicks[0])
+                        strcat (nicks, " ");
+                    strcat (nicks, ptr_nick->name);
+                    modes_added++;
+                    weechat_hashtable_set (nicks_sent, ptr_nick->name, NULL);
+                    /*
+                     * nick just added, ignore other arguments that would add
+                     * the same nick
+                     */
+                    break;
+                }
+            }
+        }
+    }
+
+    /* send a final MODE command if some nicks are remaining */
+    if (modes[0] && nicks[0])
+    {
+        irc_server_sendf (server, msg_priority, NULL,
+                          "MODE %s %s%s %s",
+                          channel->name, set, modes, nicks);
+    }
+
+    weechat_hashtable_free (nicks_sent);
 }
 
 /*
@@ -114,6 +271,7 @@ irc_command_admin (void *data, struct t_gui_buffer *buffer, int argc,
  * Executes a command on all channels.
  *
  * If server is NULL, executes command on all channels of all connected servers.
+ * Special variables $server/$channel/$nick are replaced in command.
  */
 
 void
@@ -123,7 +281,7 @@ irc_command_exec_all_channels (struct t_irc_server *server,
 {
     struct t_irc_server *ptr_server, *next_server;
     struct t_irc_channel *ptr_channel, *next_channel;
-    char **channels, *str_command;
+    char **channels, *str_command, *cmd_vars_replaced;
     int num_channels, length, excluded, i;
 
     if (!command || !command[0])
@@ -175,7 +333,13 @@ irc_command_exec_all_channels (struct t_irc_server *server,
                         }
                         if (!excluded)
                         {
-                            weechat_command (ptr_channel->buffer, str_command);
+                            cmd_vars_replaced = irc_message_replace_vars (ptr_server,
+                                                                          ptr_channel,
+                                                                          str_command);
+                            weechat_command (ptr_channel->buffer,
+                                             (cmd_vars_replaced) ? cmd_vars_replaced : str_command);
+                            if (cmd_vars_replaced)
+                                free (cmd_vars_replaced);
                         }
                     }
 
@@ -244,13 +408,15 @@ irc_command_allchan (void *data, struct t_gui_buffer *buffer, int argc,
 
 /*
  * Executes a command on all connected channels.
+ *
+ * Special variables $server/$channel/$nick are replaced in command.
  */
 
 void
 irc_command_exec_all_servers (const char *exclude_servers, const char *command)
 {
     struct t_irc_server *ptr_server, *next_server;
-    char **servers, *str_command;
+    char **servers, *str_command, *cmd_vars_replaced;
     int num_servers, length, excluded, i;
 
     if (!command || !command[0])
@@ -293,7 +459,13 @@ irc_command_exec_all_servers (const char *exclude_servers, const char *command)
             }
             if (!excluded)
             {
-                weechat_command (ptr_server->buffer, str_command);
+                cmd_vars_replaced = irc_message_replace_vars (ptr_server,
+                                                              NULL,
+                                                              str_command);
+                weechat_command (ptr_server->buffer,
+                                 (cmd_vars_replaced) ? cmd_vars_replaced : str_command);
+                if (cmd_vars_replaced)
+                    free (cmd_vars_replaced);
             }
         }
 
@@ -1298,8 +1470,8 @@ irc_command_dehalfop (void *data, struct t_gui_buffer *buffer, int argc,
         }
         else
         {
-            irc_command_mode_nicks (ptr_server, ptr_channel->name,
-                                    "-", "h", argc, argv);
+            irc_command_mode_nicks (ptr_server, ptr_channel,
+                                    "dehalfop", "-", "h", argc, argv);
         }
     }
     else
@@ -1339,8 +1511,8 @@ irc_command_deop (void *data, struct t_gui_buffer *buffer, int argc,
         }
         else
         {
-            irc_command_mode_nicks (ptr_server, ptr_channel->name,
-                                    "-", "o", argc, argv);
+            irc_command_mode_nicks (ptr_server, ptr_channel,
+                                    "deop", "-", "o", argc, argv);
         }
     }
     else
@@ -1380,8 +1552,8 @@ irc_command_devoice (void *data, struct t_gui_buffer *buffer, int argc,
         }
         else
         {
-            irc_command_mode_nicks (ptr_server, ptr_channel->name,
-                                    "-", "v", argc, argv);
+            irc_command_mode_nicks (ptr_server, ptr_channel,
+                                    "devoice", "-", "v", argc, argv);
         }
     }
     else
@@ -1602,8 +1774,8 @@ irc_command_halfop (void *data, struct t_gui_buffer *buffer, int argc,
         }
         else
         {
-            irc_command_mode_nicks (ptr_server, ptr_channel->name,
-                                    "+", "h", argc, argv);
+            irc_command_mode_nicks (ptr_server, ptr_channel,
+                                    "halfop", "+", "h", argc, argv);
         }
     }
     else
@@ -1868,6 +2040,16 @@ irc_command_invite (void *data, struct t_gui_buffer *buffer, int argc,
     /* make C compiler happy */
     (void) data;
     (void) argv_eol;
+
+    if (argc < 2)
+    {
+        weechat_printf (NULL,
+                        _("%s%s: missing arguments for \"%s\" "
+                          "command"),
+                        weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                        "invite");
+        return WEECHAT_RC_OK;
+    }
 
     if (argc > 2)
     {
@@ -3302,8 +3484,8 @@ irc_command_op (void *data, struct t_gui_buffer *buffer, int argc, char **argv,
         }
         else
         {
-            irc_command_mode_nicks (ptr_server, ptr_channel->name,
-                                    "+", "o", argc, argv);
+            irc_command_mode_nicks (ptr_server, ptr_channel,
+                                    "op", "+", "o", argc, argv);
         }
     }
     else
@@ -3507,8 +3689,8 @@ int
 irc_command_query (void *data, struct t_gui_buffer *buffer, int argc,
                    char **argv, char **argv_eol)
 {
-    char *string;
-    int arg_nick, arg_text;
+    char *string, **nicks;
+    int i, arg_nick, arg_text, num_nicks;
 
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
 
@@ -3528,37 +3710,50 @@ irc_command_query (void *data, struct t_gui_buffer *buffer, int argc,
 
         IRC_COMMAND_CHECK_SERVER("query", 1);
 
-        /* create private window if not already opened */
-        ptr_channel = irc_channel_search (ptr_server, argv[arg_nick]);
-        if (!ptr_channel)
+        nicks = weechat_string_split (argv[arg_nick], ",", 0, 0, &num_nicks);
+        if (nicks)
         {
-            ptr_channel = irc_channel_new (ptr_server,
-                                           IRC_CHANNEL_TYPE_PRIVATE,
-                                           argv[arg_nick], 1, 0);
-            if (!ptr_channel)
+            for (i = 0; i < num_nicks; i++)
             {
-                weechat_printf (ptr_server->buffer,
-                                _("%s%s: cannot create new private "
-                                  "buffer \"%s\""),
-                                weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                                argv[arg_nick]);
-                return WEECHAT_RC_OK;
-            }
-        }
-        weechat_buffer_set (ptr_channel->buffer, "display", "1");
+                /* create private window if not already opened */
+                ptr_channel = irc_channel_search (ptr_server, nicks[i]);
+                if (!ptr_channel)
+                {
+                    ptr_channel = irc_channel_new (ptr_server,
+                                                   IRC_CHANNEL_TYPE_PRIVATE,
+                                                   nicks[i], 1, 0);
+                    if (!ptr_channel)
+                    {
+                        weechat_printf (ptr_server->buffer,
+                                        _("%s%s: cannot create new private "
+                                          "buffer \"%s\""),
+                                        weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                                        nicks[i]);
+                    }
+                }
 
-        /* display text if given */
-        if (argv_eol[arg_text])
-        {
-            string = irc_color_decode (argv_eol[arg_text],
-                                       weechat_config_boolean (irc_config_network_colors_receive));
-            irc_input_user_message_display (ptr_channel->buffer, 0,
-                                            (string) ? string : argv_eol[arg_text]);
-            if (string)
-                free (string);
-            irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
-                              "PRIVMSG %s :%s",
-                              argv[arg_nick], argv_eol[arg_text]);
+                if (ptr_channel)
+                {
+                    /* switch to buffer */
+                    weechat_buffer_set (ptr_channel->buffer, "display", "1");
+
+                    /* display text if given */
+                    if (argv_eol[arg_text])
+                    {
+                        string = irc_color_decode (argv_eol[arg_text],
+                                                   weechat_config_boolean (irc_config_network_colors_receive));
+                        irc_input_user_message_display (ptr_channel->buffer, 0,
+                                                        (string) ? string : argv_eol[arg_text]);
+                        if (string)
+                            free (string);
+                        irc_server_sendf (ptr_server, IRC_SERVER_SEND_OUTQ_PRIO_HIGH,
+                                          NULL,
+                                          "PRIVMSG %s :%s",
+                                          nicks[i], argv_eol[arg_text]);
+                    }
+                }
+            }
+            weechat_string_free_split (nicks);
         }
     }
     else
@@ -4675,7 +4870,7 @@ irc_command_server (void *data, struct t_gui_buffer *buffer, int argc,
         server_name = strdup (server_found->name);
         irc_server_free (server_found);
         weechat_printf (NULL,
-                        _("%s: Server %s%s%s has been deleted"),
+                        _("%s: server %s%s%s has been deleted"),
                         IRC_PLUGIN_NAME,
                         IRC_COLOR_CHAT_SERVER,
                         (server_name) ? server_name : "???",
@@ -5242,8 +5437,8 @@ irc_command_voice (void *data, struct t_gui_buffer *buffer, int argc,
                               ptr_server->nick);
         }
         else
-            irc_command_mode_nicks (ptr_server, ptr_channel->name,
-                                    "+", "v", argc, argv);
+            irc_command_mode_nicks (ptr_server, ptr_channel,
+                                    "voice", "+", "v", argc, argv);
     }
     else
     {
@@ -5537,7 +5732,9 @@ irc_command_init ()
                              "allowed at beginning or end of channel name, to "
                              "exclude many channels)\n"
                              "  command: command to execute\n"
-                             "arguments: arguments for command\n\n"
+                             "arguments: arguments for command (special variables "
+                             "$nick, $channel and $server are replaced by their "
+                             "value)\n\n"
                              "Examples:\n"
                              "  execute '/me is testing' on all channels:\n"
                              "    /allchan me is testing\n"
@@ -5555,12 +5752,16 @@ irc_command_init ()
                              "allowed at beginning or end of server name, to "
                              "exclude many servers)\n"
                              "  command: command to execute\n"
-                             "arguments: arguments for command\n\n"
+                             "arguments: arguments for command (special variables "
+                             "$nick, $channel and $server are replaced by their "
+                             "value)\n\n"
                              "Examples:\n"
                              "  change nick on all servers:\n"
                              "    /allserv nick newnick\n"
                              "  set away on all servers:\n"
-                             "    /allserv away I'm away"),
+                             "    /allserv away I'm away\n"
+                             "  do a whois on my nick on all servers:\n"
+                             "    /allserv whois $nick"),
                           NULL, &irc_command_allserv, NULL);
     weechat_hook_command_run ("/away", &irc_command_run_away, NULL);
     weechat_hook_command ("ban",
@@ -5644,18 +5845,26 @@ irc_command_init ()
                           N_("remove channel half-operator status from "
                              "nick(s)"),
                           N_("<nick> [<nick>...]"),
-                          "",
+                          N_("nick: nick or mask (can start or end with \"*\" "
+                             "as wildcard)\n"
+                             "   *: remove channel half-operator status from "
+                             "everybody on channel except yourself"),
                           "%(nicks)", &irc_command_dehalfop, NULL);
     weechat_hook_command ("deop",
                           N_("remove channel operator status from "
                              "nick(s)"),
-                          N_("<nick> [<nick>...]"),
-                          "",
+                          N_("<nick> [<nick>...] || * -yes"),
+                          N_("nick: nick or mask (can start or end with \"*\" "
+                             "as wildcard)\n"
+                             "   *: remove channel operator status from "
+                             "everybody on channel except yourself"),
                           "%(nicks)|%*", &irc_command_deop, NULL);
     weechat_hook_command ("devoice",
                           N_("remove voice from nick(s)"),
-                          N_("<nick> [<nick>...]"),
-                          "",
+                          N_("<nick> [<nick>...] || * -yes"),
+                          N_("nick: nick or mask (can start or end with \"*\" "
+                             "as wildcard)\n"
+                             "   *: remove voice from everybody on channel"),
                           "%(nicks)|%*", &irc_command_devoice, NULL);
     weechat_hook_command ("die",
                           N_("shutdown the server"),
@@ -5675,8 +5884,11 @@ irc_command_init ()
     weechat_hook_command ("halfop",
                           N_("give channel half-operator status to "
                              "nick(s)"),
-                          N_("<nick> [<nick>...]"),
-                          "",
+                          N_("<nick> [<nick>...] || * -yes"),
+                          N_("nick: nick or mask (can start or end with \"*\" "
+                             "as wildcard)\n"
+                             "   *: give channel half-operator status to "
+                             "everybody on channel"),
                           "%(nicks)", &irc_command_halfop, NULL);
     weechat_hook_command ("ignore",
                           N_("ignore nicks/hosts from servers or channels"),
@@ -5917,8 +6129,11 @@ irc_command_init ()
                           &irc_command_notify, NULL);
     weechat_hook_command ("op",
                           N_("give channel operator status to nick(s)"),
-                          N_("<nick> [<nick>...]"),
-                          "",
+                          N_("<nick> [<nick>...] || * -yes"),
+                          N_("nick: nick or mask (can start or end with \"*\" "
+                             "as wildcard)\n"
+                             "   *: give channel operator status to everybody "
+                             "on channel"),
                           "%(nicks)|%*", &irc_command_op, NULL);
     weechat_hook_command ("oper",
                           N_("get operator privileges"),
@@ -5948,7 +6163,7 @@ irc_command_init ()
                           NULL, &irc_command_pong, NULL);
     weechat_hook_command ("query",
                           N_("send a private message to a nick"),
-                          N_("[-server <server>] <nick> [<text>]"),
+                          N_("[-server <server>] <nick>[,<nick>...] [<text>]"),
                           N_("server: send to this server (internal name)\n"
                              "  nick: nick for private conversation\n"
                              "  text: text to send"),
@@ -6158,7 +6373,9 @@ irc_command_init ()
     weechat_hook_command ("voice",
                           N_("give voice to nick(s)"),
                           N_("<nick> [<nick>...]"),
-                          "",
+                          N_("nick: nick or mask (can start or end with \"*\" "
+                             "as wildcard)\n"
+                             "   *: give voice to everybody on channel"),
                           "%(nicks)|%*", &irc_command_voice, NULL);
     weechat_hook_command ("wallchops",
                           N_("send a notice to channel ops"),

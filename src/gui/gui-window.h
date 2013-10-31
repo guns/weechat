@@ -22,6 +22,7 @@
 
 struct t_infolist;
 struct t_gui_bar_window;
+struct t_gui_line_data;
 
 /* window structures */
 
@@ -95,8 +96,6 @@ struct t_gui_window_scroll
                                        /* (for horizontal scrolling)        */
     int lines_after;                   /* number of lines after last line   */
                                        /* displayed (with scrolling)        */
-    int reset_allowed;                 /* reset scroll allowed (when using  */
-                                       /* keys like page_up/down, end, ..)  */
     struct t_gui_window_scroll *prev_scroll; /* link to prev. buf. scrolled */
     struct t_gui_window_scroll *next_scroll; /* link to next buf. scrolled  */
 };
@@ -164,6 +163,10 @@ extern void gui_window_set_layout_plugin_name (struct t_gui_window *window,
 extern void gui_window_set_layout_buffer_name (struct t_gui_window *window,
                                                const char *buffer_name);
 extern void gui_window_coords_init_line (struct t_gui_window *window, int line);
+extern void gui_window_coords_remove_line (struct t_gui_window *window,
+                                           struct t_gui_line *line);
+extern void gui_window_coords_remove_line_data (struct t_gui_window *window,
+                                                struct t_gui_line_data *line_data);
 extern void gui_window_coords_alloc (struct t_gui_window *window);
 extern void gui_window_free (struct t_gui_window *window);
 extern void gui_window_switch_previous (struct t_gui_window *window);
@@ -198,8 +201,6 @@ extern int gui_window_get_height ();
 extern int gui_window_objects_init (struct t_gui_window *window);
 extern void gui_window_objects_free (struct t_gui_window *window,
                                      int free_separators);
-extern void gui_window_save_style ();
-extern void gui_window_restore_style ();
 extern void gui_window_calculate_pos_size (struct t_gui_window *window);
 extern void gui_window_switch_to_buffer (struct t_gui_window *window,
                                          struct t_gui_buffer *buffer,
@@ -211,6 +212,7 @@ extern void gui_window_scroll_up (struct t_gui_window *window);
 extern void gui_window_scroll_down (struct t_gui_window *window);
 extern void gui_window_scroll_top (struct t_gui_window *window);
 extern void gui_window_scroll_bottom (struct t_gui_window *window);
+extern void gui_window_scroll_beyond_end (struct t_gui_window *window);
 extern struct t_gui_window *gui_window_split_horizontal (struct t_gui_window *window,
                                                          int percentage);
 extern struct t_gui_window *gui_window_split_vertical (struct t_gui_window *window,

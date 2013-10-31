@@ -6,7 +6,7 @@ Sébastien Helleu <flashcode@flashtux.org>
 Diese Anleitung beschreibt den WeeChat Chat Client und ist Teil von WeeChat.
 
 Die aktuelle Version dieser Anleitung finden Sie auf:
-http://www.weechat.org/doc
+http://weechat.org/doc
 
 
 [[introduction]]
@@ -549,15 +549,15 @@ Die print Funktion heißt in Perl/Ruby/Lua/Tcl `print`. In Python lautet die Fun
 Text in einen Buffer senden
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Sie können einen Text oder einen Befehl zu einem Buffer senden. Dies entspricht exakt dem
-Verhalten als ob Sie einen Text oder einen Befehl in der Befehlszeile eingeben und diesen
-mit der [Enter] Taste bestätigen.
+Sie können einen Text oder einen Befehl in einen Buffer senden. Dies entspricht exakt dem
+Verhalten als ob Sie einen Text oder einen Befehl in die Befehlszeile eingeben und selbigen
+mit der [Eingabe] Taste bestätigen.
 
 Beispiele:
 
 [source,python]
 ----------------------------------------
-# führt den Befehl "/help" im Core Buffer aus
+# führt den Befehl "/help" im aktuellen Buffer aus (die Ausgabe erfolgt im Core-Buffer)
 weechat.command("", "/help")
 
 # sendet den Text "Hallo" in den IRC Channel #weechat (die Teilnehmer des Channels sehen diese Nachricht)
@@ -751,12 +751,12 @@ def weechat_process_cb(data, command, rc, out, err):
         weechat.prnt("", "aktuelle stabile WeeChat-Version: %s" % weechat_version)
     return weechat.WEECHAT_RC_OK
 
-weechat.hook_process("url:http://weechat.org/info/stable/",
+weechat.hook_process("url:http://weechat.org/dev/info/stable/",
                      30 * 1000, "weechat_process_cb", "")
 ----------------------------------------
 
 [TIP]
-Alle Informationen die WeeChat betreffen findet man auf: http://weechat.org/info
+Alle Informationen die WeeChat betreffen findet man auf: http://weechat.org/dev/info
 
 Beispiel eines URL Transfers, mit zusätzliche Optionen: Es wird das neuste
 WeeChat Entwicklerpaket in die Datei '/tmp/weechat-devel.tar.gz' gesichert:

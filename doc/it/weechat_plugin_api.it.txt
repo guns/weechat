@@ -7,7 +7,7 @@ Questo manuale documenta il client di chat WeeChat, ed è parte
 del programma stesso.
 
 La versione più recente di questo documento si trova qui:
-http://www.weechat.org/doc
+http://weechat.org/doc
 
 
 [[introduction]]
@@ -804,6 +804,51 @@ char *pos = weechat_strcasestr ("aBcDeF", "de"); /* risultato: puntatore a "DeF"
 [NOTE]
 Questa funzione non è disponibile nelle API per lo scripting.
 
+weechat_strlen_screen
+^^^^^^^^^^^^^^^^^^^^^
+
+_Novità nella versione 0.4.2._
+
+Restituisce il numero di caratteri necessari per visualizzare la stringa
+UTF-8 su schermo.
+// TRANSLATION MISSING
+Non-printable chars have a width of 1 (this is the difference with the function
+<<_weechat_utf8_strlen_screen,weechat_utf8_strlen_screen>>).
+
+Prototipo:
+
+[source,C]
+----------------------------------------
+int weechat_strlen_screen (const char *string);
+----------------------------------------
+
+Argomenti:
+
+* 'string': stringa
+
+Valore restituito:
+
+* numero di caratteri necessari per visualizzare la stringa UTF-8
+su schermo
+
+Esempio in C:
+
+[source,C]
+----------------------------------------
+int length_on_screen = weechat_strlen_screen ("é"); /* == 1 */
+----------------------------------------
+
+Script (Python):
+
+[source,python]
+----------------------------------------
+# prototipo
+length = weechat.strlen_screen(string)
+
+# esempio
+length = weechat.strlen_screen("é") # 1
+----------------------------------------
+
 weechat_string_match
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1210,7 +1255,7 @@ Argomenti:
 ** 1: ogni stringa conterrà tutte le stringhe fino a fine riga
    (consultare il seguente esempio)
 ** 2: come il punto 1, ma non rimuove i delimitatori alla fine della stringa
-   prima della divisione (_novità nella versione 0.3.6_)
+   prima della divisione _(novità nella versione 0.3.6)_
 * 'num_items_max': numero massimo di elementi creati (0 = nessun limite)
 * 'num_items': puntatore ad int che conterrà il numero di elementi creati
 
@@ -1638,7 +1683,8 @@ str3 = weechat.string_input_for_buffer("//test") # "/test"
 weechat_string_eval_expression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-_Novità nella versione 0.4.0._
+// TRANSLATION MISSING
+_Novità nella versione 0.4.0, updated in 0.4.2._
 
 // TRANSLATION MISSING
 Evaluate an expression and return result as a string.
@@ -1651,7 +1697,8 @@ Prototipo:
 ----------------------------------------
 char *weechat_string_eval_expression (const char *expr,
                                       struct t_hashtable *pointers,
-                                      struct t_hashtable *extra_vars);
+                                      struct t_hashtable *extra_vars,
+                                      struct t_hashtable *options);
 ----------------------------------------
 
 Argomenti:
@@ -1662,6 +1709,14 @@ Argomenti:
   pointer); pointers "window" and "buffer" are automatically added if they are
   not in hashtable (with pointer to current window/buffer) (can be NULL)
 * 'extra_vars': extra variables that will be expanded (can be NULL)
+* 'options': a hashtable with some options (keys and values must be string)
+  (can be NULL):
+** 'type': default behavior is just to replace values in expression, other
+   types can be selected:
+*** 'condition': the expression is evaluated as a condition: operators and
+    parentheses are used, result is a boolean ("0" or "1")
+** 'prefix': prefix before variables to replace (default: "${")
+** 'suffix': suffix after variables to replace (default: "}")
 
 Valore restituito:
 
@@ -1673,9 +1728,16 @@ Esempi in C:
 
 [source,C]
 ----------------------------------------
-char *str1 = weechat_string_eval_expression ("${buffer.full_name}", NULL, NULL);       /* "core.weechat" */
-char *str2 = weechat_string_eval_expression ("${window.win_width} > 100", NULL, NULL); /* "1" */
-char *str3 = weechat_string_eval_expression ("abc =~ def", NULL, NULL);                /* "0" */
+struct t_hashtable *options = weechat_hashtable_new (8,
+                                                     WEECHAT_HASHTABLE_STRING,
+                                                     WEECHAT_HASHTABLE_STRING,
+                                                     NULL,
+                                                     NULL);
+if (options)
+    weechat_hashtable_set (options, "type", "condition");
+char *str1 = weechat_string_eval_expression ("${buffer.full_name}", NULL, NULL, NULL);          /* "core.weechat" */
+char *str2 = weechat_string_eval_expression ("${window.win_width} > 100", NULL, NULL, options); /* "1" */
+char *str3 = weechat_string_eval_expression ("abc =~ def", NULL, NULL, options);                /* "0" */
 ----------------------------------------
 
 Script (Python):
@@ -1683,12 +1745,12 @@ Script (Python):
 [source,python]
 ----------------------------------------
 # prototipo
-str = weechat.string_eval_expression(expr, pointers, extra_vars)
+str = weechat.string_eval_expression(expr, pointers, extra_vars, options)
 
 # esempi
-str1 = weechat.string_input_for_buffer("${buffer.full_name}", {}, {})       # "core.weechat"
-str2 = weechat.string_input_for_buffer("${window.win_width} > 100", {}, {}) # "1"
-str3 = weechat.string_input_for_buffer("abc =~ def", {}, {})                # "0"
+str1 = weechat.string_eval_expression("${buffer.full_name}", {}, {}, {})                          # "core.weechat"
+str2 = weechat.string_eval_expression("${window.win_width} > 100", {}, {}, {"type": "condition"}) # "1"
+str3 = weechat.string_eval_expression("abc =~ def", {}, {}, {"type": "condition"})                # "0"
 ----------------------------------------
 
 [[utf-8]]
@@ -3222,8 +3284,8 @@ Prototipo:
 struct t_hashtable *weechat_hashtable_new (int size,
                                            const char *type_keys,
                                            const char *type_values,
-                                           unsigned int (*callback_hash_key)(struct t_hashtable *hashtable,
-                                                                             const void *key),
+                                           unsigned long (*callback_hash_key)(struct t_hashtable *hashtable,
+                                                                              const void *key),
                                            int (*callback_keycmp)(struct t_hashtable *hashtable,
                                                                   const void *key1,
                                                                   const void *key2));
@@ -3286,7 +3348,8 @@ Questa funzione non è disponibile nelle API per lo scripting.
 weechat_hashtable_set_with_size
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-_Novità nella versione 0.3.3._
+// TRANSLATION MISSING
+_Novità nella versione 0.3.3, updated in 0.4.2._
 
 Aggiunge o aggiorna un elemento nella tabella hash con la dimensione per la
 chiave ed il valore.
@@ -3295,9 +3358,9 @@ Prototipo:
 
 [source,C]
 ----------------------------------------
-int weechat_hashtable_set_with_size (struct t_hashtable *hashtable,
-                                     const void *key, int key_size,
-                                     const void *value, int value_size);
+struct t_hashtable_item *weechat_hashtable_set_with_size (struct t_hashtable *hashtable,
+                                                          const void *key, int key_size,
+                                                          const void *value, int value_size);
 ----------------------------------------
 
 Argomenti:
@@ -3312,7 +3375,8 @@ Argomenti:
 
 Valore restituito:
 
-* 1 se ok, 0 in caso di errore
+// TRANSLATION MISSING
+* pointer to item created/updated, NULL if error
 
 Esempio in C:
 
@@ -3328,7 +3392,8 @@ Questa funzione non è disponibile nelle API per lo scripting.
 weechat_hashtable_set
 ^^^^^^^^^^^^^^^^^^^^^
 
-_Novità nella versione 0.3.3._
+// TRANSLATION MISSING
+_Novità nella versione 0.3.3, updated in 0.4.2._
 
 Aggiunge o aggiorna un elemento nella tabella hash.
 
@@ -3336,8 +3401,8 @@ Prototipo:
 
 [source,C]
 ----------------------------------------
-int weechat_hashtable_set (struct t_hashtable *hashtable,
-                           const void *key, const void *value);
+struct t_hashtable_item *weechat_hashtable_set (struct t_hashtable *hashtable,
+                                                const void *key, const void *value);
 ----------------------------------------
 
 Argomenti:
@@ -3348,7 +3413,8 @@ Argomenti:
 
 Valore restituito:
 
-* 1 se ok, 0 in caso di errore
+// TRANSLATION MISSING
+* pointer to item created/updated, NULL if error
 
 Esempio in C:
 
@@ -3632,6 +3698,9 @@ Argomenti:
 
 * 'hashtable': puntatore alla tabella hash
 * 'property' e 'value': nome della proprietà, con il proprio valore:
+// TRANSLATION MISSING
+** 'callback_free_key': set callback function used to free keys in hashtable
+   _(novità nella versione 0.4.2)_
 ** 'callback_free_value': imposta la funzione callback usata per
    liberare i valori nella tabella hash
 
@@ -4358,7 +4427,7 @@ option5 = weechat.config_new_option(config_file, section, "option5", "color",
 [NOTE]
 In Ruby, the 3 callbacks + data (6 strings) must be given in an array of 6
 strings (due to a Ruby limitation of 15 arguments by function), see the
-'WeeChat Scripting Guide' for more info (_fixed in version 0.4.1_).
+'WeeChat Scripting Guide' for more info _(fixed in version 0.4.1)_.
 
 weechat_config_search_option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -6192,11 +6261,11 @@ Argomenti:
 [width="70%",cols="^2e,^1,^3,5",options="header"]
 |========================================
 | Prefisso | Valore | Colore       | Descrizione
-| error    | `=!=`  | giallo       | messaggio di errore
-| network  | `--`   | magenta      | messaggio dalla rete
-| action   | `*`    | bianco       | azione automatica
-| join     | `-->`  | verde chiaro | qualcuno entra nella chat corrente
-| quit     | `<--`  | rosso chiaro | qualcuno lascia la chat corrente
+| error    | `=!=`  | giallo       | Messaggio di errore
+| network  | `--`   | magenta      | Messaggio dalla rete
+| action   | `*`    | bianco       | Azione automatica
+| join     | `-->`  | verde chiaro | Qualcuno entra nella chat corrente
+| quit     | `<--`  | rosso chiaro | Qualcuno lascia la chat corrente
 |========================================
 
 [NOTE]
@@ -6251,6 +6320,10 @@ Argomenti:
 *** '-italic': rimuove corsivo
 *** 'underline': imposta sottolineato
 *** '-underline': rimuove sottolineato
+// TRANSLATION MISSING
+*** 'emphasis': toggle the emphasis for text (note: this should be used only in
+    bars, because WeeChat uses text emphasis when searching text in buffer)
+    _(new in version 0.4.2)_
 ** nome colore della barra:
 *** 'bar_fg': colore di primo piano della barra
 *** 'bar_delim': colore dei delimitatori della barra
@@ -6258,7 +6331,7 @@ Argomenti:
 ** reset:
 *** 'reset': ripristina colore ed attributi
 *** 'resetcolor': ripristina colore (mantiene attributi)
-    (_novità nella versione 0.3.6_)
+    _(novità nella versione 0.3.6)_
 
 Il formato del colore è: attributi (opzionale) + nome colore +",sfondo"
 (opzionale). Gli attributi possibili sono:
@@ -6267,7 +6340,7 @@ Il formato del colore è: attributi (opzionale) + nome colore +",sfondo"
 * `!` : video inverso
 * `_` : testo sottolineato
 * `|` : mantiene attributi: non ripristina grassetto/inverso/sottolineato
-  al cambio di colore (_novità nella versione 0.3.6_)
+  al cambio di colore _(novità nella versione 0.3.6)_
 
 Esempi:
 
@@ -6330,7 +6403,8 @@ tabulazione non verrà mostrato).
 // TRANSLATION MISSING
 [NOTE]
 With two tabs ("\t") at beginning of message, time will not be displayed and
-message will have no alignment at all (like the message "Day changed to").
+message will have no alignment at all. Moreover, the date in message will be
+set to 0.
 
 Esempio in C:
 
@@ -6840,10 +6914,13 @@ struct t_hook *weechat_hook_timer (long interval,
 Argomenti:
 
 * 'interval': intervallo tra due chiamate (millisecondi, 1000 = 1 secondo)
+// TRANSLATION MISSING
 * 'align_second': allineamento su un secondo. Per esempio, rrent time is 09:00,
   if interval = 60000 (60 seconds), and align_second = 60, then timer is
-  called each minute when second is 00
+  called each minute when second is 0
+// TRANSLATION MISSING
 * 'max_calls': number of calls to timer (if 0, then timer has no end)
+// TRANSLATION MISSING
 * 'callback': function called when time is reached, argomenti e valore
   restituito:
 ** 'void *data': pointer
@@ -6971,7 +7048,7 @@ WeeChat makes an automatic split of command and arguments (like the shell does).
 If the split is not correct (according to quotes in your command), or if you
 want to use shell, you can use function
 <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>> with
-arguments in the hashtable 'options' (_new in version 0.4.0_).
+arguments in the hashtable 'options' _(new in version 0.4.0)_.
 
 Prototipo:
 
@@ -6991,7 +7068,7 @@ struct t_hook *weechat_hook_process (const char *command,
 Argomenti:
 
 * 'command': comando da avviare nel processo figlio o URL
-  (_novità nella versione 0.3.7_), segue:
+  _(novità nella versione 0.3.7)_, segue:
 * 'timeout': timeout per il comando (in millisecondi): dopo questo timeout,
   il processo figlio viene terminato (0 indica nessun timeout)
 * 'callback': funzione chiamata quando i dati dal processo figlio sono disponibili,
@@ -7024,14 +7101,14 @@ Quando il comando ha terminato, o se viene raggiunto il timeout, WeeChat
 effettua automaticamente l'unhook (e termina il processo se ancora in esecuzione).
 
 Il comando può essere un URL con il formato: "url:http://www.esempio.com", per
-scaricare il contenuto dell'URL (_novità nella versione 0.3.7_). Le opzioni per
+scaricare il contenuto dell'URL _(novità nella versione 0.3.7)_. Le opzioni per
 un URL sono disponibili con la funzione
 <<_weechat_hook_process_hashtable,weechat_hook_process_hashtable>>.
 
 // TRANSLATION MISSING
 [TIP]
 If you want to retrieve infos about WeeChat (like current stable version,
-latest git commit, ...), you can use URLs on page http://weechat.org/info
+latest git commit, ...), you can use URLs on page http://weechat.org/dev/info
 
 [NOTE]
 La dimensione del buffer per l'invio dei dati alla callback è di 64KB (ci sono
@@ -7136,7 +7213,7 @@ Gli argomenti sono gli stessi della funzione
 // TRANSLATION MISSING
 For a standard command (not beginning with "url:"), the hashtable 'options' can
 contain arguments for command (and then 'command' must be only the command
-without arguments) (_new in version 0.4.0_). +
+without arguments) _(new in version 0.4.0)_. +
 The keys in hashtable must be: 'arg1', 'arg2', ...
 
 Per il comando "url:..." sono disponibili le seguenti opzioni (consultare
@@ -7579,561 +7656,559 @@ Argomenti:
 
 // TRANSLATION MISSING
 | aspell | aspell_suggest +
-  (_novità nella versione 0.4.0_) |
-  pointer: buffer |
-  new suggestions for a misspelled word
+  _(novità nella versione 0.4.0)_ |
+  Pointer: buffer |
+  New suggestions for a misspelled word
 
 // TRANSLATION MISSING
 | guile | guile_script_loaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  scheme script loaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Scheme script loaded
 
 // TRANSLATION MISSING
 | guile | guile_script_unloaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  scheme script unloaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Scheme script unloaded
 
 // TRANSLATION MISSING
 | guile | guile_script_installed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.scm,/path/to/script2.scm") |
-  scheme script(s) installed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of paths to scripts installed (example: "/path/to/script1.scm,/path/to/script2.scm") |
+  Scheme script(s) installed
 
 // TRANSLATION MISSING
 | guile | guile_script_removed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of scripts removed (example: "script1.scm,script2.scm") |
-  scheme script(s) removed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of scripts removed (example: "script1.scm,script2.scm") |
+  Scheme script(s) removed
 
 | irc | xxx,irc_in_yyy ^(1)^ |
-  string: messaggio |
-  messaggio irc dal server (prima di essere utilizzato
+  String: messaggio |
+  Messaggio IRC dal server (prima di essere utilizzato
   dal plugin irc, il segnale viene inviato solo se il
   messaggio *non* viene ignorato)
 
 | irc | xxx,irc_in2_yyy ^(1)^ |
-  string: messaggio |
-  messaggio irc dal server (dopo essere stato
+  String: messaggio |
+  Messaggio IRC dal server (dopo essere stato
   utilizzato dal plugin irc, il segnale viene inviato
   solo se il messaggio *non* viene ignorato)
 
 | irc | xxx,irc_raw_in_yyy ^(1)^ +
-  (_novità nella versione 0.3.2_) |
-  string: messaggio |
-  messaggio irc dal server (prima di essere utilizzato
+  _(novità nella versione 0.3.2)_ |
+  String: messaggio |
+  Messaggio IRC dal server (prima di essere utilizzato
   dal plugin irc, il segnale viene inviato anche se il
   messaggio è stato ignorato)
 
 | irc | xxx,irc_raw_in2_yyy ^(1)^ +
-  (_novità nella versione 0.3.2_) |
-  string: messaggio |
-  messaggio irc dal server (dopo essere stato
+  _(novità nella versione 0.3.2)_ |
+  String: messaggio |
+  Messaggio IRC dal server (dopo essere stato
   utilizzato dal plugin irc, il segnale viene inviato
   anche se il messaggio è stato ignorato)
 
 | irc | xxx,irc_out1_yyy ^(1)^ +
-  (_novità nella versione 0.3.7_) |
-  string: messaggio |
-  messaggio irc inviato al server (prima della divisione automatica da adattare in 512 byte)
+  _(novità nella versione 0.3.7)_ |
+  String: messaggio |
+  Messaggio IRC inviato al server (prima della divisione automatica da adattare in 512 byte)
 
 | irc | xxx,irc_out_yyy ^(1)^ |
-  string: messaggio |
-  messaggio irc inviato al server (dopo la divisione automatica da adattare in 512 byte)
+  String: messaggio |
+  Messaggio IRC inviato al server (dopo la divisione automatica da adattare in 512 byte)
 
 | irc | xxx,irc_outtags_yyy ^(1)^ +
-  (_novità nella versione 0.3.4_) |
-  stringa: tag + ";" + messaggio |
-  tag + messaggio irc inviato al server
+  _(novità nella versione 0.3.4)_ |
+  Stringa: tag + ";" + messaggio |
+  Tag + messaggio IRC inviato al server
 
 | irc | irc_ctcp |
-  string: messaggio |
+  String: messaggio |
   CTCP ricevuto
 
 | irc | irc_dcc |
-  string: messaggio |
-  nuova DCC
+  String: messaggio |
+  Nuova DCC
 
 | irc | irc_pv |
-  string: messaggio |
-  messaggio privato ricevuto
+  String: messaggio |
+  Messaggio privato ricevuto
 
 | irc | irc_channel_opened |
-  puntatore: buffer |
-  canale aperto
+  Puntatore: buffer |
+  Canale aperto
 
 | irc | irc_pv_opened |
-  puntatore: buffer |
-  chat privata aperta
+  Puntatore: buffer |
+  Chat privata aperta
 
 | irc | irc_server_opened +
-  (_novità nella versione 0.3.7_) |
-  puntatore: buffer |
-  server del buffer aperto
+  _(novità nella versione 0.3.7)_ |
+  Puntatore: buffer |
+  Server del buffer aperto
 
 | irc | irc_server_connecting |
-  string: nome server |
-  connessione al server
+  String: nome server |
+  Connessione al server
 
 | irc | irc_server_connected |
-  string: nome server |
-  connesso al server
+  String: nome server |
+  Connesso al server
 
 | irc | irc_server_disconnected |
-  string: nome server |
-  disconnesso dal server
+  String: nome server |
+  Disconnesso dal server
 
 | irc | irc_ignore_removing |
-  puntatore: ignore |
-  rimozione dell'ignore
+  Puntatore: ignore |
+  Rimozione dell'ignore
 
 | irc | irc_ignore_removed |
   - |
-  ignore rimosso
+  Ignore rimosso
 
 | irc | irc_notify_join +
-  (_novità nella versione 0.3.8_) |
-  string: nome server + "," + nick |
-  un nick nella lista notifiche è entrato sul server
+  _(novità nella versione 0.3.8)_ |
+  String: nome server + "," + nick |
+  Un nick nella lista notifiche è entrato sul server
 
 | irc | irc_notify_quit +
-  (_novità nella versione 0.3.8_) |
-  string: nome server + "," + nick |
-  un nick nella lista notifiche è uscito dal server
+  _(novità nella versione 0.3.8)_ |
+  String: nome server + "," + nick |
+  Un nick nella lista notifiche è uscito dal server
 
 | irc | irc_notify_away +
-  (_novità nella versione 0.3.8_) |
-  string: nome server + "," + nick + "," + messaggio di assenza |
-  un nick nella lista notifiche è ora assente sul server
+  _(novità nella versione 0.3.8)_ |
+  String: nome server + "," + nick + "," + messaggio di assenza |
+  Un nick nella lista notifiche è ora assente sul server
 
 | irc | irc_notify_still_away +
-  (_novità nella versione 0.3.8_) |
-  string: nome server + "," + nick + "," + messaggio di assenza |
-  un nick nella lista notifiche è ancora assente sul server (messaggio di assenza cambiato)
+  _(novità nella versione 0.3.8)_ |
+  String: nome server + "," + nick + "," + messaggio di assenza |
+  Un nick nella lista notifiche è ancora assente sul server (messaggio di assenza cambiato)
 
 | irc | irc_notify_back +
-  (_novità nella versione 0.3.8_) |
-  string: nome server + "," + nick |
-  un nick nella lista notifiche è tornato (messaggio di assenza rimosso)
+  _(novità nella versione 0.3.8)_ |
+  String: nome server + "," + nick |
+  Un nick nella lista notifiche è tornato (messaggio di assenza rimosso)
 
 | logger | logger_start |
-  puntatore: buffer |
-  avvia il logging per il buffer
+  Puntatore: buffer |
+  Avvia il logging per il buffer
 
 | logger | logger_stop |
-  puntatore: buffer |
-  ferma il logging per il buffer
+  Puntatore: buffer |
+  Ferma il logging per il buffer
 
 | logger | logger_backlog |
-  puntatore: buffer |
-  visualizza log precedenti per il buffer
+  Puntatore: buffer |
+  Visualizza log precedenti per il buffer
 
 // TRANSLATION MISSING
 | lua | lua_script_loaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  lua script loaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Lua script loaded
 
 // TRANSLATION MISSING
 | lua | lua_script_unloaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  lua script unloaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Lua script unloaded
 
 // TRANSLATION MISSING
 | lua | lua_script_installed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.lua,/path/to/script2.lua") |
-  lua script(s) installed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of paths to scripts installed (example: "/path/to/script1.lua,/path/to/script2.lua") |
+  Lua script(s) installed
 
 // TRANSLATION MISSING
 | lua | lua_script_removed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of scripts removed (example: "script1.lua,script2.lua") |
-  lua script(s) removed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of scripts removed (example: "script1.lua,script2.lua") |
+  Lua script(s) removed
 
 // TRANSLATION MISSING
 | perl | perl_script_loaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  perl script loaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Perl script loaded
 
 // TRANSLATION MISSING
 | perl | perl_script_unloaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  perl script unloaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Perl script unloaded
 
 // TRANSLATION MISSING
 | perl | perl_script_installed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.pl,/path/to/script2.pl") |
-  perl script(s) installed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of paths to scripts installed (example: "/path/to/script1.pl,/path/to/script2.pl") |
+  Perl script(s) installed
 
 // TRANSLATION MISSING
 | perl | perl_script_removed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of scripts removed (example: "script1.pl,script2.pl") |
-  perl script(s) removed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of scripts removed (example: "script1.pl,script2.pl") |
+  Perl script(s) removed
 
 // TRANSLATION MISSING
 | python | python_script_loaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  python script loaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Python script loaded
 
 // TRANSLATION MISSING
 | python | python_script_unloaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  python script unloaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Python script unloaded
 
 // TRANSLATION MISSING
 | python | python_script_installed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.py,/path/to/script2.py") |
-  python script(s) installed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of paths to scripts installed (example: "/path/to/script1.py,/path/to/script2.py") |
+  Python script(s) installed
 
 // TRANSLATION MISSING
 | python | python_script_removed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of scripts removed (example: "script1.py,script2.py") |
-  python script(s) removed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of scripts removed (example: "script1.py,script2.py") |
+  Python script(s) removed
 
 // TRANSLATION MISSING
 | ruby | ruby_script_loaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  ruby script loaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Ruby script loaded
 
 // TRANSLATION MISSING
 | ruby | ruby_script_unloaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  ruby script unloaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Ruby script unloaded
 
 // TRANSLATION MISSING
 | ruby | ruby_script_installed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.rb,/path/to/script2.rb") |
-  ruby script(s) installed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of paths to scripts installed (example: "/path/to/script1.rb,/path/to/script2.rb") |
+  Ruby script(s) installed
 
 // TRANSLATION MISSING
 | ruby | ruby_script_removed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of scripts removed (example: "script1.rb,script2.rb") |
-  ruby script(s) removed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of scripts removed (example: "script1.rb,script2.rb") |
+  Ruby script(s) removed
 
 // TRANSLATION MISSING
 | tcl | tcl_script_loaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  tcl script loaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Tcl script loaded
 
 // TRANSLATION MISSING
 | tcl | tcl_script_unloaded +
-  (_novità nella versione 0.3.9_) |
-  string: path to script |
-  tcl script unloaded
+  _(novità nella versione 0.3.9)_ |
+  String: path to script |
+  Tcl script unloaded
 
 // TRANSLATION MISSING
 | tcl | tcl_script_installed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of paths to scripts installed (example: "/path/to/script1.tcl,/path/to/script2.tcl") |
-  tcl script(s) installed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of paths to scripts installed (example: "/path/to/script1.tcl,/path/to/script2.tcl") |
+  Tcl script(s) installed
 
 // TRANSLATION MISSING
 | tcl | tcl_script_removed +
-  (_novità nella versione 0.3.9_) |
-  string: comma-separated list of scripts removed (example: "script1.tcl,script2.tcl") |
-  tcl script(s) removed
+  _(novità nella versione 0.3.9)_ |
+  String: comma-separated list of scripts removed (example: "script1.tcl,script2.tcl") |
+  Tcl script(s) removed
 
 | weechat | buffer_closing |
-  puntatore: buffer |
-  chiusura del buffer
+  Puntatore: buffer |
+  Chiusura del buffer
 
 | weechat | buffer_closed |
-  puntatore: buffer |
-  buffer chiuso
+  Puntatore: buffer |
+  Buffer chiuso
 
 | weechat | buffer_line_added +
-  (_novità nella versione 0.3.7_) |
-  puntatore: riga |
-  riga aggiunta in un buffer
+  _(novità nella versione 0.3.7)_ |
+  Puntatore: riga |
+  Riga aggiunta in un buffer
 
 | weechat | buffer_lines_hidden |
-  puntatore: buffer |
-  righe nascoste nel buffer
+  Puntatore: buffer |
+  Righe nascoste nel buffer
 
 | weechat | buffer_localvar_added |
-  puntatore: buffer |
-  variabili locali aggiunte
+  Puntatore: buffer |
+  Variabili locali aggiunte
 
 | weechat | buffer_localvar_changed |
-  puntatore: buffer |
-  variabili locali modificate
+  Puntatore: buffer |
+  Variabili locali modificate
 
 | weechat | buffer_localvar_removed |
-  puntatore: buffer |
-  variabili locali rimosse
+  Puntatore: buffer |
+  Variabili locali rimosse
 
 // TRANSLATION MISSING
 | weechat | buffer_merged |
-  puntatore: buffer |
-  buffer merged
+  Puntatore: buffer |
+  Buffer merged
 
 // TRANSLATION MISSING
 | weechat | buffer_unmerged |
-  puntatore: buffer |
-  buffer unmerged
+  Puntatore: buffer |
+  Buffer unmerged
 
 | weechat | buffer_moved |
-  puntatore: buffer |
-  buffer spostato
+  Puntatore: buffer |
+  Buffer spostato
 
 | weechat | buffer_opened |
-  puntatore: buffer |
-  buffer aperto
+  Puntatore: buffer |
+  Buffer aperto
 
 | weechat | buffer_renamed |
-  puntatore: buffer |
-  buffer rinominato
+  Puntatore: buffer |
+  Buffer rinominato
 
 | weechat | buffer_switch |
-  puntatore: buffer |
-  passaggio tra buffer
+  Puntatore: buffer |
+  Passaggio tra buffer
 
 | weechat | buffer_title_changed |
-  puntatore: buffer |
-  titolo del buffer modificato
+  Puntatore: buffer |
+  Titolo del buffer modificato
 
 | weechat | buffer_type_changed |
-  puntatore: buffer |
-  tipo di buffer modificato
+  Puntatore: buffer |
+  Tipo di buffer modificato
 
 | weechat | day_changed +
-  (_novità nella versione 0.3.2_) |
-  string: nuova data, formato: "2010-01-31" |
-  data di sistema modificata
+  _(novità nella versione 0.3.2)_ |
+  String: nuova data, formato: "2010-01-31" |
+  Data di sistema modificata
 
 | weechat | debug_dump |
-  stringa: nome plugin |
-  richiesta di dump
+  Stringa: nome plugin |
+  Richiesta di dump
 
 | weechat | filter_added |
-  puntatore: filtro |
-  filtro aggiunto
+  Puntatore: filtro |
+  Filtro aggiunto
 
 | weechat | filter_removing |
-  puntatore: filtro |
-  rimozione del filtro
+  Puntatore: filtro |
+  Rimozione del filtro
 
 | weechat | filter_removed |
   - |
-  filtro rimosso
+  Filtro rimosso
 
 | weechat | filters_enabled |
   - |
-  filtri abilitati
+  Filtri abilitati
 
 | weechat | filters_disabled |
   - |
-  filtri disabilitati
+  Filtri disabilitati
 
 | weechat | hotlist_changed |
   - |
-  hotlist modificata
+  Hotlist modificata
 
 | weechat | input_paste_pending |
   - |
-  incolla testo in attesa
+  Incolla testo in attesa
 
 | weechat | input_search |
-  puntatore: buffer |
-  ricerca testo nel buffer
+  Puntatore: buffer |
+  Ricerca testo nel buffer
 
 | weechat | input_text_changed |
-  puntatore: buffer |
-  testo in input modificato
+  Puntatore: buffer |
+  Testo in input modificato
 
 | weechat | input_text_cursor_moved |
-  puntatore: buffer |
-  cursore del testo di input spostato
+  Puntatore: buffer |
+  Cursore del testo di input spostato
 
 // TRANSLATION MISSING
 | weechat | key_bind |
-  string: key |
-  key added
+  String: key |
+  Key added
 
 // TRANSLATION MISSING
 | weechat | key_unbind |
-  string: key |
-  key removed
+  String: key |
+  Key removed
 
 | weechat | key_pressed |
-  string: tasto digitato |
-  tasto digitato
+  String: tasto digitato |
+  Tasto digitato
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_added +
-  (_novità nella versione 0.3.2_) |
-  string: buffer pointer + "," + group name |
-  group added in nicklist
+  _(novità nella versione 0.3.2)_ |
+  String: buffer pointer + "," + group name |
+  Group added in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_changed +
-  (_novità nella versione 0.3.4_) |
-  string: buffer pointer + "," + group name |
-  group changed in nicklist
+  _(novità nella versione 0.3.4)_ |
+  String: buffer pointer + "," + group name |
+  Group changed in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_removing +
-  (_novità nella versione 0.4.1_) |
-  string: buffer pointer + "," + group name |
-  removing group from nicklist
+  _(novità nella versione 0.4.1)_ |
+  String: buffer pointer + "," + group name |
+  Removing group from nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_removed +
-  (_novità nella versione 0.3.2_) |
-  string: buffer pointer + "," + group name |
-  group removed from nicklist
+  _(novità nella versione 0.3.2)_ |
+  String: buffer pointer + "," + group name |
+  Group removed from nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_added +
-  (_novità nella versione 0.3.2_) |
-  string: buffer pointer + "," + nick name |
-  nick added in nicklist
+  _(novità nella versione 0.3.2)_ |
+  String: buffer pointer + "," + nick name |
+  Nick added in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_changed +
-  (_novità nella versione 0.3.4_) |
-  string: buffer pointer + "," + nick name |
-  nick changed in nicklist
+  _(novità nella versione 0.3.4)_ |
+  String: buffer pointer + "," + nick name |
+  Nick changed in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_removing +
-  (_novità nella versione 0.4.1_) |
-  string: buffer pointer + "," + nick name |
-  removing nick from nicklist
+  _(novità nella versione 0.4.1)_ |
+  String: buffer pointer + "," + nick name |
+  Removing nick from nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_removed +
-  (_novità nella versione 0.3.2_) |
-  string: buffer pointer + "," + nick name |
-  nick removed from nicklist
+  _(novità nella versione 0.3.2)_ |
+  String: buffer pointer + "," + nick name |
+  Nick removed from nicklist
 
 | weechat | partial_completion |
   - |
-  completamento parziale avvenuto
+  Completamento parziale avvenuto
 
 // TRANSLATION MISSING
 | weechat | plugin_loaded +
-  (_new in version 0.3.9_) |
-  string: path to plugin loaded (example: "/usr/lib/weechat/plugins/irc.so") |
-  plugin loaded
+  _(new in version 0.3.9)_ |
+  String: path to plugin loaded (example: "/usr/lib/weechat/plugins/irc.so") |
+  Plugin loaded
 
 // TRANSLATION MISSING
 | weechat | plugin_unloaded +
-  (_new in version 0.3.9_) |
-  string: name of plugin unloaded (example: "irc") |
-  plugin unloaded
+  _(new in version 0.3.9)_ |
+  String: name of plugin unloaded (example: "irc") |
+  Plugin unloaded
 
 | weechat | quit |
-  string: argomenti per /quit |
-  comando `/quit` digitato dall'utente
+  String: argomenti per /quit |
+  Comando `/quit` digitato dall'utente
 
 // TRANSLATION MISSING
 | weechat | upgrade |
-  string: "quit" if "-quit" argument was given for /upgrade, otherwise NULL |
-  comando `/upgrade` digitato dall'utente
+  String: "quit" if "-quit" argument was given for /upgrade, otherwise NULL |
+  Comando `/upgrade` digitato dall'utente
 
 | weechat | upgrade_ended +
-  (_novità nella versione 0.3.4_) |
+  _(novità nella versione 0.3.4)_ |
   - |
-  fine del processo di aggiornamento (comando `/upgrade`)
+  Fine del processo di aggiornamento (comando `/upgrade`)
 
 | weechat | weechat_highlight |
-  string: messaggio con prefisso |
-  evento accaduto
+  String: messaggio con prefisso |
+  Evento accaduto
 
 | weechat | weechat_pv |
-  string: messaggio con prefisso |
-  messaggio privato visualizzato
+  String: messaggio con prefisso |
+  Messaggio privato visualizzato
 
 // TRANSLATION MISSING
 | weechat | window_closing +
-  (_novità nella versione 0.3.6_) |
-  puntatore: finestra |
-  closing window
+  _(novità nella versione 0.3.6)_ |
+  Puntatore: finestra |
+  Closing window
 
 // TRANSLATION MISSING
 | weechat | window_closed +
-  (_novità nella versione 0.3.6_) |
-  puntatore: finestra |
-  window closed
+  _(novità nella versione 0.3.6)_ |
+  Puntatore: finestra |
+  Window closed
 
 // TRANSLATION MISSING
 | weechat | window_opened +
-  (_novità nella versione 0.4.1_) |
-  puntatore: finestra |
-  window opened
+  _(novità nella versione 0.4.1)_ |
+  Puntatore: finestra |
+  Window opened
 
 | weechat | window_scrolled |
-  puntatore: finestra |
-  scroll nella finestra
+  Puntatore: finestra |
+  Scroll nella finestra
 
 | weechat | window_switch +
-  (_novità nella versione 0.3.7_) |
-  puntatore: finestra |
-  passaggio alla finestra
+  _(novità nella versione 0.3.7)_ |
+  Puntatore: finestra |
+  Passaggio alla finestra
 
 | weechat | window_unzoom |
-  puntatore: finestra corrente |
-  minimizzazione della finestra
+  Puntatore: finestra corrente |
+  Minimizzazione della finestra
 
 | weechat | window_unzoomed |
-  puntatore: finestra corrente |
-  window unzoomed
-  finestra minimizzata
+  Puntatore: finestra corrente |
+  Finestra minimizzata
 
 | weechat | window_zoom |
-  puntatore: finestra corrente |
-  massimizzazione della finestra
+  Puntatore: finestra corrente |
+  Massimizzazione della finestra
 
 | weechat | window_zoomed |
-  puntatore: finestra corrente |
-  finestra massimizzata
+  Puntatore: finestra corrente |
+  Finestra massimizzata
 
 | xfer | xfer_add |
-  puntatore: lista info con info per xfer|
-  nuovo xfer
+  Puntatore: lista info con info per xfer|
+  Nuovo xfer
 
 | xfer | xfer_send_ready |
-  puntatore: lista info xon info per xfer |
-  xfer pronto
+  Puntatore: lista info xon info per xfer |
+  Xfer pronto
 
 | xfer | xfer_accept_resume |
-  puntatore: lista info con info per xfer |
-  xfer accetta la ripresa
+  Puntatore: lista info con info per xfer |
+  Xfer accetta la ripresa
 
 | xfer | xfer_send_accept_resume |
-  puntatore: lista info con info per xfer |
-  xfer accetta la ripresa (invio)
+  Puntatore: lista info con info per xfer |
+  Xfer accetta la ripresa (invio)
 
 | xfer | xfer_start_resume |
-  puntatore: lista info con info per xfer |
-  avvia ripresa
+  Puntatore: lista info con info per xfer |
+  Avvia ripresa
 
 | xfer | xfer_resume_ready |
-  puntatore: lista info con info per xfer |
-  ripresa xfer pronta
+  Puntatore: lista info con info per xfer |
+  Ripresa xfer pronta
 
 | xfer | xfer_ended +
-  (_novità nella versione 0.3.2_) |
-  puntatore: lista info con info per xfer |
-  xfer terminato
-
+  _(novità nella versione 0.3.2)_ |
+  Puntatore: lista info con info per xfer |
+  Xfer terminato
 |========================================
 
 [NOTE]
@@ -8152,7 +8227,7 @@ Argomenti:
 *** 'WEECHAT_RC_OK'
 // TRANSLATION MISSING
 *** 'WEECHAT_RC_OK_EAT' (stop sending the signal immediately)
-    (_novità nella versione 0.4.0_)
+    _(novità nella versione 0.4.0)_
 *** 'WEECHAT_RC_ERROR'
 * 'callback_data': puntatore fornito alla callback quando chiamata da WeeChat
 
@@ -8415,57 +8490,57 @@ Argomenti:
 | Plugin | Segnale | Argomenti | Descrizione
 
 | irc | irc_redirection_xxx_yyy ^(1)^ +
-  (_novità nella versione 0.3.4_) |
-  consultare <<hsignal_irc_redirect_command,hsignal_irc_redirect_command>> |
-  redirection output
+  _(novità nella versione 0.3.4)_ |
+  Consultare <<hsignal_irc_redirect_command,hsignal_irc_redirect_command>> |
+  Redirection output
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_added +
-  (_novità nella versione 0.4.1_) |
+  _(novità nella versione 0.4.1)_ |
   'buffer' ('struct t_gui_buffer *'): buffer +
   'parent_group' ('struct t_gui_nick_group *'): parent group +
   'group' ('struct t_gui_nick_group *'): group |
-  group added in nicklist
+  Group added in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_added +
-  (_novità nella versione 0.4.1_) |
+  _(novità nella versione 0.4.1)_ |
   'buffer' ('struct t_gui_buffer *'): buffer +
   'parent_group' ('struct t_gui_nick_group *'): parent group +
   'nick' ('struct t_gui_nick *'): nick |
-  nick added in nicklist
+  Nick added in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_removing +
-  (_novità nella versione 0.4.1_) |
+  _(novità nella versione 0.4.1)_ |
   'buffer' ('struct t_gui_buffer *'): buffer +
   'parent_group' ('struct t_gui_nick_group *'): parent group +
   'group' ('struct t_gui_nick_group *'): group |
-  removing group from nicklist
+  Removing group from nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_removing +
-  (_novità nella versione 0.4.1_) |
+  _(novità nella versione 0.4.1)_ |
   'buffer' ('struct t_gui_buffer *'): buffer +
   'parent_group' ('struct t_gui_nick_group *'): parent group +
   'nick' ('struct t_gui_nick *'): nick |
-  removing nick from nicklist
+  Removing nick from nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_group_changed +
-  (_novità nella versione 0.4.1_) |
+  _(novità nella versione 0.4.1)_ |
   'buffer' ('struct t_gui_buffer *'): buffer +
   'parent_group' ('struct t_gui_nick_group *'): parent group +
   'group' ('struct t_gui_nick_group *'): group |
-  group changed in nicklist
+  Group changed in nicklist
 
 // TRANSLATION MISSING
 | weechat | nicklist_nick_changed +
-  (_novità nella versione 0.4.1_) |
+  _(novità nella versione 0.4.1)_ |
   'buffer' ('struct t_gui_buffer *'): buffer +
   'parent_group' ('struct t_gui_nick_group *'): parent group +
   'nick' ('struct t_gui_nick *'): nick |
-  nick changed in nicklist
+  Nick changed in nicklist
 |========================================
 
 [NOTE]
@@ -8481,7 +8556,7 @@ di redirezione.
 *** 'WEECHAT_RC_OK'
 // TRANSLATION MISSING
 *** 'WEECHAT_RC_OK_EAT' (stop sending the signal immediately)
-    (_novità nella versione 0.4.0_)
+    _(novità nella versione 0.4.0)_
 *** 'WEECHAT_RC_ERROR'
 * 'callback_data': puntatore fornito alla callback quando chiamata da WeeChat
 
@@ -9025,96 +9100,96 @@ Argomenti:
 
 | charset | charset_decode |
   plugin.buffer_name |
-  qualsiasi stringa |
-  stringa codificata dal set caratteri trovato per plugin/buffer in UTF-8
+  Qualsiasi stringa |
+  Stringa codificata dal set caratteri trovato per plugin/buffer in UTF-8
 
 | charset | charset_encode |
   plugin.buffer_name |
-  qualsiasi stringa |
-  stringa codificata da UTF-8 al set caratteri trovato per il plugin/buffer
+  Qualsiasi stringa |
+  Stringa codificata da UTF-8 al set caratteri trovato per il plugin/buffer
 
 | irc | irc_color_decode |
   "1" per mantenere i colori, "0" per rimuovere i colori |
-  qualsiasi stringa |
-  stringa con i codici colori di Weechat, o senza colore
+  Qualsiasi stringa |
+  Stringa con i codici colori di Weechat, o senza colore
 
 | irc | irc_color_encode |
   "1" per mantenere i colori, "0" per rimuovere i colori |
-  qualsiasi stringa |
-  stringa con i codici colori IRC, o senza colore
+  Qualsiasi stringa |
+  Stringa con i codici colori IRC, o senza colore
 
 // TRANSLATION MISSING
 | irc | irc_command_auth +
-  (_novità nella versione 0.4.1_) |
-  nome server |
-  authentication command (for example: `/msg nickserv identify password`) |
-  command with hidden password (for example: `/msg nickserv identify ********`)
+  _(novità nella versione 0.4.1)_ |
+  Nome server |
+  Authentication command (for example: `/msg nickserv identify password`) |
+  Command with hidden password (for example: `/msg nickserv identify ********`)
 
 // TRANSLATION MISSING
 | irc | irc_message_auth +
-  (_novità nella versione 0.4.1_) |
-  nome server |
-  message displayed after `/msg` sent to nickserv |
-  message with hidden password
+  _(novità nella versione 0.4.1)_ |
+  Nome server |
+  Message displayed after `/msg` sent to nickserv |
+  Message with hidden password
 
 | irc | irc_in_xxx ^(1)^ |
-  nome server |
-  contenuto del messaggio ricevuto dal server IRC (prima della codifica del set caratteri) |
-  nuovo contenuto del messaggio
+  Nome server |
+  Contenuto del messaggio ricevuto dal server IRC (prima della codifica del set caratteri) |
+  Nuovo contenuto del messaggio
 
 | irc | irc_in2_xxx ^(1)^ +
-  (_novità nella versione 0.3.5_) |
-  nome server |
-  contenuto del messaggio ricevuto dal server IRC (dopo la codifica del set caratteri) |
-  nuovo contenuto del messaggio
+  _(novità nella versione 0.3.5)_ |
+  Nome server |
+  Contenuto del messaggio ricevuto dal server IRC (dopo la codifica del set caratteri) |
+  Nuovo contenuto del messaggio
 
 | irc | irc_out1_xxx ^(1)^ +
-  (_novità nella versione 0.3.7_) |
-  nome server |
-  contenuto del messaggio che sta per essere inviato al server IRC (prima della divisione automatica da adattare in 512 byte) |
-  nuovo contenuto del messaggio
+  _(novità nella versione 0.3.7)_ |
+  Nome server |
+  Contenuto del messaggio che sta per essere inviato al server IRC (prima della divisione automatica da adattare in 512 byte) |
+  Nuovo contenuto del messaggio
 
 | irc | irc_out_xxx ^(1)^ |
-  nome server |
-  contenuto del messaggio che sta per essere inviato al server IRC (dopo la divisione automatica da adattare in 512 byte) |
-  nuovo contenuto del messaggio
+  Nome server |
+  Contenuto del messaggio che sta per essere inviato al server IRC (dopo la divisione automatica da adattare in 512 byte) |
+  Nuovo contenuto del messaggio
 
 | weechat | bar_condition_yyy ^(2)^ |
-  stringa con puntatore alla finestra ("0x123..") |
-  stringa vuota |
+  Stringa con puntatore alla finestra ("0x123..") |
+  Stringa vuota |
   "1" per visualizzare la barra, "0" per nasconderla
 
 | weechat | history_add +
-  (_novità nella versione 0.3.2_) |
-  stringa con puntatore al buffer ("0x123..") |
-  contenuto della riga di comando da aggiungere nella cronologia comandi (buffer e globale |
-  stringa aggiunta alla cronologia comandi
+  _(novità nella versione 0.3.2)_ |
+  Stringa con puntatore al buffer ("0x123..") |
+  Contenuto della riga di comando da aggiungere nella cronologia comandi (buffer e globale |
+  Stringa aggiunta alla cronologia comandi
 
 | weechat | input_text_content |
-  stringa con puntatore al buffer ("0x123..") |
-  contenuto della riga di comando |
-  nuovo contenuto della riga di comando
+  Stringa con puntatore al buffer ("0x123..") |
+  Contenuto della riga di comando |
+  Nuovo contenuto della riga di comando
 
 | weechat | input_text_display |
-  stringa con puntatore al buffer ("0x123..") |
-  contenuto della riga di comando, senza tag al cursore |
-  nuova stringa, solo da mostrare (la riga di comando non viene modificata)
+  Stringa con puntatore al buffer ("0x123..") |
+  Contenuto della riga di comando, senza tag al cursore |
+  Nuova stringa, solo da mostrare (la riga di comando non viene modificata)
 
 | weechat | input_text_display_with_cursor |
-  stringa con puntatore al buffer ("0x123..") |
-  contenuto della riga di comando, con tag al cursore |
-  nuova stringa, solo da mostrare (la riga di comando non viene modificata)
+  Stringa con puntatore al buffer ("0x123..") |
+  Contenuto della riga di comando, con tag al cursore |
+  Nuova stringa, solo da mostrare (la riga di comando non viene modificata)
 
 | weechat | input_text_for_buffer +
-  (_novità nella versione 0.3.7_) |
-  stringa con puntatore al buffer ("0x123..") |
-  contenuto della riga di comando inviata al buffer (testo o comando) |
-  nuovo contenuto della riga di comando inviata al buffer
+  _(novità nella versione 0.3.7)_ |
+  Stringa con puntatore al buffer ("0x123..") |
+  Contenuto della riga di comando inviata al buffer (testo o comando) |
+  Nuovo contenuto della riga di comando inviata al buffer
 
 | weechat | weechat_print |
   plugin;buffer_name;tags |
-  messaggio stampato |
-  nuovo messaggio stampato
+  Messaggio stampato |
+  Nuovo messaggio stampato
 |========================================
 
 [NOTE]
@@ -9556,35 +9631,35 @@ Contenuto della tabella hash inviata alla callback (tasti e valori sono di tipo
 [width="100%",cols="5m,5,8,3",options="header"]
 |========================================
 | Key ^(1)^                  | Descrizione                 | Valori di esempio                                | Valore se N/D
-| _x                         | colonna sullo schermo     2+| "0" ... "n"
-| _y                         | riga sullo schermo        2+| "0" ... "n"
-| _key                       | evento tasto o mouse      2+| "button1", "button2-gesture-left", ...
-| _window                    | puntatore alla finestra     | "0x12345678"                                     | ""
-| _window_number             | numero della finestra       | "1" ... "n"                                      | "*"
-| _buffer                    | puntatore al buffer         | "0x12345678"                                     | ""
-| _buffer_number             | numero del buffer           | "1" ... "n"                                      | "-1"
-| _buffer_plugin             | nome plugin del buffer      | "core", "irc", ...                               | ""
-| _buffer_name               | nome del buffer             | "weechat", "freenode.#weechat", ...              | ""
-| _buffer_full_name          | nome completo del buffer    | "core.weechat", "irc.freenode.#weechat", ...     | ""
-| _buffer_localvar_XXX ^(2)^ | variabili locali del buffer | qualsiasi valore                                 | non impostato
-| _chat                      | indicatore area di chat     | "0" o  "1"                                       | "0"
-| _chat_line_x               | colonna nella riga ^(3)^    | "0" ... "n"                                      | "-1"
-| _chat_line_y               | numero della riga ^(3)^     | "0" ... "n"                                      | "-1"
-| _chat_line_date            | riga con data/ora           | "1313237175"                                     | "0"
-| _chat_line_date_printed    | riga con data/ora ^(4)^     | "1313237175"                                     | "0"
-| _chat_line_time            | ora visualizzata            | "14:06:15"                                       | ""
-| _chat_line_tags            | tag della riga              | "irc_privmsg,notify_message,nick_FlashCode,log1" | ""
-| _chat_line_nick            | nick della riga             | "FlashCode"                                      | ""
-| _chat_line_prefix          | prefisso della riga         | "@FlashCode"                                     | ""
-| _chat_line_message         | messaggio della riga        | "Hello world!"                                   | ""
-| _chat_word                 | parola a (x,y)              | "Hello"                                          | ""
-| _chat_bol                  | inizio della riga ⇒ (x-1,y) | "He"                                             | ""
+| _x                         | Colonna sullo schermo     2+| "0" ... "n"
+| _y                         | Riga sullo schermo        2+| "0" ... "n"
+| _key                       | Evento tasto o mouse      2+| "button1", "button2-gesture-left", ...
+| _window                    | Puntatore alla finestra     | "0x12345678"                                     | ""
+| _window_number             | Numero della finestra       | "1" ... "n"                                      | "*"
+| _buffer                    | Puntatore al buffer         | "0x12345678"                                     | ""
+| _buffer_number             | Numero del buffer           | "1" ... "n"                                      | "-1"
+| _buffer_plugin             | Nome plugin del buffer      | "core", "irc", ...                               | ""
+| _buffer_name               | Nome del buffer             | "weechat", "freenode.#weechat", ...              | ""
+| _buffer_full_name          | Nome completo del buffer    | "core.weechat", "irc.freenode.#weechat", ...     | ""
+| _buffer_localvar_XXX ^(2)^ | Variabili locali del buffer | qualsiasi valore                                 | non impostato
+| _chat                      | Indicatore area di chat     | "0" o  "1"                                       | "0"
+| _chat_line_x               | Colonna nella riga ^(3)^    | "0" ... "n"                                      | "-1"
+| _chat_line_y               | Numero della riga ^(3)^     | "0" ... "n"                                      | "-1"
+| _chat_line_date            | Riga con data/ora           | "1313237175"                                     | "0"
+| _chat_line_date_printed    | Riga con data/ora ^(4)^     | "1313237175"                                     | "0"
+| _chat_line_time            | Ora visualizzata            | "14:06:15"                                       | ""
+| _chat_line_tags            | Tag della riga              | "irc_privmsg,notify_message,nick_FlashCode,log1" | ""
+| _chat_line_nick            | Nick della riga             | "FlashCode"                                      | ""
+| _chat_line_prefix          | Prefisso della riga         | "@FlashCode"                                     | ""
+| _chat_line_message         | Messaggio della riga        | "Hello world!"                                   | ""
+| _chat_word                 | Parola a (x,y)              | "Hello"                                          | ""
+| _chat_bol                  | Inizio della riga ⇒ (x-1,y) | "He"                                             | ""
 | _chat_eol                  | (x,y) ⇒ fine della riga     | "llo world!"                                     | ""
-| _bar_name                  | nome della barra            | "title", "nicklist", ...                         | ""
-| _bar_filling               | riempimento della barra     | "horizontal", "vertical", ...                    | ""
-| _bar_item_name             | nome dell'elemento barra    | "buffer_nicklist", "hotlist", ...                | ""
-| _bar_item_line             | riga nell'elemento barra    | "0" ... "n"                                      | "-1"
-| _bar_item_col              | colonna nell'elemento barra | "0" ... "n"                                      | "-1"
+| _bar_name                  | Nome della barra            | "title", "nicklist", ...                         | ""
+| _bar_filling               | Riempimento della barra     | "horizontal", "vertical", ...                    | ""
+| _bar_item_name             | Nome dell'elemento barra    | "buffer_nicklist", "hotlist", ...                | ""
+| _bar_item_line             | Riga nell'elemento barra    | "0" ... "n"                                      | "-1"
+| _bar_item_col              | Colonna nell'elemento barra | "0" ... "n"                                      | "-1"
 |========================================
 
 [NOTE]
@@ -9601,10 +9676,10 @@ Informazioni aggiuntive per l'elemento barra "buffer_nicklist":
 [width="70%",cols="3m,3,8",options="header"]
 |========================================
 | Chiave         | Plugin | Descrizione
-| nick           | core   | nick
-| prefix         | core   | prefisso per il nick
-| group          | core   | nome gruppo
-| irc_host       | irc    | host per il nick (se conosciuto)
+| nick           | core   | Nick
+| prefix         | core   | Prefisso per il nick
+| group          | core   | Nome gruppo
+| irc_host       | irc    | Host per il nick (se conosciuto)
 |========================================
 
 [NOTE]
@@ -9677,7 +9752,7 @@ Argomenti:
 
 | subplugin | qualsiasi stringa |
 // TRANSLATION MISSING
-  name of sub plugin (commonly script name, which is displayed in
+  Name of sub plugin (commonly script name, which is displayed in
   `/help command` for a hook of type 'command')
 |========================================
 
@@ -10231,7 +10306,7 @@ Argomenti:
 ** 'plugin': nome del plugin che ha creato questo buffer ("core"
    per il buffer principale di WeeChat)
 ** 'name': nome del buffer
-** 'full_name': nome completo del buffer ("plugin.nome") (_novità nella versione 0.3.7_)
+** 'full_name': nome completo del buffer ("plugin.nome") _(novità nella versione 0.3.7)_
 ** 'short_name': nome breve del buffer (nota: usato solo per il display e può
    essere cambiato dall'utente, questo nome non va usato per trovare il nome del
    buffer, utilizzare invece 'name', 'fullname' o la variabile locale 'channel')
@@ -10353,7 +10428,7 @@ Argomenti:
   (impostazione globale, il puntatore al buffer non è utilizzato)
 
 | unread | - |
-  imposta l'evidenziatore di lettura dopo l'ultima riga del buffer
+  Imposta l'evidenziatore di lettura dopo l'ultima riga del buffer
 
 | display | "1", "auto" |
   "1": passa a questo buffer nella finestra corrente +
@@ -10361,25 +10436,25 @@ Argomenti:
   lettura non viene resettato
 
 | number | numero |
-  sposta buffer a questo numero
+  Sposta buffer a questo numero
 
 | name | qualsiasi stringa |
-  imposta nuovo nome per il buffer
+  Imposta nuovo nome per il buffer
 
 | short_name | qualsiasi stringa |
-  imposta nuovo nome breve per il buffer
+  Imposta nuovo nome breve per il buffer
 
 | type | "formatted" oppure "free" |
-  imposta tipo per il: "formatted" (per stampare i messaggi di chat),
+  Imposta tipo per il: "formatted" (per stampare i messaggi di chat),
   oppure "free" (per contenuto libero)
 
 | notify | "0", "1", "2", "3" |
-  imposta il livello di notifica per il buffer: "0" = non aggiungere alla hotlist,
+  Imposta il livello di notifica per il buffer: "0" = non aggiungere alla hotlist,
   "1" = aggiungere solo per gli eventi, "2" = aggiungere per eventi e
   messaggi, "3" = aggiungere per tutti i messaggi
 
 | title | qualsiasi stringa |
-  imposta nuovo titolo per il buffer
+  Imposta nuovo titolo per il buffer
 
 | time_for_each_line | "0" oppure "1" |
   "0" per nascondere l'orario in tutte le righe del buffer, "1" per
@@ -10403,46 +10478,46 @@ Argomenti:
   questo buffer, ad esempio: "abc,def,ghi"
 
 | highlight_words_add | elenco di parole separate da virgole |
-  elenco di parole separate da virgole da evidenziare in questo buffer,
+  Elenco di parole separate da virgole da evidenziare in questo buffer,
   queste parole vengono aggiunte alle parole evidenziate esistenti nel
   buffer
 
 | highlight_words_del | elenco di parole separate da virgole|
-  elenco di parole separate da virgole da rimuovere dalle
+  Elenco di parole separate da virgole da rimuovere dalle
   parole evidenziate nel buffer
 
 | highlight_regex | qualsiasi stringa |
-  espressione regolare per l'evento
+  Espressione regolare per l'evento
 
 | highlight_tags | elenco separato da virgole di tag |
-  elenco separato da virgole di tag da evidenziare in questo buffer
+  Elenco separato da virgole di tag da evidenziare in questo buffer
 
 | hotlist_max_level_nicks | elenco separado da virgole di "nick:livello" |
-  elenco separato da virgole di nick con il livello massimo per la hotlist
+  Elenco separato da virgole di nick con il livello massimo per la hotlist
   su questo buffer (il livello può essere: -1: mai nella hotlist, 0: basso,
   1: messaggio, 2: privato, 3: evento), ad esempio: "joe:2,mike:-1,robert:-1"
   (joe non produce eventi sul buffer, mike e robert non modificano la hotlist)
 
 | hotlist_max_level_nicks_add | elenco separato da virgole di "nick:livello" |
-  elenco separato da virgole di nick con il livello per la hotlist, questi
+  Elenco separato da virgole di nick con il livello per la hotlist, questi
   nick vengono aggiunti a quelli esistenti nel buffer
 
 | hotlist_max_level_nicks_del | elenco separato da virgole di nick |
-  elenco separato da virgole di nick da rimuovere dai livelli massimi della
+  Elenco separato da virgole di nick da rimuovere dai livelli massimi della
   hotlist
 
 | key_bind_xxx | qualsiasi stringa |
-  assegna un nuovo tasto 'xxx', specifico per questo buffer, il valore è il
+  Assegna un nuovo tasto 'xxx', specifico per questo buffer, il valore è il
   comando da eseguire per questo tasto
 
 | key_unbind_xxx | - |
-  rimuove l'assegnazione del tasto 'xxx' per questo buffer
+  Rimuove l'assegnazione del tasto 'xxx' per questo buffer
 
 | input | qualsiasi stringa |
-  imposta un nuovo valore per l'input del buffer
+  Imposta un nuovo valore per l'input del buffer
 
 | input_pos | posizione |
-  imposta la posizione del cursore per l'input del buffer
+  Imposta la posizione del cursore per l'input del buffer
 
 | input_get_unknown_commands | "0" oppure "1" |
   "0" per disabilitare i comandi sconosciuti per questo buffer (comportamento
@@ -10451,11 +10526,11 @@ Argomenti:
   comando sconosciuto)
 
 | localvar_set_xxx | qualsiasi stringa |
-  imposta il nuovo valore per la variabile locale 'xxx' (la variabile verrà
+  Imposta il nuovo valore per la variabile locale 'xxx' (la variabile verrà
   creata se non esiste)
 
 | localvar_del_xxx | - |
-  rimuove la variabile locale 'xxx'
+  Rimuove la variabile locale 'xxx'
 |========================================
 
 Esempio in C:
@@ -10526,10 +10601,10 @@ Argomenti:
 ** 'input_callback_data': set input callback data
 // TRANSLATION MISSING
 ** 'nickcmp_callback': set nick comparison callback function (this callback is
-   called when searching nick in nicklist) (_novità nella versione 0.3.9_)
+   called when searching nick in nicklist) _(novità nella versione 0.3.9)_
 // TRANSLATION MISSING
 ** 'nickcmp_callback_data': set nick comparison callback data
-   (_novità nella versione 0.3.9_)
+   _(novità nella versione 0.3.9)_
 
 // TRANSLATION MISSING
 Prototypes for callbacks:
@@ -11474,7 +11549,7 @@ Argomenti:
 | Nome | Valore | Descrizione
 
 | color | nome per l'opzione del colore per WeeChat |
-  consultare l'argomento "color" della funzione
+  Consultare l'argomento "color" della funzione
   <<_weechat_nicklist_add_group,weechat_nicklist_add_group>>
 
 | visible | "0", "1" |
@@ -11680,14 +11755,14 @@ Argomenti:
 | Nome | Valore | Descrizione
 
 | color | nome per l'opzione del colore di WeeChat |
-  consultare l'argomento "color" della funzione
+  Consultare l'argomento "color" della funzione
   <<_weechat_nicklist_add_nick,weechat_nicklist_add_nick>>
 
 | prefix | qualsiasi stringa |
-  prefisso del nick
+  Prefisso del nick
 
 | prefix_color | nome per l'opzione del colore di WeeChat |
-  consultare l'argomento "prefix_color" della funzione
+  Consultare l'argomento "prefix_color" della funzione
   <<_weechat_nicklist_add_nick,weechat_nicklist_add_nick>>
 
 | visible | "0", "1" |
@@ -11780,6 +11855,9 @@ bar_item = weechat.bar_item_search("myitem")
 weechat_bar_item_new
 ^^^^^^^^^^^^^^^^^^^^
 
+// TRANSLATION MISSING
+_Updated in version 0.4.2._
+
 Crea un nuovo elemento barra.
 
 Prototipo:
@@ -11789,7 +11867,9 @@ Prototipo:
 struct t_gui_bar_item *weechat_bar_item_new (const char *name,
                                              char *(*build_callback)(void *data,
                                                                      struct t_gui_bar_item *item,
-                                                                     struct t_gui_window *window),
+                                                                     struct t_gui_window *window,
+                                                                     struct t_gui_buffer *buffer,
+                                                                     struct t_hashtable *extra_info),
                                              void *build_callback_data);
 ----------------------------------------
 
@@ -11800,7 +11880,16 @@ Argomenti:
   compilato, argomenti e valore restituito:
 ** 'void *data': puntatore
 ** 'struct t_gui_bar_item *item': puntatore all'elemento barra
-** 'struct t_gui_window *window': puntatore alla finestra
+// TRANSLATION MISSING
+** 'struct t_gui_window *window': puntatore alla finestra (NULL when called for
+   a root bar)
+// TRANSLATION MISSING
+** 'struct t_gui_buffer *buffer': buffer displayed in window (if window is NULL,
+   then it is current buffer) or buffer given in bar item with syntax:
+   "@buffer:item" _(novità nella versione 0.4.2)_
+// TRANSLATION MISSING
+** 'struct t_hashtable *extra_info': always NULL (argument is reserved for a
+   future version) _(novità nella versione 0.4.2)_
 ** valore restituito: contenuto dell'elemento barra
 * 'build_callback_data': puntatore fornito alla callback quando
   chiamata da WeeChat
@@ -11816,7 +11905,9 @@ Esempio in C:
 char *
 my_build_callback (void *data,
                    struct t_gui_bar_item *item,
-                   struct t_gui_window *window)
+                   struct t_gui_window *window,
+                   struct t_gui_buffer *buffer,
+                   struct t_hashtable *extra_info)
 {
     return strdup ("my content");
 }
@@ -11828,16 +11919,30 @@ struct t_gui_bar_item *my_item = weechat_bar_item_new ("myitem",
 
 Script (Python):
 
+// TRANSLATION MISSING
+[NOTE]
+For compatibility with versions ≤ 0.4.1, the default callback has only 3
+arguments: 'data', 'item' and 'window' (no 'buffer' and 'extra_info'). +
+To use a callback with all arguments, you must add "(extra)" before the name,
+see example below.
+
+// TRANSLATION MISSING
 [source,python]
 ----------------------------------------
 # prototipo
 bar_item = weechat.bar_item_new(name, build_callback, build_callback_data)
 
-# esempio
+# esempio (callback without "buffer" and "extra_info")
 def my_build_callback(data, item, window):
     return "my content"
 
 bar_item = weechat.bar_item_new("myitem", "my_build_callback", "")
+
+# example (callback with all arguments)
+def my_build_callback2(data, item, window, buffer, extra_info):
+    return "my content"
+
+bar_item2 = weechat.bar_item_new("(extra)myitem2", "my_build_callback2", "")
 ----------------------------------------
 
 weechat_bar_item_update
@@ -12029,7 +12134,7 @@ Esempio in C:
 ----------------------------------------
 struct t_gui_bar *my_bar = weechat_bar_new ("mybar",
                                             "off",
-                                            100,
+                                            "100",
                                             "window",
                                             "",
                                             "top",
@@ -12054,7 +12159,7 @@ bar = weechat.bar_new(name, hidden, priority, type, condition, position,
     color_fg, color_delim, color_bg, separator, items)
 
 # esempio
-bar = weechat.bar_new("mybar", "off", 100, "window", "", "top", "horizontal", "vertical",
+bar = weechat.bar_new("mybar", "off", "100", "window", "", "top", "horizontal", "vertical",
     "0", "5", "default", "cyan", "blue", "off", "time,buffer_number+buffer_name")
 ----------------------------------------
 
@@ -13285,13 +13390,13 @@ Argomenti:
   successivo nella lista (può essere NULL se non è disponibile tale variabile)
 // TRANSLATION MISSING
 * 'create_allowed': 1 if create of structure is allowed, otherwise 0
-  (_novità nella versione 0.4.0_)
+  _(novità nella versione 0.4.0)_
 // TRANSLATION MISSING
 * 'delete_allowed': 1 if delete of structure is allowed, otherwise 0
-  (_novità nella versione 0.3.9_)
+  _(novità nella versione 0.3.9)_
 // TRANSLATION MISSING
 * 'callback_update': callback to update data in hdata, can be NULL if no update
-  is allowed (_novità nella versione 0.3.9_), arguments and return value:
+  is allowed _(novità nella versione 0.3.9)_, arguments and return value:
 ** 'void *data': pointer
 ** 'struct t_hdata *hdata': pointer to hdata
 ** 'struct t_hashtable *hashtable': hashtable with variables to update
@@ -13299,7 +13404,7 @@ Argomenti:
 ** return value: number of variables updated
 // TRANSLATION MISSING
 * 'callback_update_data': pointer given to update callback when it is called by
-  WeeChat (_novità nella versione 0.3.9_)
+  WeeChat _(novità nella versione 0.3.9)_
 
 Valore restituito:
 
@@ -13346,10 +13451,10 @@ Argomenti:
 ** WEECHAT_HDATA_OTHER
 // TRANSLATION MISSING
 * 'update_allowed': 1 if update of variable is allowed, otherwise 0
-  (_novità nella versione 0.3.9_)
+  _(novità nella versione 0.3.9)_
 // TRANSLATION MISSING
 * 'array_size': not NULL only if a variable is an array, and it can be:
-  (_novità nella versione 0.3.9_)
+  _(novità nella versione 0.3.9)_
 ** name of variable in hdata: this variable will be used as size of array
    (dynamic size for array)
 ** integer (as string): fixed size for array
@@ -14513,7 +14618,7 @@ Argomenti:
   allowed:
 // TRANSLATION MISSING
 ** key `__create_allowed` (with any value): return 1 if create is allowed for
-   structure, otherwise 0 (_new in version 0.4.0_)
+   structure, otherwise 0 _(new in version 0.4.0)_
 ** key `__delete_allowed` (with any value): return 1 if delete is allowed for
    structure, otherwise 0
 ** key `__update_allowed`, value is name of a variable: return 1 if update is
