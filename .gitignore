@@ -48,3 +48,6 @@ weechat.pc
 stamp*
 
 src/gui/curses/weechat
+
+/pkg/
+/*.tar.xz*
