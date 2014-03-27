@@ -1,7 +1,7 @@
 /*
  * irc-completion.c - completion for IRC commands
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -409,7 +409,7 @@ irc_completion_channel_topic_cb (void *data, const char *completion_item,
                                  struct t_gui_buffer *buffer,
                                  struct t_gui_completion *completion)
 {
-    char *topic, *topic_color;
+    char *topic;
     int length;
 
     IRC_BUFFER_GET_SERVER_CHANNEL(buffer);
@@ -442,12 +442,9 @@ irc_completion_channel_topic_cb (void *data, const char *completion_item,
         else
             topic = strdup (ptr_channel->topic);
 
-        topic_color = irc_color_decode_for_user_entry ((topic) ? topic : ptr_channel->topic);
         weechat_hook_completion_list_add (completion,
-                                          (topic_color) ? topic_color : ((topic) ? topic : ptr_channel->topic),
+                                          (topic) ? topic : ptr_channel->topic,
                                           0, WEECHAT_LIST_POS_SORT);
-        if (topic_color)
-            free (topic_color);
         if (topic)
             free (topic);
     }
@@ -517,6 +514,37 @@ irc_completion_privates_cb (void *data, const char *completion_item,
                 weechat_hook_completion_list_add (completion, ptr_channel->name,
                                                   0, WEECHAT_LIST_POS_SORT);
             }
+        }
+    }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * Adds default kick message to completion list.
+ */
+
+int
+irc_completion_msg_kick_cb (void *data, const char *completion_item,
+                            struct t_gui_buffer *buffer,
+                            struct t_gui_completion *completion)
+{
+    const char *msg_kick;
+
+    IRC_BUFFER_GET_SERVER(buffer);
+
+    /* make C compiler happy */
+    (void) data;
+    (void) completion_item;
+
+    if (ptr_server)
+    {
+        msg_kick = IRC_SERVER_OPTION_STRING(ptr_server,
+                                            IRC_SERVER_OPTION_DEFAULT_MSG_KICK);
+        if (msg_kick && msg_kick[0])
+        {
+            weechat_hook_completion_list_add (completion, msg_kick,
+                                              0, WEECHAT_LIST_POS_SORT);
         }
     }
 
@@ -668,6 +696,9 @@ irc_completion_init ()
     weechat_hook_completion ("irc_privates",
                              N_("privates on all IRC servers"),
                              &irc_completion_privates_cb, NULL);
+    weechat_hook_completion ("irc_msg_kick",
+                             N_("default kick message"),
+                             &irc_completion_msg_kick_cb, NULL);
     weechat_hook_completion ("irc_msg_part",
                              N_("default part message for IRC channel"),
                              &irc_completion_msg_part_cb, NULL);

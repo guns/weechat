@@ -1,7 +1,7 @@
 /*
  * weechat-ruby.c - ruby plugin for WeeChat
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -23,8 +23,11 @@
 #undef _
 
 #include <ruby.h>
-#if defined(RUBY_VERSION) && RUBY_VERSION >=19
+#if (defined(RUBY_API_VERSION_MAJOR) && defined(RUBY_API_VERSION_MINOR)) && (RUBY_API_VERSION_MAJOR >= 2 || (RUBY_API_VERSION_MAJOR == 1 && RUBY_API_VERSION_MINOR >= 9))
 #include <ruby/encoding.h>
+#endif
+#ifdef HAVE_RUBY_VERSION_H
+#include <ruby/version.h>
 #endif
 
 #include <stdarg.h>
@@ -55,7 +58,7 @@
 
 WEECHAT_PLUGIN_NAME(RUBY_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Support of ruby scripts"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -68,6 +71,7 @@ struct t_plugin_script *last_ruby_script = NULL;
 struct t_plugin_script *ruby_current_script = NULL;
 struct t_plugin_script *ruby_registered_script = NULL;
 const char *ruby_current_script_filename = NULL;
+VALUE ruby_current_module;
 
 /*
  * string used to execute action "install":
@@ -261,7 +265,7 @@ weechat_ruby_print_exception (VALUE err)
 
     if (strcmp (err_class, "SyntaxError") == 0)
     {
-	tmp3 = rb_inspect(err);
+        tmp3 = rb_inspect(err);
         weechat_printf (NULL,
                         weechat_gettext ("%s%s: error: %s"),
                         weechat_prefix ("error"), RUBY_PLUGIN_NAME,
@@ -499,7 +503,7 @@ int
 weechat_ruby_load (const char *filename)
 {
     char modname[64];
-    VALUE curModule, ruby_retcode, err, argv[1];
+    VALUE ruby_retcode, err, argv[1];
     int ruby_error;
     struct stat buf;
 
@@ -524,12 +528,13 @@ weechat_ruby_load (const char *filename)
     snprintf (modname, sizeof(modname), "%s%d", MOD_NAME_PREFIX, ruby_num);
     ruby_num++;
 
-    curModule = rb_define_module(modname);
+    ruby_current_module = rb_define_module (modname);
 
     ruby_current_script_filename = filename;
 
     argv[0] = rb_str_new2 (filename);
-    ruby_retcode = rb_protect_funcall (curModule, rb_intern("load_eval_file"),
+    ruby_retcode = rb_protect_funcall (ruby_current_module,
+                                       rb_intern ("load_eval_file"),
                                        &ruby_error, 1, argv);
 
     if (ruby_retcode == Qnil)
@@ -569,13 +574,14 @@ weechat_ruby_load (const char *filename)
 
         if (NUM2INT(ruby_retcode) == 1 || NUM2INT(ruby_retcode) == 2)
         {
-            weechat_ruby_print_exception(rb_iv_get(curModule, "@load_eval_file_error"));
+            weechat_ruby_print_exception(rb_iv_get (ruby_current_module,
+                                                    "@load_eval_file_error"));
         }
 
         return 0;
     }
 
-    (void) rb_protect_funcall (curModule, rb_intern("weechat_init"),
+    (void) rb_protect_funcall (ruby_current_module, rb_intern ("weechat_init"),
                                &ruby_error, 0, NULL);
 
     if (ruby_error)
@@ -608,7 +614,6 @@ weechat_ruby_load (const char *filename)
     }
     ruby_current_script = ruby_registered_script;
 
-    ruby_current_script->interpreter = (VALUE *) curModule;
     rb_gc_register_address (ruby_current_script->interpreter);
 
     /*
@@ -948,6 +953,29 @@ weechat_ruby_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
+ * Display infos about external libraries used.
+ */
+
+int
+weechat_ruby_signal_debug_libs_cb (void *data, const char *signal,
+                                   const char *type_data, void *signal_data)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) signal;
+    (void) type_data;
+    (void) signal_data;
+
+#ifdef HAVE_RUBY_VERSION_H
+    weechat_printf (NULL, "  %s: %s", RUBY_PLUGIN_NAME, ruby_version);
+#else
+    weechat_printf (NULL, "  %s: (?)", RUBY_PLUGIN_NAME);
+#endif
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Callback called when a buffer is closed.
  */
 
@@ -1058,62 +1086,61 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 {
     struct t_plugin_script_init init;
     int ruby_error;
-    char *weechat_ruby_code =
-        {
-            "$stdout = WeechatOutputs\n"
-            "$stderr = WeechatOutputs\n"
-            "begin"
-            "  if RUBY_VERSION.split('.')[1] == '9'\n"
-            "    require 'enc/encdb.so'\n"
-            "    require 'enc/trans/transdb.so'\n"
-            "\n"
-            "    require 'thread'\n"
-            "    class ::Mutex\n"
-            "      def synchronize(*args)\n"
-            "        yield\n"
-            "      end\n"
-            "    end\n"
-            "    require 'rubygems'\n"
-            "  else\n"
-            "    require 'rubygems'\n"
-            "  end\n"
-            "rescue LoadError\n"
-            "end\n"
-            "\n"
-            "class Module\n"
-            "\n"
-            "  def load_eval_file (file)\n"
-            "    lines = ''\n"
-            "    begin\n"
-            "      lines = File.read(file)\n"
-            "    rescue => e\n"
-            "      return 1\n"
-            "    end\n"
-            "\n"
-            "    begin\n"
-            "      module_eval(lines)\n"
-            "    rescue Exception => e\n"
-            "      @load_eval_file_error = e\n"
-            "      return 2\n"
-            "    end\n"
-            "\n"
-            "    has_init = false\n"
-            "\n"
-            "    instance_methods.each do |meth|\n"
-            "      if meth.to_s == 'weechat_init'\n"
-            "        has_init = true\n"
-            "      end\n"
-            "      module_eval('module_function :' + meth.to_s)\n"
-            "    end\n"
-            "\n"
-            "    unless has_init\n"
-            "      return 3\n"
-            "    end\n"
-            "\n"
-            "    return 0\n"
-            "  end\n"
-            "end\n"
-        };
+    char *weechat_ruby_code = {
+        "$stdout = WeechatOutputs\n"
+        "$stderr = WeechatOutputs\n"
+        "begin"
+        "  if RUBY_VERSION.split('.')[0] == '1' and RUBY_VERSION.split('.')[1] <= '8'\n"
+        "    require 'rubygems'\n"
+        "  else\n"
+        "    require 'enc/encdb.so'\n"
+        "    require 'enc/trans/transdb.so'\n"
+        "\n"
+        "    require 'thread'\n"
+        "    class ::Mutex\n"
+        "      def synchronize(*args)\n"
+        "        yield\n"
+        "      end\n"
+        "    end\n"
+        "    require 'rubygems'\n"
+        "  end\n"
+        "rescue LoadError\n"
+        "end\n"
+        "\n"
+        "class Module\n"
+        "\n"
+        "  def load_eval_file (file)\n"
+        "    lines = ''\n"
+        "    begin\n"
+        "      lines = File.read(file)\n"
+        "    rescue => e\n"
+        "      return 1\n"
+        "    end\n"
+        "\n"
+        "    begin\n"
+        "      module_eval(lines)\n"
+        "    rescue Exception => e\n"
+        "      @load_eval_file_error = e\n"
+        "      return 2\n"
+        "    end\n"
+        "\n"
+        "    has_init = false\n"
+        "\n"
+        "    instance_methods.each do |meth|\n"
+        "      if meth.to_s == 'weechat_init'\n"
+        "        has_init = true\n"
+        "      end\n"
+        "      module_eval('module_function :' + meth.to_s)\n"
+        "    end\n"
+        "\n"
+        "    unless has_init\n"
+        "      return 3\n"
+        "    end\n"
+        "\n"
+        "    return 0\n"
+        "  end\n"
+        "end\n"
+    };
 
     weechat_ruby_plugin = plugin;
 
@@ -1122,7 +1149,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     /* init stdout/stderr buffer */
     ruby_buffer_output[0] = '\0';
 
-#if defined(RUBY_VERSION) && RUBY_VERSION >= 19
+#if (defined(RUBY_API_VERSION_MAJOR) && defined(RUBY_API_VERSION_MINOR)) && (RUBY_API_VERSION_MAJOR >= 2 || (RUBY_API_VERSION_MAJOR == 1 && RUBY_API_VERSION_MINOR >= 9))
     RUBY_INIT_STACK;
 #endif
 
@@ -1163,6 +1190,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     init.callback_hdata = &weechat_ruby_hdata_cb;
     init.callback_infolist = &weechat_ruby_infolist_cb;
     init.callback_signal_debug_dump = &weechat_ruby_signal_debug_dump_cb;
+    init.callback_signal_debug_libs = &weechat_ruby_signal_debug_libs_cb;
     init.callback_signal_buffer_closed = &weechat_ruby_signal_buffer_closed_cb;
     init.callback_signal_script_action = &weechat_ruby_signal_script_action_cb;
     init.callback_load_file = &weechat_ruby_load_cb;

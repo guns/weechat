@@ -1,7 +1,7 @@
 /*
  * weechat-perl-api.c - perl API functions
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2008 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2012 Simon Arlott
  *
@@ -156,9 +156,6 @@ XS (XS_weechat_api_register)
                                              description, shutdown_func, charset);
     if (perl_current_script)
     {
-#ifndef MULTIPLICITY
-        perl_current_script->interpreter = SvPV_nolen (eval_pv ("__PACKAGE__", TRUE));
-#endif
         perl_registered_script = perl_current_script;
         if ((weechat_perl_plugin->debug >= 2) || !perl_quiet)
         {
@@ -167,6 +164,11 @@ XS (XS_weechat_api_register)
                                              "version %s (%s)"),
                             PERL_PLUGIN_NAME, name, version, description);
         }
+#ifdef MULTIPLICITY
+        perl_current_script->interpreter = perl_current_interpreter;
+#else
+        perl_current_script->interpreter = SvPV_nolen (eval_pv ("__PACKAGE__", TRUE));
+#endif
     }
     else
     {
@@ -3019,6 +3021,24 @@ XS (XS_weechat_api_hook_focus)
     API_RETURN_STRING_FREE(result);
 }
 
+XS (XS_weechat_api_hook_set)
+{
+    char *hook, *property, *value;
+    dXSARGS;
+
+    API_FUNC(1, "hook_set", API_RETURN_ERROR);
+    if (items < 3)
+        API_WRONG_ARGS(API_RETURN_ERROR);
+
+    hook = SvPV_nolen (ST (0));
+    property = SvPV_nolen (ST (1));
+    value = SvPV_nolen (ST (2));
+
+    weechat_hook_set (API_STR2PTR(hook), property, value);
+
+    API_RETURN_OK;
+}
+
 XS (XS_weechat_api_unhook)
 {
     dXSARGS;
@@ -4963,6 +4983,7 @@ weechat_perl_api_init (pTHX)
     API_DEF_FUNC(hook_info_hashtable);
     API_DEF_FUNC(hook_infolist);
     API_DEF_FUNC(hook_focus);
+    API_DEF_FUNC(hook_set);
     API_DEF_FUNC(unhook);
     API_DEF_FUNC(unhook_all);
     API_DEF_FUNC(buffer_new);

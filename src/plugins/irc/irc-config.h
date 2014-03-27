@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -117,7 +117,7 @@ extern struct t_config_option *irc_config_look_display_pv_back;
 extern struct t_config_option *irc_config_look_highlight_server;
 extern struct t_config_option *irc_config_look_highlight_channel;
 extern struct t_config_option *irc_config_look_highlight_pv;
-extern struct t_config_option *irc_config_look_highlight_tags;
+extern struct t_config_option *irc_config_look_highlight_tags_restrict;
 extern struct t_config_option *irc_config_look_item_away_message;
 extern struct t_config_option *irc_config_look_item_channel_modes_hide_key;
 extern struct t_config_option *irc_config_look_item_display_server;
@@ -135,6 +135,7 @@ extern struct t_config_option *irc_config_look_nick_mode;
 extern struct t_config_option *irc_config_look_nick_mode_empty;
 extern struct t_config_option *irc_config_look_notice_as_pv;
 extern struct t_config_option *irc_config_look_notice_welcome_redirect;
+extern struct t_config_option *irc_config_look_notice_welcome_tags;
 extern struct t_config_option *irc_config_look_notify_tags_ison;
 extern struct t_config_option *irc_config_look_notify_tags_whois;
 extern struct t_config_option *irc_config_look_part_closes_buffer;
@@ -146,6 +147,7 @@ extern struct t_config_option *irc_config_look_smart_filter;
 extern struct t_config_option *irc_config_look_smart_filter_delay;
 extern struct t_config_option *irc_config_look_smart_filter_join;
 extern struct t_config_option *irc_config_look_smart_filter_join_unmask;
+extern struct t_config_option *irc_config_look_smart_filter_mode;
 extern struct t_config_option *irc_config_look_smart_filter_nick;
 extern struct t_config_option *irc_config_look_smart_filter_quit;
 extern struct t_config_option *irc_config_look_topic_strip_colors;
@@ -167,9 +169,11 @@ extern struct t_config_option *irc_config_color_topic_old;
 extern struct t_config_option *irc_config_network_alternate_nick;
 extern struct t_config_option *irc_config_network_autoreconnect_delay_growing;
 extern struct t_config_option *irc_config_network_autoreconnect_delay_max;
+extern struct t_config_option *irc_config_network_ban_mask_default;
 extern struct t_config_option *irc_config_network_colors_receive;
 extern struct t_config_option *irc_config_network_colors_send;
 extern struct t_config_option *irc_config_network_lag_check;
+extern struct t_config_option *irc_config_network_lag_max;
 extern struct t_config_option *irc_config_network_lag_min_show;
 extern struct t_config_option *irc_config_network_lag_reconnect;
 extern struct t_config_option *irc_config_network_lag_refresh_interval;

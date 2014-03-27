@@ -1,7 +1,7 @@
 /*
  * xfer-chat.c - chat with direct connection to remote host
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -372,13 +372,11 @@ xfer_chat_open_buffer (struct t_xfer *xfer)
         }
 
         weechat_printf (xfer->buffer,
-                        _("Connected to %s (%ld.%ld.%ld.%ld) via "
-                          "xfer chat"),
+                        _("%s%s: connected to %s (%s) via xfer chat"),
+                        weechat_prefix ("network"),
+                        XFER_PLUGIN_NAME,
                         xfer->remote_nick,
-                        xfer->remote_address >> 24,
-                        (xfer->remote_address >> 16) & 0xff,
-                        (xfer->remote_address >> 8) & 0xff,
-                        xfer->remote_address & 0xff);
+                        xfer->remote_address_str);
 
         free (name);
     }

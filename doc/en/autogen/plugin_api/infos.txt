@@ -1,5 +1,5 @@
 [width="100%",cols="^1,^2,6,6",options="header"]
-|========================================
+|===
 | Plugin | Name | Description | Arguments
 
 | aspell | aspell_dict | comma-separated list of dictionaries used in buffer | buffer pointer ("0x12345678") or buffer full name ("irc.freenode.#weechat")
@@ -42,6 +42,10 @@
 
 | weechat | locale | locale used for translating messages | -
 
+| weechat | term_height | height of terminal | -
+
+| weechat | term_width | width of terminal | -
+
 | weechat | version | WeeChat version | -
 
 | weechat | version_git | WeeChat git version (output of command "git describe" for a development version only, empty for a stable release) | -
@@ -62,4 +66,4 @@
 
 | weechat | weechat_upgrading | 1 if WeeChat is upgrading (command `/upgrade`) | -
 
-|========================================
+|===

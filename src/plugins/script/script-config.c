@@ -1,7 +1,7 @@
 /*
  * script-config.c - script configuration options (file script.conf)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -478,7 +478,7 @@ script_config_init ()
         script_config_file, ptr_section,
         "translate_description", "boolean",
         N_("translate description of scripts (if translation is available in "
-           "your language, otherwise english version is used)"),
+           "your language, otherwise English version is used)"),
         NULL, 0, 0, "on", NULL, 0,
         NULL, NULL, &script_config_reload_scripts_cb, NULL, NULL, NULL);
     script_config_look_use_keys = weechat_config_new_option (
@@ -578,7 +578,7 @@ script_config_init ()
         script_config_file, ptr_section,
         "text_delimiters", "color",
         N_("text color of delimiters in script buffer"),
-        NULL, 0, 0, "darkgray", NULL, 0,
+        NULL, 0, 0, "default", NULL, 0,
         NULL, NULL, &script_config_refresh_cb, NULL, NULL, NULL);
     script_config_color_text_description = weechat_config_new_option (
         script_config_file, ptr_section,

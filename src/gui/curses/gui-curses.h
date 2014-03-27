@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,15 +30,17 @@
 #include <curses.h>
 #endif
 
-#ifdef __CYGWIN__
-#include <sys/termios.h>
-#endif
-
 struct t_gui_buffer;
 struct t_gui_window;
 struct t_gui_bar_window;
 
 #define GUI_CURSES_NUM_WEECHAT_COLORS 17
+
+#ifndef A_ITALIC /* A_ITALIC is defined in ncurses >= 5.9 patch 20130831 */
+#define A_ITALIC 0
+#endif
+
+#define A_ALL_ATTR A_BOLD | A_UNDERLINE | A_REVERSE | A_ITALIC
 
 #define GUI_WINDOW_OBJECTS(window)                                      \
     ((struct t_gui_window_curses_objects *)(window->gui_objects))
@@ -79,6 +81,7 @@ extern int gui_color_buffer_refresh_needed;
 extern int gui_window_current_emphasis;
 
 /* color functions */
+extern int gui_color_get_extended_attrs (int color);
 extern int gui_color_get_pair (int fg, int bg);
 extern int gui_color_weechat_get_pair (int weechat_color);
 extern void gui_color_pre_init ();
@@ -127,6 +130,10 @@ extern void gui_window_string_apply_color_set_attr (unsigned char **str,
                                                     WINDOW *window);
 extern void gui_window_string_apply_color_remove_attr (unsigned char **str,
                                                        WINDOW *window);
+extern void gui_window_hline (WINDOW *window, int x, int y, int width,
+                              const char *string);
+extern void gui_window_vline (WINDOW *window, int x, int y, int height,
+                              const char *string);
 extern void gui_window_set_title (const char *title);
 
 #endif /* __WEECHAT_GUI_CURSES_H */

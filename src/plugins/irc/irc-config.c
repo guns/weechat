@@ -1,7 +1,7 @@
 /*
  * irc-config.c - IRC configuration options (file irc.conf)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -69,7 +69,7 @@ struct t_config_option *irc_config_look_display_pv_back;
 struct t_config_option *irc_config_look_highlight_server;
 struct t_config_option *irc_config_look_highlight_channel;
 struct t_config_option *irc_config_look_highlight_pv;
-struct t_config_option *irc_config_look_highlight_tags;
+struct t_config_option *irc_config_look_highlight_tags_restrict;
 struct t_config_option *irc_config_look_item_away_message;
 struct t_config_option *irc_config_look_item_channel_modes_hide_key;
 struct t_config_option *irc_config_look_item_display_server;
@@ -87,6 +87,7 @@ struct t_config_option *irc_config_look_nick_mode;
 struct t_config_option *irc_config_look_nick_mode_empty;
 struct t_config_option *irc_config_look_notice_as_pv;
 struct t_config_option *irc_config_look_notice_welcome_redirect;
+struct t_config_option *irc_config_look_notice_welcome_tags;
 struct t_config_option *irc_config_look_notify_tags_ison;
 struct t_config_option *irc_config_look_notify_tags_whois;
 struct t_config_option *irc_config_look_part_closes_buffer;
@@ -98,6 +99,7 @@ struct t_config_option *irc_config_look_smart_filter;
 struct t_config_option *irc_config_look_smart_filter_delay;
 struct t_config_option *irc_config_look_smart_filter_join;
 struct t_config_option *irc_config_look_smart_filter_join_unmask;
+struct t_config_option *irc_config_look_smart_filter_mode;
 struct t_config_option *irc_config_look_smart_filter_nick;
 struct t_config_option *irc_config_look_smart_filter_quit;
 struct t_config_option *irc_config_look_topic_strip_colors;
@@ -123,9 +125,11 @@ struct t_config_option *irc_config_color_topic_old;
 struct t_config_option *irc_config_network_alternate_nick;
 struct t_config_option *irc_config_network_autoreconnect_delay_growing;
 struct t_config_option *irc_config_network_autoreconnect_delay_max;
+struct t_config_option *irc_config_network_ban_mask_default;
 struct t_config_option *irc_config_network_colors_receive;
 struct t_config_option *irc_config_network_colors_send;
 struct t_config_option *irc_config_network_lag_check;
+struct t_config_option *irc_config_network_lag_max;
 struct t_config_option *irc_config_network_lag_min_show;
 struct t_config_option *irc_config_network_lag_reconnect;
 struct t_config_option *irc_config_network_lag_refresh_interval;
@@ -485,12 +489,12 @@ irc_config_change_look_item_nick_prefix (void *data,
 }
 
 /*
- * Callback for changes on option "irc.look.highlight_tags".
+ * Callback for changes on option "irc.look.highlight_tags_restrict".
  */
 
 void
-irc_config_change_look_highlight_tags (void *data,
-                                       struct t_config_option *option)
+irc_config_change_look_highlight_tags_restrict (void *data,
+                                                struct t_config_option *option)
 {
     struct t_irc_server *ptr_server;
     struct t_irc_channel *ptr_channel;
@@ -504,16 +508,16 @@ irc_config_change_look_highlight_tags (void *data,
     {
         if (ptr_server->buffer)
         {
-            weechat_buffer_set (ptr_server->buffer, "highlight_tags",
-                                weechat_config_string (irc_config_look_highlight_tags));
+            weechat_buffer_set (ptr_server->buffer, "highlight_tags_restrict",
+                                weechat_config_string (irc_config_look_highlight_tags_restrict));
         }
         for (ptr_channel = ptr_server->channels; ptr_channel;
              ptr_channel = ptr_channel->next_channel)
         {
             if (ptr_channel->buffer)
             {
-                weechat_buffer_set (ptr_channel->buffer, "highlight_tags",
-                                    weechat_config_string (irc_config_look_highlight_tags));
+                weechat_buffer_set (ptr_channel->buffer, "highlight_tags_restrict",
+                                    weechat_config_string (irc_config_look_highlight_tags_restrict));
             }
         }
     }
@@ -978,7 +982,10 @@ irc_config_check_gnutls_priorities (const char *priorities)
 
     rc = gnutls_priority_init (&priority_cache, priorities, &pos_error);
     if (rc == GNUTLS_E_SUCCESS)
+    {
+        gnutls_priority_deinit (priority_cache);
         return NULL;
+    }
     if (pos_error)
         return pos_error;
     return priorities;
@@ -1049,6 +1056,16 @@ irc_config_server_check_value_cb (void *data,
                                       "at this position in string: \"%s\""),
                                     weechat_prefix ("error"), IRC_PLUGIN_NAME,
                                     pos_error);
+                    return 0;
+                }
+                break;
+            case IRC_SERVER_OPTION_SSL_FINGERPRINT:
+                if (value && value[0] && (strlen (value) != 40))
+                {
+                    weechat_printf (NULL,
+                                    _("%s%s: fingerprint must have exactly 40 "
+                                      "hexadecimal digits"),
+                                    weechat_prefix ("error"), IRC_PLUGIN_NAME);
                     return 0;
                 }
                 break;
@@ -1562,6 +1579,22 @@ irc_config_server_new_option (struct t_config_file *config_file,
                 callback_change, callback_change_data,
                 NULL, NULL);
             break;
+        case IRC_SERVER_OPTION_SSL_FINGERPRINT:
+            new_option = weechat_config_new_option (
+                config_file, section,
+                option_name, "string",
+                N_("SHA1 fingerprint of certificate which is trusted and "
+                   "accepted for the server (it must be exactly 40 hexadecimal "
+                   "digits without separators); if this option is set, the "
+                   "other checks on certificates are NOT performed (option "
+                   "\"ssl_verify\")"),
+                NULL, 0, 0,
+                default_value, value,
+                null_value_allowed,
+                callback_check_value, callback_check_value_data,
+                callback_change, callback_change_data,
+                NULL, NULL);
+            break;
         case IRC_SERVER_OPTION_SSL_VERIFY:
             new_option = weechat_config_new_option (
                 config_file, section,
@@ -1746,10 +1779,10 @@ irc_config_server_new_option (struct t_config_file *config_file,
             new_option = weechat_config_new_option (
                 config_file, section,
                 option_name, "string",
-                N_("command(s) to run when connected to server (many commands "
-                   "should be separated by \";\", use \"\\;\" for a semicolon, "
-                   "special variables $nick, $channel and $server are replaced "
-                   "by their value) "
+                N_("command(s) to run after connection to server and before "
+                   "auto-join of channels (many commands can be separated by "
+                   "\";\", use \"\\;\" for a semicolon, special variables "
+                   "$nick, $channel and $server are replaced by their value) "
                    "(note: content is evaluated, see /help eval)"),
                 NULL, 0, 0,
                 default_value, value,
@@ -1762,8 +1795,9 @@ irc_config_server_new_option (struct t_config_file *config_file,
             new_option = weechat_config_new_option (
                 config_file, section,
                 option_name, "integer",
-                N_("delay (in seconds) after command was executed (example: give some "
-                   "time for authentication)"),
+                N_("delay (in seconds) after execution of command and before "
+                   "auto-join of channels (example: give some time for "
+                   "authentication before joining channels)"),
                 NULL, 0, 3600,
                 default_value, value,
                 null_value_allowed,
@@ -1775,8 +1809,13 @@ irc_config_server_new_option (struct t_config_file *config_file,
             new_option = weechat_config_new_option (
                 config_file, section,
                 option_name, "string",
-                N_("comma separated list of channels to join when connected to server "
-                   "(example: \"#chan1,#chan2,#chan3 key1,key2\") "
+                N_("comma separated list of channels to join after connection "
+                   "to server (and after executing command + delay if they are "
+                   "set); the channels that require a key must be at beginning "
+                   "of the list, and all the keys must be given after the "
+                   "channels (separated by a space) (example: \"#channel1,"
+                   "#channel2,#channel3 key1,key2\" where #channel1 and "
+                   "#channel2 are protected by key1 and key2) "
                    "(note: content is evaluated, see /help eval)"),
                 NULL, 0, 0,
                 default_value, value,
@@ -1875,6 +1914,20 @@ irc_config_server_new_option (struct t_config_file *config_file,
                 N_("do not check away nicks on channels with high number of "
                    "nicks (0 = unlimited)"),
                 NULL, 0, 1000000,
+                default_value, value,
+                null_value_allowed,
+                callback_check_value, callback_check_value_data,
+                callback_change, callback_change_data,
+                NULL, NULL);
+            break;
+        case IRC_SERVER_OPTION_DEFAULT_MSG_KICK:
+            new_option = weechat_config_new_option (
+                config_file, section,
+                option_name, "string",
+                N_("default kick message used by commands \"/kick\" and "
+                   "\"/kickban\" (special variables $nick, $channel and $server "
+                   "are replaced by their value)"),
+                NULL, 0, 0,
                 default_value, value,
                 null_value_allowed,
                 callback_check_value, callback_check_value_data,
@@ -2261,7 +2314,7 @@ irc_config_init ()
         "display_join_message", "string",
         N_("comma-separated list of messages to display after joining a channel: "
            "329 = channel creation date, 332 = topic, 333 = nick/date for topic, "
-           "366 = names on channel"),
+           "353 = names on channel, 366 = names count"),
         NULL, 0, 0, "329,332,333,366", NULL, 0, NULL, NULL,
         &irc_config_change_look_display_join_message, NULL, NULL, NULL);
     irc_config_look_display_old_topic = weechat_config_new_option (
@@ -2288,10 +2341,9 @@ irc_config_init ()
            "(case insensitive, use \"(?-i)\" at beginning of words to "
            "make them case sensitive; special variables $nick, $channel and "
            "$server are replaced by their value), these words are added to "
-           "buffer local variable \"highlight_words\" only when buffer is "
-           "created (it does not affect current buffers), an empty string "
-           "disables default highlight on nick, examples: \"$nick\", "
-           "\"(?-i)$nick\""),
+           "buffer property \"highlight_words\" only when buffer is created "
+           "(it does not affect current buffers), an empty string disables "
+           "default highlight on nick, examples: \"$nick\", \"(?-i)$nick\""),
         NULL, 0, 0, "$nick", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_highlight_channel = weechat_config_new_option (
         irc_config_file, ptr_section,
@@ -2300,10 +2352,9 @@ irc_config_init ()
            "(case insensitive, use \"(?-i)\" at beginning of words to "
            "make them case sensitive; special variables $nick, $channel and "
            "$server are replaced by their value), these words are added to "
-           "buffer local variable \"highlight_words\" only when buffer is "
-           "created (it does not affect current buffers), an empty string "
-           "disables default highlight on nick, examples: \"$nick\", "
-           "\"(?-i)$nick\""),
+           "buffer property \"highlight_words\" only when buffer is created "
+           "(it does not affect current buffers), an empty string disables "
+            "default highlight on nick, examples: \"$nick\", \"(?-i)$nick\""),
         NULL, 0, 0, "$nick", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_highlight_pv = weechat_config_new_option (
         irc_config_file, ptr_section,
@@ -2312,19 +2363,21 @@ irc_config_init ()
            "(case insensitive, use \"(?-i)\" at beginning of words to "
            "make them case sensitive; special variables $nick, $channel and "
            "$server are replaced by their value), these words are added to "
-           "buffer local variable \"highlight_words\" only when buffer is "
-           "created (it does not affect current buffers), an empty string "
-           "disables default highlight on nick, examples: \"$nick\", "
-           "\"(?-i)$nick\""),
+           "buffer property \"highlight_words\" only when buffer is created "
+           "(it does not affect current buffers), an empty string disables "
+            "default highlight on nick, examples: \"$nick\", \"(?-i)$nick\""),
         NULL, 0, 0, "$nick", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    irc_config_look_highlight_tags = weechat_config_new_option (
+    irc_config_look_highlight_tags_restrict = weechat_config_new_option (
         irc_config_file, ptr_section,
-        "highlight_tags", "string",
-        N_("comma separated list of tags for messages that may produce "
-           "highlight (usually any message from another user, not server "
-           "messages,..)"),
+        "highlight_tags_restrict", "string",
+        N_("restrict highlights to these tags on irc buffers (to have "
+           "highlight on user messages but not server messages); tags "
+           "must be separated by a comma and \"+\" can be used to make a "
+           "logical \"and\" between tags; tags can start or end with \"*\" "
+           "to match more than one tag; an empty value allows highlight on any "
+           "tag"),
         NULL, 0, 0, "irc_privmsg,irc_notice", NULL, 0, NULL, NULL,
-        &irc_config_change_look_highlight_tags, NULL, NULL, NULL);
+        &irc_config_change_look_highlight_tags_restrict, NULL, NULL, NULL);
     irc_config_look_item_away_message = weechat_config_new_option (
         irc_config_file, ptr_section,
         "item_away_message", "boolean",
@@ -2454,12 +2507,19 @@ irc_config_init ()
            "beginning of notice message, for example notices sent by freenode "
            "server which look like: \"[#channel] Welcome to this channel...\""),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    irc_config_look_notice_welcome_tags = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "notice_welcome_tags", "string",
+        N_("comma separated list of tags used in a welcome notices redirected "
+           "to a channel, for example: \"notify_private\""),
+        NULL, 0, 0, "", NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, NULL);
     irc_config_look_notify_tags_ison = weechat_config_new_option (
         irc_config_file, ptr_section,
         "notify_tags_ison", "string",
         N_("comma separated list of tags used in messages displayed by notify "
-           "when a nick joins or quits server (result of command ison), "
-           "for example: \"notify_message\", \"notify_private\" or "
+           "when a nick joins or quits server (result of command ison or "
+           "monitor), for example: \"notify_message\", \"notify_private\" or "
            "\"notify_highlight\""),
         NULL, 0, 0, "notify_message", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
@@ -2533,6 +2593,15 @@ irc_config_init ()
            "update on topic), the join is unmasked, as well as nick changes "
            "after this join (0 = disable: never unmask a join)"),
         NULL, 0, 60*24*7, "30", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    irc_config_look_smart_filter_mode = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "smart_filter_mode", "string",
+        /* TRANSLATORS: please do not translate "mode" */
+        N_("enable smart filter for \"mode\" messages: \"*\" to filter all "
+           "modes, \"xyz\" to filter only modes x/y/z, \"-xyz\" to filter all "
+           "modes but not x/y/z; examples: \"ovh\": filter modes o/v/h, "
+           "\"-bkl\": filter all modes but not b/k/l"),
+        NULL, 0, 0, "ovh", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_look_smart_filter_nick = weechat_config_new_option (
         irc_config_file, ptr_section,
         "smart_filter_nick", "boolean",
@@ -2655,7 +2724,7 @@ irc_config_init ()
         irc_config_file, ptr_section,
         "topic_old", "color",
         N_("color for old channel topic (when topic is changed)"),
-        NULL, -1, 0, "darkgray", NULL, 0, NULL, NULL,
+        NULL, -1, 0, "default", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
 
     /* network */
@@ -2691,6 +2760,15 @@ irc_config_init ()
         N_("maximum autoreconnect delay to server (in seconds, 0 = no maximum)"),
         NULL, 0, 3600 * 24, "1800", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
+    irc_config_network_ban_mask_default = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "ban_mask_default", "string",
+        N_("default ban mask for commands /ban, /unban and /kickban; variables "
+           "$nick, $user and $host are replaced by their values (extracted "
+           "from \"nick!user@host\"); this default mask is used only if "
+           "WeeChat knows the host for the nick"),
+        NULL, 0, 0, "*!$user@$host", NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, NULL);
     irc_config_network_colors_receive = weechat_config_new_option (
         irc_config_file, ptr_section,
         "colors_receive", "boolean",
@@ -2701,7 +2779,7 @@ irc_config_init ()
         "colors_send", "boolean",
         N_("allow user to send colors with special codes (ctrl-c + a code and "
            "optional color: b=bold, cxx=color, cxx,yy=color+background, "
-           "u=underline, r=reverse)"),
+           "i=italic, o=disable color/attributes, r=reverse, u=underline)"),
         NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     irc_config_network_lag_check = weechat_config_new_option (
         irc_config_file, ptr_section,
@@ -2710,6 +2788,14 @@ irc_config_init ()
            "check)"),
         NULL, 0, 3600 * 24 * 7, "60", NULL, 0, NULL, NULL,
         &irc_config_change_network_lag_check, NULL, NULL, NULL);
+    irc_config_network_lag_max = weechat_config_new_option (
+        irc_config_file, ptr_section,
+        "lag_max", "integer",
+        N_("maximum lag (in seconds): if this lag is reached, WeeChat will "
+           "consider that the answer from server (pong) will never be received "
+           "and will give up counting the lag (0 = never give up)"),
+        NULL, 0, 3600 * 24 * 7, "1800", NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, NULL);
     irc_config_network_lag_min_show = weechat_config_new_option (
         irc_config_file, ptr_section,
         "lag_min_show", "integer",
@@ -2719,9 +2805,11 @@ irc_config_init ()
     irc_config_network_lag_reconnect = weechat_config_new_option (
         irc_config_file, ptr_section,
         "lag_reconnect", "integer",
-        N_("reconnect to server if lag is greater than this value (in seconds, "
-           "0 = never reconnect)"),
-        NULL, 0, 3600 * 24 * 7, "0", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        N_("reconnect to server if lag is greater than or equal to this value "
+           "(in seconds, 0 = never reconnect); this value must be less than or "
+           "equal to irc.network.lag_max"),
+        NULL, 0, 3600 * 24 * 7, "0", NULL, 0, NULL, NULL,
+        NULL, NULL, NULL, NULL);
     irc_config_network_lag_refresh_interval = weechat_config_new_option (
         irc_config_file, ptr_section,
         "lag_refresh_interval", "integer",

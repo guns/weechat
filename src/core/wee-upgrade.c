@@ -1,7 +1,7 @@
 /*
  * wee-upgrade.c - save/restore session data of WeeChat core
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -354,7 +354,7 @@ upgrade_weechat_save_layout_window (struct t_upgrade_file *upgrade_file)
 
     if (ptr_layout)
     {
-        gui_layout_window_save (ptr_layout);
+        gui_layout_window_store (ptr_layout);
 
         /* save tree with layout of windows */
         rc = upgrade_weechat_save_layout_window_tree (upgrade_file, ptr_layout->layout_windows);
@@ -521,8 +521,23 @@ upgrade_weechat_read_cb (void *data,
                                                         infolist_string (infolist, "highlight_words"));
                         gui_buffer_set_highlight_regex (upgrade_current_buffer,
                                                         infolist_string (infolist, "highlight_regex"));
-                        gui_buffer_set_highlight_tags (upgrade_current_buffer,
-                                                       infolist_string (infolist, "highlight_tags"));
+                        if (infolist_search_var (infolist,
+                                                 "highlight_tags_restrict"))
+                        {
+                            /* WeeChat >= 0.4.3 */
+                            gui_buffer_set_highlight_tags_restrict (upgrade_current_buffer,
+                                                                    infolist_string (infolist,
+                                                                                     "highlight_tags_restrict"));
+                            gui_buffer_set_highlight_tags (upgrade_current_buffer,
+                                                           infolist_string (infolist,
+                                                                            "highlight_tags"));
+                        }
+                        else
+                        {
+                            /* WeeChat <= 0.4.2 */
+                            gui_buffer_set_highlight_tags_restrict (upgrade_current_buffer,
+                                                                    infolist_string (infolist, "highlight_tags"));
+                        }
                         gui_buffer_set_hotlist_max_level_nicks (upgrade_current_buffer,
                                                                 infolist_string (infolist, "hotlist_max_level_nicks"));
                         index = 0;

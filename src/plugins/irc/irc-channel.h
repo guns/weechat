@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -48,8 +48,8 @@ struct t_irc_channel
     int limit;                         /* user limit (0 is limit not set)   */
     char *key;                         /* channel key (NULL if no key set)  */
     struct t_hashtable *join_msg_received; /* messages received after join: */
-                                       /* 366=names, 332/333=topic,         */
-                                       /* 329=creation date                 */
+                                       /* 353=names, 366=names count,       */
+                                       /* 332/333=topic, 329=creation date  */
     int checking_away;                 /* = 1 if checking away with WHO cmd */
     char *away_message;                /* to display away only once in pv   */
     int has_quit_server;               /* =1 if nick has quit (pv only), to */
@@ -83,6 +83,8 @@ extern struct t_irc_channel *irc_channel_new (struct t_irc_server *server,
                                               const char *channel_name,
                                               int switch_to_channel,
                                               int auto_switch);
+extern void irc_channel_add_nicklist_groups (struct t_irc_server *server,
+                                             struct t_irc_channel *channel);
 extern void irc_channel_set_topic (struct t_irc_channel *channel,
                                    const char *topic);
 extern void irc_channel_set_modes (struct t_irc_channel *channel,

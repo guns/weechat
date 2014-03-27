@@ -1,6 +1,7 @@
 [[command_rmodifier_rmodifier]]
 [command]*`rmodifier`* wandelt Schlüsselwörter mit regulären Ausdrücken (regelt die Darstellung von Texten in WeeChat)::
-........................................
+
+----
 /rmodifier  list|listdefault
             add <name> <modifiers> <groups> <regex>
             del <name>|-all [<name>...]
@@ -13,7 +14,7 @@ listdefault: zeigt die Standardeinstellung für rmodifier an
        name: Name des rmodifier
   modifiers: durch Kommata getrennte Liste der modifier
      groups: Aktion auf Gruppen (groups) anwenden, die durch reguläre Ausdrücke abgefragt werden (innerhalb der runden Klammern): durch Kommata getrennte Liste der Gruppen (von 1 bis 9). Optional kann nach der Nummer für die Gruppe ein "*" gesetzt werden um diese Gruppe auszublenden
-      regex: regulärer Ausdruck (zwischen Groß- und Kleinschreibung wird nicht unterschieden. Um zwischen Groß- und Kleinschreibung zu unterscheiden muss zu Beginn "(?-i)" genutzt werden)
+      regex: erweiterter regulärer POSIX Ausdruck (zwischen Groß- und Kleinschreibung wird nicht unterschieden. Um zwischen Groß- und Kleinschreibung zu unterscheiden muss zu Beginn "(?-i)" genutzt werden)
         del: löscht einen rmodifier Eintrag
        -all: löscht alle rmodifiers Einträge
     missing: fügt fehlende rmodifiers hinzu
@@ -26,5 +27,5 @@ Beispiele:
     /rmodifier del passwort
   lösche alle rmodifiers:
     /rmodifier del -all
-........................................
+----
 

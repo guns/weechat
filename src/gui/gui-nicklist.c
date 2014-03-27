@@ -1,7 +1,7 @@
 /*
  * gui-nicklist.c - nicklist functions (used by all GUI)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1046,8 +1046,8 @@ gui_nicklist_hdata_nick_group_cb (void *data, const char *hdata_name)
                        0, 0, NULL, NULL);
     if (hdata)
     {
-        HDATA_VAR(struct t_gui_nick_group, name, STRING, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick_group, color, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick_group, name, SHARED_STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick_group, color, SHARED_STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_nick_group, visible, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_nick_group, level, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_nick_group, parent, POINTER, 0, NULL, hdata_name);
@@ -1078,10 +1078,10 @@ gui_nicklist_hdata_nick_cb (void *data, const char *hdata_name)
     if (hdata)
     {
         HDATA_VAR(struct t_gui_nick, group, POINTER, 0, NULL, "nick_group");
-        HDATA_VAR(struct t_gui_nick, name, STRING, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, color, STRING, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, prefix, STRING, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_nick, prefix_color, STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, name, SHARED_STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, color, SHARED_STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, prefix, SHARED_STRING, 0, NULL, NULL);
+        HDATA_VAR(struct t_gui_nick, prefix_color, SHARED_STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_nick, visible, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_nick, prev_nick, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_nick, next_nick, POINTER, 0, NULL, hdata_name);
@@ -1330,5 +1330,19 @@ gui_nicklist_print_log (struct t_gui_nick_group *group, int indent)
                   "%%-%dsnext_nick . . . : 0x%%lx",
                   (indent * 2) + 6);
         log_printf (format, " ", ptr_nick->next_nick);
+    }
+}
+
+/*
+ * Frees all allocated data.
+ */
+
+void
+gui_nicklist_end ()
+{
+    if (gui_nicklist_hsignal)
+    {
+        hashtable_free (gui_nicklist_hsignal);
+        gui_nicklist_hsignal = NULL;
     }
 }

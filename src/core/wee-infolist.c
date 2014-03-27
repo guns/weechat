@@ -1,7 +1,7 @@
 /*
  * wee-infolist.c - info lists management
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -65,6 +65,33 @@ infolist_new (struct t_weechat_plugin *plugin)
     }
 
     return new_infolist;
+}
+
+/*
+ * Checks if an infolist pointer is valid.
+ *
+ * Returns:
+ *   1: infolist exists
+ *   0: infolist is not found
+ */
+
+int
+infolist_valid (struct t_infolist *infolist)
+{
+    struct t_infolist *ptr_infolist;
+
+    if (!infolist)
+        return 0;
+
+    for (ptr_infolist = weechat_infolists; ptr_infolist;
+         ptr_infolist = ptr_infolist->next_infolist)
+    {
+        if (ptr_infolist == infolist)
+            return 1;
+    }
+
+    /* list not found */
+    return 0;
 }
 
 /*
@@ -275,30 +302,6 @@ infolist_new_var_time (struct t_infolist_item *item,
 }
 
 /*
- * Checks if an infolist pointer is valid.
- *
- * Returns:
- *   1: infolist exists
- *   0: infolist is not found
- */
-
-int
-infolist_valid (struct t_infolist *infolist)
-{
-    struct t_infolist *ptr_infolist;
-
-    for (ptr_infolist = weechat_infolists; ptr_infolist;
-         ptr_infolist = ptr_infolist->next_infolist)
-    {
-        if (ptr_infolist == infolist)
-            return 1;
-    }
-
-    /* list not found */
-    return 0;
-}
-
-/*
  * Gets next item for an infolist.
  *
  * If pointer is NULL, returns first item of infolist.
@@ -342,6 +345,29 @@ void
 infolist_reset_item_cursor (struct t_infolist *infolist)
 {
     infolist->ptr_item = NULL;
+}
+
+/*
+ * Searches for a variable in current infolist item.
+ */
+
+struct t_infolist_var *
+infolist_search_var (struct t_infolist *infolist, const char *name)
+{
+    struct t_infolist_var *ptr_var;
+
+    if (!infolist || !infolist->ptr_item || !name || !name[0])
+        return NULL;
+
+    for (ptr_var = infolist->ptr_item->vars; ptr_var;
+         ptr_var = ptr_var->next_var)
+    {
+        if (string_strcasecmp (ptr_var->name, name) == 0)
+            return ptr_var;
+    }
+
+    /* variable not found */
+    return NULL;
 }
 
 /*

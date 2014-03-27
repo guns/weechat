@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -81,6 +81,9 @@ struct t_plugin_script_init
                                             void *pointer,
                                             const char *arguments);
     int (*callback_signal_debug_dump)(void *data, const char *signal,
+                                      const char *type_data,
+                                      void *signal_data);
+    int (*callback_signal_debug_libs)(void *data, const char *signal,
                                       const char *type_data,
                                       void *signal_data);
     int (*callback_signal_buffer_closed)(void *data, const char *signal,

@@ -1,7 +1,7 @@
 /*
  * weechat-python.c - python plugin for WeeChat
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2007 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2012 Simon Arlott
  *
@@ -36,7 +36,7 @@
 
 WEECHAT_PLUGIN_NAME(PYTHON_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Support of python scripts"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -49,6 +49,7 @@ struct t_plugin_script *python_current_script = NULL;
 struct t_plugin_script *python_registered_script = NULL;
 const char *python_current_script_filename = NULL;
 PyThreadState *python_mainThreadState = NULL;
+PyThreadState *python_current_interpreter = NULL;
 char *python2_bin = NULL;
 
 /* outputs subroutines */
@@ -590,7 +591,6 @@ weechat_python_load (const char *filename)
     wchar_t *wargv[] = { NULL, NULL };
 #endif
     FILE *fp;
-    PyThreadState *python_current_interpreter;
     PyObject *weechat_outputs, *python_path, *path;
     const char *weechat_home;
     char *str_home;
@@ -659,7 +659,13 @@ weechat_python_load (const char *filename)
         if (str_home)
         {
             snprintf (str_home, len, "%s/python", weechat_home);
+#if PY_MAJOR_VERSION >= 3
+            /* python >= 3.x */
+            path = PyUnicode_FromString(str_home);
+#else
+            /* python <= 2.x */
             path = PyBytes_FromString (str_home);
+#endif
             if (path != NULL)
             {
                 PyList_Insert (python_path, 0, path);
@@ -670,10 +676,10 @@ weechat_python_load (const char *filename)
     }
 
 #if PY_MAJOR_VERSION >= 3
-    /* python 3.x (or newer) */
+    /* python >= 3.x */
     weechat_outputs = PyModule_Create (&moduleDefOutputs);
 #else
-    /* python 2.x */
+    /* python <= 2.x */
     weechat_outputs = Py_InitModule("weechatOutputs",
                                     weechat_python_output_funcs);
 #endif
@@ -748,7 +754,6 @@ weechat_python_load (const char *filename)
     }
     python_current_script = python_registered_script;
 
-    python_current_script->interpreter = (PyThreadState *) python_current_interpreter;
     /* PyEval_ReleaseThread (python_current_script->interpreter); */
 
     /*
@@ -1127,6 +1132,29 @@ weechat_python_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
+ * Display infos about external libraries used.
+ */
+
+int
+weechat_python_signal_debug_libs_cb (void *data, const char *signal,
+                                     const char *type_data, void *signal_data)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) signal;
+    (void) type_data;
+    (void) signal_data;
+
+#ifdef PY_VERSION
+    weechat_printf (NULL, "  %s: %s", PYTHON_PLUGIN_NAME, PY_VERSION);
+#else
+    weechat_printf (NULL, "  %s: (?)", PYTHON_PLUGIN_NAME);
+#endif
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Callback called when a buffer is closed.
  */
 
@@ -1286,6 +1314,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     init.callback_hdata = &weechat_python_hdata_cb;
     init.callback_infolist = &weechat_python_infolist_cb;
     init.callback_signal_debug_dump = &weechat_python_signal_debug_dump_cb;
+    init.callback_signal_debug_libs = &weechat_python_signal_debug_libs_cb;
     init.callback_signal_buffer_closed = &weechat_python_signal_buffer_closed_cb;
     init.callback_signal_script_action = &weechat_python_signal_script_action_cb;
     init.callback_load_file = &weechat_python_load_cb;

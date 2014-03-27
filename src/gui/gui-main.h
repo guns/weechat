@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -25,6 +25,7 @@
 extern void gui_main_get_password (const char *prompt1, const char *prompt2,
                                    const char *prompt3,
                                    char *password, int size);
+extern void gui_main_debug_libs ();
 extern void gui_main_loop ();
 extern void gui_main_pre_init (int *argc, char **argv[]);
 extern void gui_main_init ();

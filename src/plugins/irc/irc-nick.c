@@ -1,7 +1,7 @@
 /*
  * irc-nick.c - nick management for IRC plugin
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -48,7 +48,7 @@ irc_nick_valid (struct t_irc_channel *channel, struct t_irc_nick *nick)
 {
     struct t_irc_nick *ptr_nick;
 
-    if (!channel)
+    if (!channel || !nick)
         return 0;
 
     for (ptr_nick = channel->nicks; ptr_nick; ptr_nick = ptr_nick->next_nick)
@@ -632,6 +632,9 @@ irc_nick_new (struct t_irc_server *server, struct t_irc_channel *channel,
     if (!nickname || !nickname[0])
         return NULL;
 
+    if (!channel->nicks)
+        irc_channel_add_nicklist_groups (server, channel);
+
     /* nick already exists on this channel? */
     ptr_nick = irc_nick_search (server, channel, nickname);
     if (ptr_nick)
@@ -820,6 +823,9 @@ irc_nick_free_all (struct t_irc_server *server, struct t_irc_channel *channel)
     {
         irc_nick_free (server, channel, channel->nicks);
     }
+
+    /* remove all groups in nicklist */
+    weechat_nicklist_remove_all (channel->buffer);
 
     /* should be zero, but prevent any bug :D */
     channel->nicks_count = 0;
@@ -1037,6 +1043,58 @@ irc_nick_color_for_pv (struct t_irc_channel *channel, const char *nickname)
     }
 
     return IRC_COLOR_CHAT_NICK_OTHER;
+}
+
+/*
+ * Returns default ban mask for the nick.
+ *
+ * Note: result must be freed after use (if not NULL).
+ */
+
+char *
+irc_nick_default_ban_mask (struct t_irc_nick *nick)
+{
+    const char *ptr_ban_mask;
+    char *pos_hostname, user[128], *res, *temp;
+
+    if (!nick)
+        return NULL;
+
+    ptr_ban_mask = weechat_config_string (irc_config_network_ban_mask_default);
+
+    pos_hostname = (nick->host) ? strchr (nick->host, '@') : NULL;
+
+    if (!nick->host || !pos_hostname || !ptr_ban_mask || !ptr_ban_mask[0])
+        return NULL;
+
+    if (pos_hostname - nick->host > (int)sizeof (user) - 1)
+        return NULL;
+
+    strncpy (user, nick->host, pos_hostname - nick->host);
+    user[pos_hostname - nick->host] = '\0';
+    pos_hostname++;
+
+    /* replace nick */
+    temp = weechat_string_replace (ptr_ban_mask, "$nick", nick->name);
+    if (!temp)
+        return NULL;
+    res = temp;
+
+    /* replace user */
+    temp = weechat_string_replace (res, "$user", user);
+    free (res);
+    if (!temp)
+        return NULL;
+    res = temp;
+
+    /* replace hostname */
+    temp = weechat_string_replace (res, "$host", pos_hostname);
+    free (res);
+    if (!temp)
+        return NULL;
+    res = temp;
+
+    return res;
 }
 
 /*

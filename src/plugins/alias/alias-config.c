@@ -1,7 +1,7 @@
 /*
  * alias-config.c - alias configuration options (file alias.conf)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -36,6 +36,7 @@ char *alias_default_list[][2] =
   { "AME",     "allchan /me"          },
   { "AMSG",    "allchan /msg *"       },
   { "ANICK",   "allserv /nick"        },
+  { "BEEP",    "print -stderr \\a"    },
   { "BYE",     "quit"                 },
   { "C",       "buffer clear"         },
   { "CL",      "buffer clear"         },

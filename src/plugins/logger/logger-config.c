@@ -1,7 +1,7 @@
 /*
  * logger-config.c - logger configuration options (file logger.conf)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -401,12 +401,12 @@ logger_config_init ()
         logger_config_file, ptr_section,
         "backlog_end", "color",
         N_("color for line ending the backlog"),
-        NULL, -1, 0, "darkgray", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        NULL, -1, 0, "default", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     logger_config_color_backlog_line = weechat_config_new_option (
         logger_config_file, ptr_section,
         "backlog_line", "color",
         N_("color for backlog lines"),
-        NULL, -1, 0, "darkgray", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        NULL, -1, 0, "default", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
 
     /* file */
     ptr_section = weechat_config_new_section (logger_config_file, "file",

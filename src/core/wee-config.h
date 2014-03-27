@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -28,6 +28,8 @@ struct t_gui_buffer;
 
 #define WEECHAT_CONFIG_NAME "weechat"
 
+#define TAB_MAX_WIDTH 64
+
 enum t_config_look_align_end_of_lines
 {
     CONFIG_LOOK_ALIGN_END_OF_LINES_TIME = 0,
@@ -35,6 +37,19 @@ enum t_config_look_align_end_of_lines
     CONFIG_LOOK_ALIGN_END_OF_LINES_PREFIX,
     CONFIG_LOOK_ALIGN_END_OF_LINES_SUFFIX,
     CONFIG_LOOK_ALIGN_END_OF_LINES_MESSAGE,
+};
+
+enum t_config_look_buffer_position
+{
+    CONFIG_LOOK_BUFFER_POSITION_END = 0,
+    CONFIG_LOOK_BUFFER_POSITION_FIRST_GAP,
+};
+
+enum t_config_look_buffer_search_where
+{
+    CONFIG_LOOK_BUFFER_SEARCH_PREFIX = 0,
+    CONFIG_LOOK_BUFFER_SEARCH_MESSAGE,
+    CONFIG_LOOK_BUFFER_SEARCH_PREFIX_MESSAGE,
 };
 
 enum t_config_look_prefix_align
@@ -101,7 +116,13 @@ extern struct t_config_option *config_look_bar_more_left;
 extern struct t_config_option *config_look_bar_more_right;
 extern struct t_config_option *config_look_bar_more_up;
 extern struct t_config_option *config_look_bar_more_down;
+extern struct t_config_option *config_look_buffer_auto_renumber;
 extern struct t_config_option *config_look_buffer_notify_default;
+extern struct t_config_option *config_look_buffer_position;
+extern struct t_config_option *config_look_buffer_search_case_sensitive;
+extern struct t_config_option *config_look_buffer_search_force_default;
+extern struct t_config_option *config_look_buffer_search_regex;
+extern struct t_config_option *config_look_buffer_search_where;
 extern struct t_config_option *config_look_buffer_time_format;
 extern struct t_config_option *config_look_color_basic_force_bold;
 extern struct t_config_option *config_look_color_inactive_window;
@@ -142,6 +163,7 @@ extern struct t_config_option *config_look_input_share_overwrite;
 extern struct t_config_option *config_look_input_undo_max;
 extern struct t_config_option *config_look_item_time_format;
 extern struct t_config_option *config_look_item_buffer_filter;
+extern struct t_config_option *config_look_item_buffer_zoom;
 extern struct t_config_option *config_look_jump_current_to_previous_buffer;
 extern struct t_config_option *config_look_jump_previous_buffer_when_closing;
 extern struct t_config_option *config_look_jump_smart_back_to_buffer;
@@ -176,10 +198,12 @@ extern struct t_config_option *config_look_scroll_page_percent;
 extern struct t_config_option *config_look_search_text_not_found_alert;
 extern struct t_config_option *config_look_separator_horizontal;
 extern struct t_config_option *config_look_separator_vertical;
-extern struct t_config_option *config_look_set_title;
+extern struct t_config_option *config_look_tab_width;
 extern struct t_config_option *config_look_time_format;
+extern struct t_config_option *config_look_window_auto_zoom;
 extern struct t_config_option *config_look_window_separator_horizontal;
 extern struct t_config_option *config_look_window_separator_vertical;
+extern struct t_config_option *config_look_window_title;
 
 extern struct t_config_option *config_color_bar_more;
 extern struct t_config_option *config_color_chat;
@@ -272,11 +296,11 @@ extern int config_length_nick_prefix_suffix;
 extern int config_length_prefix_same_nick;
 extern int config_emphasized_attributes;
 extern regex_t *config_highlight_regex;
-extern char **config_highlight_tags;
+extern char ***config_highlight_tags;
 extern int config_num_highlight_tags;
 extern char **config_plugin_extensions;
 extern int config_num_plugin_extensions;
-
+extern char config_tab_spaces[];
 
 extern struct t_config_option *config_weechat_debug_get (const char *plugin_name);
 extern int config_weechat_debug_set (const char *plugin_name,

@@ -1,7 +1,7 @@
 /*
  * weechat-perl.c - perl plugin for WeeChat
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2008 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -34,7 +34,7 @@
 
 WEECHAT_PLUGIN_NAME(PERL_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Support of perl scripts"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -46,6 +46,9 @@ struct t_plugin_script *last_perl_script = NULL;
 struct t_plugin_script *perl_current_script = NULL;
 struct t_plugin_script *perl_registered_script = NULL;
 const char *perl_current_script_filename = NULL;
+#ifdef MULTIPLICITY
+PerlInterpreter *perl_current_interpreter = NULL;
+#endif
 int perl_quit_or_upgrade = 0;
 
 /*
@@ -345,10 +348,7 @@ weechat_perl_load (const char *filename)
     struct stat buf;
     char *perl_code;
     int length;
-
-#ifdef MULTIPLICITY
-    PerlInterpreter *perl_current_interpreter;
-#else
+#ifndef MULTIPLICITY
     char pkgname[64];
 #endif
 
@@ -454,9 +454,7 @@ weechat_perl_load (const char *filename)
     }
     perl_current_script = perl_registered_script;
 
-#ifdef MULTIPLICITY
-    perl_current_script->interpreter = (PerlInterpreter *)perl_current_interpreter;
-#else
+#ifndef MULTIPLICITY
     perl_current_script->interpreter = strdup (pkgname);
 #endif
 
@@ -811,6 +809,29 @@ weechat_perl_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
+ * Display infos about external libraries used.
+ */
+
+int
+weechat_perl_signal_debug_libs_cb (void *data, const char *signal,
+                                   const char *type_data, void *signal_data)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) signal;
+    (void) type_data;
+    (void) signal_data;
+
+#ifdef PERL_VERSION_STRING
+    weechat_printf (NULL, "  %s: %s", PERL_PLUGIN_NAME, PERL_VERSION_STRING);
+#else
+    weechat_printf (NULL, "  %s: (?)", PERL_PLUGIN_NAME);
+#endif
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Callback called when a buffer is closed.
  */
 
@@ -976,6 +997,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     init.callback_hdata = &weechat_perl_hdata_cb;
     init.callback_infolist = &weechat_perl_infolist_cb;
     init.callback_signal_debug_dump = &weechat_perl_signal_debug_dump_cb;
+    init.callback_signal_debug_libs = &weechat_perl_signal_debug_libs_cb;
     init.callback_signal_buffer_closed = &weechat_perl_signal_buffer_closed_cb;
     init.callback_signal_script_action = &weechat_perl_signal_script_action_cb;
     init.callback_load_file = &weechat_perl_load_cb;

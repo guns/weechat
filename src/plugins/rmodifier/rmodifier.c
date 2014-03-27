@@ -1,7 +1,7 @@
 /*
  * rmodifier.c - alter modifier strings with regular expressions
  *
- * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2010-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <strings.h>
 
 #include "../weechat-plugin.h"
 #include "rmodifier.h"
@@ -35,7 +34,7 @@
 
 WEECHAT_PLUGIN_NAME(RMODIFIER_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("String modifier with regular expressions"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -342,7 +341,7 @@ rmodifier_new_with_string (const char *name, const char *value)
     new_rmodifier = NULL;
 
     pos1 = strchr (value, ';');
-    pos2 = rindex (value, ';');
+    pos2 = strrchr (value, ';');
     if (pos1 && pos2 && (pos2 > pos1))
     {
         modifiers = weechat_strndup (value, pos1 - value);
@@ -578,12 +577,8 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     rmodifier_hook_list = weechat_list_new ();
 
     if (!rmodifier_config_init ())
-    {
-        weechat_printf (NULL,
-                        _("%s%s: error creating configuration file"),
-                        weechat_prefix("error"), RMODIFIER_PLUGIN_NAME);
         return WEECHAT_RC_ERROR;
-    }
+
     rmodifier_config_read ();
 
     rmodifier_command_init ();

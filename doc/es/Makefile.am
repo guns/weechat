@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2012-2014 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -36,7 +36,7 @@ all-local: $(man_targets) $(doc_targets)
 
 # quickstart
 weechat_quickstart.es.html: weechat_quickstart.es.txt
-	$(ASCIIDOC) -a lang=es -a toc -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -n -o weechat_quickstart.es.html $(abs_top_srcdir)/doc/es/weechat_quickstart.es.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_quickstart.es.html $(abs_top_srcdir)/doc/es/weechat_quickstart.es.txt
 
 # install man/docs
 

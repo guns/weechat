@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2007-2008 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -71,7 +71,7 @@ LIST(APPEND EXTRA_LIBS ${CURL_LIBRARIES})
 
 ADD_EXECUTABLE(${EXECUTABLE} ${WEECHAT_CURSES_SRC})
 
-INCLUDE_DIRECTORIES(.. ../../core ../../plugins)
+INCLUDE_DIRECTORIES(.. ../../core ../../plugins ${NCURSES_INCLUDE_PATH})
 
 # Because of a linker bug, we have to link 2 times with libweechat_core.a
 TARGET_LINK_LIBRARIES(${EXECUTABLE} ${STATIC_LIBS} ${EXTRA_LIBS} ${STATIC_LIBS})

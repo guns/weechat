@@ -1,7 +1,7 @@
 /*
  * irc-color.c - IRC color decoding/encoding in messages
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -68,6 +68,9 @@ irc_color_decode (const char *string, int keep_colors)
     const char *remapped_color;
     int fg, bg, bold, reverse, italic, underline, rc;
 
+    if (!string)
+        return NULL;
+
     /*
      * create output string with size of length*2 (with min 128 bytes),
      * this string will be realloc() later with a larger size if needed
@@ -118,7 +121,6 @@ irc_color_decode (const char *string, int keep_colors)
                 ptr_string++;
                 break;
             case IRC_COLOR_REVERSE_CHAR:
-            case IRC_COLOR_REVERSE2_CHAR:
                 if (keep_colors)
                 {
                     snprintf (str_to_add, sizeof (str_to_add), "%s",
@@ -261,72 +263,6 @@ irc_color_decode (const char *string, int keep_colors)
 }
 
 /*
- * Replaces IRC color codes by codes for command line.
- *
- * Note: result must be freed after use.
- */
-
-char *
-irc_color_decode_for_user_entry (const char *string)
-{
-    unsigned char *out, *ptr_string;
-    int out_length, out_pos, length;
-
-    out_length = (strlen (string) * 2) + 1;
-    out = malloc (out_length);
-    if (!out)
-        return NULL;
-
-    ptr_string = (unsigned char *)string;
-    out_pos = 0;
-    while (ptr_string && ptr_string[0] && (out_pos < out_length - 1))
-    {
-        switch (ptr_string[0])
-        {
-            case IRC_COLOR_BOLD_CHAR:
-                out[out_pos++] = 0x02;
-                ptr_string++;
-                break;
-            case IRC_COLOR_FIXED_CHAR:
-                ptr_string++;
-                break;
-            case IRC_COLOR_RESET_CHAR:
-                out[out_pos++] = 0x0F;
-                ptr_string++;
-                break;
-            case IRC_COLOR_REVERSE_CHAR:
-            case IRC_COLOR_REVERSE2_CHAR:
-                out[out_pos++] = 0x12;
-                ptr_string++;
-                break;
-            case IRC_COLOR_ITALIC_CHAR:
-                out[out_pos++] = 0x1D;
-                ptr_string++;
-                break;
-            case IRC_COLOR_UNDERLINE_CHAR:
-                out[out_pos++] = 0x15;
-                ptr_string++;
-                break;
-            case IRC_COLOR_COLOR_CHAR:
-                out[out_pos++] = 0x03;
-                ptr_string++;
-                break;
-            default:
-                length = weechat_utf8_char_size ((char *)ptr_string);
-                if (length == 0)
-                    length = 1;
-                memcpy (out + out_pos, ptr_string, length);
-                out_pos += length;
-                ptr_string += length;
-        }
-    }
-
-    out[out_pos] = '\0';
-
-    return (char *)out;
-}
-
-/*
  * Replaces color codes in command line by IRC color codes.
  *
  * If keep_colors == 0, remove any color/style in message, otherwise keeps
@@ -340,6 +276,9 @@ irc_color_encode (const char *string, int keep_colors)
 {
     unsigned char *out, *ptr_string;
     int out_length, out_pos, length;
+
+    if (!string)
+        return NULL;
 
     out_length = (strlen (string) * 2) + 1;
     out = malloc (out_length);
@@ -397,12 +336,12 @@ irc_color_encode (const char *string, int keep_colors)
                     out[out_pos++] = IRC_COLOR_RESET_CHAR;
                 ptr_string++;
                 break;
-            case 0x12: /* ^R */
+            case 0x16: /* ^V */
                 if (keep_colors)
                     out[out_pos++] = IRC_COLOR_REVERSE_CHAR;
                 ptr_string++;
                 break;
-            case 0x15: /* ^U */
+            case 0x1F: /* ^_ */
                 if (keep_colors)
                     out[out_pos++] = IRC_COLOR_UNDERLINE_CHAR;
                 ptr_string++;

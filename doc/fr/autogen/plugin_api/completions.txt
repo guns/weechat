@@ -1,5 +1,5 @@
 [width="65%",cols="^1,^2,8",options="header"]
-|========================================
+|===
 | Extension | Nom | Description
 
 | alias | alias | liste des alias
@@ -21,6 +21,8 @@
 | irc | irc_channels | canaux sur tous les serveurs IRC
 
 | irc | irc_ignores_numbers | numéros pour les ignores définis
+
+| irc | irc_msg_kick | message d'élimination par défaut
 
 | irc | irc_msg_part | message de fin par défaut pour le canal IRC
 
@@ -114,6 +116,8 @@
 
 | weechat | plugins_commands | commandes définies par les extensions
 
+| weechat | plugins_installed | noms des extensions installées
+
 | weechat | plugins_names | noms des extensions
 
 | weechat | proxies_names | noms des proxies
@@ -128,4 +132,4 @@
 
 | xfer | nick | pseudos de la discussion DCC
 
-|========================================
+|===

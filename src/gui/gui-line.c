@@ -1,7 +1,7 @@
 /*
  * gui-line.c - line functions (used by all GUI)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -562,6 +562,30 @@ gui_line_match_regex (struct t_gui_line_data *line_data, regex_t *regex_prefix,
 }
 
 /*
+ * Checks if a line has tag "no_filter" (which means that line should never been
+ * filtered: it is always displayed).
+ *
+ * Returns:
+ *   1: line has tag "no_filter"
+ *   0: line does not have tag "no_filter"
+ */
+
+int
+gui_line_has_tag_no_filter (struct t_gui_line_data *line_data)
+{
+    int i;
+
+    for (i = 0; i < line_data->tags_count; i++)
+    {
+        if (strcmp (line_data->tags_array[i], GUI_FILTER_TAG_NO_FILTER) == 0)
+            return 1;
+    }
+
+    /* tag not found, line may be filtered */
+    return 0;
+}
+
+/*
  * Checks if line matches tags.
  *
  * Returns:
@@ -571,9 +595,9 @@ gui_line_match_regex (struct t_gui_line_data *line_data, regex_t *regex_prefix,
 
 int
 gui_line_match_tags (struct t_gui_line_data *line_data,
-                     int tags_count, char **tags_array)
+                     int tags_count, char ***tags_array)
 {
-    int i, j;
+    int i, j, k, match, tag_found;
 
     if (!line_data)
         return 0;
@@ -583,14 +607,28 @@ gui_line_match_tags (struct t_gui_line_data *line_data,
 
     for (i = 0; i < tags_count; i++)
     {
-        for (j = 0; j < line_data->tags_count; j++)
+        match = 1;
+        for (j = 0; tags_array[i][j]; j++)
         {
-            /* check tag */
-            if (string_match (line_data->tags_array[j],
-                              tags_array[i],
-                              0))
-                return 1;
+            tag_found = 0;
+            for (k = 0; k < line_data->tags_count; k++)
+            {
+                if (string_match (line_data->tags_array[k],
+                                  tags_array[i][j],
+                                  0))
+                {
+                    tag_found = 1;
+                    break;
+                }
+            }
+            if (!tag_found)
+            {
+                match = 0;
+                break;
+            }
         }
+        if (match)
+            return 1;
     }
 
     return 0;
@@ -648,8 +686,9 @@ gui_line_get_nick_tag (struct t_gui_line *line)
 int
 gui_line_has_highlight (struct t_gui_line *line)
 {
-    int rc, i, j, no_highlight;
-    char *msg_no_color, *highlight_words;
+    int rc, i, no_highlight, action, length;
+    char *msg_no_color, *ptr_msg_no_color, *highlight_words;
+    const char *ptr_nick;
 
     /*
      * highlights are disabled on this buffer? (special value "-" means that
@@ -660,36 +699,65 @@ gui_line_has_highlight (struct t_gui_line *line)
         return 0;
 
     /*
-     * check if highlight is forced by a tag (with option highlight_tags) or
-     * disabled for line
+     * check if highlight is disabled for line; also check if the line is an
+     * action message (for example tag "irc_action") and get pointer on the nick
+     * (tag "nick_xxx"), these info will be used later (see below)
      */
     no_highlight = 0;
+    action = 0;
+    ptr_nick = NULL;
     for (i = 0; i < line->data->tags_count; i++)
     {
-        if (config_highlight_tags)
-        {
-            for (j = 0; j < config_num_highlight_tags; j++)
-            {
-                if (string_strcasecmp (line->data->tags_array[i],
-                                       config_highlight_tags[j]) == 0)
-                    return 1;
-            }
-        }
         if (strcmp (line->data->tags_array[i], GUI_CHAT_TAG_NO_HIGHLIGHT) == 0)
             no_highlight = 1;
+        else if (strncmp (line->data->tags_array[i], "nick_", 5) == 0)
+            ptr_nick = line->data->tags_array[i] + 5;
+        else
+        {
+            length = strlen (line->data->tags_array[i]);
+            if ((length >= 7)
+                && (strcmp (line->data->tags_array[i] + length - 7, "_action") == 0))
+            {
+                action = 1;
+            }
+        }
     }
     if (no_highlight)
         return 0;
 
     /*
+     * check if highlight is forced by a tag
+     * (with global option "weechat.look.highlight_tags")
+     */
+    if (config_highlight_tags
+        && gui_line_match_tags (line->data,
+                                config_num_highlight_tags,
+                                config_highlight_tags))
+    {
+        return 1;
+    }
+
+    /*
+     * check if highlight is forced by a tag
+     * (with buffer property "highlight_tags")
+     */
+    if (line->data->buffer->highlight_tags
+        && gui_line_match_tags (line->data,
+                                line->data->buffer->highlight_tags_count,
+                                line->data->buffer->highlight_tags_array))
+    {
+        return 1;
+    }
+
+    /*
      * check that line matches highlight tags, if any (if no tag is specified,
      * then any tag is allowed)
      */
-    if (line->data->buffer->highlight_tags_count > 0)
+    if (line->data->buffer->highlight_tags_restrict_count > 0)
     {
         if (!gui_line_match_tags (line->data,
-                                  line->data->buffer->highlight_tags_count,
-                                  line->data->buffer->highlight_tags_array))
+                                  line->data->buffer->highlight_tags_restrict_count,
+                                  line->data->buffer->highlight_tags_restrict_array))
             return 0;
     }
 
@@ -697,6 +765,19 @@ gui_line_has_highlight (struct t_gui_line *line)
     msg_no_color = gui_color_decode (line->data->message, NULL);
     if (!msg_no_color)
         return 0;
+    ptr_msg_no_color = msg_no_color;
+
+    /*
+     * if the line is an action message and that we know the nick, we skip
+     * the nick if it is at beginning of message (to not highlight an action
+     * from another user if his nick is in our highlight settings)
+     */
+    if (action && ptr_nick)
+    {
+        length = strlen (ptr_nick);
+        if (strncmp (ptr_msg_no_color, ptr_nick, length) == 0)
+            ptr_msg_no_color += length;
+    }
 
     /*
      * there is highlight on line if one of buffer highlight words matches line
@@ -704,7 +785,7 @@ gui_line_has_highlight (struct t_gui_line *line)
      */
     highlight_words = gui_buffer_string_replace_local_var (line->data->buffer,
                                                            line->data->buffer->highlight_words);
-    rc = string_has_highlight (msg_no_color,
+    rc = string_has_highlight (ptr_msg_no_color,
                                (highlight_words) ?
                                highlight_words : line->data->buffer->highlight_words);
     if (highlight_words)
@@ -714,7 +795,7 @@ gui_line_has_highlight (struct t_gui_line *line)
     {
         highlight_words = gui_buffer_string_replace_local_var (line->data->buffer,
                                                                CONFIG_STRING(config_look_highlight));
-        rc = string_has_highlight (msg_no_color,
+        rc = string_has_highlight (ptr_msg_no_color,
                                    (highlight_words) ?
                                    highlight_words : CONFIG_STRING(config_look_highlight));
         if (highlight_words)
@@ -723,13 +804,13 @@ gui_line_has_highlight (struct t_gui_line *line)
 
     if (!rc && config_highlight_regex)
     {
-        rc = string_has_highlight_regex_compiled (msg_no_color,
+        rc = string_has_highlight_regex_compiled (ptr_msg_no_color,
                                                   config_highlight_regex);
     }
 
     if (!rc && line->data->buffer->highlight_regex_compiled)
     {
-        rc = string_has_highlight_regex_compiled (msg_no_color,
+        rc = string_has_highlight_regex_compiled (ptr_msg_no_color,
                                                   line->data->buffer->highlight_regex_compiled);
     }
 
@@ -1108,7 +1189,7 @@ gui_line_add (struct t_gui_buffer *buffer, time_t date,
     }
 
     /* create data for line */
-    new_line_data = malloc (sizeof (*(new_line->data)));
+    new_line_data = malloc (sizeof (*new_line_data));
     if (!new_line_data)
     {
         free (new_line);
@@ -1256,7 +1337,7 @@ gui_line_add_y (struct t_gui_buffer *buffer, int y, const char *message)
             return;
         }
 
-        new_line_data = malloc (sizeof (*(new_line->data)));
+        new_line_data = malloc (sizeof (*new_line_data));
         if (!new_line_data)
         {
             free (new_line);
@@ -1607,11 +1688,11 @@ gui_line_hdata_line_data_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_line_data, date_printed, TIME, 1, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, str_time, STRING, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, tags_count, INTEGER, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, tags_array, STRING, 1, "tags_count", NULL);
+        HDATA_VAR(struct t_gui_line_data, tags_array, SHARED_STRING, 1, "tags_count", NULL);
         HDATA_VAR(struct t_gui_line_data, displayed, CHAR, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, highlight, CHAR, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, refresh_needed, CHAR, 0, NULL, NULL);
-        HDATA_VAR(struct t_gui_line_data, prefix, STRING, 1, NULL, NULL);
+        HDATA_VAR(struct t_gui_line_data, prefix, SHARED_STRING, 1, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, prefix_length, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_line_data, message, STRING, 1, NULL, NULL);
     }

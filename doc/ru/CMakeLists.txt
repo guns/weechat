@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -22,7 +22,7 @@ IF(ENABLE_DOC AND SOURCEHIGHLIGHT_FOUND)
   # quickstart
   ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ru.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a lang=ru -a toc -a date=`date "+%F"` -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ru.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ru.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ru.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ru.txt
     DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ru.txt
     COMMENT "Building weechat_quickstart.ru.html"

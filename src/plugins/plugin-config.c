@@ -1,7 +1,7 @@
 /*
  * plugin-config.c - plugin configuration options (file plugins.conf)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -318,6 +318,8 @@ plugin_config_delete_desc (void *data, struct t_config_file *config_file,
             ptr_option_var->description = NULL;
         }
     }
+
+    config_file_option_free (option);
 
     return WEECHAT_CONFIG_OPTION_UNSET_OK_REMOVED;
 }

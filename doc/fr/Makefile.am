@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2006 Julien Louis <ptitlouis@sysif.net>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -29,6 +29,8 @@ EXTRA_DIST = CMakeLists.txt \
              weechat_faq.fr.txt \
              weechat_quickstart.fr.txt \
              weechat_tester.fr.txt \
+             weechat_relay_protocol.fr.txt \
+             weechat_dev.fr.txt \
              $(wildcard autogen/user/*.txt) \
              $(wildcard autogen/plugin_api/*.txt)
 
@@ -43,7 +45,9 @@ if DOC
 		weechat_scripting.fr.html \
 		weechat_faq.fr.html \
 		weechat_quickstart.fr.html \
-		weechat_tester.fr.html
+		weechat_tester.fr.html \
+		weechat_relay_protocol.fr.html \
+		weechat_dev.fr.html
   doc_install = install-doc
   doc_uninstall = uninstall-doc
 endif
@@ -51,31 +55,41 @@ all-local: $(man_targets) $(doc_targets)
 
 # man page
 weechat.1: weechat.1.fr.txt cmdline_options.fr.txt
-	$(A2X) -a lang=fr -a revision="WeeChat $(VERSION)" -d manpage -f manpage -L -D . $(abs_top_srcdir)/doc/fr/weechat.1.fr.txt
+	cp -f $(abs_top_srcdir)/doc/fr/weechat.1.fr.txt .
+	cp -f $(abs_top_srcdir)/doc/fr/cmdline_options.fr.txt .
+	$(A2X) -a revision="WeeChat $(VERSION)" -d manpage -f manpage -L weechat.1.fr.txt
 
 # user's guide
 weechat_user.fr.html: weechat_user.fr.txt cmdline_options.fr.txt $(wildcard autogen/user/*.txt)
-	$(ASCIIDOC) -a lang=fr -a toc -a toclevels=4 -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_user.fr.html $(abs_top_srcdir)/doc/fr/weechat_user.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_user.fr.html $(abs_top_srcdir)/doc/fr/weechat_user.fr.txt
 
 # plugin API reference
 weechat_plugin_api.fr.html: weechat_plugin_api.fr.txt $(wildcard autogen/plugin_api/*.txt)
-	$(ASCIIDOC) -a lang=fr -a toc -a toclevels=4 -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -n -o weechat_plugin_api.fr.html $(abs_top_srcdir)/doc/fr/weechat_plugin_api.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_plugin_api.fr.html $(abs_top_srcdir)/doc/fr/weechat_plugin_api.fr.txt
 
 # scripting guide
 weechat_scripting.fr.html: weechat_scripting.fr.txt
-	$(ASCIIDOC) -a lang=fr -a toc -a toclevels=3 -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -n -o weechat_scripting.fr.html $(abs_top_srcdir)/doc/fr/weechat_scripting.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_scripting.fr.html $(abs_top_srcdir)/doc/fr/weechat_scripting.fr.txt
 
 # FAQ
 weechat_faq.fr.html: weechat_faq.fr.txt
-	$(ASCIIDOC) -a lang=fr -a toc -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_faq.fr.html $(abs_top_srcdir)/doc/fr/weechat_faq.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_faq.fr.html $(abs_top_srcdir)/doc/fr/weechat_faq.fr.txt
 
 # quickstart
 weechat_quickstart.fr.html: weechat_quickstart.fr.txt
-	$(ASCIIDOC) -a lang=fr -a toc -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -n -o weechat_quickstart.fr.html $(abs_top_srcdir)/doc/fr/weechat_quickstart.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_quickstart.fr.html $(abs_top_srcdir)/doc/fr/weechat_quickstart.fr.txt
 
 # tester's guide
 weechat_tester.fr.html: weechat_tester.fr.txt
-	$(ASCIIDOC) -a lang=fr -a toc -a date=`date "+%F"` -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -n -o weechat_tester.fr.html $(abs_top_srcdir)/doc/fr/weechat_tester.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_tester.fr.html $(abs_top_srcdir)/doc/fr/weechat_tester.fr.txt
+
+# relay protocol
+weechat_relay_protocol.fr.html: weechat_relay_protocol.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_relay_protocol.fr.html $(abs_top_srcdir)/doc/fr/weechat_relay_protocol.fr.txt
+
+# developer's guide
+weechat_dev.fr.html: weechat_dev.fr.txt
+	$(ASCIIDOC) -a revision="$(VERSION)" -a stylesheet=$(abs_top_srcdir)/doc/asciidoc.css -f $(abs_top_srcdir)/doc/asciidoc.conf -n -o weechat_dev.fr.html $(abs_top_srcdir)/doc/fr/weechat_dev.fr.txt
 
 # install man/docs
 
@@ -104,5 +118,5 @@ uninstall-doc:
 # clean
 
 clean-local:
-	-rm -f weechat.1
+	-rm -f weechat.1 weechat.1.fr.txt cmdline_options.fr.txt
 	-rm -f *.html

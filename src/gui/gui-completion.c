@@ -1,7 +1,7 @@
 /*
  * gui-completion.c - word completion according to context (used by all GUI)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -630,7 +629,7 @@ gui_completion_build_list (struct t_gui_completion *completion)
     }
     if (repeat_last)
     {
-        pos_space = rindex (template, ' ');
+        pos_space = strrchr (template, ' ');
         gui_completion_build_list_template (completion,
                                             (pos_space) ?
                                             pos_space + 1 : template,

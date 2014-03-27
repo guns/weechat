@@ -1,67 +1,67 @@
 * [[option_weechat.color.bar_more]] *weechat.color.bar_more*
 ** descrizione: `colore del testo '+' allo scorrimento delle barre`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightmagenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightmagenta`)
 
 * [[option_weechat.color.chat]] *weechat.color.chat*
 ** descrizione: `colore del testo per la chat`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_bg]] *weechat.color.chat_bg*
 ** descrizione: `colore di sfondo per la chat`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_buffer]] *weechat.color.chat_buffer*
 ** descrizione: `colore del testo per i nomi dei buffer`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `white`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `white`)
 
 * [[option_weechat.color.chat_channel]] *weechat.color.chat_channel*
 ** descrizione: `colore del testo per i nomi dei canali`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `white`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `white`)
 
 * [[option_weechat.color.chat_day_change]] *weechat.color.chat_day_change*
 ** descrizione: `colore del testo per i messaggi mostrati al cambio di data`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `cyan`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `cyan`)
 
 * [[option_weechat.color.chat_delimiters]] *weechat.color.chat_delimiters*
 ** descrizione: `colore del testo per i delimitatori`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.chat_highlight]] *weechat.color.chat_highlight*
 ** descrizione: `colore del testo per il prefisso di notifica`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.chat_highlight_bg]] *weechat.color.chat_highlight_bg*
 ** descrizione: `colore di sfondo per il prefisso di notifica`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `magenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `magenta`)
 
 * [[option_weechat.color.chat_host]] *weechat.color.chat_host*
 ** descrizione: `colore del testo per i nomi host`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `cyan`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `cyan`)
 
 * [[option_weechat.color.chat_inactive_buffer]] *weechat.color.chat_inactive_buffer*
 ** descrizione: `colore del testo per la chat quando la riga è inattiva (il buffer è unito con altri buffer e non è selezionato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_inactive_window]] *weechat.color.chat_inactive_window*
 ** descrizione: `colore del testo per la chat quando la finestra è inattiva (nessuna finestra attiva selezionata)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_nick]] *weechat.color.chat_nick*
 ** descrizione: `colore del testo per i nick nella finestra di chat`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightcyan`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightcyan`)
 
 * [[option_weechat.color.chat_nick_colors]] *weechat.color.chat_nick_colors*
 ** descrizione: `colore del testo per i nick (elenco separato da virgole di colori, quello di sfondo è consentito con il formato "fg:bg", ad esempio: "lightred:blue")`
@@ -71,237 +71,237 @@
 * [[option_weechat.color.chat_nick_offline]] *weechat.color.chat_nick_offline*
 ** descrizione: `colore del testo per i nick non in linea (non più in lista nick)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_nick_offline_highlight]] *weechat.color.chat_nick_offline_highlight*
 ** descrizione: `colore del testo per i nick non in linea con highlight`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_nick_offline_highlight_bg]] *weechat.color.chat_nick_offline_highlight_bg*
 ** descrizione: `colore di sfondo per i nick non in linea con highlight`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `blue`)
 
 * [[option_weechat.color.chat_nick_other]] *weechat.color.chat_nick_other*
 ** descrizione: `colore del testo per gli altri nick nel buffer privato`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `cyan`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `cyan`)
 
 * [[option_weechat.color.chat_nick_prefix]] *weechat.color.chat_nick_prefix*
 ** descrizione: `colore per il prefisso del nick (stringa visualizzata prima del nick nel prefisso)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.chat_nick_self]] *weechat.color.chat_nick_self*
 ** descrizione: `colore del testo per il nick locale nella finestra di chat`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `white`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `white`)
 
 * [[option_weechat.color.chat_nick_suffix]] *weechat.color.chat_nick_suffix*
 ** descrizione: `colore per il prefisso del nick (stringa visualizzata dopo il nick nel prefisso)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.chat_prefix_action]] *weechat.color.chat_prefix_action*
 ** descrizione: `colore del testo per il prefisso di azione`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `white`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `white`)
 
 * [[option_weechat.color.chat_prefix_buffer]] *weechat.color.chat_prefix_buffer*
 ** descrizione: `colore del testo per il nome del buffer (prima del prefisso, quando più buffer sono uniti con lo stesso nome)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `brown`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `brown`)
 
 * [[option_weechat.color.chat_prefix_buffer_inactive_buffer]] *weechat.color.chat_prefix_buffer_inactive_buffer*
 ** descrizione: `colore del testo per il nome del buffer inattivo (prima del prefisso, quando più buffer sono uniti con lo stesso numero e il buffer non è selezionato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `darkgray`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_prefix_error]] *weechat.color.chat_prefix_error*
 ** descrizione: `colore del testo per il prefisso di errore`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.chat_prefix_join]] *weechat.color.chat_prefix_join*
 ** descrizione: `colore del testo per il prefisso di entrata`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightgreen`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightgreen`)
 
 * [[option_weechat.color.chat_prefix_more]] *weechat.color.chat_prefix_more*
 ** descrizione: `colore del testo per '+' quando il prefisso è troppo lungo`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightmagenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightmagenta`)
 
 * [[option_weechat.color.chat_prefix_network]] *weechat.color.chat_prefix_network*
 ** descrizione: `colore del testo per il prefisso di rete`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `magenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `magenta`)
 
 * [[option_weechat.color.chat_prefix_quit]] *weechat.color.chat_prefix_quit*
 ** descrizione: `colore del testo per il prefisso di uscita`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightred`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightred`)
 
 * [[option_weechat.color.chat_prefix_suffix]] *weechat.color.chat_prefix_suffix*
 ** descrizione: `colore del testo per il suffisso (dopo il prefisso)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.chat_read_marker]] *weechat.color.chat_read_marker*
 ** descrizione: `colore del testo per l'evidenziatore di dati non letti`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `magenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `magenta`)
 
 * [[option_weechat.color.chat_read_marker_bg]] *weechat.color.chat_read_marker_bg*
 ** descrizione: `colore di sfondo per l'evidenziatore di dati non letti`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_server]] *weechat.color.chat_server*
 ** descrizione: `colore del testo per i nomi dei server`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `brown`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `brown`)
 
 * [[option_weechat.color.chat_tags]] *weechat.color.chat_tags*
 ** descrizione: `colore del testo per i tago dopo i messaggi (mostrati con il comando /debug tags)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `red`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `red`)
 
 * [[option_weechat.color.chat_text_found]] *weechat.color.chat_text_found*
 ** descrizione: `colore del testo per l'evidenziatore sulle righe per il testo trovato`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.chat_text_found_bg]] *weechat.color.chat_text_found_bg*
 ** descrizione: `colore di sfondo per l'evidenziatore sulle righe per il testo trovato`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightmagenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightmagenta`)
 
 * [[option_weechat.color.chat_time]] *weechat.color.chat_time*
 ** descrizione: `colore del testo per l'orario nella finestra di chat`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.chat_time_delimiters]] *weechat.color.chat_time_delimiters*
 ** descrizione: `colore del testo per i delimitator dell'orario`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `brown`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `brown`)
 
 * [[option_weechat.color.chat_value]] *weechat.color.chat_value*
 ** descrizione: `colore del testo per i valori`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `cyan`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `cyan`)
 
 * [[option_weechat.color.emphasized]] *weechat.color.emphasized*
 ** descrizione: `text color for emphasized text (for example when searching text); this option is used only if option weechat.look.emphasized_attributes is an empty string (default value)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.emphasized_bg]] *weechat.color.emphasized_bg*
 ** descrizione: `background color for emphasized text (for example when searching text); used only if option weechat.look.emphasized_attributes is an empty string (default value)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `magenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `magenta`)
 
 * [[option_weechat.color.input_actions]] *weechat.color.input_actions*
 ** descrizione: `colore del testo per le azioni sulla riga di input`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightgreen`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightgreen`)
 
 * [[option_weechat.color.input_text_not_found]] *weechat.color.input_text_not_found*
 ** descrizione: `colore del testo per la ricerca del testo fallita nella riga di input`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `red`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `red`)
 
 * [[option_weechat.color.nicklist_away]] *weechat.color.nicklist_away*
 ** descrizione: `colore del testo per i nick assenti`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `cyan`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `cyan`)
 
 * [[option_weechat.color.nicklist_group]] *weechat.color.nicklist_group*
 ** descrizione: `colore del testo per i gruppi nella lista nick`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.nicklist_offline]] *weechat.color.nicklist_offline*
 ** descrizione: `colore del testo per i nick non in linea`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `blue`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `blue`)
 
 * [[option_weechat.color.separator]] *weechat.color.separator*
 ** descrizione: `colore per i separatori delle finestre (quando divise) e dei separatori tra le barre (come la lista nick)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `blue`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `blue`)
 
 * [[option_weechat.color.status_count_highlight]] *weechat.color.status_count_highlight*
 ** descrizione: `colore del testo per il conteggio dei messaggi di notifica nella hotlist (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `magenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `magenta`)
 
 * [[option_weechat.color.status_count_msg]] *weechat.color.status_count_msg*
 ** descrizione: `colore del testo per il conteggio dei messaggi nella hotlist (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `brown`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `brown`)
 
 * [[option_weechat.color.status_count_other]] *weechat.color.status_count_other*
 ** descrizione: `colore del testo per il conteggio di altri messaggi nella hotlist (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.status_count_private]] *weechat.color.status_count_private*
 ** descrizione: `colore del testo per il conteggio dei messaggi privati nella hotlist (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.status_data_highlight]] *weechat.color.status_data_highlight*
 ** descrizione: `colore del testo per il buffer con notifica (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightmagenta`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightmagenta`)
 
 * [[option_weechat.color.status_data_msg]] *weechat.color.status_data_msg*
 ** descrizione: `colore del testo per il buffer con nuovi messaggi (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.status_data_other]] *weechat.color.status_data_other*
 ** descrizione: `colore del testo per il buffer con nuovi dati (non messaggi) (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.color.status_data_private]] *weechat.color.status_data_private*
 ** descrizione: `colore del testo per il buffer con un messaggio privato (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightgreen`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightgreen`)
 
 * [[option_weechat.color.status_filter]] *weechat.color.status_filter*
 ** descrizione: `colore del testo per l'indicatore di filtro nella barra di stato`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `green`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `green`)
 
 * [[option_weechat.color.status_more]] *weechat.color.status_more*
 ** descrizione: `colore del testo per il buffer con nuovi dati (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.status_name]] *weechat.color.status_name*
 ** descrizione: `colore del testo per il nome del buffer corrente nella barra di stato`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `white`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `white`)
 
 * [[option_weechat.color.status_name_ssl]] *weechat.color.status_name_ssl*
 ** descrizione: `colore del testo per il nome del buffer corrente nella barra di stato, se i dati sono messi al sicuro con un protocollo come SSL`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `lightgreen`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `lightgreen`)
 
 * [[option_weechat.color.status_number]] *weechat.color.status_number*
 ** descrizione: `colore del testo per il numero del buffer corrente nella barra di stato`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `yellow`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `yellow`)
 
 * [[option_weechat.color.status_time]] *weechat.color.status_time*
 ** descrizione: `colore del testo per l'ora (barra di stato)`
 ** tipo: colore
-** valori: un nome colore di WeeChat (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), un numero colore del terminale o un alias; attributi consentiti prima del colore (solo per il colore del testo, non lo sfondo): "*" per il grassetto, "!" per l'inverso, "_" per la sottolineatura (valore predefinito: `default`)
+** valori: a WeeChat color name (default, black, (dark)gray, white, (light)red, (light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a terminal color number or an alias; attributes are allowed before color (for text color only, not background): "*" for bold, "!" for reverse, "/" for italic, "_" for underline (valore predefinito: `default`)
 
 * [[option_weechat.completion.base_word_until_cursor]] *weechat.completion.base_word_until_cursor*
 ** descrizione: `se abilitata, la parola base da completare termina al carattere prima del cursore; altrimenti la parola base termina al primo spazio dopo il cursore`
@@ -364,17 +364,17 @@
 ** valori: 0 .. 2147483647 (valore predefinito: `5`)
 
 * [[option_weechat.history.max_buffer_lines_minutes]] *weechat.history.max_buffer_lines_minutes*
-** descrizione: `numero massimo di minuti nella cronologia per buffer (0 = nessun limite, esempi: 1440 = un giorno, 10000 = una settimana; 43200 = un mese, 525600 = un anno)`
+** descrizione: `maximum number of minutes in history per buffer (0 = unlimited); examples: 1440 = one day, 10080 = one week, 43200 = one month, 525600 = one year; use 0 ONLY if option weechat.history.max_buffer_lines_number is NOT set to 0`
 ** tipo: intero
 ** valori: 0 .. 2147483647 (valore predefinito: `0`)
 
 * [[option_weechat.history.max_buffer_lines_number]] *weechat.history.max_buffer_lines_number*
-** descrizione: `numero massimo di righe nella cronologia per buffer (0 = nessun limite)`
+** descrizione: `maximum number of lines in history per buffer (0 = unlimited); use 0 ONLY if option weechat.history.max_buffer_lines_minutes is NOT set to 0`
 ** tipo: intero
 ** valori: 0 .. 2147483647 (valore predefinito: `4096`)
 
 * [[option_weechat.history.max_commands]] *weechat.history.max_commands*
-** descrizione: `numero massimo di comandi utente nella cronologia (0 = nessun limite)`
+** descrizione: `maximum number of user commands in history (0 = unlimited, NOT RECOMMENDED: no limit in memory usage)`
 ** tipo: intero
 ** valori: 0 .. 2147483647 (valore predefinito: `100`)
 
@@ -408,10 +408,40 @@
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"--"`)
 
+* [[option_weechat.look.buffer_auto_renumber]] *weechat.look.buffer_auto_renumber*
+** descrizione: `automatically renumber buffers to have only consecutive numbers and start with number 1; if disabled, gaps between buffer numbers are allowed and the first buffer can have a number greater than 1`
+** tipo: bool
+** valori: on, off (valore predefinito: `on`)
+
 * [[option_weechat.look.buffer_notify_default]] *weechat.look.buffer_notify_default*
 ** descrizione: `livello predefinito di notifica per i buffer (usato per comunicare a WeeChat se il buffer deve essere visualizzato nella hotlist oppure no, a seconda dell'importanza del messaggio): all: tutti i messaggi (predefinito), message=messaggi+notifiche, highlight=solo notifiche, none=non viene mai visualizzato nella hotlist`
 ** tipo: intero
 ** valori: none, highlight, message, all (valore predefinito: `all`)
+
+* [[option_weechat.look.buffer_position]] *weechat.look.buffer_position*
+** descrizione: `position of a new buffer: end = after the end of list (number = last number + 1) (default), first_gap = at first available number in the list (after the end of list if no number is available); this option is used only if the buffer has no layout number`
+** tipo: intero
+** valori: end, first_gap (valore predefinito: `end`)
+
+* [[option_weechat.look.buffer_search_case_sensitive]] *weechat.look.buffer_search_case_sensitive*
+** descrizione: `default text search in buffer: case sensitive or not`
+** tipo: bool
+** valori: on, off (valore predefinito: `off`)
+
+* [[option_weechat.look.buffer_search_force_default]] *weechat.look.buffer_search_force_default*
+** descrizione: `force default values for text search in buffer (instead of using values from last search in buffer)`
+** tipo: bool
+** valori: on, off (valore predefinito: `off`)
+
+* [[option_weechat.look.buffer_search_regex]] *weechat.look.buffer_search_regex*
+** descrizione: `default text search in buffer: if enabled, search POSIX extended regular expression, otherwise search simple string`
+** tipo: bool
+** valori: on, off (valore predefinito: `off`)
+
+* [[option_weechat.look.buffer_search_where]] *weechat.look.buffer_search_where*
+** descrizione: `default text search in buffer: in message, prefix, prefix and message`
+** tipo: intero
+** valori: prefix, message, prefix_message (valore predefinito: `message`)
 
 * [[option_weechat.look.buffer_time_format]] *weechat.look.buffer_time_format*
 ** descrizione: `time format for each line displayed in buffers (see man strftime for date/time specifiers) (note: content is evaluated, so you can use colors with format "${color:xxx}", see /help eval); for example time using grayscale (requires support of 256 colors): "${color:252}%H${color:245}%M${color:240}%S"`
@@ -499,7 +529,7 @@
 ** valori: on, off (valore predefinito: `off`)
 
 * [[option_weechat.look.emphasized_attributes]] *weechat.look.emphasized_attributes*
-** descrizione: `attributes for emphasized text: one or more attribute chars ("*" for bold, "!" for reverse, "_" for underline); if the string is empty, the colors weechat.color.emphasized* are used`
+** descrizione: `attributes for emphasized text: one or more attribute chars ("*" for bold, "!" for reverse, "/" for italic, "_" for underline); if the string is empty, the colors weechat.color.emphasized* are used`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -509,12 +539,12 @@
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_weechat.look.highlight_regex]] *weechat.look.highlight_regex*
-** descrizione: `espressione regolare usata per verificare se un messaggio contiene una notifica oppure no, almeno una corrispondenza nella stringa deve essere racchiusa da caratteri :(alfanumerici, "-", "_" or "|"), l'espressione regolare non è sensibile alle maiuscole (usare "(?-i)" all'inizio per renderla sensibile alle maiuscole), ad esempio: "flashcode|flashy", "(?-i)Flashcode|flashy"`
+** descrizione: `POSIX extended regular expression used to check if a message has highlight or not, at least one match in string must be surrounded by delimiters (chars different from: alphanumeric, "-", "_" and "|"), regular expression is case insensitive (use "(?-i)" at beginning to make it case sensitive), examples: "flashcode|flashy", "(?-i)FlashCode|flashy"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
 * [[option_weechat.look.highlight_tags]] *weechat.look.highlight_tags*
-** descrizione: `elenco separato da virgole di tag da notificare (confronto non sensibile alle maiuscole, esempi: "irc_notice" per gli annunci IRC, "nick_flashcode" per i messaggi dal nick "FlashCode")`
+** descrizione: `comma separated list of tags to highlight; case insensitive comparison; each tag can start or end with "*" to match more than one tag; many tags can be separated by "+" to make a logical "and" between tags; examples: "nick_flashcode" for messages from nick "FlashCode", "irc_notice+nick_toto*" for notices from a nick starting with "toto"`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
@@ -541,7 +571,7 @@
 * [[option_weechat.look.hotlist_names_count]] *weechat.look.hotlist_names_count*
 ** descrizione: `numero massimo di nomi nella hotlist (0 = nessun nome visualizzato, solo numeri dei buffer)`
 ** tipo: intero
-** valori: 0 .. 32 (valore predefinito: `3`)
+** valori: 0 .. 10000 (valore predefinito: `3`)
 
 * [[option_weechat.look.hotlist_names_length]] *weechat.look.hotlist_names_length*
 ** descrizione: `lunghezza massima dei nomi nella hotlist (0 = nessun limite)`
@@ -608,6 +638,11 @@
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"*"`)
 
+* [[option_weechat.look.item_buffer_zoom]] *weechat.look.item_buffer_zoom*
+** descrizione: `string used to show zoom on merged buffer (bar item "buffer_zoom")`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `"!"`)
+
 * [[option_weechat.look.item_time_format]] *weechat.look.item_time_format*
 ** descrizione: `formato dell'ora per l'elemento barra "time" (consultare man strftime per gli specificatori data/ora)`
 ** tipo: stringa
@@ -656,7 +691,7 @@
 * [[option_weechat.look.paste_bracketed]] *weechat.look.paste_bracketed*
 ** descrizione: `abilita la modalità "bracketed paste" per il terminale (non supportata da tutti i terminali/multiplexer): in questa modalità, il testo incollato viene racchiuso da sequenze di controllo in modo che WeeChat possa differenziare il testo incollato dal testo digitato ("ESC[200~", seguito dal testo incollato, seguito da "ESC[201~")`
 ** tipo: bool
-** valori: on, off (valore predefinito: `off`)
+** valori: on, off (valore predefinito: `on`)
 
 * [[option_weechat.look.paste_bracketed_timer_delay]] *weechat.look.paste_bracketed_timer_delay*
 ** descrizione: `forza la fine della modalità "bracketed paste" dopo questo ritardo (in secondi) se la sequenza di controllo per la fine del "bracketed paste" ("ESC[201~") non è stata ricevuta in tempo`
@@ -769,7 +804,7 @@
 ** valori: on, off (valore predefinito: `on`)
 
 * [[option_weechat.look.save_layout_on_exit]] *weechat.look.save_layout_on_exit*
-** descrizione: `salva layout all'uscita (buffer, finestre, o entrambi)`
+** descrizione: `save layout on exit (buffers, windows, or both)`
 ** tipo: intero
 ** valori: none, buffers, windows, all (valore predefinito: `none`)
 
@@ -794,24 +829,29 @@
 ** valori: on, off (valore predefinito: `on`)
 
 * [[option_weechat.look.separator_horizontal]] *weechat.look.separator_horizontal*
-** descrizione: `carattere usato per disegnare i separatori orizzontali intorno alle barre e alle finestre (un valore vuoto disegnerà una riga reale con ncurses, ma può causare bug con la selezione dell'URL in alcuni terminali), i caratteri wide qui NON sono consentiti`
+** descrizione: `char used to draw horizontal separators around bars and windows (empty value will draw a real line with ncurses, but may cause bugs with URL selection under some terminals); width on screen must be exactly one char`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"-"`)
 
 * [[option_weechat.look.separator_vertical]] *weechat.look.separator_vertical*
-** descrizione: `carattere usato per disegnare i separatori verticali intorno alle barre e alle finestre (un valore vuoto disegnerà una riga reale con ncurses), i caratteri wide qui NON sono consentiti`
+** descrizione: `char used to draw vertical separators around bars and windows (empty value will draw a real line with ncurses); width on screen must be exactly one char`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `""`)
 
-* [[option_weechat.look.set_title]] *weechat.look.set_title*
-** descrizione: `imposta titolo per la finestra (terminale per interfacce Curses) con nome e versione`
-** tipo: bool
-** valori: on, off (valore predefinito: `on`)
+* [[option_weechat.look.tab_width]] *weechat.look.tab_width*
+** descrizione: `number of spaces used to display tabs in messages`
+** tipo: intero
+** valori: 1 .. 64 (valore predefinito: `1`)
 
 * [[option_weechat.look.time_format]] *weechat.look.time_format*
 ** descrizione: `formato dell'ora per le date convertite in stringhe e mostrate nei messaggi(consultare man strftime per i dettagli su data/ora)`
 ** tipo: stringa
 ** valori: qualsiasi stringa (valore predefinito: `"%a, %d %b %Y %T"`)
+
+* [[option_weechat.look.window_auto_zoom]] *weechat.look.window_auto_zoom*
+** descrizione: `automatically zoom on current window if the terminal becomes too small to display all windows (use alt-z to unzoom windows when the terminal is big enough)`
+** tipo: bool
+** valori: on, off (valore predefinito: `off`)
 
 * [[option_weechat.look.window_separator_horizontal]] *weechat.look.window_separator_horizontal*
 ** descrizione: `mostra un separatore orizzontale tra le finestre`
@@ -822,6 +862,11 @@
 ** descrizione: `mostra un separatore verticale tra le finestre`
 ** tipo: bool
 ** valori: on, off (valore predefinito: `on`)
+
+* [[option_weechat.look.window_title]] *weechat.look.window_title*
+** descrizione: `title for window (terminal for Curses GUI), set on startup; an empty string will keep title unchanged (note: content is evaluated, see /help eval)`
+** tipo: stringa
+** valori: qualsiasi stringa (valore predefinito: `"WeeChat ${info:version}"`)
 
 * [[option_weechat.network.connection_timeout]] *weechat.network.connection_timeout*
 ** descrizione: `timeout (in secondi) per la connessione ad un host remoto (eseguita in un processo figlio)`

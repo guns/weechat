@@ -1,7 +1,7 @@
 /*
  * irc-channel.c - channel and private chat management for IRC plugin
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -51,7 +51,7 @@ irc_channel_valid (struct t_irc_server *server, struct t_irc_channel *channel)
 {
     struct t_irc_channel *ptr_channel;
 
-    if (!server)
+    if (!server || !channel)
         return 0;
 
     for (ptr_channel = server->channels; ptr_channel;
@@ -152,10 +152,9 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
 {
     struct t_irc_channel *new_channel;
     struct t_gui_buffer *new_buffer, *ptr_buffer_for_merge;
-    int i, buffer_created, current_buffer_number, buffer_position, manual_join;
+    int buffer_created, current_buffer_number, buffer_position, manual_join;
     int noswitch;
-    char *buffer_name, str_number[32], str_group[32], *channel_name_lower;
-    const char *prefix_modes;
+    char *buffer_name, str_number[32], *channel_name_lower;
 
     /* alloc memory for new channel */
     if ((new_channel = malloc (sizeof (*new_channel))) == NULL)
@@ -254,28 +253,12 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
                            (channel_type == IRC_CHANNEL_TYPE_CHANNEL) ?
                            weechat_config_string (irc_config_look_highlight_channel) :
                            weechat_config_string (irc_config_look_highlight_pv));
-        if (weechat_config_string (irc_config_look_highlight_tags)
-            && weechat_config_string (irc_config_look_highlight_tags)[0])
+        if (weechat_config_string (irc_config_look_highlight_tags_restrict)
+            && weechat_config_string (irc_config_look_highlight_tags_restrict)[0])
         {
-            weechat_buffer_set (new_buffer, "highlight_tags",
-                                weechat_config_string (irc_config_look_highlight_tags));
+            weechat_buffer_set (new_buffer, "highlight_tags_restrict",
+                                weechat_config_string (irc_config_look_highlight_tags_restrict));
         }
-    }
-
-    if (channel_type == IRC_CHANNEL_TYPE_CHANNEL)
-    {
-        prefix_modes = irc_server_get_prefix_modes (server);
-        for (i = 0; prefix_modes[i]; i++)
-        {
-            snprintf (str_group, sizeof (str_group), "%03d|%c",
-                      i, prefix_modes[i]);
-            weechat_nicklist_add_group (new_buffer, NULL, str_group,
-                                        "weechat.color.nicklist_group", 1);
-        }
-        snprintf (str_group, sizeof (str_group), "%03d|%s",
-                  IRC_NICK_GROUP_OTHER_NUMBER, IRC_NICK_GROUP_OTHER_NAME);
-        weechat_nicklist_add_group (new_buffer, NULL, str_group,
-                                    "weechat.color.nicklist_group", 1);
     }
 
     /* initialize new channel */
@@ -373,6 +356,35 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
 
     /* all is OK, return address of new channel */
     return new_channel;
+}
+
+/*
+ * Add groups in nicklist for a channel.
+ */
+
+void
+irc_channel_add_nicklist_groups (struct t_irc_server *server,
+                                 struct t_irc_channel *channel)
+{
+    const char *prefix_modes;
+    char str_group[32];
+    int i;
+
+    if (channel->type != IRC_CHANNEL_TYPE_CHANNEL)
+        return;
+
+    prefix_modes = irc_server_get_prefix_modes (server);
+    for (i = 0; prefix_modes[i]; i++)
+    {
+        snprintf (str_group, sizeof (str_group), "%03d|%c",
+                  i, prefix_modes[i]);
+        weechat_nicklist_add_group (channel->buffer, NULL, str_group,
+                                    "weechat.color.nicklist_group", 1);
+    }
+    snprintf (str_group, sizeof (str_group), "%03d|%s",
+              IRC_NICK_GROUP_OTHER_NUMBER, IRC_NICK_GROUP_OTHER_NAME);
+    weechat_nicklist_add_group (channel->buffer, NULL, str_group,
+                                "weechat.color.nicklist_group", 1);
 }
 
 /*
@@ -1164,6 +1176,8 @@ irc_channel_free (struct t_irc_server *server, struct t_irc_channel *channel)
         free (channel->modes);
     if (channel->key)
         free (channel->key);
+    if (channel->join_msg_received)
+        weechat_hashtable_free (channel->join_msg_received);
     if (channel->away_message)
         free (channel->away_message);
     if (channel->pv_remote_nick_color)

@@ -1,7 +1,7 @@
 /*
  * script.c - scripts manager for WeeChat
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -37,7 +37,7 @@
 
 WEECHAT_PLUGIN_NAME(SCRIPT_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Scripts manager"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -372,8 +372,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     if (!script_config_init ())
         return WEECHAT_RC_ERROR;
 
-    if (script_config_read () < 0)
-        return WEECHAT_RC_ERROR;
+    script_config_read ();
 
     weechat_mkdir_home (SCRIPT_PLUGIN_NAME, 0755);
 

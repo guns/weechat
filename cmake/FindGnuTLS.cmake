@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2009 Emmanuel Bouthenot <kolter@openics.org>
 #
 # This file is part of WeeChat, the extensible chat client.
@@ -43,7 +43,7 @@ EXECUTE_PROCESS(COMMAND ${PKG_CONFIG_EXECUTABLE} --variable=prefix gnutls
 EXECUTE_PROCESS(COMMAND ${PKG_CONFIG_EXECUTABLE} --cflags gnutls
    OUTPUT_VARIABLE GNUTLS_CFLAGS
 )
-STRING(REGEX REPLACE "[\r\n]" "" GNUTLS_CFLAGS "${GNUTLS_FLAGS}")
+STRING(REGEX REPLACE "[\r\n]" "" GNUTLS_CFLAGS "${GNUTLS_CFLAGS}")
 
 EXECUTE_PROCESS(COMMAND ${PKG_CONFIG_EXECUTABLE} --libs gnutls
    OUTPUT_VARIABLE GNUTLS_LDFLAGS

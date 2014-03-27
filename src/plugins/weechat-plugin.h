@@ -1,7 +1,7 @@
 /*
  * weechat-plugin.h - header to compile WeeChat plugins
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -22,7 +22,12 @@
 #ifndef __WEECHAT_WEECHAT_PLUGIN_H
 #define __WEECHAT_WEECHAT_PLUGIN_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/types.h>
+#include <sys/socket.h>
 
 /* some systems like GNU/Hurd do not define PATH_MAX */
 #ifndef PATH_MAX
@@ -52,7 +57,7 @@ struct timeval;
  * please change the date with current one; for a second change at same
  * date, increment the 01, otherwise please keep 01.
  */
-#define WEECHAT_PLUGIN_API_VERSION "20130819-01"
+#define WEECHAT_PLUGIN_API_VERSION "20140122-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -118,6 +123,7 @@ struct timeval;
 #define WEECHAT_HDATA_POINTER                       5
 #define WEECHAT_HDATA_TIME                          6
 #define WEECHAT_HDATA_HASHTABLE                     7
+#define WEECHAT_HDATA_SHARED_STRING                 8
 
 /* buffer hotlist */
 #define WEECHAT_HOTLIST_LOW                         "0"
@@ -802,8 +808,9 @@ struct t_weechat_plugin
     /* network */
     int (*network_pass_proxy) (const char *proxy, int sock,
                                const char *address, int port);
-    int (*network_connect_to) (const char *proxy, int sock,
-                               unsigned long address, int port);
+    int (*network_connect_to) (const char *proxy,
+                               struct sockaddr *address,
+                               socklen_t address_length);
 
     /* infos */
     const char *(*info_get) (struct t_weechat_plugin *plugin,
@@ -832,6 +839,8 @@ struct t_weechat_plugin
     struct t_infolist_var *(*infolist_new_var_time) (struct t_infolist_item *item,
                                                      const char *name,
                                                      time_t time);
+    struct t_infolist_var *(*infolist_search_var) (struct t_infolist *infolist,
+                                                   const char *name);
     struct t_infolist *(*infolist_get) (struct t_weechat_plugin *plugin,
                                         const char *infolist_name,
                                         void *pointer,
@@ -1584,9 +1593,10 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 #define weechat_network_pass_proxy(__proxy, __sock, __address, __port)  \
     weechat_plugin->network_pass_proxy(__proxy, __sock, __address,      \
                                        __port)
-#define weechat_network_connect_to(__proxy, __sock, __address, __port)  \
-    weechat_plugin->network_connect_to(__proxy, __sock, __address,      \
-                                       __port)
+#define weechat_network_connect_to(__proxy, __address,                  \
+                                   __address_length)                    \
+    weechat_plugin->network_connect_to(__proxy, __address,              \
+                                       __address_length)
 
 /* infos */
 #define weechat_info_get(__info_name, __arguments)                      \
@@ -1612,6 +1622,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                             __size)
 #define weechat_infolist_new_var_time(__item, __name, __time)           \
     weechat_plugin->infolist_new_var_time(__item, __name, __time)
+#define weechat_infolist_search_var(__list, __name)                     \
+    weechat_plugin->infolist_search_var(__list, __name)
 #define weechat_infolist_get(__infolist_name, __pointer, __arguments)   \
     weechat_plugin->infolist_get(weechat_plugin, __infolist_name,       \
                                  __pointer, __arguments)
@@ -1723,5 +1735,9 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                  __callback_read_data)
 #define weechat_upgrade_close(__upgrade_file)                           \
     weechat_plugin->upgrade_close(__upgrade_file)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WEECHAT_WEECHAT_PLUGIN_H */

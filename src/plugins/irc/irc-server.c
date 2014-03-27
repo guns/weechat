@@ -1,7 +1,7 @@
 /*
  * irc-server.c - I/O communication with IRC servers
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2005-2010 Emmanuel Bouthenot <kolter@openics.org>
  * Copyright (C) 2012 Simon Arlott
  *
@@ -36,6 +36,10 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #endif
+#include <sys/types.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #ifdef HAVE_GNUTLS
 #include <gnutls/gnutls.h>
@@ -68,7 +72,8 @@ struct t_irc_message *irc_msgq_last_msg = NULL;
 
 char *irc_server_option_string[IRC_SERVER_NUM_OPTIONS] =
 { "addresses", "proxy", "ipv6",
-  "ssl", "ssl_cert", "ssl_priorities", "ssl_dhkey_size", "ssl_verify",
+  "ssl", "ssl_cert", "ssl_priorities", "ssl_dhkey_size", "ssl_fingerprint",
+  "ssl_verify",
   "password", "capabilities",
   "sasl_mechanism", "sasl_username", "sasl_password", "sasl_timeout",
   "autoconnect", "autoreconnect", "autoreconnect_delay",
@@ -77,13 +82,14 @@ char *irc_server_option_string[IRC_SERVER_NUM_OPTIONS] =
   "connection_timeout",
   "anti_flood_prio_high", "anti_flood_prio_low",
   "away_check", "away_check_max_nicks",
-  "default_msg_part", "default_msg_quit",
+  "default_msg_kick", "default_msg_part", "default_msg_quit",
   "notify",
 };
 
 char *irc_server_option_default[IRC_SERVER_NUM_OPTIONS] =
 { "", "", "on",
-  "off", "", "NORMAL", "2048", "on",
+  "off", "", "NORMAL", "2048", "",
+  "on",
   "", "",
   "plain", "", "", "15",
   "off", "on", "10",
@@ -92,7 +98,7 @@ char *irc_server_option_default[IRC_SERVER_NUM_OPTIONS] =
   "60",
   "2", "2",
   "0", "25",
-  "WeeChat %v", "WeeChat %v",
+  "","WeeChat %v", "WeeChat %v",
   "",
 };
 
@@ -735,7 +741,7 @@ irc_server_set_prefix_modes_chars (struct t_irc_server *server,
 }
 
 /*
- * Gets prefix_modes for server.
+ * Gets prefix_modes for server (for example: "ohv").
  *
  * Returns default modes if prefix_modes is not set in server.
  */
@@ -748,7 +754,7 @@ irc_server_get_prefix_modes (struct t_irc_server *server)
 }
 
 /*
- * Gets prefix_chars for server.
+ * Gets prefix_chars for server (for example: "@%+").
  *
  * Returns default chars if prefix_chars is not set in server.
  */
@@ -762,6 +768,8 @@ irc_server_get_prefix_chars (struct t_irc_server *server)
 
 /*
  * Gets index of mode in prefix_modes.
+ *
+ * The mode is for example 'o' or 'v'.
  *
  * Returns -1 if mode does not exist in server.
  */
@@ -785,6 +793,8 @@ irc_server_get_prefix_mode_index (struct t_irc_server *server, char mode)
 
 /*
  * Gets index of prefix_char in prefix_chars.
+ *
+ * The prefix char is for example '@' or '+'.
  *
  * Returns -1 if prefix_char does not exist in server.
  */
@@ -810,6 +820,8 @@ irc_server_get_prefix_char_index (struct t_irc_server *server,
 /*
  * Gets mode for prefix char.
  *
+ * For example prefix_char '@' can return 'o'.
+ *
  * Returns ' ' (space) if prefix char is not found.
  */
 
@@ -834,6 +846,8 @@ irc_server_get_prefix_mode_for_char (struct t_irc_server *server,
 /*
  * Gets prefix char for mode.
  *
+ * For example mode 'o' can return '@'.
+ *
  * Returns return ' ' (space) if mode is not found.
  */
 
@@ -855,7 +869,7 @@ irc_server_get_prefix_char_for_mode (struct t_irc_server *server, char mode)
 }
 
 /*
- * Gets chanmodes for server.
+ * Gets chanmodes for server (for example: "eIb,k,l,imnpstS").
  *
  * Returns default chanmodes if chanmodes is not set in server.
  */
@@ -865,6 +879,32 @@ irc_server_get_chanmodes (struct t_irc_server *server)
 {
     return (server && server->chanmodes) ?
         server->chanmodes : irc_server_chanmodes_default;
+}
+
+/*
+ * Checks if a prefix char is valid for a status message
+ * (message sent for example to ops/voiced).
+ *
+ * The prefix (for example '@' or '+') must be in STATUSMSG,
+ * or in "prefix_chars" if STATUSMSG is not defined.
+ *
+ * Returns:
+ *   1: prefix is valid for a status message
+ *   0: prefix is NOT valid for a status message
+ */
+
+int
+irc_server_prefix_char_statusmsg (struct t_irc_server *server,
+                                  char prefix_char)
+{
+    const char *support_statusmsg;
+
+    support_statusmsg = irc_server_get_isupport_value (server, "STATUSMSG");
+    if (support_statusmsg)
+        return (strchr (support_statusmsg, prefix_char)) ? 1 : 0;
+
+    return (irc_server_get_prefix_char_index (server, prefix_char) >= 0) ?
+        1 : 0;
 }
 
 /*
@@ -940,6 +980,8 @@ irc_server_alloc (const char *name)
     new_server->casemapping = IRC_SERVER_CASEMAPPING_RFC1459;
     new_server->chantypes = NULL;
     new_server->chanmodes = NULL;
+    new_server->monitor = 0;
+    new_server->monitor_time = 0;
     new_server->reconnect_delay = 0;
     new_server->reconnect_start = 0;
     new_server->command_time = 0;
@@ -967,6 +1009,7 @@ irc_server_alloc (const char *name)
     new_server->last_redirect = NULL;
     new_server->notify_list = NULL;
     new_server->last_notify = NULL;
+    new_server->notify_count = 0;
     new_server->join_manual = weechat_hashtable_new (32,
                                                      WEECHAT_HASHTABLE_STRING,
                                                      WEECHAT_HASHTABLE_TIME,
@@ -2786,112 +2829,138 @@ irc_server_timer_cb (void *data, int remaining_calls)
         }
         else
         {
-            if (ptr_server->is_connected)
-            {
-                /* send queued messages */
-                irc_server_outqueue_send (ptr_server);
+            if (!ptr_server->is_connected)
+                continue;
 
-                /* check for lag */
-                if ((weechat_config_integer (irc_config_network_lag_check) > 0)
-                    && (ptr_server->lag_check_time.tv_sec == 0)
-                    && (current_time >= ptr_server->lag_next_check))
+            /* send queued messages */
+            irc_server_outqueue_send (ptr_server);
+
+            /* check for lag */
+            if ((weechat_config_integer (irc_config_network_lag_check) > 0)
+                && (ptr_server->lag_check_time.tv_sec == 0)
+                && (current_time >= ptr_server->lag_next_check))
+            {
+                irc_server_sendf (ptr_server, 0, NULL, "PING %s",
+                                  (ptr_server->current_address) ?
+                                  ptr_server->current_address : "weechat");
+                gettimeofday (&(ptr_server->lag_check_time), NULL);
+                ptr_server->lag = 0;
+                ptr_server->lag_last_refresh = 0;
+            }
+            else
+            {
+                /* check away (only if lag check was not done) */
+                away_check = IRC_SERVER_OPTION_INTEGER(ptr_server, IRC_SERVER_OPTION_AWAY_CHECK);
+                if (away_check > 0)
                 {
-                    irc_server_sendf (ptr_server, 0, NULL, "PING %s",
-                                      (ptr_server->current_address) ?
-                                      ptr_server->current_address : "weechat");
-                    gettimeofday (&(ptr_server->lag_check_time), NULL);
-                    ptr_server->lag = 0;
-                    ptr_server->lag_last_refresh = 0;
+                    if ((ptr_server->last_away_check == 0)
+                        || (current_time >= ptr_server->last_away_check + (away_check * 60)))
+                    {
+                        irc_server_check_away (ptr_server);
+                    }
+                }
+            }
+
+            /* check if it's time to autojoin channels (after command delay) */
+            if ((ptr_server->command_time != 0)
+                && (current_time >= ptr_server->command_time +
+                    IRC_SERVER_OPTION_INTEGER(ptr_server, IRC_SERVER_OPTION_COMMAND_DELAY)))
+            {
+                irc_server_autojoin_channels (ptr_server);
+                ptr_server->command_time = 0;
+            }
+
+            /* check if it's time to send MONITOR command */
+            if ((ptr_server->monitor_time != 0)
+                && (current_time >= ptr_server->monitor_time))
+            {
+                if (ptr_server->monitor > 0)
+                    irc_notify_send_monitor (ptr_server);
+                ptr_server->monitor_time = 0;
+            }
+
+            /* compute lag */
+            if (ptr_server->lag_check_time.tv_sec != 0)
+            {
+                gettimeofday (&tv, NULL);
+                ptr_server->lag = (int) weechat_util_timeval_diff (&(ptr_server->lag_check_time),
+                                                                   &tv);
+                /* refresh lag item if needed */
+                if (((ptr_server->lag_last_refresh == 0)
+                     || (current_time >= ptr_server->lag_last_refresh + weechat_config_integer (irc_config_network_lag_refresh_interval)))
+                    && (ptr_server->lag >= weechat_config_integer (irc_config_network_lag_min_show)))
+                {
+                    ptr_server->lag_last_refresh = current_time;
+                    weechat_bar_item_update ("lag");
+                }
+                /* lag timeout? => disconnect */
+                if ((weechat_config_integer (irc_config_network_lag_reconnect) > 0)
+                    && (ptr_server->lag >= weechat_config_integer (irc_config_network_lag_reconnect) * 1000))
+                {
+                    weechat_printf (ptr_server->buffer,
+                                    _("%s%s: lag is high, reconnecting to "
+                                      "server %s%s%s"),
+                                    weechat_prefix ("network"),
+                                    IRC_PLUGIN_NAME,
+                                    IRC_COLOR_CHAT_SERVER,
+                                    ptr_server->name,
+                                    IRC_COLOR_RESET);
+                    irc_server_disconnect (ptr_server, 0, 1);
                 }
                 else
                 {
-                    /* check away (only if lag check was not done) */
-                    away_check = IRC_SERVER_OPTION_INTEGER(ptr_server, IRC_SERVER_OPTION_AWAY_CHECK);
-                    if (away_check > 0)
+                    /* stop lag counting if max lag is reached */
+                    if ((weechat_config_integer (irc_config_network_lag_max) > 0)
+                        && (ptr_server->lag >= (weechat_config_integer (irc_config_network_lag_max) * 1000)))
                     {
-                        if ((ptr_server->last_away_check == 0)
-                            || (current_time >= ptr_server->last_away_check + (away_check * 60)))
-                        {
-                            irc_server_check_away (ptr_server);
-                        }
-                    }
-                }
-
-                /* check if it's time to autojoin channels (after command delay) */
-                if ((ptr_server->command_time != 0)
-                    && (current_time >= ptr_server->command_time +
-                        IRC_SERVER_OPTION_INTEGER(ptr_server, IRC_SERVER_OPTION_COMMAND_DELAY)))
-                {
-                    irc_server_autojoin_channels (ptr_server);
-                    ptr_server->command_time = 0;
-                }
-
-                /* compute lag */
-                if (ptr_server->lag_check_time.tv_sec != 0)
-                {
-                    gettimeofday (&tv, NULL);
-                    ptr_server->lag = (int) weechat_util_timeval_diff (&(ptr_server->lag_check_time),
-                                                                       &tv);
-                    /* refresh lag item if needed */
-                    if (((ptr_server->lag_last_refresh == 0)
-                         || (current_time >= ptr_server->lag_last_refresh + weechat_config_integer (irc_config_network_lag_refresh_interval)))
-                        && (ptr_server->lag >= weechat_config_integer (irc_config_network_lag_min_show)))
-                    {
+                        /* refresh lag item */
                         ptr_server->lag_last_refresh = current_time;
                         weechat_bar_item_update ("lag");
-                    }
-                    /* lag timeout? => disconnect */
-                    if ((weechat_config_integer (irc_config_network_lag_reconnect) > 0)
-                        && (ptr_server->lag / 1000 > weechat_config_integer (irc_config_network_lag_reconnect)))
-                    {
-                        weechat_printf (ptr_server->buffer,
-                                        _("%s%s: lag is high, reconnecting to "
-                                          "server %s%s%s"),
-                                        weechat_prefix ("network"),
-                                        IRC_PLUGIN_NAME,
-                                        IRC_COLOR_CHAT_SERVER,
-                                        ptr_server->name,
-                                        IRC_COLOR_RESET);
-                        irc_server_disconnect (ptr_server, 0, 1);
+
+                        /* schedule next lag check in 5 seconds */
+                        ptr_server->lag_check_time.tv_sec = 0;
+                        ptr_server->lag_check_time.tv_usec = 0;
+                        ptr_server->lag_next_check = time (NULL) +
+                            weechat_config_integer (irc_config_network_lag_check);
                     }
                 }
+            }
 
-                /* remove redirects if timeout occurs */
-                ptr_redirect = ptr_server->redirects;
-                while (ptr_redirect)
+            /* remove redirects if timeout occurs */
+            ptr_redirect = ptr_server->redirects;
+            while (ptr_redirect)
+            {
+                ptr_next_redirect = ptr_redirect->next_redirect;
+
+                if ((ptr_redirect->start_time > 0)
+                    && (ptr_redirect->start_time + ptr_redirect->timeout < current_time))
                 {
-                    ptr_next_redirect = ptr_redirect->next_redirect;
-
-                    if ((ptr_redirect->start_time > 0)
-                        && (ptr_redirect->start_time + ptr_redirect->timeout < current_time))
-                    {
-                        irc_redirect_stop (ptr_redirect, "timeout");
-                    }
-
-                    ptr_redirect = ptr_next_redirect;
+                    irc_redirect_stop (ptr_redirect, "timeout");
                 }
 
-                /* purge some data (every 10 minutes) */
-                if (current_time > ptr_server->last_data_purge + (60 * 10))
+                ptr_redirect = ptr_next_redirect;
+            }
+
+            /* purge some data (every 10 minutes) */
+            if (current_time > ptr_server->last_data_purge + (60 * 10))
+            {
+                weechat_hashtable_map (ptr_server->join_manual,
+                                       &irc_server_check_join_manual_cb,
+                                       NULL);
+                weechat_hashtable_map (ptr_server->join_noswitch,
+                                       &irc_server_check_join_noswitch_cb,
+                                       NULL);
+                for (ptr_channel = ptr_server->channels; ptr_channel;
+                     ptr_channel = ptr_channel->next_channel)
                 {
-                    weechat_hashtable_map (ptr_server->join_manual,
-                                           &irc_server_check_join_manual_cb,
-                                           NULL);
-                    weechat_hashtable_map (ptr_server->join_noswitch,
-                                           &irc_server_check_join_noswitch_cb,
-                                           NULL);
-                    for (ptr_channel = ptr_server->channels; ptr_channel;
-                         ptr_channel = ptr_channel->next_channel)
+                    if (ptr_channel->join_smart_filtered)
                     {
-                        if (ptr_channel->join_smart_filtered)
-                        {
-                            weechat_hashtable_map (ptr_channel->join_smart_filtered,
-                                                   &irc_server_check_join_smart_filtered_cb,
-                                                   NULL);
-                        }
+                        weechat_hashtable_map (ptr_channel->join_smart_filtered,
+                                               &irc_server_check_join_smart_filtered_cb,
+                                               NULL);
                     }
-                    ptr_server->last_data_purge = current_time;
                 }
+                ptr_server->last_data_purge = current_time;
             }
         }
     }
@@ -2935,12 +3004,11 @@ irc_server_close_connection (struct t_irc_server *server)
     {
 #ifdef HAVE_GNUTLS
         /* close SSL connection */
-        if ((server->sock != -1) && (server->ssl_connected))
+        if (server->ssl_connected)
         {
-            if (server->ssl_connected)
+            if (server->sock != -1)
                 gnutls_bye (server->gnutls_sess, GNUTLS_SHUT_WR);
-            if (server->ssl_connected)
-                gnutls_deinit (server->gnutls_sess);
+            gnutls_deinit (server->gnutls_sess);
         }
 #endif
     }
@@ -3289,11 +3357,16 @@ irc_server_connect_cb (void *data, int status, int gnutls_rc, int sock,
                 weechat_printf (server->buffer,
                                 _("%s%s: you should play with option "
                                   "irc.server.%s.ssl_dhkey_size (current "
-                                  "value is %d)"),
+                                  "value is %d, try a lower value like %d or "
+                                  "%d)"),
                                 weechat_prefix ("error"), IRC_PLUGIN_NAME,
                                 server->name,
                                 IRC_SERVER_OPTION_INTEGER (server,
-                                                           IRC_SERVER_OPTION_SSL_DHKEY_SIZE));
+                                                           IRC_SERVER_OPTION_SSL_DHKEY_SIZE),
+                                IRC_SERVER_OPTION_INTEGER (server,
+                                                           IRC_SERVER_OPTION_SSL_DHKEY_SIZE) / 2,
+                                IRC_SERVER_OPTION_INTEGER (server,
+                                                           IRC_SERVER_OPTION_SSL_DHKEY_SIZE) / 4);
             }
 #else
             (void) gnutls_rc;
@@ -3438,11 +3511,11 @@ irc_server_create_buffer (struct t_irc_server *server)
     /* set highlights settings on server buffer */
     weechat_buffer_set (server->buffer, "highlight_words_add",
                         weechat_config_string (irc_config_look_highlight_server));
-    if (weechat_config_string (irc_config_look_highlight_tags)
-        && weechat_config_string (irc_config_look_highlight_tags)[0])
+    if (weechat_config_string (irc_config_look_highlight_tags_restrict)
+        && weechat_config_string (irc_config_look_highlight_tags_restrict)[0])
     {
-        weechat_buffer_set (server->buffer, "highlight_tags",
-                            weechat_config_string (irc_config_look_highlight_tags));
+        weechat_buffer_set (server->buffer, "highlight_tags_restrict",
+                            weechat_config_string (irc_config_look_highlight_tags_restrict));
     }
 
     irc_server_set_buffer_title (server);
@@ -3465,10 +3538,63 @@ irc_server_create_buffer (struct t_irc_server *server)
 }
 
 #ifdef HAVE_GNUTLS
+
+/*
+ * Checks if a GnuTLS session uses the certificate with a given fingerprint.
+ *
+ * Returns:
+ *   1: certificate has the good fingerprint
+ *   0: certificate does NOT have the good fingerprint
+ */
+
+int
+irc_server_check_certificate_fingerprint (struct t_irc_server *server,
+                                          gnutls_x509_crt_t certificate,
+                                          const char *good_fingerprint)
+{
+    unsigned char fingerprint[20];
+    size_t i, fingerprint_size;
+    unsigned int value;
+
+    fingerprint_size = sizeof (fingerprint);
+
+    /* invalid length for good_fingerprint? */
+    if (strlen (good_fingerprint) != fingerprint_size * 2)
+        return 0;
+
+    /* calculate the SHA1 fingerprint for the certificate */
+    if (gnutls_x509_crt_get_fingerprint (certificate, GNUTLS_DIG_SHA1,
+                                         fingerprint,
+                                         &fingerprint_size) != GNUTLS_E_SUCCESS)
+    {
+        weechat_printf (server->buffer,
+                        _("%sgnutls: failed to calculate certificate "
+                          "fingerprint"),
+                        weechat_prefix ("error"));
+        return 0;
+    }
+
+    /* compare the fingerprints */
+    for (i = 0; i < fingerprint_size; i++)
+    {
+        if (sscanf (&good_fingerprint[i * 2], "%02x", &value) != 1)
+            return 0;
+        if (value != fingerprint[i])
+            return 0;
+    }
+
+    /* fingerprint matches */
+    return 1;
+}
+
 /*
  * GnuTLS callback called during handshake.
  *
+ * Returns:
+ *    0: certificate OK
+ *   -1: error in certificate
  */
+
 int
 irc_server_gnutls_callback (void *data, gnutls_session_t tls_session,
                             const gnutls_datum_t *req_ca, int nreq,
@@ -3490,11 +3616,11 @@ irc_server_gnutls_callback (void *data, gnutls_session_t tls_session,
     gnutls_x509_crt_t cert_temp;
     const gnutls_datum_t *cert_list;
     gnutls_datum_t filedatum;
-    unsigned int cert_list_len, status;
+    unsigned int i, cert_list_len, status;
     time_t cert_time;
-    char *cert_path0, *cert_path1, *cert_path2, *cert_str, *hostname;
-    const char *weechat_dir;
-    int rc, ret, i, j, hostname_match;
+    char *cert_path0, *cert_path1, *cert_path2, *cert_str;
+    const char *weechat_dir, *fingerprint;
+    int rc, ret, fingerprint_match, hostname_match, cert_temp_init;
 #if LIBGNUTLS_VERSION_NUMBER >= 0x010706
     gnutls_datum_t cinfo;
     int rinfo;
@@ -3512,126 +3638,202 @@ irc_server_gnutls_callback (void *data, gnutls_session_t tls_session,
         return -1;
 
     server = (struct t_irc_server *) data;
-    hostname = server->current_address;
-    hostname_match = 0;
+    cert_temp_init = 0;
+    cert_list = NULL;
+    cert_list_len = 0;
 
     if (action == WEECHAT_HOOK_CONNECT_GNUTLS_CB_VERIFY_CERT)
     {
         weechat_printf (server->buffer,
-                        _("%sgnutls: connected using %d-bit Diffie-Hellman shared "
-                          "secret exchange"),
+                        _("%sgnutls: connected using %d-bit Diffie-Hellman "
+                          "shared secret exchange"),
                         weechat_prefix ("network"),
                         IRC_SERVER_OPTION_INTEGER (server,
                                                    IRC_SERVER_OPTION_SSL_DHKEY_SIZE));
+
+        /* initialize the certificate structure */
+        if (gnutls_x509_crt_init (&cert_temp) != GNUTLS_E_SUCCESS)
+        {
+            weechat_printf (server->buffer,
+                            _("%sgnutls: failed to initialize certificate "
+                              "structure"),
+                            weechat_prefix ("error"));
+            rc = -1;
+            goto end;
+        }
+
+        /* flag to do the "deinit" (at the end of function) */
+        cert_temp_init = 1;
+
+        /* get fingerprint option in server */
+        fingerprint = IRC_SERVER_OPTION_STRING (server,
+                                                IRC_SERVER_OPTION_SSL_FINGERPRINT);
+
+        /* set match options */
+        fingerprint_match = (fingerprint && fingerprint[0]) ? 0 : 1;
+        hostname_match = 0;
+
+        /* get the peer's raw certificate (chain) as sent by the peer */
+        cert_list = gnutls_certificate_get_peers (tls_session, &cert_list_len);
+        if (cert_list)
+        {
+            weechat_printf (server->buffer,
+                            NG_("%sgnutls: receiving %d certificate",
+                                "%sgnutls: receiving %d certificates",
+                                cert_list_len),
+                            weechat_prefix ("network"),
+                            cert_list_len);
+
+            for (i = 0; i < cert_list_len; i++)
+            {
+                if (gnutls_x509_crt_import (cert_temp,
+                                            &cert_list[i],
+                                            GNUTLS_X509_FMT_DER) != GNUTLS_E_SUCCESS)
+                {
+                    weechat_printf (server->buffer,
+                                    _("%sgnutls: failed to import "
+                                      "certificate[%d]"),
+                                    weechat_prefix ("error"), i + 1);
+                    rc = -1;
+                    goto end;
+                }
+
+                /* checks on first certificate received */
+                if (i == 0)
+                {
+                    /* check if fingerprint matches the first certificate */
+                    if (fingerprint && fingerprint[0])
+                    {
+                        fingerprint_match = irc_server_check_certificate_fingerprint (server,
+                                                                                      cert_temp,
+                                                                                      fingerprint);
+                    }
+                    /* check if hostname matches in the first certificate */
+                    if (gnutls_x509_crt_check_hostname (cert_temp,
+                                                        server->current_address) != 0)
+                    {
+                        hostname_match = 1;
+                    }
+                }
+#if LIBGNUTLS_VERSION_NUMBER >= 0x010706
+                /* display infos about certificate */
+#if LIBGNUTLS_VERSION_NUMBER < 0x020400
+                rinfo = gnutls_x509_crt_print (cert_temp, GNUTLS_X509_CRT_ONELINE, &cinfo);
+#else
+                rinfo = gnutls_x509_crt_print (cert_temp, GNUTLS_CRT_PRINT_ONELINE, &cinfo);
+#endif
+                if (rinfo == 0)
+                {
+                    weechat_printf (server->buffer,
+                                    _("%s - certificate[%d] info:"),
+                                    weechat_prefix ("network"), i + 1);
+                    weechat_printf (server->buffer,
+                                    "%s   - %s",
+                                    weechat_prefix ("network"), cinfo.data);
+                    gnutls_free (cinfo.data);
+                }
+#endif
+                /* check dates, only if fingerprint is not set */
+                if (!fingerprint || !fingerprint[0])
+                {
+                    /* check expiration date */
+                    cert_time = gnutls_x509_crt_get_expiration_time (cert_temp);
+                    if (cert_time < time (NULL))
+                    {
+                        weechat_printf (server->buffer,
+                                        _("%sgnutls: certificate has expired"),
+                                        weechat_prefix ("error"));
+                        rc = -1;
+                    }
+                    /* check activation date */
+                    cert_time = gnutls_x509_crt_get_activation_time (cert_temp);
+                    if (cert_time > time (NULL))
+                    {
+                        weechat_printf (server->buffer,
+                                        _("%sgnutls: certificate is not yet activated"),
+                                        weechat_prefix ("error"));
+                        rc = -1;
+                    }
+                }
+            }
+
+            /*
+             * if fingerprint is set, display if matches, and don't check
+             * anything else
+             */
+            if (fingerprint && fingerprint[0])
+            {
+                if (fingerprint_match)
+                {
+                    weechat_printf (server->buffer,
+                                    _("%sgnutls: certificate fingerprint "
+                                      "matches"),
+                                    weechat_prefix ("network"));
+                }
+                else
+                {
+                    weechat_printf (server->buffer,
+                                    _("%sgnutls: certificate fingerprint does "
+                                      "NOT match (check value of option "
+                                      "irc.server.%s.ssl_fingerprint)"),
+                                    weechat_prefix ("error"), server->name);
+                    rc = -1;
+                }
+                goto end;
+            }
+
+            if (!hostname_match)
+            {
+                weechat_printf (server->buffer,
+                                _("%sgnutls: the hostname in the "
+                                  "certificate does NOT match \"%s\""),
+                                weechat_prefix ("error"),
+                                server->current_address);
+                rc = -1;
+            }
+        }
+
+        /* verify the peer’s certificate */
         if (gnutls_certificate_verify_peers2 (tls_session, &status) < 0)
         {
             weechat_printf (server->buffer,
                             _("%sgnutls: error while checking peer's certificate"),
                             weechat_prefix ("error"));
             rc = -1;
+            goto end;
+        }
+
+        /* check if certificate is trusted */
+        if (status & GNUTLS_CERT_INVALID)
+        {
+            weechat_printf (server->buffer,
+                            _("%sgnutls: peer's certificate is NOT trusted"),
+                            weechat_prefix ("error"));
+            rc = -1;
         }
         else
         {
-            /* some checks */
-            if (status & GNUTLS_CERT_INVALID)
-            {
-                weechat_printf (server->buffer,
-                                _("%sgnutls: peer's certificate is NOT trusted"),
-                                weechat_prefix ("error"));
-                rc = -1;
-            }
-            else
-            {
-                weechat_printf (server->buffer,
-                                _("%sgnutls: peer's certificate is trusted"),
-                                weechat_prefix ("network"));
-            }
-            if (status & GNUTLS_CERT_SIGNER_NOT_FOUND)
-            {
-                weechat_printf (server->buffer,
-                                _("%sgnutls: peer's certificate issuer is unknown"),
-                                weechat_prefix ("error"));
-                rc = -1;
-            }
-            if (status & GNUTLS_CERT_REVOKED)
-            {
-                weechat_printf (server->buffer,
-                                _("%sgnutls: the certificate has been revoked"),
-                                weechat_prefix ("error"));
-                rc = -1;
-            }
+            weechat_printf (server->buffer,
+                            _("%sgnutls: peer's certificate is trusted"),
+                            weechat_prefix ("network"));
+        }
 
-            /* check certificates */
-            if (gnutls_x509_crt_init (&cert_temp) >= 0)
-            {
-                cert_list = gnutls_certificate_get_peers (tls_session, &cert_list_len);
-                if (cert_list)
-                {
-                    weechat_printf (server->buffer,
-                                    NG_("%sgnutls: receiving %d certificate",
-                                        "%sgnutls: receiving %d certificates",
-                                        cert_list_len),
-                                    weechat_prefix ("network"),
-                                    cert_list_len);
-                    for (i = 0, j = (int) cert_list_len; i < j; i++)
-                    {
-                        if (gnutls_x509_crt_import (cert_temp, &cert_list[i], GNUTLS_X509_FMT_DER) >= 0)
-                        {
-                            /* checking if hostname matches in the first certificate */
-                            if ((i == 0) && (gnutls_x509_crt_check_hostname (cert_temp, hostname) != 0))
-                            {
-                                hostname_match = 1;
-                            }
-#if LIBGNUTLS_VERSION_NUMBER >= 0x010706
-                            /* displaying infos about certificate */
-#if LIBGNUTLS_VERSION_NUMBER < 0x020400
-                            rinfo = gnutls_x509_crt_print (cert_temp, GNUTLS_X509_CRT_ONELINE, &cinfo);
-#else
-                            rinfo = gnutls_x509_crt_print (cert_temp, GNUTLS_CRT_PRINT_ONELINE, &cinfo);
-#endif
-                            if (rinfo == 0)
-                            {
-                                weechat_printf (server->buffer,
-                                                _("%s - certificate[%d] info:"),
-                                                weechat_prefix ("network"),
-                                                i + 1);
-                                weechat_printf (server->buffer,
-                                                "%s   - %s",
-                                                weechat_prefix ("network"),
-                                                cinfo.data);
-                                gnutls_free (cinfo.data);
-                            }
-#endif
-                            /* check expiration date */
-                            cert_time = gnutls_x509_crt_get_expiration_time (cert_temp);
-                            if (cert_time < time (NULL))
-                            {
-                                weechat_printf (server->buffer,
-                                                _("%sgnutls: certificate has expired"),
-                                                weechat_prefix ("error"));
-                                rc = -1;
-                            }
-                            /* check activation date */
-                            cert_time = gnutls_x509_crt_get_activation_time (cert_temp);
-                            if (cert_time > time (NULL))
-                            {
-                                weechat_printf (server->buffer,
-                                                _("%sgnutls: certificate is not yet activated"),
-                                                weechat_prefix ("error"));
-                                rc = -1;
-                            }
-                        }
-                    }
-                    if (hostname_match == 0)
-                    {
-                        weechat_printf (server->buffer,
-                                        _("%sgnutls: the hostname in the "
-                                          "certificate does NOT match \"%s\""),
-                                        weechat_prefix ("error"), hostname);
-                        rc = -1;
-                    }
-                }
-            }
+        /* check if certificate issuer is known */
+        if (status & GNUTLS_CERT_SIGNER_NOT_FOUND)
+        {
+            weechat_printf (server->buffer,
+                            _("%sgnutls: peer's certificate issuer is unknown"),
+                            weechat_prefix ("error"));
+            rc = -1;
+        }
+
+        /* check that certificate is not revoked */
+        if (status & GNUTLS_CERT_REVOKED)
+        {
+            weechat_printf (server->buffer,
+                            _("%sgnutls: the certificate has been revoked"),
+                            weechat_prefix ("error"));
+            rc = -1;
         }
     }
     else if (action == WEECHAT_HOOK_CONNECT_GNUTLS_CB_SET_CERT)
@@ -3740,12 +3942,16 @@ irc_server_gnutls_callback (void *data, gnutls_session_t tls_session,
         }
     }
 
+end:
     /* an error should stop the handshake unless the user doesn't care */
     if ((rc == -1)
         && (IRC_SERVER_OPTION_BOOLEAN(server, IRC_SERVER_OPTION_SSL_VERIFY) == 0))
     {
         rc = 0;
     }
+
+    if (cert_temp_init)
+        gnutls_x509_crt_deinit (cert_temp);
 
     return rc;
 }
@@ -4056,7 +4262,7 @@ irc_server_disconnect (struct t_irc_server *server, int switch_address,
     if (switch_address)
         irc_server_switch_address (server, 0);
     else
-        irc_server_set_index_current_address(server, 0);
+        irc_server_set_index_current_address (server, 0);
 
     if (server->nick_modes)
     {
@@ -4072,6 +4278,8 @@ irc_server_disconnect (struct t_irc_server *server, int switch_address,
     server->lag_next_check = time (NULL) +
         weechat_config_integer (irc_config_network_lag_check);
     server->lag_last_refresh = 0;
+    server->monitor = 0;
+    server->monitor_time = 0;
 
     if (reconnect
         && IRC_SERVER_OPTION_BOOLEAN(server, IRC_SERVER_OPTION_AUTORECONNECT))
@@ -4346,8 +4554,11 @@ irc_server_xfer_send_ready_cb (void *data, const char *signal,
 {
     struct t_infolist *infolist;
     struct t_irc_server *ptr_server;
-    const char *plugin_name, *plugin_id, *type, *filename;
-    int spaces_in_name;
+    const char *plugin_name, *plugin_id, *type, *filename, *local_address;
+    char converted_addr[NI_MAXHOST];
+    struct addrinfo *ainfo;
+    struct sockaddr_in *saddr;
+    int spaces_in_name, rc;
 
     /* make C compiler happy */
     (void) data;
@@ -4360,14 +4571,40 @@ irc_server_xfer_send_ready_cb (void *data, const char *signal,
     {
         plugin_name = weechat_infolist_string (infolist, "plugin_name");
         plugin_id = weechat_infolist_string (infolist, "plugin_id");
-        if (plugin_name && (strcmp (plugin_name, IRC_PLUGIN_NAME) == 0) && plugin_id)
+        if (plugin_name && (strcmp (plugin_name, IRC_PLUGIN_NAME) == 0)
+            && plugin_id)
         {
             ptr_server = irc_server_search (plugin_id);
             if (ptr_server)
             {
-                type = weechat_infolist_string (infolist, "type");
-                if (type)
+                converted_addr[0] = '\0';
+                local_address = weechat_infolist_string (infolist,
+                                                         "local_address");
+                if (local_address)
                 {
+                    rc = getaddrinfo (local_address, NULL, NULL, &ainfo);
+                    if ((rc == 0) && ainfo && ainfo->ai_addr)
+                    {
+                        if (ainfo->ai_family == AF_INET)
+                        {
+                            /* transform dotted 4 IP address to ulong string */
+                            saddr = (struct sockaddr_in *)ainfo->ai_addr;
+                            snprintf (converted_addr, sizeof (converted_addr),
+                                      "%lu",
+                                      (unsigned long)ntohl (saddr->sin_addr.s_addr));
+                        }
+                        else
+                        {
+                            snprintf (converted_addr, sizeof (converted_addr),
+                                      "%s", local_address);
+                        }
+                    }
+                }
+
+                type = weechat_infolist_string (infolist, "type_string");
+                if (type && converted_addr[0])
+                {
+                    /* send DCC PRIVMSG */
                     if (strcmp (type, "file_send") == 0)
                     {
                         filename = weechat_infolist_string (infolist, "filename");
@@ -4380,7 +4617,7 @@ irc_server_xfer_send_ready_cb (void *data, const char *signal,
                                           (spaces_in_name) ? "\"" : "",
                                           filename,
                                           (spaces_in_name) ? "\"" : "",
-                                          weechat_infolist_string (infolist, "local_address"),
+                                          converted_addr,
                                           weechat_infolist_integer (infolist, "port"),
                                           weechat_infolist_string (infolist, "size"));
                     }
@@ -4390,7 +4627,7 @@ irc_server_xfer_send_ready_cb (void *data, const char *signal,
                                           IRC_SERVER_SEND_OUTQ_PRIO_HIGH, NULL,
                                           "PRIVMSG %s :\01DCC CHAT chat %s %d\01",
                                           weechat_infolist_string (infolist, "remote_nick"),
-                                          weechat_infolist_string (infolist, "local_address"),
+                                          converted_addr,
                                           weechat_infolist_integer (infolist, "port"));
                     }
                 }
@@ -4565,6 +4802,8 @@ irc_server_hdata_server_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_server, casemapping, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, chantypes, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, chanmodes, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_server, monitor, INTEGER, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_server, monitor_time, TIME, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, reconnect_delay, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, reconnect_start, TIME, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, command_time, TIME, 0, NULL, NULL);
@@ -4587,6 +4826,7 @@ irc_server_hdata_server_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_server, last_redirect, POINTER, 0, NULL, "irc_redirect");
         WEECHAT_HDATA_VAR(struct t_irc_server, notify_list, POINTER, 0, NULL, "irc_notify");
         WEECHAT_HDATA_VAR(struct t_irc_server, last_notify, POINTER, 0, NULL, "irc_notify");
+        WEECHAT_HDATA_VAR(struct t_irc_server, notify_count, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, join_manual, HASHTABLE, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, join_channel_key, HASHTABLE, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, join_noswitch, HASHTABLE, 0, NULL, NULL);
@@ -4655,6 +4895,9 @@ irc_server_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "ssl_dhkey_size",
                                            IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_SSL_DHKEY_SIZE)))
+        return 0;
+    if (!weechat_infolist_new_var_string (ptr_item, "ssl_fingerprint",
+                                           IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_SSL_FINGERPRINT)))
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "ssl_verify",
                                            IRC_SERVER_OPTION_BOOLEAN(server, IRC_SERVER_OPTION_SSL_VERIFY)))
@@ -4725,6 +4968,9 @@ irc_server_add_to_infolist (struct t_infolist *infolist,
     if (!weechat_infolist_new_var_integer (ptr_item, "away_check_max_nicks",
                                            IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS)))
         return 0;
+    if (!weechat_infolist_new_var_string (ptr_item, "default_msg_kick",
+                                          IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_DEFAULT_MSG_KICK)))
+        return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "default_msg_part",
                                           IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_DEFAULT_MSG_PART)))
         return 0;
@@ -4772,6 +5018,10 @@ irc_server_add_to_infolist (struct t_infolist *infolist,
     if (!weechat_infolist_new_var_string (ptr_item, "chantypes", server->chantypes))
         return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "chanmodes", server->chanmodes))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "monitor", server->monitor))
+        return 0;
+    if (!weechat_infolist_new_var_time (ptr_item, "monitor_time", server->monitor_time))
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "reconnect_delay", server->reconnect_delay))
         return 0;
@@ -4876,6 +5126,13 @@ irc_server_print_log ()
         else
             weechat_log_printf ("  ssl_dhkey_size . . . : '%d'",
                                 weechat_config_integer (ptr_server->options[IRC_SERVER_OPTION_SSL_DHKEY_SIZE]));
+        /* ssl_fingerprint */
+        if (weechat_config_option_is_null (ptr_server->options[IRC_SERVER_OPTION_SSL_FINGERPRINT]))
+            weechat_log_printf ("  ssl_fingerprint. . . : null ('%s')",
+                                IRC_SERVER_OPTION_STRING(ptr_server, IRC_SERVER_OPTION_SSL_FINGERPRINT));
+        else
+            weechat_log_printf ("  ssl_fingerprint. . . : '%s'",
+                                weechat_config_string (ptr_server->options[IRC_SERVER_OPTION_SSL_FINGERPRINT]));
         /* ssl_verify */
         if (weechat_config_option_is_null (ptr_server->options[IRC_SERVER_OPTION_SSL_VERIFY]))
             weechat_log_printf ("  ssl_verify . . . . . : null (%s)",
@@ -5039,6 +5296,13 @@ irc_server_print_log ()
         else
             weechat_log_printf ("  away_check_max_nicks : %d",
                                 weechat_config_integer (ptr_server->options[IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS]));
+        /* default_msg_kick */
+        if (weechat_config_option_is_null (ptr_server->options[IRC_SERVER_OPTION_DEFAULT_MSG_KICK]))
+            weechat_log_printf ("  default_msg_kick . . : null ('%s')",
+                                IRC_SERVER_OPTION_STRING(ptr_server, IRC_SERVER_OPTION_DEFAULT_MSG_KICK));
+        else
+            weechat_log_printf ("  default_msg_kick . . : '%s'",
+                                weechat_config_string (ptr_server->options[IRC_SERVER_OPTION_DEFAULT_MSG_KICK]));
         /* default_msg_part */
         if (weechat_config_option_is_null (ptr_server->options[IRC_SERVER_OPTION_DEFAULT_MSG_PART]))
             weechat_log_printf ("  default_msg_part . . : null ('%s')",
@@ -5093,6 +5357,8 @@ irc_server_print_log ()
                             irc_server_casemapping_string[ptr_server->casemapping]);
         weechat_log_printf ("  chantypes. . . . . . : '%s'",  ptr_server->chantypes);
         weechat_log_printf ("  chanmodes. . . . . . : '%s'",  ptr_server->chanmodes);
+        weechat_log_printf ("  monitor. . . . . . . : %d",    ptr_server->monitor);
+        weechat_log_printf ("  monitor_time . . . . : %ld",   ptr_server->monitor_time);
         weechat_log_printf ("  reconnect_delay. . . : %d",    ptr_server->reconnect_delay);
         weechat_log_printf ("  reconnect_start. . . : %ld",   ptr_server->reconnect_start);
         weechat_log_printf ("  command_time . . . . : %ld",   ptr_server->command_time);
@@ -5120,6 +5386,7 @@ irc_server_print_log ()
         weechat_log_printf ("  last_redirect. . . . : 0x%lx", ptr_server->last_redirect);
         weechat_log_printf ("  notify_list. . . . . : 0x%lx", ptr_server->notify_list);
         weechat_log_printf ("  last_notify. . . . . : 0x%lx", ptr_server->last_notify);
+        weechat_log_printf ("  notify_count . . . . : %d",    ptr_server->notify_count);
         weechat_log_printf ("  join_manual. . . . . : 0x%lx (hashtable: '%s')",
                             ptr_server->join_manual,
                             weechat_hashtable_get_string (ptr_server->join_manual, "keys_values"));

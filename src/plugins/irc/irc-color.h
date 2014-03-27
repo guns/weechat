@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -38,22 +38,26 @@
 
 /* attributes in IRC messages for color & style (bold, ..) */
 
-#define IRC_COLOR_BOLD_CHAR       '\x02'
-#define IRC_COLOR_BOLD_STR        "\x02"
-#define IRC_COLOR_COLOR_CHAR      '\x03'
-#define IRC_COLOR_COLOR_STR       "\x03"
-#define IRC_COLOR_RESET_CHAR      '\x0F'
-#define IRC_COLOR_RESET_STR       "\x0F"
-#define IRC_COLOR_FIXED_CHAR      '\x11'
-#define IRC_COLOR_FIXED_STR       "\x11"
-#define IRC_COLOR_REVERSE_CHAR    '\x12'
-#define IRC_COLOR_REVERSE_STR     "\x12"
-#define IRC_COLOR_REVERSE2_CHAR   '\x16'
-#define IRC_COLOR_REVERSE2_STR    "\x16"
-#define IRC_COLOR_ITALIC_CHAR     '\x1D'
-#define IRC_COLOR_ITALIC_STR      "\x1D"
-#define IRC_COLOR_UNDERLINE_CHAR  '\x1F'
-#define IRC_COLOR_UNDERLINE_STR   "\x1F"
+#define IRC_COLOR_BOLD_CHAR      '\x02'  /* bold text                       */
+#define IRC_COLOR_BOLD_STR       "\x02"  /*   [02]...[02]                   */
+
+#define IRC_COLOR_COLOR_CHAR     '\x03'  /* text color: fg / fg,bg / ,bg    */
+#define IRC_COLOR_COLOR_STR      "\x03"  /*   [03]15,05...[03]              */
+
+#define IRC_COLOR_RESET_CHAR     '\x0F'  /* reset color/attributes          */
+#define IRC_COLOR_RESET_STR      "\x0F"  /*   [0F]...                       */
+
+#define IRC_COLOR_FIXED_CHAR     '\x11'  /* monospaced font (ignored)       */
+#define IRC_COLOR_FIXED_STR      "\x11"  /*   [11]...[11]                   */
+
+#define IRC_COLOR_REVERSE_CHAR   '\x16'  /* reverse video (fg <--> bg)      */
+#define IRC_COLOR_REVERSE_STR    "\x16"  /*   [16]...[16]                   */
+
+#define IRC_COLOR_ITALIC_CHAR    '\x1D'  /* italic text                     */
+#define IRC_COLOR_ITALIC_STR     "\x1D"  /*   [1D]...[1D]                   */
+
+#define IRC_COLOR_UNDERLINE_CHAR '\x1F'  /* underlined text                 */
+#define IRC_COLOR_UNDERLINE_STR  "\x1F"  /*   [1F]...[1F]                   */
 
 /* macros for WeeChat core and IRC colors */
 
@@ -89,7 +93,6 @@
 #define IRC_COLOR_ITEM_LAG_FINISHED weechat_color(weechat_config_string(irc_config_color_item_lag_finished))
 
 extern char *irc_color_decode (const char *string, int keep_colors);
-extern char *irc_color_decode_for_user_entry (const char *string);
 extern char *irc_color_encode (const char *string, int keep_colors);
 extern char *irc_color_modifier_cb (void *data, const char *modifier,
                                     const char *modifier_data,

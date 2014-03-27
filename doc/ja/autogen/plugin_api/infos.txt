@@ -1,5 +1,5 @@
 [width="100%",cols="^1,^2,6,6",options="header"]
-|========================================
+|===
 | プラグイン | 名前 | 説明 | 引数
 
 | aspell | aspell_dict | バッファで使用中の辞書のコンマ区切りリスト | バッファポインタ ("0x12345678") またはバッファのフルネーム ("irc.freenode.#weechat")
@@ -42,6 +42,10 @@
 
 | weechat | locale | 翻訳メッセージに利用するロケール | -
 
+| weechat | term_height | ターミナルの高さ | -
+
+| weechat | term_width | ターミナルの幅 | -
+
 | weechat | version | WeeChat のバージョン | -
 
 | weechat | version_git | WeeChat の git バージョン (開発バージョンではコマンド "git describe" の出力、安定版リリースでは空文字が出力されます) | -
@@ -62,4 +66,4 @@
 
 | weechat | weechat_upgrading | WeeChat がアップグレード中は 1 (コマンド `/upgrade`) | -
 
-|========================================
+|===

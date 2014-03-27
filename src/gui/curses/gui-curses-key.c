@@ -1,7 +1,7 @@
 /*
  * gui-curses-key.c - keyboard functions for Curses GUI
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -144,8 +144,8 @@ gui_key_default_bindings (int context)
         BIND(/* ^Cc         */ "ctrl-Cc",            "/input insert \\x03");
         BIND(/* ^Ci         */ "ctrl-Ci",            "/input insert \\x1D");
         BIND(/* ^Co         */ "ctrl-Co",            "/input insert \\x0F");
-        BIND(/* ^Cr         */ "ctrl-Cr",            "/input insert \\x12");
-        BIND(/* ^Cu         */ "ctrl-Cu",            "/input insert \\x15");
+        BIND(/* ^Cv         */ "ctrl-Cv",            "/input insert \\x16");
+        BIND(/* ^C_         */ "ctrl-C_",            "/input insert \\x1F");
         BIND(/* m-right     */ "meta-meta2-C",       "/buffer +1");
         BIND(/* m-right     */ "meta2-1;3C",         "/buffer +1");
         BIND(/* m-down      */ "meta-meta2-B",       "/buffer +1");
@@ -169,15 +169,19 @@ gui_key_default_bindings (int context)
         BIND(/* m-pgdn      */ "meta2-6;3~",         "/window scroll_down");
         BIND(/* m-home      */ "meta-meta2-1~",      "/window scroll_top");
         BIND(/* m-home      */ "meta-meta2-7~",      "/window scroll_top");
+        BIND(/* m-home      */ "meta2-1;3H"   ,      "/window scroll_top");
         BIND(/* m-end       */ "meta-meta2-4~",      "/window scroll_bottom");
         BIND(/* m-end       */ "meta-meta2-8~",      "/window scroll_bottom");
+        BIND(/* m-end       */ "meta2-1;3F",         "/window scroll_bottom");
         BIND(/* m-n         */ "meta-n",             "/window scroll_next_highlight");
         BIND(/* m-p         */ "meta-p",             "/window scroll_previous_highlight");
         BIND(/* F9          */ "meta2-20~",          "/bar scroll title * -30%");
         BIND(/* F10         */ "meta2-21~",          "/bar scroll title * +30%");
         BIND(/* F11         */ "meta2-23~",          "/bar scroll nicklist * -100%");
         BIND(/* F12         */ "meta2-24~",          "/bar scroll nicklist * +100%");
+        BIND(/* m-F11       */ "meta2-23;3~",        "/bar scroll nicklist * b");
         BIND(/* m-F11       */ "meta-meta2-23~",     "/bar scroll nicklist * b");
+        BIND(/* m-F12       */ "meta2-24;3~",        "/bar scroll nicklist * e");
         BIND(/* m-F12       */ "meta-meta2-24~",     "/bar scroll nicklist * e");
         BIND(/* ^L          */ "ctrl-L",             "/window refresh");
         BIND(/* F7          */ "meta2-18~",          "/window -1");
@@ -214,8 +218,8 @@ gui_key_default_bindings (int context)
         /* bind meta-j + {01..99} to switch to buffers # > 10 */
         for (i = 1; i < 100; i++)
         {
-            sprintf (key_str, "meta-j%02d", i);
-            sprintf (command, "/buffer %d", i);
+            snprintf (key_str, sizeof (key_str), "meta-j%02d", i);
+            snprintf (command, sizeof (command), "/buffer %d", i);
             BIND(key_str, command);
         }
     }
@@ -531,18 +535,15 @@ gui_key_read_cb (void *data, int fd)
             || ((buffer[i] != '\r') && (buffer[i] != '\n'))
             || ((buffer[i - 1] != '\r') && (buffer[i - 1] != '\n')))
         {
-            if (gui_key_paste_pending)
+            if (gui_key_paste_pending && (buffer[i] == 25))
             {
-                if (buffer[i] == 25)
-                {
-                    /* ctrl-Y: accept paste */
-                    accept_paste = 1;
-                }
-                else if (buffer[i] == 14)
-                {
-                    /* ctrl-N: cancel paste */
-                    cancel_paste = 1;
-                }
+                /* ctrl-Y: accept paste */
+                accept_paste = 1;
+            }
+            else if (gui_key_paste_pending && (buffer[i] == 14))
+            {
+                /* ctrl-N: cancel paste */
+                cancel_paste = 1;
             }
             else
             {

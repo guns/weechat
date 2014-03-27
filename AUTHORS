@@ -1,37 +1,40 @@
-WeeChat Authors
-===============
+= WeeChat Authors
+Sébastien Helleu <flashcode@flashtux.org>
 
-Developers
-----------
+
+== Developers
 
 * General code
-
 ** Sébastien Helleu (FlashCode) <flashcode@flashtux.org>
-
 * Scripts plugins, debian packager
-
 ** Emmanuel Bouthenot (kolter) <kolter@openics.org>
 
-
-Contributors
-------------
+== Contributors
 
 Alphabetically:
 
 * Ailin Nemui (Nei)
 * Aleksey V Zapparov
-* Andrew Potter
+* Alex Tarkovsky
+* Andrew Potter (talisein)
 * Antoine Pietri (seirl)
+* Asakura
 * Arvydas Sidorenko
+* Bazerka
 * Benoit Papillault (benoit)
+* Christian Heinz
+* Christopher O'Neill (deltafire)
+* David Flatz
 * Dmitry Kobylin
 * Dominik Honnef
 * Elián Hanisch (m4v)
 * Elizabeth Myers (Elizacat)
+* Emanuele Giaquinta
 * Esteban I. Ruiz Moreno (Exio)
 * Frank Zacharias
 * Gu1ll4um3r0m41n
-* gwenn
+* Guido Berhoerster
+* Gwenn
 * Hasan Kiran (turgay)
 * Ivan Sichmann Freitas
 * JD Horelick (jdhore)
@@ -41,31 +44,43 @@ Alphabetically:
 * Krzysztof Koroscik (soltys)
 * Kyle Fuller (kylef)
 * Lázaro A.
+* Leonid Evdokimov
+* Maarten de Vries
 * Marco Paolone
+* Matt Robinson
 * Mantas Mikulėnas (grawity)
 * Mateusz Poszwa
+* Murilo Opsfelder Araujo
 * Nicolas Cavigneaux
 * Nils Görs (nils_2)
 * Odin
+* Patrick Steinhardt
+* Paul Komkoff
 * Pavel Shevchuk (Stalwart)
 * Peter Boström (pbos)
-* pistos
+* Pierre Carru
+* Piotr Szymaniak
+* Pistos
 * Quentin Glidic (SardemFF7)
+* Quentin Pradet
 * Quico Noizeux
-* rettub
+* Rettub
 * Rudolf Polzer (divVerent)
 * Ryuunosuke Ayanokouzi
 * Sergio Durigan Junior
 * Simon Arlott
 * Simon Kuhnle
 * Stefano Pigozzi
-* voroskoi
+* Stfn
+* Tom Alsberg
+* Tor Hveem (xt)
+* Valentin Lorentz (progval)
+* Voroskoi
+* Yannick Palanque
 
-
-Contact
--------
+== Contact
 
 Developers are connected to IRC:
 
 * server: 'irc.freenode.net'
-* channels: '#weechat' (english) and '#weechat-fr' (french)
+* channels: '#weechat' (English) and '#weechat-fr' (French)

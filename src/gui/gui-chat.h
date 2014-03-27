@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -70,7 +70,8 @@ extern int gui_chat_strlen_screen (const char *string);
 extern char *gui_chat_string_add_offset (const char *string, int offset);
 extern char *gui_chat_string_add_offset_screen (const char *string,
                                                 int offset_screen);
-extern int gui_chat_string_real_pos (const char *string, int pos);
+extern int gui_chat_string_real_pos (const char *string, int pos,
+                                     int use_screen_size);
 extern int gui_chat_string_pos (const char *string, int real_pos);
 extern void gui_chat_get_word_info (struct t_gui_window *window,
                                     const char *data, int *word_start_offset,
@@ -87,7 +88,7 @@ extern void gui_chat_printf_date_tags (struct t_gui_buffer *buffer,
                                        const char *message, ...);
 extern void gui_chat_printf_y (struct t_gui_buffer *buffer, int y,
                                const char *message, ...);
-extern void gui_chat_print_lines_waiting_buffer ();
+extern void gui_chat_print_lines_waiting_buffer (FILE *f);
 extern int gui_chat_hsignal_quote_line_cb (void *data, const char *signal,
                                            struct t_hashtable *hashtable);
 extern void gui_chat_end ();

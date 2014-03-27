@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -85,8 +85,9 @@ extern int gui_line_search_text (struct t_gui_buffer *buffer,
 extern int gui_line_match_regex (struct t_gui_line_data *line_data,
                                  regex_t *regex_prefix,
                                  regex_t *regex_message);
+extern int gui_line_has_tag_no_filter (struct t_gui_line_data *line_data);
 extern int gui_line_match_tags (struct t_gui_line_data *line_data,
-                                int tags_count, char **tags_array);
+                                int tags_count, char ***tags_array);
 extern const char *gui_line_search_tag_starting_with (struct t_gui_line *line,
                                                       const char *tag);
 extern const char *gui_line_get_nick_tag (struct t_gui_line *line);

@@ -1,7 +1,7 @@
 /*
  * relay-weechat-msg.c - build binary messages for WeeChat protocol
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -433,6 +433,7 @@ relay_weechat_msg_add_hdata_path (struct t_relay_weechat_msg *msg,
                                 relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_LONG);
                                 break;
                             case WEECHAT_HDATA_STRING:
+                            case WEECHAT_HDATA_SHARED_STRING:
                                 relay_weechat_msg_add_type (msg, RELAY_WEECHAT_MSG_OBJ_STRING);
                                 break;
                             case WEECHAT_HDATA_POINTER:
@@ -476,6 +477,7 @@ relay_weechat_msg_add_hdata_path (struct t_relay_weechat_msg *msg,
                                                                                     name));
                                     break;
                                 case WEECHAT_HDATA_STRING:
+                                case WEECHAT_HDATA_SHARED_STRING:
                                     relay_weechat_msg_add_string (msg,
                                                                   weechat_hdata_string (hdata,
                                                                                         pointer,
@@ -664,6 +666,7 @@ relay_weechat_msg_add_hdata (struct t_relay_weechat_msg *msg,
                         strcat (keys_types, RELAY_WEECHAT_MSG_OBJ_LONG);
                         break;
                     case WEECHAT_HDATA_STRING:
+                    case WEECHAT_HDATA_SHARED_STRING:
                         strcat (keys_types, RELAY_WEECHAT_MSG_OBJ_STRING);
                         break;
                     case WEECHAT_HDATA_POINTER:

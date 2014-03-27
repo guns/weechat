@@ -1,7 +1,7 @@
 /*
  * wee-utf8.c - UTF-8 string functions
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2006 Emmanuel Bouthenot <kolter@openics.org>
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -154,7 +154,10 @@ utf8_normalize (char *string, char replacement)
 }
 
 /*
- * Returns pointer to previous UTF-8 char in a string.
+ * Gets pointer to previous UTF-8 char in a string.
+ *
+ * Returns pointer to previous UTF-8 char, NULL if not found (for example
+ * "string_start" was reached).
  */
 
 char *
@@ -195,7 +198,9 @@ utf8_prev_char (const char *string_start, const char *string)
 }
 
 /*
- * Returns pointer to next UTF-8 char in a string.
+ * Gets pointer to next UTF-8 char in a string.
+ *
+ * Returns pointer to next UTF-8 char, NULL if string was NULL.
  */
 
 char *
@@ -236,7 +241,9 @@ utf8_next_char (const char *string)
 }
 
 /*
- * Returns UTF-8 char as an integer.
+ * Gets UTF-8 char as an integer.
+ *
+ * Returns the UTF-8 char as integer number.
  */
 
 int
@@ -291,7 +298,60 @@ utf8_char_int (const char *string)
 }
 
 /*
+ * Converts a unicode char (as unsigned integer) to a string.
+ *
+ * The string must have a size >= 5
+ * (4 bytes for the UTF-8 char + the final '\0').
+ *
+ * In case of error (if unicode value is > 0x1FFFFF), the string is set to an
+ * empty string (string[0] == '\0').
+ */
+
+void
+utf8_int_string (unsigned int unicode_value, char *string)
+{
+    if (!string)
+        return;
+
+    string[0] = '\0';
+
+    if (unicode_value <= 0x007F)
+    {
+        /* UTF-8, 1 byte: 0vvvvvvv */
+        string[0] = unicode_value;
+        string[1] = '\0';
+    }
+    else if (unicode_value <= 0x07FF)
+    {
+        /* UTF-8, 2 bytes: 110vvvvv 10vvvvvv */
+        string[0] = 0xC0 | ((unicode_value >> 6) & 0x1F);
+        string[1] = 0x80 | (unicode_value & 0x3F);
+        string[2] = '\0';
+    }
+    else if (unicode_value <= 0xFFFF)
+    {
+        /* UTF-8, 3 bytes: 1110vvvv 10vvvvvv 10vvvvvv */
+        string[0] = 0xE0 | ((unicode_value >> 12) & 0x0F);
+        string[1] = 0x80 | ((unicode_value >> 6) & 0x3F);
+        string[2] = 0x80 | (unicode_value & 0x3F);
+        string[3] = '\0';
+    }
+    else if (unicode_value <= 0x1FFFFF)
+    {
+        /* UTF-8, 4 bytes: 11110vvv 10vvvvvv 10vvvvvv 10vvvvvv */
+        string[0] = 0xF0 | ((unicode_value >> 18) & 0x07);
+        string[1] = 0x80 | ((unicode_value >> 12) & 0x3F);
+        string[2] = 0x80 | ((unicode_value >> 6) & 0x3F);
+        string[3] = 0x80 | (unicode_value & 0x3F);
+        string[4] = '\0';
+    }
+}
+
+/*
  * Gets wide char from string (first char).
+ *
+ * Returns the char as "wint_t", WEOF is string was NULL/empty or in case of
+ * error.
  */
 
 wint_t
@@ -346,8 +406,10 @@ utf8_char_size (const char *string)
 }
 
 /*
- * Returns length of an UTF-8 string in number of chars (not bytes).
+ * Gets length of an UTF-8 string in number of chars (not bytes).
  * Result is <= strlen(string).
+ *
+ * Returns length of string (>= 0).
  */
 
 int
@@ -368,7 +430,9 @@ utf8_strlen (const char *string)
 }
 
 /*
- * Returns length of an UTF-8 string for N bytes max in string.
+ * Gets length of an UTF-8 string for N bytes max in string.
+ *
+ * Returns length of string (>= 0).
  */
 
 int
@@ -391,14 +455,17 @@ utf8_strnlen (const char *string, int bytes)
 }
 
 /*
- * Returns number of chars needed on screen to display the UTF-8 string.
+ * Gets number of chars needed on screen to display the UTF-8 string.
+ *
+ * Returns the number of chars (>= 0).
  */
 
 int
 utf8_strlen_screen (const char *string)
 {
-    int length, num_char;
+    int length, num_char, add_for_tab;
     wchar_t *alloc_wstring, *ptr_wstring, wstring[4+2];
+    const char *ptr_string;
 
     if (!string || !string[0])
         return 0;
@@ -440,11 +507,26 @@ utf8_strlen_screen (const char *string)
     if (alloc_wstring)
         free (alloc_wstring);
 
+    add_for_tab = CONFIG_INTEGER(config_look_tab_width) - 1;
+    if (add_for_tab > 0)
+    {
+        for (ptr_string = string; ptr_string[0]; ptr_string++)
+        {
+            if (ptr_string[0] == '\t')
+                length += add_for_tab;
+        }
+    }
+
     return length;
 }
 
 /*
  * Compares two UTF-8 chars (case sensitive).
+ *
+ * Returns:
+ *   < 0: char1 < char2
+ *     0: char1 == char2
+ *   > 0: char1 > char2
  */
 
 int
@@ -478,6 +560,11 @@ utf8_charcmp (const char *string1, const char *string2)
 
 /*
  * Compares two UTF-8 chars (case is ignored).
+ *
+ * Returns:
+ *   < 0: char1 < char2
+ *     0: char1 == char2
+ *   > 0: char1 > char2
  */
 
 int
@@ -537,7 +624,9 @@ utf8_charcasecmp_range (const char *string1, const char *string2, int range)
 }
 
 /*
- * Returns number of chars needed on screen to display the UTF-8 char.
+ * Gets number of chars needed on screen to display the UTF-8 char.
+ *
+ * Returns the number of chars (>= 0).
  */
 
 int
@@ -561,6 +650,8 @@ utf8_char_size_screen (const char *string)
 
 /*
  * Moves forward N chars in an UTF-8 string.
+ *
+ * Returns pointer to the new position in string.
  */
 
 char *
@@ -578,11 +669,13 @@ utf8_add_offset (const char *string, int offset)
 }
 
 /*
- * Returns real position in UTF-8 string, in bytes.
+ * Gets real position in UTF-8 string, in bytes.
  *
  * Argument "pos" is a number of chars (not bytes).
  *
  * Example: ("déca", 2) returns 3.
+ *
+ * Returns the real position (>= 0).
  */
 
 int
@@ -607,11 +700,13 @@ utf8_real_pos (const char *string, int pos)
 }
 
 /*
- * Returns position in UTF-8 string, in chars.
+ * Gets position in UTF-8 string, in chars.
  *
  * Argument "real_pos" is a number of bytes (not chars).
  *
  * Example: ("déca", 3) returns 2.
+ *
+ * Returns the position in string.
  */
 
 int
@@ -635,6 +730,8 @@ utf8_pos (const char *string, int real_pos)
 
 /*
  * Duplicates an UTF-8 string, with max N chars.
+ *
+ * Note: result must be freed after use.
  */
 
 char *

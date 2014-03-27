@@ -1,7 +1,7 @@
 /*
  * wee-debug.c - debug functions
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -29,6 +29,13 @@
 #endif
 #include <string.h>
 #include <time.h>
+#include <gcrypt.h>
+#include <curl/curl.h>
+#include <zlib.h>
+
+#ifdef HAVE_GNUTLS
+#include <gnutls/gnutls.h>
+#endif
 
 #include "weechat.h"
 #include "wee-backtrace.h"
@@ -170,26 +177,6 @@ debug_sigsegv ()
 }
 
 /*
- * Callback for signal "debug_buffer".
- *
- * This function is called when command "/debug buffer" is issued.
- */
-
-int
-debug_buffer_cb (void *data, const char *signal, const char *type_data,
-                 void *signal_data)
-{
-    /* make C compiler happy */
-    (void) data;
-    (void) signal;
-    (void) type_data;
-
-    gui_buffer_dump_hexa ((struct t_gui_buffer *)signal_data);
-
-    return WEECHAT_RC_OK;
-}
-
-/*
  * Displays tree of windows (this function must not be called directly).
  */
 
@@ -251,27 +238,6 @@ debug_windows_tree ()
     gui_chat_printf (NULL, "");
     gui_chat_printf (NULL, _("Windows tree:"));
     debug_windows_tree_display (gui_windows_tree, 1);
-}
-
-/*
- * Callback for signal "debug_windows".
- *
- * This function is called when command "/debug windows" is issued.
- */
-
-int
-debug_windows_cb (void *data, const char *signal, const char *type_data,
-                  void *signal_data)
-{
-    /* make C compiler happy */
-    (void) data;
-    (void) signal;
-    (void) type_data;
-    (void) signal_data;
-
-    debug_windows_tree ();
-
-    return WEECHAT_RC_OK;
 }
 
 /*
@@ -538,6 +504,70 @@ debug_infolists ()
 }
 
 /*
+ * Callback for signal "debug_libs": displays infos about external libraries
+ * used (called when command "/debug libs" is issued).
+ *
+ * Note: this function displays libraries for WeeChat core only: plugins can
+ * catch this signal to display their external libraries.
+ */
+
+int
+debug_libs_cb (void *data, const char *signal, const char *type_data,
+               void *signal_data)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) signal;
+    (void) type_data;
+    (void) signal_data;
+
+    gui_chat_printf (NULL, "  core:");
+
+    /* display ncurses version */
+    gui_main_debug_libs ();
+
+    /* display gcrypt version */
+#ifdef GCRYPT_VERSION
+    gui_chat_printf (NULL, "    gcrypt: %s%s",
+                     GCRYPT_VERSION,
+                     (weechat_no_gcrypt) ? " (not initialized)" : "");
+#else
+    gui_chat_printf (NULL, "    gcrypt: (?)%s",
+                     (weechat_no_gcrypt) ? " (not initialized)" : "");
+#endif
+
+    /* display gnutls version */
+#ifdef HAVE_GNUTLS
+#ifdef GNUTLS_VERSION
+    gui_chat_printf (NULL, "    gnutls: %s%s",
+                     GNUTLS_VERSION,
+                     (weechat_no_gnutls) ? " (not initialized)" : "");
+#else
+    gui_chat_printf (NULL, "    gnutls: (?)%s",
+                     (weechat_no_gnutls) ? " (not initialized)" : "");
+#endif
+#else
+    gui_chat_printf (NULL, "    gnutls: (not available)");
+#endif
+
+    /* display curl version */
+#ifdef LIBCURL_VERSION
+    gui_chat_printf (NULL, "    curl: %s", LIBCURL_VERSION);
+#else
+    gui_chat_printf (NULL, "    curl: (?)");
+#endif
+
+    /* display zlib version */
+#ifdef ZLIB_VERSION
+    gui_chat_printf (NULL, "    zlib: %s", ZLIB_VERSION);
+#else
+    gui_chat_printf (NULL, "    zlib: (?)");
+#endif
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Displays WeeChat directories.
  */
 
@@ -560,7 +590,11 @@ debug_directories ()
 void
 debug_init ()
 {
-    hook_signal (NULL, "debug_dump", &debug_dump_cb, NULL);
-    hook_signal (NULL, "debug_buffer", &debug_buffer_cb, NULL);
-    hook_signal (NULL, "debug_windows", &debug_windows_cb, NULL);
+    /*
+     * hook signals with high priority, to be sure they will be used before
+     * plugins (they should anyway because this function is called before load
+     * of plugins)
+     */
+    hook_signal (NULL, "2000|debug_dump", &debug_dump_cb, NULL);
+    hook_signal (NULL, "2000|debug_libs", &debug_libs_cb, NULL);
 }

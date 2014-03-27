@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2005 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2006-2009 Emmanuel Bouthenot <kolter@openics.org>
 #
@@ -55,7 +55,8 @@ EXTRA_DIST = CMakeLists.txt \
              po/CMakeLists.txt \
              po/srcfiles.cmake \
              weechat.png \
-             weechat.pc.in
+             weechat.pc.in \
+             weechat.cygport.in
 
 ACLOCAL_AMFLAGS = -I m4
 

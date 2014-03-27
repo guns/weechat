@@ -1,5 +1,5 @@
 [width="65%",cols="^1,^2,8",options="header"]
-|========================================
+|===
 | プラグイン | 名前 | 説明
 
 | alias | alias | 別名のリスト
@@ -21,6 +21,8 @@
 | irc | irc_channels | 全ての IRC サーバのチャンネル
 
 | irc | irc_ignores_numbers | 無視エントリの数
+
+| irc | irc_msg_kick | デフォルトのキックメッセージ
 
 | irc | irc_msg_part | IRC チャンネルのデフォルト退出メッセージ
 
@@ -114,6 +116,8 @@
 
 | weechat | plugins_commands | プラグインの定義するコマンド
 
+| weechat | plugins_installed | インストールされたプラグインの名前
+
 | weechat | plugins_names | プラグイン名
 
 | weechat | proxies_names | プロキシの名前
@@ -128,4 +132,4 @@
 
 | xfer | nick | DCC チャットのニックネーム
 
-|========================================
+|===

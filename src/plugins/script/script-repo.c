@@ -1,7 +1,7 @@
 /*
  * script-repo.c - download and read repository file (plugins.xml.gz)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1225,7 +1225,7 @@ script_repo_file_read (int quiet)
                             }
                             if (!ptr_desc)
                             {
-                                /* default description (english) */
+                                /* default description (English) */
                                 ptr_desc = weechat_hashtable_get (descriptions,
                                                                   "en");
                             }

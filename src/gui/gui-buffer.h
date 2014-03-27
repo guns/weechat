@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -20,6 +20,7 @@
 #ifndef __WEECHAT_GUI_BUFFER_H
 #define __WEECHAT_GUI_BUFFER_H 1
 
+#include <limits.h>
 #include <regex.h>
 
 struct t_hashtable;
@@ -45,6 +46,10 @@ enum t_gui_buffer_notify
 };
 
 #define GUI_BUFFER_MAIN "weechat"
+
+#define GUI_BUFFERS_MAX 10000
+
+#define GUI_BUFFER_NUMBER_MAX (INT_MAX - 10000)
 
 #define GUI_TEXT_SEARCH_DISABLED 0
 #define GUI_TEXT_SEARCH_BACKWARD 1
@@ -77,7 +82,7 @@ struct t_gui_buffer
     char *plugin_name_for_upgrade;     /* plugin name when upgrading        */
 
     int number;                        /* buffer number (first is 1)        */
-    int layout_number;                 /* number of buffer saved in layout  */
+    int layout_number;                 /* number of buffer stored in layout */
     int layout_number_merge_order;     /* order in merge for layout         */
     char *name;                        /* buffer name                       */
     char *full_name;                   /* plugin name + '.' + buffer name   */
@@ -92,6 +97,7 @@ struct t_gui_buffer
                                        /* 1 = active (merged or not)        */
                                        /* 2 = the only active (merged)      */
     int print_hooks_enabled;           /* 1 if print hooks are enabled      */
+    int day_change;                    /* 1 if "day change" displayed       */
 
     /* close callback */
     int (*close_callback)(void *data,  /* called when buffer is closed      */
@@ -171,10 +177,12 @@ struct t_gui_buffer
     char *highlight_words;             /* list of words to highlight        */
     char *highlight_regex;             /* regex for highlight               */
     regex_t *highlight_regex_compiled; /* compiled regex                    */
-    char *highlight_tags;              /* tags to highlight                 */
-    int highlight_tags_count;          /* number of tags to highlight       */
-                                       /* (if 0, any tag is highlighted)    */
-    char **highlight_tags_array;       /* tags to highlight                 */
+    char *highlight_tags_restrict;     /* restrict highlight to these tags  */
+    int highlight_tags_restrict_count; /* number of restricted tags         */
+    char ***highlight_tags_restrict_array; /* array with restricted tags    */
+    char *highlight_tags;              /* force highlight on these tags     */
+    int highlight_tags_count;          /* number of highlight tags          */
+    char ***highlight_tags_array;      /* array with highlight tags         */
 
     /* hotlist settings for buffer */
     struct t_hashtable *hotlist_max_level_nicks; /* max hotlist level for   */
@@ -204,6 +212,7 @@ struct t_gui_buffer_visited
 
 extern struct t_gui_buffer *gui_buffers;
 extern struct t_gui_buffer *last_gui_buffer;
+extern int gui_buffers_count;
 extern struct t_gui_buffer_visited *gui_buffers_visited;
 extern struct t_gui_buffer_visited *last_gui_buffer_visited;
 extern int gui_buffers_visited_index;
@@ -256,8 +265,10 @@ extern void gui_buffer_set_highlight_words (struct t_gui_buffer *buffer,
                                             const char *new_highlight_words);
 extern void gui_buffer_set_highlight_regex (struct t_gui_buffer *buffer,
                                             const char *new_highlight_regex);
+extern void gui_buffer_set_highlight_tags_restrict (struct t_gui_buffer *buffer,
+                                                    const char *new_tags);
 extern void gui_buffer_set_highlight_tags (struct t_gui_buffer *buffer,
-                                           const char *new_highlight_tags);
+                                           const char *new_tags);
 extern void gui_buffer_set_hotlist_max_level_nicks (struct t_gui_buffer *buffer,
                                                     const char *new_hotlist_max_level_nicks);
 extern void gui_buffer_set_unread (struct t_gui_buffer *buffer);
@@ -275,6 +286,7 @@ extern struct t_gui_buffer *gui_buffer_search_by_full_name (const char *full_nam
 extern struct t_gui_buffer *gui_buffer_search_by_partial_name (const char *plugin,
                                                                const char *name);
 extern struct t_gui_buffer *gui_buffer_search_by_number (int number);
+extern struct t_gui_buffer *gui_buffer_search_by_number_or_name (const char *string);
 extern struct t_gui_buffer *gui_buffer_search_by_layout_number (int layout_number,
                                                                 int layout_number_merge_order);
 extern int gui_buffer_count_merged_buffers (int number);
@@ -287,9 +299,9 @@ extern void gui_buffer_switch_by_number (struct t_gui_window *window,
 extern void gui_buffer_set_active_buffer (struct t_gui_buffer *buffer);
 extern struct t_gui_buffer *gui_buffer_get_next_active_buffer (struct t_gui_buffer *buffer);
 extern struct t_gui_buffer *gui_buffer_get_previous_active_buffer (struct t_gui_buffer *buffer);
+extern void gui_buffer_renumber (int number1, int number2, int start_number);
 extern void gui_buffer_move_to_number (struct t_gui_buffer *buffer, int number);
-extern void gui_buffer_swap (struct t_gui_buffer *buffer1,
-                             struct t_gui_buffer *buffer2);
+extern void gui_buffer_swap (int number1, int number2);
 extern void gui_buffer_merge (struct t_gui_buffer *buffer,
                               struct t_gui_buffer *target_buffer);
 extern void gui_buffer_unmerge (struct t_gui_buffer *buffer, int number);
@@ -311,6 +323,8 @@ extern struct t_hdata *gui_buffer_hdata_buffer_cb (void *data,
                                                    const char *hdata_name);
 extern struct t_hdata *gui_buffer_hdata_input_undo_cb (void *data,
                                                        const char *hdata_name);
+extern struct t_hdata *gui_buffer_hdata_buffer_visited_cb (void *data,
+                                                           const char *hdata_name);
 extern int gui_buffer_add_to_infolist (struct t_infolist *infolist,
                                        struct t_gui_buffer *buffer);
 extern void gui_buffer_dump_hexa (struct t_gui_buffer *buffer);

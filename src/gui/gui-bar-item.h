@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -28,11 +28,13 @@ enum t_gui_bar_item_weechat
     GUI_BAR_ITEM_INPUT_TEXT,
     GUI_BAR_ITEM_TIME,
     GUI_BAR_ITEM_BUFFER_COUNT,
+    GUI_BAR_ITEM_BUFFER_LAST_NUMBER,
     GUI_BAR_ITEM_BUFFER_PLUGIN,
     GUI_BAR_ITEM_BUFFER_NUMBER,
     GUI_BAR_ITEM_BUFFER_NAME,
     GUI_BAR_ITEM_BUFFER_MODES,
     GUI_BAR_ITEM_BUFFER_FILTER,
+    GUI_BAR_ITEM_BUFFER_ZOOM,
     GUI_BAR_ITEM_BUFFER_NICKLIST_COUNT,
     GUI_BAR_ITEM_SCROLL,
     GUI_BAR_ITEM_HOTLIST,

@@ -1,7 +1,7 @@
 /*
  * gui-curses-main.c - main loop for Curses GUI
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -60,6 +60,7 @@
 
 
 int gui_reload_config = 0;
+int gui_signal_sigwinch_received = 0;
 int gui_term_cols = 0;
 int gui_term_lines = 0;
 
@@ -210,8 +211,11 @@ gui_main_init ()
         {
             gui_current_window = gui_windows;
 
-            if (CONFIG_BOOLEAN(config_look_set_title))
-                gui_window_set_title (version_get_name_version ());
+            if (CONFIG_STRING(config_look_window_title)
+                && CONFIG_STRING(config_look_window_title)[0])
+            {
+                gui_window_set_title (CONFIG_STRING(config_look_window_title));
+            }
         }
 
         /*
@@ -282,6 +286,8 @@ gui_main_signal_sighup ()
      * reloaded, but they are if signal SIGHUP is sent to WeeChat by user)
      */
     gui_reload_config = 1;
+
+    hook_signal_send ("signal_sighup", WEECHAT_HOOK_SIGNAL_STRING, NULL);
 }
 
 /*
@@ -291,7 +297,24 @@ gui_main_signal_sighup ()
 void
 gui_main_signal_sigwinch ()
 {
+    gui_signal_sigwinch_received = 1;
+
     gui_window_ask_refresh (2);
+}
+
+/*
+ * Displays infos about ncurses lib.
+ */
+
+void
+gui_main_debug_libs ()
+{
+#if defined(NCURSES_VERSION) && defined(NCURSES_VERSION_PATCH)
+    gui_chat_printf (NULL, "    ncurses: %s (patch %d)",
+                     NCURSES_VERSION, NCURSES_VERSION_PATCH);
+#else
+    gui_chat_printf (NULL, "    ncurses: (?)");
+#endif
 }
 
 /*
@@ -456,6 +479,13 @@ gui_main_loop ()
         if (gui_window_refresh_needed)
             gui_main_refreshs ();
 
+        if (gui_signal_sigwinch_received)
+        {
+            hook_signal_send ("signal_sigwinch",
+                              WEECHAT_HOOK_SIGNAL_STRING, NULL);
+            gui_signal_sigwinch_received = 0;
+        }
+
         gui_color_pairs_auto_reset_pending = 0;
 
         /* wait for keyboard or network activity */
@@ -538,14 +568,20 @@ gui_main_end (int clean_exit)
         gui_history_global_free ();
 
         /* reset title */
-        if (CONFIG_BOOLEAN(config_look_set_title))
+        if (CONFIG_STRING(config_look_window_title)
+            && CONFIG_STRING(config_look_window_title)[0])
+        {
             gui_window_set_title (NULL);
+        }
 
         /* end color */
         gui_color_end ();
 
         /* free some variables used for chat area */
         gui_chat_end ();
+
+        /* free some variables used for nicklist */
+        gui_nicklist_end ();
     }
 
     /* end of Curses output */

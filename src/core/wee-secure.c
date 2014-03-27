@@ -1,7 +1,7 @@
 /*
  * wee-secure.c - secured data configuration options (file sec.conf)
  *
- * Copyright (C) 2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2013-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -1100,13 +1100,6 @@ secure_read ()
 
     rc = config_file_read (secure_config_file);
 
-    if (rc != WEECHAT_CONFIG_READ_OK)
-    {
-        gui_chat_printf (NULL,
-                         _("%sError reading configuration"),
-                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR]);
-    }
-
     return rc;
 }
 
@@ -1342,4 +1335,28 @@ secure_buffer_open ()
     gui_window_switch_to_buffer (gui_current_window, secure_buffer, 1);
 
     secure_buffer_display ();
+}
+
+/*
+ * Frees all allocated data.
+ */
+
+void
+secure_end ()
+{
+    if (secure_passphrase)
+    {
+        free (secure_passphrase);
+        secure_passphrase = NULL;
+    }
+    if (secure_hashtable_data)
+    {
+        hashtable_free (secure_hashtable_data);
+        secure_hashtable_data = NULL;
+    }
+    if (secure_hashtable_data_encrypted)
+    {
+        hashtable_free (secure_hashtable_data_encrypted);
+        secure_hashtable_data_encrypted = NULL;
+    }
 }

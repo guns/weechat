@@ -1,15 +1,17 @@
 [[command_weechat_away]]
 [command]*`away`* définir ou supprimer le statut d'absence::
-........................................
+
+----
 /away  [-all] [<message>]
 
    -all: définir ou supprimer le statut d'absence sur tous les serveurs connectés
 message: message pour l'absence (si pas de message donné, le statut d'absence est supprimé)
-........................................
+----
 
 [[command_weechat_bar]]
 [command]*`bar`* gestion des barres::
-........................................
+
+----
 /bar  list|listfull|listitems
       add <nom> <type>[,<conditions>] <position> <taille> <séparateur> <objet1>[,<objet2>...]
       default [input|title|status|nicklist]
@@ -56,16 +58,18 @@ Exemples:
     /bar scroll nicklist * y+10
   faire défiler la liste des pseudos à la fin sur le tampon courant:
     /bar scroll nicklist * ye
-........................................
+----
 
 [[command_weechat_buffer]]
 [command]*`buffer`* gestion des tampons::
-........................................
+
+----
 /buffer  list
          clear [<nombre>|<nom>|-merged|-all]
          move|merge <nombre>
          swap <nombre1>|<nom1> [<nombre2>|<nom2>]
          unmerge [<nombre>|-all]
+         renumber <nombre1> [<nombre2> [<départ>]]
          close [<n1>[-<n2>]|<nom>]
          notify <niveau>
          localvar
@@ -80,6 +84,7 @@ Exemples:
    merge: mélanger le tampon courant avec un autre tampon (la zone de discussion sera un mélange des deux tampons)
           (par défaut ctrl-x bascule entre les tampons mélangés)
  unmerge: détacher le tampon courant des autres tampons portant le même numéro
+renumber: renuméroter des tampons (fonctionne seulement si l'option weechat.look.buffer_auto_renumber est désactivée)
    close: fermer le tampon (nombre/intervalle ou nom optionnel)
   notify: définir le niveau de notification pour le tampon courant: ce niveau détermine si le tampon doit être ajouté à la hotlist ou pas:
                none: jamais
@@ -117,11 +122,12 @@ Exemples:
     /buffer #weechat
   aller au tampon suivant:
     /buffer +1
-........................................
+----
 
 [[command_weechat_color]]
 [command]*`color`* définir des alias de couleurs et afficher la palette des couleurs::
-........................................
+
+----
 /color  alias <couleur> <nom>
         unalias <couleur>
         reset
@@ -141,20 +147,22 @@ Exemples:
     /color alias 214 orange
   supprimer la couleur 214:
     /color unalias 214
-........................................
+----
 
 [[command_weechat_command]]
 [command]*`command`* lancer explicitement une commande WeeChat ou d'une extension::
-........................................
+
+----
 /command  <extension> <commande>
 
 extension: nom de l'extension ('weechat' pour une commande interne WeeChat)
  commande: commande à exécuter (un '/' est automatiquement ajouté s'il n'est pas trouvé au début de la commande)
-........................................
+----
 
 [[command_weechat_cursor]]
 [command]*`cursor`* mouvement libre du curseur sur l'écran pour exécuter des actions sur des zones spécifiques de l'écran::
-........................................
+
+----
 /cursor  go chat|<barre>|<x>,<y>
          move up|down|left|right|area_up|area_down|area_left|area_right
          stop
@@ -172,11 +180,12 @@ Exemples:
     /cursor go nicklist
   aller aux coordonnées x=10, y=5:
     /cursor go 10,5
-........................................
+----
 
 [[command_weechat_debug]]
 [command]*`debug`* contrôle du debug pour le cœur/les extensions::
-........................................
+
+----
 /debug  list
         set <extension> <niveau>
         dump [<extension>]
@@ -196,16 +205,18 @@ extension: nom de l'extension ("core" pour le cœur de WeeChat)
     hdata: afficher des infos sur les hdata (avec free: supprimer tous les hdata en mémoire)
     hooks: afficher des infos sur les hooks
 infolists: afficher des infos sur les infolists
+     libs: afficher des infos sur les bibliothèques externes utilisées
    memory: afficher des infos sur l'utilisation de la mémoire
     mouse: activer/désactiver le debug pour la souris
      tags: afficher les étiquettes pour les lignes
      term: afficher des infos sur le terminal
   windows: afficher l'arbre des fenêtres
-........................................
+----
 
 [[command_weechat_eval]]
 [command]*`eval`* évaluer une expression et envoyer le résultat au tampon::
-........................................
+
+----
 /eval  [-n] <expression>
        [-n] -c <expression1> <opérateur> <expression2>
 
@@ -223,8 +234,8 @@ expression: expression à évaluer, les variables avec le format ${variable} son
                 <   inférieur
                 >=  supérieur ou égal
                 >   supérieur
-                =~  correspond à l'expression régulière
-                !~  ne correspond PAS à l'expression régulière
+                =~  correspond à l'expression régulière POSIX étendue
+                !~  ne correspond PAS à l'expression régulière POSIX étendue
 
 Une expression est considérée comme "vraie" si elle est non NULL, non vide, et différente de "0".
 La comparaison est faite en utilisant des entiers si les deux expressions sont des entiers valides.
@@ -233,10 +244,11 @@ Pour forcer une comparaison de chaînes, ajoutez des guillemets autour de chaque
   "50" > "100"  ==> 1
 
 Des variables sont remplacées dans l'expression, en utilisant le format ${variable}, la variable pouvant être, par ordre de priorité :
-  1. une couleur (format: color:xxx)
-  2. une option (format: fichier.section.option)
-  3. une variable locale du tampon
-  4. un hdata/variable (la valeur est automatiquement convertie en chaîne), par défaut "window" et "buffer" pointent vers la fenêtre et le tampon courants.
+  1. une couleur (format: "color:xxx")
+  2. une info (format: "info:nom,paramètres", les paramètres sont optionnels)
+  3. une option (format: "fichier.section.option")
+  4. une variable locale du tampon
+  5. un hdata/variable (la valeur est automatiquement convertie en chaîne), par défaut "window" et "buffer" pointent vers la fenêtre et le tampon courants.
 Le format du hdata peut être le suivant :
   hdata.var1.var2...: démarrer avec un hdata (le pointeur doit être connu), et demander les variables l'une après l'autre (d'autres hdata peuvent être suivis)
   hdata[list].var1.var2...: démarrer avec un hdata en utilisant une liste, par exemple :
@@ -245,6 +257,7 @@ Le format du hdata peut être le suivant :
 Pour le nom du hdata et des variables, voir la "Référence API extension", fonction "weechat_hdata_get".
 
 Exemples:
+  /eval -n ${info:version}                 ==> 0.4.3
   /eval -n ${weechat.look.scroll_amount}   ==> 3
   /eval -n ${window}                       ==> 0x2549aa0
   /eval -n ${window.buffer}                ==> 0x2549320
@@ -258,45 +271,48 @@ Exemples:
   /eval -n -c abcd =~ (?-i)^ABC            ==> 0
   /eval -n -c abcd =~ (?-i)^abc            ==> 1
   /eval -n -c abcd !~ abc                  ==> 0
-........................................
+----
 
 [[command_weechat_filter]]
-[command]*`filter`* filtrer les messages dans les tampons, pour les cacher/afficher selon des tags ou expressions régulières::
-........................................
+[command]*`filter`* filtrer les messages dans les tampons, pour les cacher/afficher selon des étiquettes ou expressions régulières::
+
+----
 /filter  list
          enable|disable|toggle [<nom>]
-         add <nom> <tampon>[,<tampon>...] <tags> <regex>
+         add <nom> <tampon>[,<tampon>...] <étiquettes> <regex>
          del <nom>|-all
 
-   list: lister tous les filtres
- enable: activer les filtres (par défaut les filtres sont activés)
-disable: désactiver les filtres
- toggle: activer/désactiver les filtres
-    nom: nom de filtre
-    add: ajouter un filtre
-    del: supprimer un filtre
-   -all: supprimer tous les filtres
- tampon: liste des tampons, séparés par des virgules, où le filtre est actif :
-         - il s'agit du nom complet incluant l'extension (exemple: "irc.freenode.#weechat")
-         - "*" signifie tous les tampons
-         - un nom commençant par '!' est exclu
-         - le nom peut commencer ou se terminer par '*' pour plusieurs tampons
-   tags: liste de tags, séparés par des virgules, par exemple: "irc_join,irc_part,irc_quit"
-  regex: expression régulière à rechercher dans la ligne
-         - utiliser '\t' pour séparer le préfixe du message, les caractères spéciaux comme '|' doivent être échappés: '\|'
-         - si l'expression régulière commence par '!' alors le résultat est inversé (utiliser '\!' pour démarrer par '!')
-         - deux expressions régulières sont créées: une pour le préfixe et une pour le message
-         - les expressions régulières sont insensibles à la casse, elles peuvent commencer par "(?-i)" pour devenir sensibles à la casse
+      list: lister tous les filtres
+    enable: activer les filtres (par défaut les filtres sont activés)
+   disable: désactiver les filtres
+    toggle: activer/désactiver les filtres
+       nom: nom de filtre
+       add: ajouter un filtre
+       del: supprimer un filtre
+      -all: supprimer tous les filtres
+    tampon: liste des tampons, séparés par des virgules, où le filtre est actif :
+            - il s'agit du nom complet incluant l'extension (exemple: "irc.freenode.#weechat")
+            - "*" signifie tous les tampons
+            - un nom commençant par '!' est exclu
+            - le nom peut commencer ou se terminer par '*' pour plusieurs tampons
+étiquettes: liste d'étiquettes, séparées par des virgules, par exemple: "irc_join,irc_part,irc_quit"
+            - "et" logique: utilisez "+" entre les étiquettes (par exemple: "nick_toto+irc_action")
+            - les étiquettes peuvent commencer ou se terminer par '*'
+     regex: expression régulière POSIX étendue à rechercher dans la ligne
+            - utiliser '\t' pour séparer le préfixe du message, les caractères spéciaux comme '|' doivent être échappés: '\|'
+            - si l'expression régulière commence par '!' alors le résultat est inversé (utiliser '\!' pour démarrer par '!')
+            - deux expressions régulières sont créées: une pour le préfixe et une pour le message
+            - les expressions régulières sont insensibles à la casse, elles peuvent commencer par "(?-i)" pour devenir sensibles à la casse
 
 La touche par défaut alt+'=' active/désactive le filtrage.
 
-Les tags les plus couramment utilisés:
+Les étiquettes les plus couramment utilisées:
   no_filter, no_highlight, no_log, log0..log9 (niveau de log),
   notify_none, notify_message, notify_private, notify_highlight,
   nick_xxx (xxx est le pseudo dans le message), prefix_nick_ccc (ccc est la couleur du pseudo),
   irc_xxx (xxx est un nom de commande ou nombre, voir /server raw ou /debug tags),
   irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, irc_smart_filter, away_info.
-Pour voir les tags des lignes affichées: /debug tags
+Pour voir les étiquettes des lignes affichées: /debug tags
 
 Exemples:
   utiliser le filtre intelligent IRC sur tous les tampons:
@@ -309,13 +325,16 @@ Exemples:
     /filter add nicks * irc_366 *
   filtrer le pseudo "toto" sur le canal IRC #weechat:
     /filter add toto irc.freenode.#weechat nick_toto *
+  filtrer les messages IRC join/action du pseudo "toto":
+    /filter add toto * nick_toto+irc_join,nick_toto+irc_action *
   filtrer les lignes contenant "weechat sucks" sur le canal IRC #weechat:
     /filter add sucks irc.freenode.#weechat * weechat sucks
-........................................
+----
 
 [[command_weechat_help]]
 [command]*`help`* afficher l'aide sur les commandes et les options::
-........................................
+
+----
 /help  -list|-listfull [<extension> [<extension>...]]
        <commande>
        <option>
@@ -325,21 +344,23 @@ Exemples:
 extension: lister les commandes de cette extension
  commande: un nom de commande
    option: un nom d'option (utilisez /set pour voir la liste)
-........................................
+----
 
 [[command_weechat_history]]
 [command]*`history`* afficher l'historique des commandes du tampon::
-........................................
+
+----
 /history  clear
           <valeur>
 
  clear: effacer l'historique
 valeur: nombre d'entrées dans l'historique à afficher
-........................................
+----
 
 [[command_weechat_input]]
 [command]*`input`* fonctions pour la ligne de commande::
-........................................
+
+----
 /input  <action> [<paramètres>]
 
 liste des actions:
@@ -389,16 +410,17 @@ liste des actions:
   switch_active_buffer: basculer vers le tampon mélangé suivant
   switch_active_buffer_previous: basculer vers le tampon mélangé précédent
   zoom_merged_buffer: zoom sur le tampon mélangé
-  insert: insérer du texte dans la ligne de commande
+  insert: insérer du texte dans la ligne de commande (les caractères échappés sont autorisés, voir /help print)
   paste_start: début de collage (mode "bracketed paste")
   paste_stop: fin de collage (mode "bracketed paste")
 
 Cette commande est utilisé par les associations de touches ou les extensions.
-........................................
+----
 
 [[command_weechat_key]]
 [command]*`key`* associer/libérer des touches::
-........................................
+
+----
 /key  list|listdefault|listdiff [<contexte>]
       bind <touche> [<commande> [<args>]]
       bindctxt <contexte> <touche> [<commande> [<args>]]
@@ -434,7 +456,7 @@ Pour le contexte "mouse" (possible aussi pour le contexte "cursor"), la touche a
     item(*): n'importe quel objet de barre
   item(xxx): l'objet de barre "xxx"
 La touche peut commencer ou se terminer par '*' pour plusieurs évènements de la souris.
-Une valeur spéciale pour la commande avec le format "hsignal:nom" peut être utilisée dans le contexte "mouse", cela enverra le signal "nom" avec la hashtable du focus comme paramètre.
+Une valeur spéciale pour la commande avec le format "hsignal:nom" peut être utilisée dans le contexte "mouse", cela enverra le signal "nom" avec la table de hachage du focus comme paramètre.
 Une autre valeur spéciale "-" peut être utilisée pour désactiver la touche (elle sera ignorée lors de la recherche de touches).
 
 Exemples:
@@ -448,33 +470,35 @@ Exemples:
     /key bindctxt search ctrl-I /input search_stop
   bouton du milieu de la souris sur un pseudo pour récupérer les infos sur le pseudo:
     /key bindctxt mouse @item(buffer_nicklist):button3 /msg nickserv info ${nick}
-........................................
+----
 
 [[command_weechat_layout]]
-[command]*`layout`* sauver/appliquer/réinitialiser la disposition des tampons et fenêtres::
-........................................
-/layout  save [<nom>] [buffers|windows]
+[command]*`layout`* gestion des dispositions de tampons/fenêtres::
+
+----
+/layout  store [<nom>] [buffers|windows]
          apply [<nom>] [buffers|windows]
          leave
-         reset [<nom>] [buffers|windows]
+         del [<nom>] [buffers|windows]
          rename <nom> <nouveau_nom>
 
-   save: sauver la disposition courante
-  apply: appliquer une disposition sauvegardée
+  store: stocker les tampons/fenêtres courants dans une disposition
+  apply: appliquer une disposition stockée
   leave: quitter la disposition courante (ne met à jour aucune disposition)
-  reset: réinitialiser les tampons et/ou fenêtres dans une disposition sauvegardée
-         (si les tampons et fenêtres sont réinitialisées ensemble, la disposition est supprimée)
+    del: supprimer les tampons et/ou fenêtres dans une disposition stockée
+         (si ni "buffers" ni "windows" n'est donné après le nom, la disposition est supprimée)
  rename: renommer une disposition
-    nom: nom pour la disposition sauvegardée (par défaut "default")
-buffers: sauver/appliquer seulement pour les tampons (ordre des tampons)
-windows: sauver/appliquer seulement pour les fenêtres (le tampon affiché par chaque fenêtre)
+    nom: nom pour la disposition stockée (par défaut "default")
+buffers: stocker/appliquer seulement pour les tampons (ordre des tampons)
+windows: stocker/appliquer seulement pour les fenêtres (le tampon affiché par chaque fenêtre)
 
-Sans paramètre, cette commande affiche les dispositions sauvegardées.
-........................................
+Sans paramètre, cette commande affiche les dispositions stockées.
+----
 
 [[command_weechat_mouse]]
 [command]*`mouse`* contrôle de la souris::
-........................................
+
+----
 /mouse  enable|disable|toggle [<délai>]
 
  enable: activer la souris
@@ -489,12 +513,13 @@ Exemples:
     /mouse enable
   activer/désactiver la souris pendant 5 secondes:
     /mouse toggle 5
-........................................
+----
 
 [[command_weechat_mute]]
 [command]*`mute`* exécuter une commande silencieusement::
-........................................
-/mute  [-current | -buffer <nom> | -all] commande
+
+----
+/mute  [-current | -buffer <nom> | -all] <commande>
 
 -current: pas d'affichage sur le tampon courant
  -buffer: pas d'affichage sur le tampon spécifié
@@ -511,11 +536,12 @@ Exemples:
     /mute -current msg * bonjour !
   message au canal #weechat:
     /mute -buffer irc.freenode.#weechat msg #weechat bonjour !
-........................................
+----
 
 [[command_weechat_plugin]]
 [command]*`plugin`* lister/charger/décharger des extensions::
-........................................
+
+----
 /plugin  list|listfull [<nom>]
          load <fichier> [<paramètres>]
          autoload [<paramètres>]
@@ -533,11 +559,53 @@ Exemples:
 paramètres: paramètres donnés à l'extension lors de son chargement
 
 Sans paramètre, cette commande liste les extensions chargées.
-........................................
+----
+
+[[command_weechat_print]]
+[command]*`print`* afficher du texte dans un tampon::
+
+----
+/print  [-buffer <numéro>|<nom>] [-core] [-escape] [-date <date>] [-tags <étiquettes>] [-action|-error|-join|-network|-quit] <texte>
+        -stdout|-stderr <texte>
+
+-buffer: le tampon où est affiché le texte (par défaut: tampon courant)
+  -core: alias de "-buffer core.weechat"
+-escape: interpréter les caractères échappés (par exemple \a, \07, \x07)
+  -date: date du message, le format peut être :
+           -n: 'n' secondes avant maintenant
+           +n: 'n' secondes dans le futur
+            n: 'n' secondes depuis l'époque (voir man time)
+           date/heure (ISO 8601): yyyy-mm-ddThh:mm:ss, exemple: 2014-01-19T04:32:55
+           heure: hh:mm:ss (exemple: 04:32:55)
+  -tags: liste d'étiquettes séparées par des virgules (voir /help filter pour une liste des étiquettes couramment utilisées)
+  texte: texte à afficher (le préfixe et le message doivent être séparés par \t)
+-stdout: afficher le texte sur stdout (les caractères échappés sont interprétés)
+-stderr: afficher le texte sur stderr (les caractères échappés sont interprétés)
+
+Les options -action ... -quit utilisent le préfixe défini dans les options "weechat.look.prefix_*".
+
+Les caractères échappés suivants sont supportés:
+  \" \\ \a \b \e \f \n \r \t \v \0ooo \xhh \uhhhh \Uhhhhhhhh
+
+Exemples:
+  afficher un pense-bête sur le tampon core avec un highlight:
+    /print -core -tags notify_highlight Pense-bête: acheter du lait
+  afficher une erreur sur le tampon core:
+    /print -core -error Une erreur ici
+  afficher un message sur le tampon core avec le préfixe "abc":
+    /print -core abc\tLe message
+  afficher un message sur le canal #weechat:
+    /print -buffer irc.freenode.#weechat Message sur #weechat
+  afficher un bonhomme de neige (U+2603):
+    /print -escape \u2603
+  envoyer une alerte (BEL):
+    /print -stderr \a
+----
 
 [[command_weechat_proxy]]
 [command]*`proxy`* gestion des proxies::
-........................................
+
+----
 /proxy  list
         add <nom> <type> <adresse> <port> [<utilisateur> [<mot_de_passe>]]
         del <nom>|-all
@@ -566,31 +634,34 @@ Exemples:
     /proxy add myproxy socks5 sample.host.org 3128 myuser mypass
   supprimer un proxy:
     /proxy del myproxy
-........................................
+----
 
 [[command_weechat_quit]]
 [command]*`quit`* quitter WeeChat::
-........................................
+
+----
 /quit  [-yes] [<paramètres>]
 
       -yes: requis si l'option weechat.look.confirm_quit est activée
 paramètres: texte envoyé avec le signal "quit"
             (par exemple l'extension irc utilise ce texte pour envoyer le message de quit au serveur)
-........................................
+----
 
 [[command_weechat_reload]]
 [command]*`reload`* recharger les fichiers de configuration depuis le disque::
-........................................
+
+----
 /reload  [<fichier> [<fichier>...]]
 
 fichier: fichier de configuration à recharger (sans l'extension ".conf")
 
 Sans paramètre, tous les fichiers (WeeChat et extensions) sont rechargés.
-........................................
+----
 
 [[command_weechat_repeat]]
 [command]*`repeat`* exécuter une commande plusieurs fois::
-........................................
+
+----
 /repeat  [-interval <délai>] <nombre> <commande>
 
    délai: délai entre l'exécution des commandes (en millisecondes)
@@ -602,21 +673,23 @@ Toutes les commandes sont exécutées sur le tampon où la commande a été lanc
 Exemple:
   faire défiler de 2 pages vers le haut:
     /repeat 2 /window page_up
-........................................
+----
 
 [[command_weechat_save]]
 [command]*`save`* sauvegarder les fichiers de configuration sur disque::
-........................................
+
+----
 /save  [<fichier> [<fichier>...]]
 
 fichier: fichier de configuration à sauvegarder (sans l'extension ".conf")
 
 Sans paramètre, tous les fichiers (WeeChat et extensions) sont sauvegardés.
-........................................
+----
 
 [[command_weechat_secure]]
 [command]*`secure`* gestion des données sécurisées (mots de passe ou données privées chiffrés dans le fichier sec.conf)::
-........................................
+
+----
 /secure  passphrase <phrase de chiffrement>|-delete
          decrypt <phrase de chiffrement>|-discard
          set <nom> <valeur>
@@ -653,11 +726,12 @@ Exemples :
     /set irc.server.oftc.command "/msg nickserv identify ${sec.data.oftc}"
   alias pour ghost du pseudo "pseudo" :
     /alias ghost /eval /msg -server freenode nickserv ghost pseudo ${sec.data.freenode}
-........................................
+----
 
 [[command_weechat_set]]
 [command]*`set`* modifier des options de configuration::
-........................................
+
+----
 /set  [<option> [<valeur>]]
       diff [<option> [<option>...]]
 
@@ -682,11 +756,12 @@ Exemples:
     /set diff
   afficher les options modifiées dans l'extension irc:
     /set diff irc.*
-........................................
+----
 
 [[command_weechat_unset]]
 [command]*`unset`* supprimer/réinitialiser des options de configuration::
-........................................
+
+----
 /unset  <option>
 
 option: nom d'une option (peut commencer ou se terminer par "*" pour réinitialiser plusieurs options, à utiliser avec prudence !)
@@ -698,11 +773,12 @@ Exemples:
     /unset weechat.look.item_time_format
   réinitialiser toutes les options de couleur:
     /unset weechat.color.*
-........................................
+----
 
 [[command_weechat_upgrade]]
 [command]*`upgrade`* mettre à jour WeeChat sans se déconnecter des serveurs::
-........................................
+
+----
 /upgrade  [<chemin_vers_binaire>|-quit]
 
 chemin_vers_binaire: chemin vers le binaire WeeChat (par défaut le binaire courant)
@@ -728,29 +804,32 @@ Avec l'option "-quit", le processus est légèrement différent :
 Et plus tard vous pouvez restaurer la session avec la commande: weechat --upgrade
 IMPORTANT: vous devez restaurer la session avec exactement la même configuration (fichiers *.conf).
 Il est également possible de restaurer la session WeeChat sur une autre machine si vous y copiez le contenu du répertoire "~/.weechat".
-........................................
+----
 
 [[command_weechat_uptime]]
 [command]*`uptime`* montrer l'uptime de WeeChat::
-........................................
+
+----
 /uptime  [-o | -ol]
 
  -o: envoyer l'uptime sur le tampon courant comme entrée (chaîne en anglais)
 -ol: envoyer l'uptime sur le tampon courant comme entrée (chaîne traduite)
-........................................
+----
 
 [[command_weechat_version]]
 [command]*`version`* afficher la version de WeeChat et la date de compilation::
-........................................
+
+----
 /version  [-o | -ol]
 
  -o: envoyer la version sur le tampon courant comme entrée (chaîne en anglais)
 -ol: envoyer la version sur le tampon courant comme entrée (chaîne traduite)
-........................................
+----
 
 [[command_weechat_wait]]
 [command]*`wait`* planifier l'exécution d'une commande dans le futur::
-........................................
+
+----
 /wait  <nombre>[<unité>] <commande>
 
   nombre: temps à attendre (nombre entier)
@@ -770,11 +849,12 @@ Exemples:
     /wait 15m /away -all I'm away
   dire 'bonjour' dans 2 minutes:
     /wait 2m bonjour
-........................................
+----
 
 [[command_weechat_window]]
 [command]*`window`* gestion des fenêtres::
-........................................
+
+----
 /window  list
          -1|+1|b#|up|down|left|right [-window <numéro>]
          <numéro>
@@ -833,5 +913,5 @@ Exemples:
     /window scroll -d
   zoom sur la fenêtre numéro 2:
     /window zoom -window 2
-........................................
+----
 

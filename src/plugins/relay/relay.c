@@ -1,7 +1,7 @@
 /*
  * relay.c - network communication between WeeChat and remote client
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -39,7 +39,7 @@
 WEECHAT_PLUGIN_NAME(RELAY_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Relay WeeChat data to remote application "
                               "(irc/weechat protocols)"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -193,8 +193,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     if (!relay_config_init ())
         return WEECHAT_RC_ERROR;
 
-    if (relay_config_read () < 0)
-        return WEECHAT_RC_ERROR;
+    relay_config_read ();
 
     relay_network_init ();
 

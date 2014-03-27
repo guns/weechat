@@ -1,7 +1,7 @@
 /*
  * wee-hdata.c - direct access to WeeChat data using hashtables
  *
- * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -42,9 +42,9 @@ struct t_hashtable *hdata_search_pointers = NULL;
 struct t_hashtable *hdata_search_extra_vars = NULL;
 struct t_hashtable *hdata_search_options = NULL;
 
-char *hdata_type_string[8] =
+char *hdata_type_string[9] =
 { "other", "char", "integer", "long", "string", "pointer", "time",
-  "hashtable" };
+  "hashtable", "shared_string" };
 
 
 /*
@@ -254,6 +254,7 @@ hdata_get_var_array_size (struct t_hdata *hdata, void *pointer,
          * types: string, pointer, hashtable)
          */
         if ((var->type == WEECHAT_HDATA_STRING)
+            || (var->type == WEECHAT_HDATA_SHARED_STRING)
             || (var->type == WEECHAT_HDATA_POINTER)
             || (var->type == WEECHAT_HDATA_HASHTABLE))
         {
@@ -266,6 +267,7 @@ hdata_get_var_array_size (struct t_hdata *hdata, void *pointer,
                 switch (var->type)
                 {
                     case WEECHAT_HDATA_STRING:
+                    case WEECHAT_HDATA_SHARED_STRING:
                         ptr_value = (*((char ***)(pointer + var->offset)))[i];
                         break;
                     case WEECHAT_HDATA_POINTER:
@@ -601,10 +603,7 @@ hdata_char (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return (*((char **)(pointer + var->offset)))[index];
-        }
+            return (*((char **)(pointer + var->offset)))[index];
         else
             return *((char *)(pointer + var->offset));
     }
@@ -631,10 +630,7 @@ hdata_integer (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return ((int *)(pointer + var->offset))[index];
-        }
+            return ((int *)(pointer + var->offset))[index];
         else
             return *((int *)(pointer + var->offset));
     }
@@ -661,10 +657,7 @@ hdata_long (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return ((long *)(pointer + var->offset))[index];
-        }
+            return ((long *)(pointer + var->offset))[index];
         else
             return *((long *)(pointer + var->offset));
     }
@@ -691,10 +684,7 @@ hdata_string (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return (*((char ***)(pointer + var->offset)))[index];
-        }
+            return (*((char ***)(pointer + var->offset)))[index];
         else
             return *((char **)(pointer + var->offset));
     }
@@ -721,10 +711,7 @@ hdata_pointer (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return (*((void ***)(pointer + var->offset)))[index];
-        }
+            return (*((void ***)(pointer + var->offset)))[index];
         else
             return *((void **)(pointer + var->offset));
     }
@@ -751,10 +738,7 @@ hdata_time (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return ((time_t *)(pointer + var->offset))[index];
-        }
+            return ((time_t *)(pointer + var->offset))[index];
         else
             return *((time_t *)(pointer + var->offset));
     }
@@ -781,10 +765,7 @@ hdata_hashtable (struct t_hdata *hdata, void *pointer, const char *name)
     if (var && (var->offset >= 0))
     {
         if (var->array_size && (index >= 0))
-        {
-            if (*((void **)(pointer + var->offset)))
-                return (*((struct t_hashtable ***)(pointer + var->offset)))[index];
-        }
+            return (*((struct t_hashtable ***)(pointer + var->offset)))[index];
         else
             return *((struct t_hashtable **)(pointer + var->offset));
     }
@@ -855,6 +836,13 @@ hdata_set (struct t_hdata *hdata, void *pointer, const char *name,
             if (*ptr_string)
                 free (*ptr_string);
             *ptr_string = (value) ? strdup (value) : NULL;
+            return 1;
+            break;
+        case WEECHAT_HDATA_SHARED_STRING:
+            ptr_string = (char **)(pointer + var->offset);
+            if (*ptr_string)
+                string_shared_free (*ptr_string);
+            *ptr_string = (value) ? (char *)string_shared_get (value) : NULL;
             return 1;
             break;
         case WEECHAT_HDATA_POINTER:

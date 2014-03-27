@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 #
 # This file is part of WeeChat, the extensible chat client.
 #
@@ -31,6 +31,10 @@ xfer-network.c xfer-network.h
 xfer-upgrade.c xfer-upgrade.h)
 SET_TARGET_PROPERTIES(xfer PROPERTIES PREFIX "")
 
-TARGET_LINK_LIBRARIES(xfer)
+SET (LINK_LIBS)
+
+LIST(APPEND LINK_LIBS ${GCRYPT_LDFLAGS})
+
+TARGET_LINK_LIBRARIES(xfer ${LINK_LIBS})
 
 INSTALL(TARGETS xfer LIBRARY DESTINATION ${LIBDIR}/plugins)

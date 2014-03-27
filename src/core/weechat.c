@@ -8,7 +8,7 @@
  * ##             WeeChat - Wee Enhanced Environment for Chat              ##
  * ##                 Fast, light, extensible chat client                  ##
  * ##                                                                      ##
- * ##             By Sebastien Helleu <flashcode@flashtux.org>             ##
+ * ##             By Sébastien Helleu <flashcode@flashtux.org>             ##
  * ##                                                                      ##
  * ##                      http://www.weechat.org/                         ##
  * ##                                                                      ##
@@ -16,7 +16,7 @@
  *
  * weechat.c - WeeChat main functions
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -75,6 +75,7 @@
 #include "../gui/gui-layout.h"
 #include "../gui/gui-main.h"
 #include "../plugins/plugin.h"
+#include "../plugins/plugin-api.h"
 
 
 int weechat_debug_core = 0;            /* debug level for core              */
@@ -110,7 +111,7 @@ weechat_display_copyright ()
     string_iconv_fprintf (stdout,
                           /* TRANSLATORS: "%s %s" after "compiled on" is date and time */
                           _("WeeChat %s Copyright %s, compiled on %s %s\n"
-                            "Developed by Sebastien Helleu <flashcode@flashtux.org> "
+                            "Developed by Sébastien Helleu <flashcode@flashtux.org> "
                             "- %s"),
                           version_get_version_with_git (),
                           WEECHAT_COPYRIGHT_DATE,
@@ -390,6 +391,8 @@ weechat_welcome_message ()
 void
 weechat_shutdown (int return_code, int crash)
 {
+    gui_chat_print_lines_waiting_buffer (stderr);
+
     if (weechat_argv0)
         free (weechat_argv0);
     if (weechat_home)
@@ -444,16 +447,15 @@ main (int argc, char *argv[])
     gui_key_init ();                    /* init keys                        */
     network_init_gcrypt ();             /* init gcrypt                      */
     if (!secure_init ())                /* init secured data options (sec.*)*/
-        exit (EXIT_FAILURE);
+        weechat_shutdown (EXIT_FAILURE, 0);
     if (!config_weechat_init ())        /* init WeeChat options (weechat.*) */
-        exit (EXIT_FAILURE);
+        weechat_shutdown (EXIT_FAILURE, 0);
     weechat_parse_args (argc, argv);    /* parse command line args          */
     weechat_create_home_dir ();         /* create WeeChat home directory    */
     log_init ();                        /* init log file                    */
-    if (secure_read () < 0)             /* read secured data options        */
-        exit (EXIT_FAILURE);
-    if (config_weechat_read () < 0)     /* read WeeChat options             */
-        exit (EXIT_FAILURE);
+    plugin_api_init ();                 /* create some hooks (info,hdata,..)*/
+    secure_read ();                     /* read secured data options        */
+    config_weechat_read ();             /* read WeeChat options             */
     network_init_gnutls ();             /* init GnuTLS                      */
     gui_main_init ();                   /* init WeeChat interface           */
     if (weechat_upgrading)
@@ -462,7 +464,7 @@ main (int argc, char *argv[])
         weechat_upgrade_count++;        /* increase /upgrade count          */
     }
     weechat_welcome_message ();         /* display WeeChat welcome message  */
-    gui_chat_print_lines_waiting_buffer (); /* print lines waiting for buf. */
+    gui_chat_print_lines_waiting_buffer (NULL); /* display lines waiting    */
     command_startup (0);                /* command executed before plugins  */
     plugin_init (weechat_auto_load_plugins, /* init plugin interface(s)     */
                  argc, argv);
@@ -474,7 +476,7 @@ main (int argc, char *argv[])
 
     gui_main_loop ();                   /* WeeChat main loop                */
 
-    gui_layout_save_on_exit ();         /* save layout                      */
+    gui_layout_store_on_exit ();        /* store layout                     */
     plugin_end ();                      /* end plugin interface(s)          */
     if (CONFIG_BOOLEAN(config_look_save_config_on_exit))
         (void) config_weechat_write (); /* save WeeChat config file         */
@@ -488,6 +490,7 @@ main (int argc, char *argv[])
     unhook_all ();                      /* remove all hooks                 */
     hdata_end ();                       /* end hdata                        */
     eval_end ();                        /* end eval                         */
+    secure_end ();                      /* end secured data                 */
     string_end ();                      /* end string                       */
     weechat_shutdown (EXIT_SUCCESS, 0); /* quit WeeChat (oh no, why?)       */
 

@@ -1,7 +1,7 @@
 /*
  * gui-chat.c - chat functions (used by all GUI)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -24,6 +24,7 @@
 #endif
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -137,8 +138,8 @@ gui_chat_prefix_build ()
 int
 gui_chat_utf_char_valid (const char *utf_char)
 {
-    /* chars below 32 are not valid */
-    if ((unsigned char)utf_char[0] < 32)
+    /* chars below 32 are not valid (except TAB) */
+    if (((unsigned char)utf_char[0] < 32) && (utf_char[0] != '\t'))
         return 0;
 
     /* 146 or 0x7F are not valid */
@@ -242,11 +243,16 @@ gui_chat_string_add_offset_screen (const char *string, int offset_screen)
  * Gets real position in string (ignoring formatting chars like
  * colors/attributes).
  *
+ * If argument "use_screen_size" is 0, the "pos" argument is a number of UTF-8
+ * chars.
+ * If argument "use_screen_size" is 1, the "pos" argument is the width of UTF-8
+ * chars on screen.
+ *
  * Returns real position, in bytes.
  */
 
 int
-gui_chat_string_real_pos (const char *string, int pos)
+gui_chat_string_real_pos (const char *string, int pos, int use_screen_size)
 {
     const char *real_pos, *real_pos_prev, *ptr_string;
     int size_on_screen;
@@ -266,7 +272,7 @@ gui_chat_string_real_pos (const char *string, int pos)
         {
             size_on_screen = gui_chat_char_size_screen (ptr_string);
             if (size_on_screen > 0)
-                pos -= size_on_screen;
+                pos -= (use_screen_size) ? size_on_screen : 1;
             ptr_string = utf8_next_char (ptr_string);
             real_pos_prev = real_pos;
             real_pos = ptr_string;
@@ -907,11 +913,16 @@ gui_chat_printf_y (struct t_gui_buffer *buffer, int y, const char *message, ...)
 }
 
 /*
- * Prints lines that are waiting for buffer.
+ * Displays lines that are waiting for buffer.
+ *
+ * If "f" is not NULL, the lines are written in this file (which is commonly
+ * stdout or stderr).
+ * If "f" is NULL, the lines are displayed in core buffer if the GUI is
+ * initialized (gui_init_ok == 1), otherwise on stdout.
  */
 
 void
-gui_chat_print_lines_waiting_buffer ()
+gui_chat_print_lines_waiting_buffer (FILE *f)
 {
     char **lines;
     int num_lines, i;
@@ -924,7 +935,10 @@ gui_chat_print_lines_waiting_buffer ()
         {
             for (i = 0; i < num_lines; i++)
             {
-                gui_chat_printf (NULL, "%s", lines[i]);
+                if (!f && gui_init_ok)
+                    gui_chat_printf (NULL, "%s", lines[i]);
+                else
+                    string_iconv_fprintf ((f) ? f : stdout, "%s\n", lines[i]);
             }
             string_free_split (lines);
         }

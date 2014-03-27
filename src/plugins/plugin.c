@@ -1,7 +1,7 @@
 /*
  * plugin.c - WeeChat plugins management (load/unload dynamic C libraries)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -734,6 +734,7 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->infolist_new_var_pointer = &infolist_new_var_pointer;
         new_plugin->infolist_new_var_buffer = &infolist_new_var_buffer;
         new_plugin->infolist_new_var_time = &infolist_new_var_time;
+        new_plugin->infolist_search_var = &infolist_search_var;
         new_plugin->infolist_get = &hook_infolist_get;
         new_plugin->infolist_next = &plugin_api_infolist_next;
         new_plugin->infolist_prev = &plugin_api_infolist_prev;
@@ -1183,9 +1184,6 @@ plugin_display_short_list ()
 void
 plugin_init (int auto_load, int argc, char *argv[])
 {
-    /* init plugin API (create some hooks) */
-    plugin_api_init ();
-
     /* read plugins options on disk */
     plugin_config_init ();
     plugin_config_read ();

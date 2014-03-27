@@ -1,7 +1,7 @@
 /*
  * gui-bar-item.c - bar item functions (used by all GUI)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -58,9 +58,10 @@ struct t_gui_bar_item *gui_bar_items = NULL;     /* first bar item          */
 struct t_gui_bar_item *last_gui_bar_item = NULL; /* last bar item           */
 char *gui_bar_item_names[GUI_BAR_NUM_ITEMS] =
 { "input_paste", "input_prompt", "input_search", "input_text", "time",
-  "buffer_count", "buffer_plugin", "buffer_number", "buffer_name",
-  "buffer_modes", "buffer_filter", "buffer_nicklist_count", "scroll",
-  "hotlist", "completion", "buffer_title", "buffer_nicklist", "window_number"
+  "buffer_count", "buffer_last_number", "buffer_plugin", "buffer_number",
+  "buffer_name", "buffer_modes", "buffer_filter", "buffer_zoom",
+  "buffer_nicklist_count", "scroll", "hotlist", "completion", "buffer_title",
+  "buffer_nicklist", "window_number"
 };
 char *gui_bar_items_default_for_bars[][2] =
 { { GUI_BAR_DEFAULT_NAME_INPUT,
@@ -69,8 +70,8 @@ char *gui_bar_items_default_for_bars[][2] =
     "buffer_title" },
   { GUI_BAR_DEFAULT_NAME_STATUS,
     "[time],[buffer_count],[buffer_plugin],buffer_number+:+"
-    "buffer_name+(buffer_modes)+{buffer_nicklist_count}+buffer_filter,[lag],"
-    "[hotlist],completion,scroll" },
+    "buffer_name+(buffer_modes)+{buffer_nicklist_count}+buffer_zoom+"
+    "buffer_filter,[lag],[hotlist],completion,scroll" },
   { GUI_BAR_DEFAULT_NAME_NICKLIST,
     "buffer_nicklist" },
   { NULL,
@@ -948,6 +949,31 @@ gui_bar_item_default_buffer_count (void *data, struct t_gui_bar_item *item,
     (void) buffer;
     (void) extra_info;
 
+    snprintf (buf, sizeof (buf), "%d", gui_buffers_count);
+
+    return strdup (buf);
+}
+
+/*
+ * Default item for last buffer number.
+ */
+
+char *
+gui_bar_item_default_buffer_last_number (void *data,
+                                         struct t_gui_bar_item *item,
+                                         struct t_gui_window *window,
+                                         struct t_gui_buffer *buffer,
+                                         struct t_hashtable *extra_info)
+{
+    char buf[32];
+
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+    (void) buffer;
+    (void) extra_info;
+
     snprintf (buf, sizeof (buf), "%d",
               (last_gui_buffer) ? last_gui_buffer->number : 0);
 
@@ -1120,6 +1146,38 @@ gui_bar_item_default_buffer_nicklist_count (void *data,
 }
 
 /*
+ * Default item for zoom on merged buffer.
+ */
+
+char *
+gui_bar_item_buffer_zoom (void *data, struct t_gui_bar_item *item,
+                          struct t_gui_window *window,
+                          struct t_gui_buffer *buffer,
+                          struct t_hashtable *extra_info)
+
+{
+    char buf[512];
+
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+    (void) extra_info;
+
+    if (!buffer)
+        return NULL;
+
+    /* don't display item if current buffer is not merged + zoomed */
+    if (buffer->active != 2)
+        return NULL;
+
+    snprintf (buf, sizeof (buf), "%s",
+              CONFIG_STRING(config_look_item_buffer_zoom));
+
+    return strdup (buf);
+}
+
+/*
  * Default item for scrolling indicator.
  */
 
@@ -1255,8 +1313,8 @@ gui_bar_item_default_hotlist (void *data, struct t_gui_bar_item *item,
                      */
                     break;
             }
-            sprintf (str_hotlist + strlen (str_hotlist),
-                     "%d", ptr_hotlist->buffer->number);
+            snprintf (str_hotlist + strlen (str_hotlist), 16,
+                      "%d", ptr_hotlist->buffer->number);
             numbers_count++;
 
             if (display_name)
@@ -1267,14 +1325,18 @@ gui_bar_item_default_hotlist (void *data, struct t_gui_bar_item *item,
                 strcat (str_hotlist, ":");
                 strcat (str_hotlist, GUI_COLOR_CUSTOM_BAR_FG);
                 if (CONFIG_INTEGER(config_look_hotlist_names_length) == 0)
+                {
                     snprintf (format, sizeof (format) - 1, "%%s");
+                }
                 else
+                {
                     snprintf (format, sizeof (format) - 1,
                               "%%.%ds",
                               CONFIG_INTEGER(config_look_hotlist_names_length));
-                sprintf (str_hotlist + strlen (str_hotlist), format,
-                         (CONFIG_BOOLEAN(config_look_hotlist_short_names)) ?
-                         gui_buffer_get_short_name (ptr_hotlist->buffer) : ptr_hotlist->buffer->name);
+                }
+                snprintf (str_hotlist + strlen (str_hotlist), 128, format,
+                          (CONFIG_BOOLEAN(config_look_hotlist_short_names)) ?
+                          gui_buffer_get_short_name (ptr_hotlist->buffer) : ptr_hotlist->buffer->name);
             }
             else
             {
@@ -1349,8 +1411,8 @@ gui_bar_item_default_hotlist (void *data, struct t_gui_bar_item *item,
                                  */
                                 break;
                         }
-                        sprintf (str_hotlist + strlen (str_hotlist),
-                                 "%d", ptr_hotlist->count[priority]);
+                        snprintf (str_hotlist + strlen (str_hotlist), 16,
+                                  "%d", ptr_hotlist->count[priority]);
                     }
                     strcat (str_hotlist, GUI_COLOR_CUSTOM_BAR_DELIM);
                     strcat (str_hotlist, ")");
@@ -1858,6 +1920,21 @@ gui_bar_item_init ()
     gui_bar_item_hook_signal ("buffer_closed",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_COUNT]);
 
+    /* last buffer number */
+    gui_bar_item_new (NULL,
+                      gui_bar_item_names[GUI_BAR_ITEM_BUFFER_LAST_NUMBER],
+                      &gui_bar_item_default_buffer_last_number, NULL);
+    gui_bar_item_hook_signal ("buffer_opened",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_LAST_NUMBER]);
+    gui_bar_item_hook_signal ("buffer_closed",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_LAST_NUMBER]);
+    gui_bar_item_hook_signal ("buffer_moved",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_LAST_NUMBER]);
+    gui_bar_item_hook_signal ("buffer_merged",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_LAST_NUMBER]);
+    gui_bar_item_hook_signal ("buffer_unmerged",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_LAST_NUMBER]);
+
     /* buffer plugin */
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_PLUGIN],
@@ -1920,6 +1997,15 @@ gui_bar_item_init ()
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_FILTER]);
     gui_bar_item_hook_signal ("filters_*",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_FILTER]);
+
+    /* buffer zoom */
+    gui_bar_item_new (NULL,
+                      gui_bar_item_names[GUI_BAR_ITEM_BUFFER_ZOOM],
+                      &gui_bar_item_buffer_zoom, NULL);
+    gui_bar_item_hook_signal ("buffer_zoomed",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_ZOOM]);
+    gui_bar_item_hook_signal ("buffer_unzoomed",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_ZOOM]);
 
     /* buffer nicklist count */
     gui_bar_item_new (NULL,

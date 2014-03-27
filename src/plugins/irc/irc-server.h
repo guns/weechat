@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  * Copyright (C) 2012 Simon Arlott
  *
  * This file is part of WeeChat, the extensible chat client.
@@ -41,6 +41,7 @@ enum t_irc_server_option
     IRC_SERVER_OPTION_SSL_CERT,      /* client ssl certificate file          */
     IRC_SERVER_OPTION_SSL_PRIORITIES, /* gnutls priorities                   */
     IRC_SERVER_OPTION_SSL_DHKEY_SIZE, /* Diffie Hellman key size             */
+    IRC_SERVER_OPTION_SSL_FINGERPRINT, /* SHA1 fingerprint of certificate    */
     IRC_SERVER_OPTION_SSL_VERIFY,    /* check if the connection is trusted   */
     IRC_SERVER_OPTION_PASSWORD,      /* password for server                  */
     IRC_SERVER_OPTION_CAPABILITIES,  /* client capabilities to enable        */
@@ -65,6 +66,7 @@ enum t_irc_server_option
     IRC_SERVER_OPTION_ANTI_FLOOD_PRIO_LOW,  /* anti-flood (low priority)     */
     IRC_SERVER_OPTION_AWAY_CHECK,           /* delay between away checks     */
     IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS, /* max nicks for away check      */
+    IRC_SERVER_OPTION_DEFAULT_MSG_KICK,     /* default kick message          */
     IRC_SERVER_OPTION_DEFAULT_MSG_PART,     /* default part message          */
     IRC_SERVER_OPTION_DEFAULT_MSG_QUIT,     /* default quit message          */
     IRC_SERVER_OPTION_NOTIFY,               /* notify list                   */
@@ -179,6 +181,8 @@ struct t_irc_server
     char *chantypes;                /* chantypes from msg 005 (eg "&#")      */
     char *chanmodes;                /* chanmodes from msg 005                */
                                     /* (eg "beI,k,l,imnpstaqr")              */
+    int monitor;                    /* monitor limit from msg 005 (eg 100)   */
+    time_t monitor_time;            /* time for monitoring nicks (on connect)*/
     int reconnect_delay;            /* current reconnect delay (growing)     */
     time_t reconnect_start;         /* this time + delay = reconnect time    */
     time_t command_time;            /* this time + command_delay = time to   */
@@ -203,6 +207,7 @@ struct t_irc_server
     struct t_irc_redirect *last_redirect;    /* last command redirection     */
     struct t_irc_notify *notify_list;        /* list of notify               */
     struct t_irc_notify *last_notify;        /* last notify                  */
+    int notify_count;                        /* number of notify in list     */
     struct t_hashtable *join_manual;         /* manual joins pending         */
     struct t_hashtable *join_channel_key;    /* keys pending for joins       */
     struct t_hashtable *join_noswitch;       /* joins w/o switch to buffer   */
@@ -264,6 +269,8 @@ extern char irc_server_get_prefix_mode_for_char (struct t_irc_server *server,
 extern char irc_server_get_prefix_char_for_mode (struct t_irc_server *server,
                                                  char mode);
 extern const char *irc_server_get_chanmodes (struct t_irc_server *server);
+extern int irc_server_prefix_char_statusmsg (struct t_irc_server *server,
+                                             char prefix_char);
 extern struct t_irc_server *irc_server_alloc (const char *name);
 extern struct t_irc_server *irc_server_alloc_with_url (const char *irc_url);
 extern void irc_server_apply_command_line_options (struct t_irc_server *server,

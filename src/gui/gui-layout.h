@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -90,7 +90,7 @@ extern void gui_layout_buffer_get_number (struct t_gui_layout *layout,
                                           int *layout_number,
                                           int *layout_number_merge_order);
 extern void gui_layout_buffer_get_number_all (struct t_gui_layout *layout);
-extern void gui_layout_buffer_save (struct t_gui_layout *layout);
+extern void gui_layout_buffer_store (struct t_gui_layout *layout);
 extern void gui_layout_buffer_apply (struct t_gui_layout *layout);
 
 extern void gui_layout_window_remove_all (struct t_gui_layout *layout);
@@ -104,11 +104,12 @@ extern struct t_gui_layout_window *gui_layout_window_add (struct t_gui_layout_wi
                                                           int split_horiz,
                                                           const char *plugin_name,
                                                           const char *buffer_name);
-extern void gui_layout_window_save (struct t_gui_layout *layout);
+extern void gui_layout_window_store (struct t_gui_layout *layout);
+extern int gui_layout_window_check_buffer (struct t_gui_window *window);
 extern void gui_layout_window_assign_buffer (struct t_gui_buffer *buffer);
 extern void gui_layout_window_apply (struct t_gui_layout *layout,
                                      int internal_id_current_window);
-extern void gui_layout_save_on_exit ();
+extern void gui_layout_store_on_exit ();
 extern void gui_layout_free (struct t_gui_layout *layout);
 extern void gui_layout_remove (struct t_gui_layout *layout);
 extern void gui_layout_remove_all ();

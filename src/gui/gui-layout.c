@@ -1,7 +1,7 @@
 /*
  * gui-layout.c - layout functions (used by all GUI)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -309,11 +309,11 @@ gui_layout_buffer_get_number_all (struct t_gui_layout *layout)
 }
 
 /*
- * Saves current layout for buffers in a layout.
+ * Stores current layout for buffers in a layout.
  */
 
 void
-gui_layout_buffer_save (struct t_gui_layout *layout)
+gui_layout_buffer_store (struct t_gui_layout *layout)
 {
     struct t_gui_buffer *ptr_buffer;
 
@@ -342,8 +342,7 @@ gui_layout_buffer_save (struct t_gui_layout *layout)
 void
 gui_layout_buffer_apply (struct t_gui_layout *layout)
 {
-    struct t_gui_buffer *ptr_buffer, *ptr_next_buffer;
-    int number, count_merged;
+    struct t_gui_buffer *ptr_buffer;
 
     if (!layout)
         return;
@@ -357,35 +356,16 @@ gui_layout_buffer_apply (struct t_gui_layout *layout)
     /* sort buffers by layout number (without merge) */
     gui_buffer_sort_by_layout_number ();
 
-    /* merge buffers */
-    ptr_buffer = gui_buffers->next_buffer;
-    while (ptr_buffer)
-    {
-        ptr_next_buffer = ptr_buffer->next_buffer;
-
-        if ((ptr_buffer->layout_number >= 1)
-            && (ptr_buffer->layout_number == (ptr_buffer->prev_buffer)->layout_number))
-        {
-            gui_buffer_merge (ptr_buffer, ptr_buffer->prev_buffer);
-        }
-
-        ptr_buffer = ptr_next_buffer;
-    }
-
     /* set appropriate active buffers */
-    number = 1;
-    while (number <= last_gui_buffer->number)
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
     {
-        count_merged = gui_buffer_count_merged_buffers (number);
-        if (count_merged > 1)
+        if ((gui_buffer_count_merged_buffers (ptr_buffer->number) > 1)
+            && (ptr_buffer->layout_number == ptr_buffer->number)
+            && (ptr_buffer->layout_number_merge_order == 0))
         {
-            ptr_buffer = gui_buffer_search_by_layout_number (number, 0);
-            if (ptr_buffer && !ptr_buffer->active)
-            {
-                gui_buffer_set_active_buffer (ptr_buffer);
-            }
+            gui_buffer_set_active_buffer (ptr_buffer);
         }
-        number++;
     }
 }
 
@@ -541,11 +521,11 @@ gui_layout_window_add (struct t_gui_layout_window **layout_window,
 }
 
 /*
- * Saves tree of windows.
+ * Stores tree of windows.
  */
 
 void
-gui_layout_window_save_tree (struct t_gui_layout *layout,
+gui_layout_window_store_tree (struct t_gui_layout *layout,
                              struct t_gui_layout_window **layout_windows,
                              struct t_gui_layout_window *parent_layout,
                              struct t_gui_window_tree *tree)
@@ -579,25 +559,25 @@ gui_layout_window_save_tree (struct t_gui_layout *layout,
 
     if (tree->child1)
     {
-        gui_layout_window_save_tree (layout, layout_windows,
+        gui_layout_window_store_tree (layout, layout_windows,
                                      layout_window, tree->child1);
     }
 
     if (tree->child2)
     {
-        gui_layout_window_save_tree (layout, layout_windows,
+        gui_layout_window_store_tree (layout, layout_windows,
                                      layout_window, tree->child2);
     }
 }
 
 /*
- * Saves current layout for windows in a layout.
+ * Stores current layout for windows in a layout.
  *
  * Returns internal id of current window.
  */
 
 void
-gui_layout_window_save (struct t_gui_layout *layout)
+gui_layout_window_store (struct t_gui_layout *layout)
 {
     if (!layout)
         return;
@@ -607,8 +587,36 @@ gui_layout_window_save (struct t_gui_layout *layout)
     layout->internal_id = 1;
     layout->internal_id_current_window = -1;
 
-    gui_layout_window_save_tree (layout, &layout->layout_windows, NULL,
+    gui_layout_window_store_tree (layout, &layout->layout_windows, NULL,
                                  gui_windows_tree);
+}
+
+/*
+ * Checks whether a window has its layout buffer displayed or not.
+ *
+ * Returns:
+ *    1: the window has layout info and the proper buffer displayed
+ *    0: the window has layout info but NOT the proper buffer displayed
+ *   -1: the window has no layout info
+ */
+
+int
+gui_layout_window_check_buffer (struct t_gui_window *window)
+{
+    /* no layout? return -1 */
+    if (!window->layout_plugin_name || !window->layout_buffer_name)
+        return -1;
+
+    /* layout and buffer displayed matches? return 1 */
+    if ((strcmp (window->layout_plugin_name,
+                 gui_buffer_get_plugin_name (window->buffer)) == 0)
+        && (strcmp (window->layout_buffer_name, (window->buffer)->name) == 0))
+    {
+        return 1;
+    }
+
+    /* buffer displayed does not match the layout, return 0 */
+    return 0;
 }
 
 /*
@@ -751,11 +759,11 @@ gui_layout_window_apply (struct t_gui_layout *layout,
 }
 
 /*
- * Saves layout according to option "save_layout_on_exit".
+ * Stores layout according to option "store_layout_on_exit".
  */
 
 void
-gui_layout_save_on_exit ()
+gui_layout_store_on_exit ()
 {
     struct t_gui_layout *ptr_layout;
 
@@ -776,18 +784,18 @@ gui_layout_save_on_exit ()
         }
     }
 
-    /* save current layout */
+    /* store current layout */
     switch (CONFIG_BOOLEAN(config_look_save_layout_on_exit))
     {
         case CONFIG_LOOK_SAVE_LAYOUT_ON_EXIT_BUFFERS:
-            gui_layout_buffer_save (ptr_layout);
+            gui_layout_buffer_store (ptr_layout);
             break;
         case CONFIG_LOOK_SAVE_LAYOUT_ON_EXIT_WINDOWS:
-            gui_layout_window_save (ptr_layout);
+            gui_layout_window_store (ptr_layout);
             break;
         case CONFIG_LOOK_SAVE_LAYOUT_ON_EXIT_ALL:
-            gui_layout_buffer_save (ptr_layout);
-            gui_layout_window_save (ptr_layout);
+            gui_layout_buffer_store (ptr_layout);
+            gui_layout_window_store (ptr_layout);
             break;
         default:
             break;

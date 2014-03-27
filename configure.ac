@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+# Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
 # Copyright (C) 2005 Benoit Papillault <benoit.papillault@free.fr>
 # Copyright (C) 2005-2006 Julien Louis <ptitlouis@sysif.net>
 # Copyright (C) 2005-2009 Emmanuel Bouthenot <kolter@openics.org>
@@ -24,7 +24,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(WeeChat, 0.4.2, flashcode@flashtux.org)
+AC_INIT(WeeChat, 0.4.3, flashcode@flashtux.org)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE
@@ -39,6 +39,7 @@ AM_PROG_LIBTOOL
 
 # Files to generate
 AC_CONFIG_FILES([weechat.pc])
+AC_CONFIG_FILES([weechat-${VERSION}-1.cygport:weechat.cygport.in])
 
 # Add some flags for some OS
 case "$host_os" in
@@ -93,32 +94,33 @@ AC_CHECK_FUNCS([mallinfo])
 
 # Variables in config.h
 
-AH_VERBATIM([PREFIX],                  [#undef PREFIX])
-AH_VERBATIM([WEECHAT_LIBDIR],          [#undef WEECHAT_LIBDIR])
-AH_VERBATIM([WEECHAT_SHAREDIR],        [#undef WEECHAT_SHAREDIR])
-AH_VERBATIM([HAVE_GNUTLS],             [#undef HAVE_GNUTLS])
-AH_VERBATIM([HAVE_FLOCK],              [#undef HAVE_FLOCK])
+AH_VERBATIM([PREFIX], [#undef PREFIX])
+AH_VERBATIM([WEECHAT_LIBDIR], [#undef WEECHAT_LIBDIR])
+AH_VERBATIM([WEECHAT_SHAREDIR], [#undef WEECHAT_SHAREDIR])
+AH_VERBATIM([HAVE_GNUTLS], [#undef HAVE_GNUTLS])
+AH_VERBATIM([HAVE_FLOCK], [#undef HAVE_FLOCK])
 AH_VERBATIM([HAVE_EAT_NEWLINE_GLITCH], [#undef HAVE_EAT_NEWLINE_GLITCH])
-AH_VERBATIM([PLUGIN_ALIAS],            [#undef PLUGIN_ALIAS])
-AH_VERBATIM([PLUGIN_ASPELL],           [#undef PLUGIN_ASPELL])
-AH_VERBATIM([PLUGIN_CHARSET],          [#undef PLUGIN_CHARSET])
-AH_VERBATIM([PLUGIN_FIFO],             [#undef PLUGIN_FIFO])
-AH_VERBATIM([PLUGIN_IRC],              [#undef PLUGIN_IRC])
-AH_VERBATIM([PLUGIN_LOGGER],           [#undef PLUGIN_LOGGER])
-AH_VERBATIM([PLUGIN_RELAY],            [#undef PLUGIN_RELAY])
-AH_VERBATIM([PLUGIN_RMODIFIER],        [#undef PLUGIN_RMODIFIER])
-AH_VERBATIM([PLUGIN_SCRIPT],           [#undef PLUGIN_SCRIPT])
-AH_VERBATIM([PLUGIN_PERL],             [#undef PLUGIN_PERL])
-AH_VERBATIM([PLUGIN_PYTHON],           [#undef PLUGIN_PYTHON])
-AH_VERBATIM([PLUGIN_RUBY],             [#undef PLUGIN_RUBY])
-AH_VERBATIM([PLUGIN_LUA],              [#undef PLUGIN_LUA])
-AH_VERBATIM([PLUGIN_TCL],              [#undef PLUGIN_TCL])
-AH_VERBATIM([PLUGIN_GUILE],            [#undef PLUGIN_GUILE])
-AH_VERBATIM([PLUGIN_XFER],             [#undef PLUGIN_XFER])
-AH_VERBATIM([MAN],                     [#undef MAN])
-AH_VERBATIM([DOC],                     [#undef DOC])
-AH_VERBATIM([WEECHAT_HOME],            [#define WEECHAT_HOME "~/.weechat"])
-AH_VERBATIM([CA_FILE],                 [#define CA_FILE "/etc/ssl/certs/ca-certificates.crt"])
+AH_VERBATIM([HAVE_ASPELL_VERSION_STRING], [#undef HAVE_ASPELL_VERSION_STRING])
+AH_VERBATIM([PLUGIN_ALIAS], [#undef PLUGIN_ALIAS])
+AH_VERBATIM([PLUGIN_ASPELL], [#undef PLUGIN_ASPELL])
+AH_VERBATIM([PLUGIN_CHARSET], [#undef PLUGIN_CHARSET])
+AH_VERBATIM([PLUGIN_FIFO], [#undef PLUGIN_FIFO])
+AH_VERBATIM([PLUGIN_IRC], [#undef PLUGIN_IRC])
+AH_VERBATIM([PLUGIN_LOGGER], [#undef PLUGIN_LOGGER])
+AH_VERBATIM([PLUGIN_RELAY], [#undef PLUGIN_RELAY])
+AH_VERBATIM([PLUGIN_RMODIFIER], [#undef PLUGIN_RMODIFIER])
+AH_VERBATIM([PLUGIN_SCRIPT], [#undef PLUGIN_SCRIPT])
+AH_VERBATIM([PLUGIN_PERL], [#undef PLUGIN_PERL])
+AH_VERBATIM([PLUGIN_PYTHON], [#undef PLUGIN_PYTHON])
+AH_VERBATIM([PLUGIN_RUBY], [#undef PLUGIN_RUBY])
+AH_VERBATIM([PLUGIN_LUA], [#undef PLUGIN_LUA])
+AH_VERBATIM([PLUGIN_TCL], [#undef PLUGIN_TCL])
+AH_VERBATIM([PLUGIN_GUILE], [#undef PLUGIN_GUILE])
+AH_VERBATIM([PLUGIN_XFER], [#undef PLUGIN_XFER])
+AH_VERBATIM([MAN], [#undef MAN])
+AH_VERBATIM([DOC], [#undef DOC])
+AH_VERBATIM([WEECHAT_HOME], [#define WEECHAT_HOME "~/.weechat"])
+AH_VERBATIM([CA_FILE], [#define CA_FILE "/etc/ssl/certs/ca-certificates.crt"])
 
 # Arguments for ./configure
 
@@ -295,7 +297,6 @@ fi
 if test "x$enable_aspell" = "xyes" ; then
     ac_found_enchant_lib="no"
     if test "x$enable_enchant" = "xyes" ; then
-        #PKG_CHECK_MODULES(ENCHANT, [enchant], [CFLAGS="$CFLAGS -DUSE_ENCHANT"],
         PKG_CHECK_MODULES(ENCHANT, [enchant], ac_found_enchant_lib="yes", ac_found_enchant_lib="no")
     fi
     if test "x$ac_found_enchant_lib" = "xyes" ; then
@@ -321,6 +322,18 @@ if test "x$enable_aspell" = "xyes" ; then
             AC_MSG_RESULT(yes)
             ASPELL_LFLAGS="$ASPELL_LFLAGS -laspell"
             ASPELL_LIB_USED="aspell"
+            ac_save_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS $ASPELL_LFLAGS"
+            AC_CACHE_CHECK([for aspell_version_string() support], ac_cv_have_aspell_version_string, [
+            AC_LINK_IFELSE([AC_LANG_PROGRAM(
+                [[ #include <aspell.h>]],
+                [[ const char *version = aspell_version_string(); ]])],
+                [ ac_have_aspell_version_string="yes" ],
+                [ ac_have_aspell_version_string="no" ])])
+            LDFLAGS="$ac_save_LDFLAGS"
+            if test "x$ac_have_aspell_version_string" = "xyes"; then
+                AC_DEFINE(HAVE_ASPELL_VERSION_STRING)
+            fi
         fi
     fi
 else
@@ -540,31 +553,34 @@ fi
 RUBY_VERSION=
 
 if test "x$enable_ruby" = "xyes" ; then
-    AC_PATH_PROGS(RUBY, ruby1.9.3 ruby1.9.2 ruby1.9.1 ruby1.9 ruby1.8 ruby)
-    if test -z $RUBY ; then
-        AC_MSG_WARN([
+    RUBY_CFLAGS=""
+    RUBY_LFLAGS=""
+    for v in "2.0" "1.9" "1.8" ; do
+        pkgconfig_ruby_found=`$PKGCONFIG --exists ruby-$v 2>/dev/null`
+        if test "x$?" = "x0" ; then
+            RUBY_VERSION=`$PKGCONFIG --modversion ruby-$v`
+            RUBY_CFLAGS=`$PKGCONFIG --cflags ruby-$v`
+            RUBY_LFLAGS=`$PKGCONFIG --libs ruby-$v`
+            break
+        fi
+    done
+
+    if test "x$RUBY_CFLAGS" = "x" -o "x$RUBY_LFLAGS" = "x" ; then
+        AC_PATH_PROGS(RUBY, ruby1.9.3 ruby1.9.2 ruby1.9.1 ruby1.9 ruby1.8 ruby)
+        if test -z $RUBY ; then
+            AC_MSG_WARN([
 *** Ruby must be installed on your system but ruby interpreter couldn't be found in path.
 *** Please check that ruby is in path, or install it with your software package manager.
-*** WeeChat will be built without Ruby support.])
-        enable_ruby="no"
-        not_found="$not_found ruby"
-    else
-        RUBY_VERSION=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG[['ruby_version']]"`
-        if test "$RUBY_VERSION" = "1.9.0"; then
-            AC_MSG_WARN([
-*** Ruby header files have been found, but they're of the version 1.9.0.
-*** Ruby 1.9.0 is an unstable release and should not be used in production.
-*** Please install Ruby 1.8.x (>= 1.8.6) or >= 1.9.1.
 *** WeeChat will be built without Ruby support.])
             enable_ruby="no"
             not_found="$not_found ruby"
         else
+            RUBY_VERSION=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG[['MAJOR']] + '.' + RbConfig::CONFIG[['MINOR']] + '.' + RbConfig::CONFIG[['TEENY']]"`
             RUBY_INCLUDE=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG[['rubyhdrdir']] || RbConfig::CONFIG[['archdir']]"`
             RUBY_ARCH=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG[["arch"]]'`
             AC_MSG_CHECKING(for Ruby header files)
             if test -d "$RUBY_INCLUDE/"; then
-                M_RUBY_VERSION=`$RUBY -rrbconfig -e "puts RbConfig::CONFIG[['ruby_version']].gsub(/\./, '')[[0,3]]"`
-                RUBY_CFLAGS="-I$RUBY_INCLUDE/ -I$RUBY_INCLUDE/$RUBY_ARCH -DRUBY_VERSION=$M_RUBY_VERSION"
+                RUBY_CFLAGS="-I$RUBY_INCLUDE/ -I$RUBY_INCLUDE/$RUBY_ARCH"
             else
                 AC_MSG_WARN([
 *** Ruby header files couldn't be found on your system.
@@ -608,27 +624,23 @@ if test "x$enable_lua" = "xyes" ; then
     fi
 
     if test "x$LUA_CFLAGS" = "x" -o "x$LUA_LFLAGS" = "x" ; then
-        PKGCONFIG=""
-        AC_CHECK_PROGS(PKGCONFIG, pkg-config)
-        if test "x$PKGCONFIG" != "x"; then
-            AC_MSG_CHECKING(for Lua headers and librairies with pkg-config)
-            echo
-            for l in "$lua_suffix" "" "51" "5.1" "50" "5.0" ; do
-                pkgconfig_lua_found=`$PKGCONFIG --exists lua$l 2>/dev/null`
-                if test "x$?" = "x0" ; then
-                    LUA_VERSION=`$PKGCONFIG --modversion lua$l`
-                    LUA_CFLAGS="$LUA_CFLAGS "`$PKGCONFIG --cflags lua$l`
-                    LUA_LFLAGS="$LUA_LFLAGS "`$PKGCONFIG --libs lua$l`
+        AC_MSG_CHECKING(for Lua headers and librairies with pkg-config)
+        echo
+        for l in "$lua_suffix" "" "51" "5.1" "50" "5.0" ; do
+            pkgconfig_lua_found=`$PKGCONFIG --exists lua$l 2>/dev/null`
+            if test "x$?" = "x0" ; then
+                LUA_VERSION=`$PKGCONFIG --modversion lua$l`
+                LUA_CFLAGS="$LUA_CFLAGS "`$PKGCONFIG --cflags lua$l`
+                LUA_LFLAGS="$LUA_LFLAGS "`$PKGCONFIG --libs lua$l`
 
-                    pkgconfig_lualib_found=`$PKGCONFIG --exists lualib$l 2>/dev/null`
-                    if test  "x$?" = "x0"; then
-                        LUA_CFLAGS="$LUA_CFLAGS "`$PKGCONFIG --cflags lualib$l`
-                        LUA_LFLAGS="$LUA_LFLAGS "`$PKGCONFIG --libs lualib$l`
-                    fi
-                    break
+                pkgconfig_lualib_found=`$PKGCONFIG --exists lualib$l 2>/dev/null`
+                if test  "x$?" = "x0"; then
+                    LUA_CFLAGS="$LUA_CFLAGS "`$PKGCONFIG --cflags lualib$l`
+                    LUA_LFLAGS="$LUA_LFLAGS "`$PKGCONFIG --libs lualib$l`
                 fi
-            done
-        fi
+                break
+            fi
+        done
     fi
 
     if test "x$LUA_CFLAGS" = "x" -o "x$LUA_LFLAGS" = "x" ; then
@@ -685,13 +697,18 @@ if test "x$enable_lua" = "xyes" ; then
     AC_MSG_CHECKING(for Lua compiling and linking)
     LUA_TEST=`LT=luatest.c ; echo "#include <lua.h>" > $LT;  echo "#include <lualib.h>" >> $LT; echo "int main() { luaopen_base((lua_State *)lua_open()); return 0; }" >> $LT ; $CC -Wall $LT -o $LT.out $LUA_CFLAGS $LUA_LFLAGS $CFLAGS $LDFLAGS 1>/dev/null 2>&1 ; echo $?; rm -f $LT $LT.out 1>/dev/null 2>&1`
     if test "x$LUA_TEST" != "x0" ; then
-        AC_MSG_RESULT(no)
-        AC_MSG_WARN([
+        LUA52_TEST=`LT=luatest.c ; echo "#include <lua.h>" > $LT;  echo "#include <lualib.h>" >> $LT; echo "int main() { luaopen_base((lua_State *)luaL_newstate()); return 0; }" >> $LT ; $CC -Wall $LT -o $LT.out $LUA_CFLAGS $LUA_LFLAGS $CFLAGS $LDFLAGS 1>/dev/null 2>&1 ; echo $?; rm -f $LT $LT.out 1>/dev/null 2>&1`
+        if test "x$LUA52_TEST" != "x0" ; then
+            AC_MSG_RESULT(no)
+            AC_MSG_WARN([
 *** Lua (>=5.0) headers and/or librairies couldn't be found on your system.
 *** Try to install liblua, liblualib and liblua-dev with your software package manager.
 *** WeeChat will be built without Lua support.])
-        enable_lua="no"
-        not_found="$not_found lua"
+            enable_lua="no"
+            not_found="$not_found lua"
+        else
+            AC_MSG_RESULT(yes)
+        fi
     else
         AC_MSG_RESULT(yes)
     fi
@@ -755,22 +772,18 @@ if test "x$enable_guile" = "xyes" ; then
     enable_plugins="yes"
 
     guile_found="no"
-    PKGCONFIG=""
-    AC_CHECK_PROGS(PKGCONFIG, pkg-config)
-    if test "x$PKGCONFIG" != "x"; then
-        AC_MSG_CHECKING(for Guile headers and librairies)
-        echo
-        for v in "2.0" ; do
-            pkgconfig_guile_found=`$PKGCONFIG --exists guile-$v 2>/dev/null`
-            if test "x$?" = "x0" ; then
-                GUILE_VERSION=`$PKGCONFIG --modversion guile-$v`
-                GUILE_CFLAGS=`$PKGCONFIG --cflags guile-$v`
-                GUILE_LFLAGS=`$PKGCONFIG --libs guile-$v`
-                guile_found="yes"
-                break
-            fi
-        done
-    fi
+    AC_MSG_CHECKING(for Guile headers and librairies)
+    echo
+    for v in "2.0" ; do
+        pkgconfig_guile_found=`$PKGCONFIG --exists guile-$v 2>/dev/null`
+        if test "x$?" = "x0" ; then
+            GUILE_VERSION=`$PKGCONFIG --modversion guile-$v`
+            GUILE_CFLAGS=`$PKGCONFIG --cflags guile-$v`
+            GUILE_LFLAGS=`$PKGCONFIG --libs guile-$v`
+            guile_found="yes"
+            break
+        fi
+    done
 
     if test "x$guile_found" = "xno" ; then
         AC_MSG_WARN([

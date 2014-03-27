@@ -1,7 +1,7 @@
 /*
  * irc-redirect.c - redirection of IRC command output
  *
- * Copyright (C) 2010-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2010-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -132,6 +132,17 @@ struct t_irc_redirect_pattern irc_redirect_patterns_default[] =
        */
       NULL,
       "mode:0,221:0,403:1,501,502",
+      NULL,
+      NULL, NULL,
+    },
+    { "monitor", 0, 0,
+      /*
+       * monitor: start: 732: list of monitored nicks
+       *           stop: 733: end of a monitor list
+       *          extra; -
+       */
+      "732:2",
+      "733:1",
       NULL,
       NULL, NULL,
     },

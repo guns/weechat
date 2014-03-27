@@ -1,7 +1,7 @@
 /*
  * xfer-buffer.c - display xfer list on xfer buffer
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -44,7 +44,7 @@ xfer_buffer_refresh (const char *hotlist)
 {
     struct t_xfer *ptr_xfer, *xfer_selected;
     char str_color[256], suffix[32], status[64], date[128], eta[128];
-    char str_ip[32];
+    char str_ip[128], str_hash[128];
     char *progress_bar, *str_pos, *str_total, *str_bytes_per_sec;
     int i, length, line, progress_bar_size, num_bars;
     unsigned long long pos, pct_complete;
@@ -93,19 +93,29 @@ xfer_buffer_refresh (const char *hotlist)
                       weechat_config_string (xfer_config_color_text_bg));
 
             str_ip[0] = '\0';
-            if (ptr_xfer->remote_address != 0)
+            if (ptr_xfer->remote_address_str)
             {
                 snprintf (str_ip, sizeof (str_ip),
-                          " (%ld.%ld.%ld.%ld)",
-                          ptr_xfer->remote_address >> 24,
-                          (ptr_xfer->remote_address >> 16) & 0xff,
-                          (ptr_xfer->remote_address >> 8) & 0xff,
-                          ptr_xfer->remote_address & 0xff);
+                          " (%s)",
+                          ptr_xfer->remote_address_str);
+            }
+
+            str_hash[0] = '\0';
+            if (ptr_xfer->hash_target
+                && ptr_xfer->hash_handle
+                && (ptr_xfer->hash_status != XFER_HASH_STATUS_UNKNOWN)
+                && ((ptr_xfer->status == XFER_STATUS_ACTIVE)
+                    || (ptr_xfer->status == XFER_STATUS_DONE)
+                    || (ptr_xfer->status == XFER_STATUS_HASHING)))
+            {
+                snprintf (str_hash, sizeof (str_hash),
+                          " (%s)",
+                          _(xfer_hash_status_string[ptr_xfer->hash_status]));
             }
 
             /* display first line with remote nick, filename and plugin name/id */
             weechat_printf_y (xfer_buffer, (line * 2) + 2,
-                              "%s%s%-24s %s%s%s%s (%s.%s)%s",
+                              "%s%s%-24s %s%s%s%s (%s.%s)%s%s",
                               weechat_color(str_color),
                               (line == xfer_buffer_selected_line) ?
                               "*** " : "    ",
@@ -117,7 +127,8 @@ xfer_buffer_refresh (const char *hotlist)
                               suffix,
                               ptr_xfer->plugin_name,
                               ptr_xfer->plugin_id,
-                              str_ip);
+                              str_ip,
+                              str_hash);
 
             snprintf (status, sizeof (status),
                       "%s", _(xfer_status_string[ptr_xfer->status]));

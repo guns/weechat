@@ -1,7 +1,7 @@
 /*
  * wee-eval.c - evaluate expressions with references to internal vars
  *
- * Copyright (C) 2012-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2012-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -129,6 +129,7 @@ eval_hdata_get_value (struct t_hdata *hdata, void *pointer, const char *path)
             value = strdup (str_value);
             break;
         case WEECHAT_HDATA_STRING:
+        case WEECHAT_HDATA_SHARED_STRING:
             ptr_value = hdata_string (hdata, pointer, var_name);
             value = (ptr_value) ? strdup (ptr_value) : NULL;
             break;
@@ -235,8 +236,8 @@ eval_replace_vars_cb (void *data, const char *text)
     struct t_config_option *ptr_option;
     struct t_gui_buffer *ptr_buffer;
     char str_value[64], *value, *pos, *pos1, *pos2, *hdata_name, *list_name;
-    char *tmp;
-    const char *ptr_value;
+    char *tmp, *info_name;
+    const char *ptr_value, *ptr_arguments;
     struct t_hdata *hdata;
     void *pointer;
 
@@ -258,7 +259,27 @@ eval_replace_vars_cb (void *data, const char *text)
         return strdup ((ptr_value) ? ptr_value : "");
     }
 
-    /* 3. look for name of option: if found, return this value */
+    /* 3. look for an info */
+    if (strncmp (text, "info:", 5) == 0)
+    {
+        ptr_value = NULL;
+        ptr_arguments = strchr (text + 5, ',');
+        if (ptr_arguments)
+        {
+            info_name = string_strndup (text + 5, ptr_arguments - text - 5);
+            ptr_arguments++;
+        }
+        else
+            info_name = strdup (text + 5);
+        if (info_name)
+        {
+            ptr_value = hook_info_get (NULL, info_name, ptr_arguments);
+            free (info_name);
+        }
+        return strdup ((ptr_value) ? ptr_value : "");
+    }
+
+    /* 4. look for name of option: if found, return this value */
     if (strncmp (text, "sec.data.", 9) == 0)
     {
         ptr_value = hashtable_get (secure_hashtable_data, text + 9);
@@ -269,6 +290,8 @@ eval_replace_vars_cb (void *data, const char *text)
         config_file_search_with_string (text, NULL, NULL, &ptr_option, NULL);
         if (ptr_option)
         {
+            if (!ptr_option->value)
+                return strdup ("");
             switch (ptr_option->type)
             {
                 case CONFIG_OPTION_TYPE_BOOLEAN:
@@ -284,12 +307,12 @@ eval_replace_vars_cb (void *data, const char *text)
                 case CONFIG_OPTION_TYPE_COLOR:
                     return strdup (gui_color_get_name (CONFIG_COLOR(ptr_option)));
                 case CONFIG_NUM_OPTION_TYPES:
-                    return NULL;
+                    return strdup ("");
             }
         }
     }
 
-    /* 4. look for local variable in buffer */
+    /* 5. look for local variable in buffer */
     ptr_buffer = hashtable_get (pointers, "buffer");
     if (ptr_buffer)
     {
@@ -298,7 +321,7 @@ eval_replace_vars_cb (void *data, const char *text)
             return strdup (ptr_value);
     }
 
-    /* 5. look for hdata */
+    /* 6. look for hdata */
     value = NULL;
     hdata_name = NULL;
     list_name = NULL;
@@ -413,6 +436,7 @@ eval_compare (const char *expr1, int comparison, const char *expr2)
             goto end;
         }
         rc = (regexec (&regex, expr1, 0, NULL, 0) == 0) ? 1 : 0;
+        regfree (&regex);
         if (comparison == EVAL_COMPARE_REGEX_NOT_MATCHING)
             rc ^= 1;
         goto end;

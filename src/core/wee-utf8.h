@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -35,6 +35,7 @@ extern void utf8_normalize (char *string, char replacement);
 extern char *utf8_prev_char (const char *string_start, const char *string);
 extern char *utf8_next_char (const char *string);
 extern int utf8_char_int (const char *string);
+extern void utf8_int_string (unsigned int unicode_value, char *string);
 extern wint_t utf8_wide_char (const char *string);
 extern int utf8_char_size (const char *string);
 extern int utf8_strlen (const char *string);

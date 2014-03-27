@@ -1,7 +1,7 @@
 /*
  * xfer-config.c - xfer configuration options (file xfer.conf)
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -57,13 +57,13 @@ struct t_config_option *xfer_config_network_timeout;
 struct t_config_option *xfer_config_file_auto_accept_chats;
 struct t_config_option *xfer_config_file_auto_accept_files;
 struct t_config_option *xfer_config_file_auto_accept_nicks;
+struct t_config_option *xfer_config_file_auto_check_crc32;
 struct t_config_option *xfer_config_file_auto_rename;
 struct t_config_option *xfer_config_file_auto_resume;
 struct t_config_option *xfer_config_file_convert_spaces;
 struct t_config_option *xfer_config_file_download_path;
 struct t_config_option *xfer_config_file_upload_path;
 struct t_config_option *xfer_config_file_use_nick_in_filename;
-
 
 
 /*
@@ -287,6 +287,12 @@ xfer_config_init ()
            "specific server) or \"nick\" (for all servers); example: "
            "\"freenode.FlashCode,andrew\""),
         NULL, 0, 0, "", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    xfer_config_file_auto_check_crc32 = weechat_config_new_option (
+        xfer_config_file, ptr_section,
+        "auto_check_crc32", "boolean",
+        N_("automatically check CRC32 file checksum if it is found in the "
+           "filename (8 hexadecimal chars)"),
+        NULL, 0, 0, "off", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     xfer_config_file_auto_rename = weechat_config_new_option (
         xfer_config_file, ptr_section,
         "auto_rename", "boolean",

@@ -1,7 +1,7 @@
 /*
  * logger.c - logger plugin for WeeChat: save buffer lines to disk files
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -47,7 +47,7 @@
 
 WEECHAT_PLUGIN_NAME(LOGGER_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Log buffers to files"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -317,6 +317,7 @@ char *
 logger_get_mask_expanded (struct t_gui_buffer *buffer, const char *mask)
 {
     char *mask2, *mask_decoded, *mask_decoded2, *mask_decoded3, *mask_decoded4;
+    char *mask_decoded5;
     const char *dir_separator;
     int length;
     time_t seconds;
@@ -327,6 +328,7 @@ logger_get_mask_expanded (struct t_gui_buffer *buffer, const char *mask)
     mask_decoded2 = NULL;
     mask_decoded3 = NULL;
     mask_decoded4 = NULL;
+    mask_decoded5 = NULL;
 
     dir_separator = weechat_info_get ("dir_separator", "");
     if (!dir_separator)
@@ -351,25 +353,34 @@ logger_get_mask_expanded (struct t_gui_buffer *buffer, const char *mask)
     if (!mask_decoded2)
         goto end;
 
-    /* restore directory separator */
-    mask_decoded3 = weechat_string_replace (mask_decoded2,
-                                            "\01", dir_separator);
+#ifdef __CYGWIN__
+    mask_decoded3 = weechat_string_replace (mask_decoded2, "\\",
+                                            weechat_config_string (logger_config_file_replacement_char));
+#else
+    mask_decoded3 = strdup (mask_decoded2);
+#endif
     if (!mask_decoded3)
         goto end;
 
-    /* replace date/time specifiers in mask */
-    length = strlen (mask_decoded3) + 256 + 1;
-    mask_decoded4 = malloc (length);
+    /* restore directory separator */
+    mask_decoded4 = weechat_string_replace (mask_decoded3,
+                                            "\01", dir_separator);
     if (!mask_decoded4)
+        goto end;
+
+    /* replace date/time specifiers in mask */
+    length = strlen (mask_decoded4) + 256 + 1;
+    mask_decoded5 = malloc (length);
+    if (!mask_decoded5)
         goto end;
     seconds = time (NULL);
     date_tmp = localtime (&seconds);
-    mask_decoded4[0] = '\0';
-    strftime (mask_decoded4, length - 1, mask_decoded3, date_tmp);
+    mask_decoded5[0] = '\0';
+    strftime (mask_decoded5, length - 1, mask_decoded4, date_tmp);
 
     /* convert to lower case? */
     if (weechat_config_boolean (logger_config_file_name_lower_case))
-        weechat_string_tolower (mask_decoded4);
+        weechat_string_tolower (mask_decoded5);
 
     if (weechat_logger_plugin->debug)
     {
@@ -379,7 +390,7 @@ logger_get_mask_expanded (struct t_gui_buffer *buffer, const char *mask)
                              "decoded mask = \"%s\"",
                              LOGGER_PLUGIN_NAME,
                              weechat_buffer_get_string (buffer, "name"),
-                             mask, mask_decoded4);
+                             mask, mask_decoded5);
     }
 
 end:
@@ -391,8 +402,10 @@ end:
         free (mask_decoded2);
     if (mask_decoded3)
         free (mask_decoded3);
+    if (mask_decoded4)
+        free (mask_decoded4);
 
-    return mask_decoded4;
+    return mask_decoded5;
 }
 
 /*
@@ -1311,50 +1324,49 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     if (!logger_config_init ())
         return WEECHAT_RC_ERROR;
 
-    if (logger_config_read () < 0)
-        return WEECHAT_RC_ERROR;
+    logger_config_read ();
 
     /* command /logger */
-    weechat_hook_command ("logger",
-                          N_("logger plugin configuration"),
-                          N_("list"
-                             " || set <level>"
-                             " || flush"
-                             " || disable"),
-                          N_("   list: show logging status for opened buffers\n"
-                             "    set: set logging level on current buffer\n"
-                             "  level: level for messages to be logged (0 = "
-                             "logging disabled, 1 = a few messages (most "
-                             "important) .. 9 = all messages)\n"
-                             "  flush: write all log files now\n"
-                             "disable: disable logging on current buffer (set "
-                             "level to 0)\n\n"
-                             "Options \"logger.level.*\" and \"logger.mask.*\" "
-                             "can be used to set level or mask for a buffer, "
-                             "or buffers beginning with name.\n\n"
-                             "Log levels used by IRC plugin:\n"
-                             "  1: user message, notice, private\n"
-                             "  2: nick change\n"
-                             "  3: server message\n"
-                             "  4: join/part/quit\n"
-                             "  9: all other messages\n\n"
-                             "Examples:\n"
-                             "  set level to 5 for current buffer:\n"
-                             "    /logger set 5\n"
-                             "  disable logging for current buffer:\n"
-                             "    /logger disable\n"
-                             "  set level to 3 for all IRC buffers:\n"
-                             "    /set logger.level.irc 3\n"
-                             "  disable logging for main WeeChat buffer:\n"
-                             "    /set logger.level.core.weechat 0\n"
-                             "  use a directory per IRC server and a file per "
-                             "channel inside:\n"
-                             "    /set logger.mask.irc \"$server/$channel.weechatlog\""),
-                          "list"
-                          " || set 1|2|3|4|5|6|7|8|9"
-                          " || flush"
-                          " || disable",
-                          &logger_command_cb, NULL);
+    weechat_hook_command (
+        "logger",
+        N_("logger plugin configuration"),
+        N_("list"
+           " || set <level>"
+           " || flush"
+           " || disable"),
+        N_("   list: show logging status for opened buffers\n"
+           "    set: set logging level on current buffer\n"
+           "  level: level for messages to be logged (0 = logging disabled, "
+           "1 = a few messages (most important) .. 9 = all messages)\n"
+           "  flush: write all log files now\n"
+           "disable: disable logging on current buffer (set level to 0)\n"
+           "\n"
+           "Options \"logger.level.*\" and \"logger.mask.*\" can be used to set "
+           "level or mask for a buffer, or buffers beginning with name.\n"
+           "\n"
+           "Log levels used by IRC plugin:\n"
+           "  1: user message, notice, private\n"
+           "  2: nick change\n"
+           "  3: server message\n"
+           "  4: join/part/quit\n"
+           "  9: all other messages\n"
+           "\n"
+           "Examples:\n"
+           "  set level to 5 for current buffer:\n"
+           "    /logger set 5\n"
+           "  disable logging for current buffer:\n"
+           "    /logger disable\n"
+           "  set level to 3 for all IRC buffers:\n"
+           "    /set logger.level.irc 3\n"
+           "  disable logging for main WeeChat buffer:\n"
+           "    /set logger.level.core.weechat 0\n"
+           "  use a directory per IRC server and a file per channel inside:\n"
+           "    /set logger.mask.irc \"$server/$channel.weechatlog\""),
+        "list"
+        " || set 1|2|3|4|5|6|7|8|9"
+        " || flush"
+        " || disable",
+        &logger_command_cb, NULL);
 
     logger_start_buffer_all (1);
 

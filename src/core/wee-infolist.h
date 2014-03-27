@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -69,6 +69,7 @@ extern struct t_infolist *last_weechat_infolist;
 /* list functions */
 
 extern struct t_infolist *infolist_new ();
+extern int infolist_valid (struct t_infolist *infolist);
 extern struct t_infolist_item *infolist_new_item (struct t_infolist *infolist);
 extern struct t_infolist_var *infolist_new_var_integer (struct t_infolist_item *item,
                                                         const char *name,
@@ -86,7 +87,8 @@ extern struct t_infolist_var *infolist_new_var_buffer (struct t_infolist_item *i
 extern struct t_infolist_var *infolist_new_var_time (struct t_infolist_item *item,
                                                      const char *name,
                                                      time_t time);
-extern int infolist_valid (struct t_infolist *infolist);
+extern struct t_infolist_var *infolist_search_var (struct t_infolist *infolist,
+                                                   const char *name);
 extern struct t_infolist_item *infolist_next (struct t_infolist *infolist);
 extern struct t_infolist_item *infolist_prev (struct t_infolist *infolist);
 extern void infolist_reset_item_cursor (struct t_infolist *infolist);

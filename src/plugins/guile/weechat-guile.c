@@ -1,7 +1,7 @@
 /*
  * weechat-guile.c - guile (scheme) plugin for WeeChat
  *
- * Copyright (C) 2011-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2011-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -35,7 +35,7 @@
 
 WEECHAT_PLUGIN_NAME(GUILE_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Support of scheme scripts (with Guile)"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -425,7 +425,6 @@ weechat_guile_load (const char *filename)
     weechat_guile_catch (scm_gc_protect_object, (void *)module);
 
     guile_current_script = guile_registered_script;
-    guile_current_script->interpreter = (void *)module;
 
     /*
      * set input/close callbacks for buffers created by this script
@@ -775,6 +774,33 @@ weechat_guile_signal_debug_dump_cb (void *data, const char *signal,
 }
 
 /*
+ * Display infos about external libraries used.
+ */
+
+int
+weechat_guile_signal_debug_libs_cb (void *data, const char *signal,
+                                    const char *type_data, void *signal_data)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) signal;
+    (void) type_data;
+    (void) signal_data;
+
+#if defined(SCM_MAJOR_VERSION) && defined(SCM_MINOR_VERSION) && defined(SCM_MICRO_VERSION)
+    weechat_printf (NULL, "  %s: %d.%d.%d",
+                    GUILE_PLUGIN_NAME,
+                    SCM_MAJOR_VERSION,
+                    SCM_MINOR_VERSION,
+                    SCM_MICRO_VERSION);
+#else
+    weechat_printf (NULL, "  %s: (?)", GUILE_PLUGIN_NAME);
+#endif
+
+    return WEECHAT_RC_OK;
+}
+
+/*
  * Callback called when a buffer is closed.
  */
 
@@ -945,6 +971,13 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
 
     guile_stdout = NULL;
 
+    /*
+     * prevent guile to use its own gmp allocator, because it can conflict
+     * with other plugins using GnuTLS like relay, which can crash WeeChat
+     * on unload (or exit)
+     */
+    scm_install_gmp_memory_functions = 0;
+
     scm_init_guile ();
 
     guile_module_weechat = scm_c_define_module ("weechat",
@@ -958,6 +991,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     init.callback_hdata = &weechat_guile_hdata_cb;
     init.callback_infolist = &weechat_guile_infolist_cb;
     init.callback_signal_debug_dump = &weechat_guile_signal_debug_dump_cb;
+    init.callback_signal_debug_libs = &weechat_guile_signal_debug_libs_cb;
     init.callback_signal_buffer_closed = &weechat_guile_signal_buffer_closed_cb;
     init.callback_signal_script_action = &weechat_guile_signal_script_action_cb;
     init.callback_load_file = &weechat_guile_load_cb;

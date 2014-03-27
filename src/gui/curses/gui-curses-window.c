@@ -1,7 +1,7 @@
 /*
  * gui-curses-window.c - window display functions for Curses GUI
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -31,14 +31,14 @@
 #include <stdarg.h>
 #include <libgen.h>
 #include <sys/ioctl.h>
-#include <sys/termios.h>
+#include <termios.h>
 
 #include "../../core/weechat.h"
 #include "../../core/wee-config.h"
+#include "../../core/wee-eval.h"
 #include "../../core/wee-hook.h"
 #include "../../core/wee-log.h"
 #include "../../core/wee-string.h"
-#include "../../core/wee-utf8.h"
 #include "../../plugins/plugin.h"
 #include "../gui-window.h"
 #include "../gui-bar.h"
@@ -175,7 +175,8 @@ gui_window_clear_weechat (WINDOW *window, int weechat_color)
     if (!gui_init_ok)
         return;
 
-    wbkgdset (window, ' ' | COLOR_PAIR (gui_color_weechat_get_pair (weechat_color)));
+    wbkgdset (window, ' ' | COLOR_PAIR (gui_color_weechat_get_pair (weechat_color)) |
+              gui_color[weechat_color]->attributes);
     werase (window);
     wmove (window, 0, 0);
 }
@@ -187,8 +188,12 @@ gui_window_clear_weechat (WINDOW *window, int weechat_color)
 void
 gui_window_clear (WINDOW *window, int fg, int bg)
 {
+    int attrs;
+
     if (!gui_init_ok)
         return;
+
+    attrs = gui_color_get_extended_attrs (fg);
 
     if ((fg > 0) && (fg & GUI_COLOR_EXTENDED_FLAG))
         fg &= GUI_COLOR_EXTENDED_MASK;
@@ -200,7 +205,7 @@ gui_window_clear (WINDOW *window, int fg, int bg)
     else
         bg = gui_weechat_colors[bg & GUI_COLOR_EXTENDED_MASK].background;
 
-    wbkgdset (window, ' ' | COLOR_PAIR (gui_color_get_pair (fg, bg)));
+    wbkgdset (window, ' ' | COLOR_PAIR (gui_color_get_pair (fg, bg)) | attrs);
     werase (window);
     wmove (window, 0, 0);
 }
@@ -289,7 +294,7 @@ gui_window_reset_style (WINDOW *window, int weechat_color)
     gui_window_current_style_bg = -1;
     gui_window_current_color_attr = 0;
 
-    wattroff (window, A_BOLD | A_UNDERLINE | A_REVERSE);
+    wattroff (window, A_ALL_ATTR);
     wattron (window, COLOR_PAIR(gui_color_weechat_get_pair (weechat_color)) |
              gui_color[weechat_color]->attributes);
 }
@@ -301,6 +306,9 @@ gui_window_reset_style (WINDOW *window, int weechat_color)
 void
 gui_window_reset_color (WINDOW *window, int weechat_color)
 {
+    gui_window_current_style_fg = gui_color[weechat_color]->foreground;
+    gui_window_current_style_bg = gui_color[weechat_color]->background;
+
     wattron (window, COLOR_PAIR(gui_color_weechat_get_pair (weechat_color)) |
              gui_color[weechat_color]->attributes);
 }
@@ -396,6 +404,10 @@ gui_window_set_custom_color_fg (WINDOW *window, int fg)
                 gui_window_set_color_style (window, A_REVERSE);
             else if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
                 gui_window_remove_color_style (window, A_REVERSE);
+            if (fg & GUI_COLOR_EXTENDED_ITALIC_FLAG)
+                gui_window_set_color_style (window, A_ITALIC);
+            else if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
+                gui_window_remove_color_style (window, A_ITALIC);
             if (fg & GUI_COLOR_EXTENDED_UNDERLINE_FLAG)
                 gui_window_set_color_style (window, A_UNDERLINE);
             else if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
@@ -407,18 +419,9 @@ gui_window_set_custom_color_fg (WINDOW *window, int fg)
         else if ((fg & GUI_COLOR_EXTENDED_MASK) < GUI_CURSES_NUM_WEECHAT_COLORS)
         {
             if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
-            {
-                gui_window_remove_color_style (window,
-                                               A_BOLD | A_REVERSE | A_UNDERLINE);
-            }
-            attributes = 0;
-            if (fg & GUI_COLOR_EXTENDED_BOLD_FLAG)
-                attributes |= A_BOLD;
-            if (fg & GUI_COLOR_EXTENDED_REVERSE_FLAG)
-                attributes |= A_REVERSE;
-            if (fg & GUI_COLOR_EXTENDED_UNDERLINE_FLAG)
-                attributes |= A_UNDERLINE;
-            attributes |= gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].attributes;
+                gui_window_remove_color_style (window, A_ALL_ATTR);
+            attributes = gui_color_get_extended_attrs (fg) |
+                gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].attributes;
             gui_window_set_color_style (window, attributes);
             fg = gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].foreground;
 
@@ -487,6 +490,10 @@ gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg)
                 gui_window_set_color_style (window, A_REVERSE);
             else if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
                 gui_window_remove_color_style (window, A_REVERSE);
+            if (fg & GUI_COLOR_EXTENDED_ITALIC_FLAG)
+                gui_window_set_color_style (window, A_ITALIC);
+            else if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
+                gui_window_remove_color_style (window, A_ITALIC);
             if (fg & GUI_COLOR_EXTENDED_UNDERLINE_FLAG)
                 gui_window_set_color_style (window, A_UNDERLINE);
             else if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
@@ -496,18 +503,9 @@ gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg)
         else if ((fg & GUI_COLOR_EXTENDED_MASK) < GUI_CURSES_NUM_WEECHAT_COLORS)
         {
             if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
-            {
-                gui_window_remove_color_style (window,
-                                               A_BOLD | A_REVERSE | A_UNDERLINE);
-            }
-            attributes = 0;
-            if (fg & GUI_COLOR_EXTENDED_BOLD_FLAG)
-                attributes |= A_BOLD;
-            if (fg & GUI_COLOR_EXTENDED_REVERSE_FLAG)
-                attributes |= A_REVERSE;
-            if (fg & GUI_COLOR_EXTENDED_UNDERLINE_FLAG)
-                attributes |= A_UNDERLINE;
-            attributes |= gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].attributes;
+                gui_window_remove_color_style (window, A_ALL_ATTR);
+            attributes = gui_color_get_extended_attrs (fg) |
+                gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].attributes;
             gui_window_set_color_style (window, attributes);
             fg = gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].foreground;
 
@@ -544,8 +542,7 @@ gui_window_set_custom_color_pair (WINDOW *window, int pair)
 {
     if ((pair >= 0) && (pair <= gui_color_num_pairs))
     {
-        gui_window_remove_color_style (window,
-                                       A_BOLD | A_REVERSE | A_UNDERLINE);
+        gui_window_remove_color_style (window, A_ALL_ATTR);
         wattron (window, COLOR_PAIR(pair));
     }
 }
@@ -591,6 +588,8 @@ gui_window_emphasize (WINDOW *window, int x, int y, int count)
             attrs ^= A_BOLD;
         if (config_emphasized_attributes & GUI_COLOR_EXTENDED_REVERSE_FLAG)
             attrs ^= A_REVERSE;
+        if (config_emphasized_attributes & GUI_COLOR_EXTENDED_ITALIC_FLAG)
+            attrs ^= A_ITALIC;
         if (config_emphasized_attributes & GUI_COLOR_EXTENDED_UNDERLINE_FLAG)
             attrs ^= A_UNDERLINE;
         mvwchgat (window, y, x, count, attrs, pair, NULL);
@@ -951,8 +950,9 @@ gui_window_string_apply_color_set_attr (unsigned char **string, WINDOW *window)
                 gui_window_set_color_style (window, A_REVERSE);
             break;
         case GUI_COLOR_ATTR_ITALIC_CHAR:
-            /* not available in Curses GUI */
             ptr_string++;
+            if (window)
+                gui_window_set_color_style (window, A_ITALIC);
             break;
         case GUI_COLOR_ATTR_UNDERLINE_CHAR:
             ptr_string++;
@@ -991,8 +991,9 @@ gui_window_string_apply_color_remove_attr (unsigned char **string, WINDOW *windo
                 gui_window_remove_color_style (window, A_REVERSE);
             break;
         case GUI_COLOR_ATTR_ITALIC_CHAR:
-            /* not available in Curses GUI */
             ptr_string++;
+            if (window)
+                gui_window_remove_color_style (window, A_ITALIC);
             break;
         case GUI_COLOR_ATTR_UNDERLINE_CHAR:
             ptr_string++;
@@ -1046,13 +1047,67 @@ gui_window_calculate_pos_size (struct t_gui_window *window)
 }
 
 /*
+ * Draws a horizontal line (like ncurses function "mvwhline", but UTF-8 chars
+ * are supported).
+ *
+ * If "string" is NULL or empty, the ACS_HLINE char is used (plain line).
+ * If "string" is not NULL and not empty, its width on screen must be exactly
+ * one char.
+ */
+
+void
+gui_window_hline (WINDOW *window, int x, int y, int width, const char *string)
+{
+    int i;
+
+    if (string && string[0])
+    {
+        for (i = 0; i < width; i++)
+        {
+            mvwaddstr (window, y, x + i, string);
+        }
+    }
+    else
+    {
+        mvwhline (window, y, x, ACS_HLINE, width);
+    }
+}
+
+/*
+ * Draws a vertical line (like ncurses function "mvwvline", but UTF-8 chars
+ * are supported).
+ *
+ * If "string" is NULL or empty, the ACS_VLINE char is used (plain line).
+ * If "string" is not NULL and not empty, its width on screen must be exactly
+ * one char.
+ */
+
+void
+gui_window_vline (WINDOW *window, int x, int y, int height, const char *string)
+{
+    int i;
+
+    if (string && string[0])
+    {
+        for (i = 0; i < height; i++)
+        {
+            mvwaddstr (window, y + i, x, string);
+        }
+    }
+    else
+    {
+        mvwvline (window, y, x, ACS_VLINE, height);
+    }
+}
+
+/*
  * Draws window separators.
  */
 
 void
 gui_window_draw_separators (struct t_gui_window *window)
 {
-    int separator_char, separator_horizontal, separator_vertical, x, width;
+    int separator_horizontal, separator_vertical, x, width;
 
     /* remove separators */
     if (GUI_WINDOW_OBJECTS(window)->win_separator_horiz)
@@ -1084,16 +1139,9 @@ gui_window_draw_separators (struct t_gui_window *window)
                                                                   x);
         gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator_horiz,
                                       GUI_COLOR_SEPARATOR);
-        separator_char = ACS_HLINE;
-        if (CONFIG_STRING(config_look_separator_horizontal)
-            && CONFIG_STRING(config_look_separator_horizontal)[0])
-        {
-            separator_char = utf8_char_int (CONFIG_STRING(config_look_separator_horizontal));
-            if (separator_char > 127)
-                separator_char = ACS_VLINE;
-        }
-        mvwhline (GUI_WINDOW_OBJECTS(window)->win_separator_horiz, 0, 0,
-                  separator_char, width);
+        gui_window_hline (GUI_WINDOW_OBJECTS(window)->win_separator_horiz,
+                          0, 0, width,
+                          CONFIG_STRING(config_look_separator_horizontal));
         wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator_horiz);
     }
 
@@ -1106,16 +1154,9 @@ gui_window_draw_separators (struct t_gui_window *window)
                                                                    window->win_x - 1);
         gui_window_set_weechat_color (GUI_WINDOW_OBJECTS(window)->win_separator_vertic,
                                       GUI_COLOR_SEPARATOR);
-        separator_char = ACS_VLINE;
-        if (CONFIG_STRING(config_look_separator_vertical)
-            && CONFIG_STRING(config_look_separator_vertical)[0])
-        {
-            separator_char = utf8_char_int (CONFIG_STRING(config_look_separator_vertical));
-            if (separator_char > 127)
-                separator_char = ACS_VLINE;
-        }
-        mvwvline (GUI_WINDOW_OBJECTS(window)->win_separator_vertic, 0, 0,
-                  separator_char, window->win_height);
+        gui_window_vline (GUI_WINDOW_OBJECTS(window)->win_separator_vertic,
+                          0, 0, window->win_height,
+                          CONFIG_STRING(config_look_separator_vertical));
         wnoutrefresh (GUI_WINDOW_OBJECTS(window)->win_separator_vertic);
     }
 }
@@ -1261,7 +1302,9 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
     }
 
     if (CONFIG_BOOLEAN(config_look_read_marker_always_show)
-        && set_last_read && !window->buffer->lines->last_read_line)
+        && set_last_read
+        && !window->buffer->lines->last_read_line
+        && !window->buffer->lines->first_line_not_read)
     {
         window->buffer->lines->last_read_line = window->buffer->lines->last_line;
     }
@@ -1720,13 +1763,16 @@ gui_window_refresh_windows ()
                                 gui_window_get_height () - add_top - add_bottom,
                                 0) < 0)
     {
-        ptr_layout = gui_layout_search (GUI_LAYOUT_ZOOM);
-        if (ptr_layout)
+        if (CONFIG_BOOLEAN(config_look_window_auto_zoom))
         {
-            /* remove zoom saved, to force a new zoom */
-            gui_layout_remove (ptr_layout);
+            ptr_layout = gui_layout_search (GUI_LAYOUT_ZOOM);
+            if (ptr_layout)
+            {
+                /* remove zoom saved, to force a new zoom */
+                gui_layout_remove (ptr_layout);
+            }
+            gui_window_zoom (gui_current_window);
         }
-        gui_window_zoom (gui_current_window);
     }
 
     for (ptr_win = gui_windows; ptr_win; ptr_win = ptr_win->next_window)
@@ -2335,90 +2381,77 @@ gui_window_refresh_screen (int full_refresh)
 
 /*
  * Sets terminal title.
+ *
+ * Note: the content of "title" (if not NULL) is evaluated, so variables like
+ * "${info:version}" can be used inside.
  */
 
 void
 gui_window_set_title (const char *title)
 {
-    char *shell, *shellname;
-    char *envterm = getenv ("TERM");
-    char *envshell = getenv ("SHELL");
+    char *new_title, *envterm, *envshell, *shell, *shellname;
 
-    if (envterm)
+    envterm = getenv ("TERM");
+    if (!envterm)
+        return;
+
+    new_title = (title && title[0]) ?
+        eval_expression (title, NULL, NULL, NULL) : strdup ("Terminal");
+    if (!new_title)
+        return;
+
+    if (strcmp (envterm, "sun-cmd") == 0)
+    {
+        printf ("\033]l%s\033\\", new_title);
+    }
+    else if (strcmp (envterm, "hpterm") == 0)
+    {
+        printf ("\033&f0k%dD%s", (int)(strlen (new_title) + 1), new_title);
+    }
+    /* the following terminals support the xterm escape codes */
+    else if ((strncmp (envterm, "xterm", 5) == 0)
+             || (strncmp (envterm, "rxvt", 4) == 0)
+             || (strcmp (envterm, "Eterm") == 0)
+             || (strcmp (envterm, "aixterm") == 0)
+             || (strcmp (envterm, "iris-ansi") == 0)
+             || (strcmp (envterm, "dtterm") == 0))
+    {
+        printf ("\33]0;%s\7", new_title);
+    }
+    else if (strncmp (envterm, "screen", 6) == 0)
     {
         if (title && title[0])
         {
-            if (strcmp (envterm, "sun-cmd") == 0)
-            {
-                printf ("\033]l%s\033\\", title);
-            }
-            else if (strcmp (envterm, "hpterm") == 0)
-            {
-                printf ("\033&f0k%dD%s", (int)(strlen(title) + 1), title);
-            }
-            /* the following terminals support the xterm escape codes */
-            else if ((strncmp (envterm, "xterm", 5) == 0)
-                     || (strncmp (envterm, "rxvt", 4) == 0)
-                     || (strcmp (envterm, "Eterm") == 0)
-                     || (strcmp (envterm, "aixterm") == 0)
-                     || (strcmp (envterm, "iris-ansi") == 0)
-                     || (strcmp (envterm, "dtterm") == 0))
-            {
-                printf ("\33]0;%s\7", title);
-            }
-            else if (strncmp (envterm, "screen", 6) == 0)
-            {
-                printf ("\033k%s\033\\", title);
-                /* trying to set the title of a backgrounded xterm like terminal */
-                printf ("\33]0;%s\7", title);
-            }
+            printf ("\033k%s\033\\", new_title);
         }
         else
         {
-            if (strcmp (envterm, "sun-cmd") == 0)
+            envshell = getenv ("SHELL");
+            if (envshell)
             {
-                printf ("\033]l%s\033\\", "Terminal");
-            }
-            else if (strcmp (envterm, "hpterm") == 0)
-            {
-                printf ("\033&f0k%dD%s", (int)strlen("Terminal"), "Terminal");
-            }
-            /* the following terminals support the xterm escape codes */
-            else if ((strncmp (envterm, "xterm", 5) == 0)
-                     || (strncmp (envterm, "rxvt", 4) == 0)
-                     || (strcmp (envterm, "Eterm") == 0)
-                     || (strcmp( envterm, "aixterm") == 0)
-                     || (strcmp( envterm, "iris-ansi") == 0)
-                     || (strcmp( envterm, "dtterm") == 0))
-            {
-                printf ("\33]0;%s\7", "Terminal");
-            }
-            else if (strncmp (envterm, "screen", 6) == 0)
-            {
-                if (envshell)
+                shell  = strdup (envshell);
+                if (shell)
                 {
-                    shell  = strdup (envshell);
-                    if (shell)
-                    {
-                        shellname = basename (shell);
-                        printf ("\033k%s\033\\", (shellname) ? shellname : shell);
-                        free (shell);
-                    }
-                    else
-                    {
-                        printf ("\033k%s\033\\", envterm);
-                    }
+                    shellname = basename (shell);
+                    printf ("\033k%s\033\\", (shellname) ? shellname : shell);
+                    free (shell);
                 }
                 else
                 {
                     printf ("\033k%s\033\\", envterm);
                 }
-                /* tryning to reset the title of a backgrounded xterm like terminal */
-                printf ("\33]0;%s\7", "Terminal");
+            }
+            else
+            {
+                printf ("\033k%s\033\\", envterm);
             }
         }
-        fflush (stdout);
+        /* trying to set the title of a backgrounded xterm like terminal */
+        printf ("\33]0;%s\7", new_title);
     }
+    fflush (stdout);
+
+    free (new_title);
 }
 
 /*

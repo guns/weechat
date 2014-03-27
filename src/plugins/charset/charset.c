@@ -1,7 +1,7 @@
 /*
  * charset.c - charset plugin for WeeChat: encode/decode strings
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -34,7 +34,7 @@
 
 WEECHAT_PLUGIN_NAME(CHARSET_PLUGIN_NAME);
 WEECHAT_PLUGIN_DESCRIPTION(N_("Charset conversions"));
-WEECHAT_PLUGIN_AUTHOR("Sebastien Helleu <flashcode@flashtux.org>");
+WEECHAT_PLUGIN_AUTHOR("Sébastien Helleu <flashcode@flashtux.org>");
 WEECHAT_PLUGIN_VERSION(WEECHAT_VERSION);
 WEECHAT_PLUGIN_LICENSE(WEECHAT_LICENSE);
 
@@ -217,8 +217,8 @@ charset_config_init ()
            "internal charset)"),
         NULL, 0, 0,
         (charset_terminal && charset_internal
-         && (strcasecmp (charset_terminal,
-                         charset_internal) != 0)) ?
+         && (weechat_strcasecmp (charset_terminal,
+                                 charset_internal) != 0)) ?
         charset_terminal : "iso-8859-1", NULL, 0,
         &charset_check_charset_decode_cb, NULL, NULL, NULL, NULL, NULL);
     charset_default_encode = weechat_config_new_option (
@@ -579,25 +579,22 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
         charset_display_charsets ();
 
     if (!charset_config_init ())
-    {
-        weechat_printf (NULL,
-                        _("%s%s: error creating configuration file"),
-                        weechat_prefix("error"), CHARSET_PLUGIN_NAME);
-        return WEECHAT_RC_OK;
-    }
+        return WEECHAT_RC_ERROR;
+
     charset_config_read ();
 
     /* /charset command */
-    weechat_hook_command ("charset",
-                          N_("change charset for current buffer"),
-                          N_("decode|encode <charset>"
-                              " || reset"),
-                          N_(" decode: change decoding charset\n"
-                             " encode: change encoding charset\n"
-                             "charset: new charset for current buffer\n"
-                             "  reset: reset charsets for current buffer"),
-                          "decode|encode|reset",
-                          &charset_command_cb, NULL);
+    weechat_hook_command (
+        "charset",
+        N_("change charset for current buffer"),
+        N_("decode|encode <charset>"
+           " || reset"),
+        N_(" decode: change decoding charset\n"
+           " encode: change encoding charset\n"
+           "charset: new charset for current buffer\n"
+           "  reset: reset charsets for current buffer"),
+        "decode|encode|reset",
+        &charset_command_cb, NULL);
 
     /* modifiers hooks */
     weechat_hook_modifier ("charset_decode", &charset_decode_cb, NULL);

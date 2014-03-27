@@ -1,7 +1,7 @@
 /*
  * gui-curses-chat.c - chat display functions for Curses GUI
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -30,6 +30,7 @@
 #include "../../core/weechat.h"
 #include "../../core/wee-config.h"
 #include "../../core/wee-eval.h"
+#include "../../core/wee-hashtable.h"
 #include "../../core/wee-hook.h"
 #include "../../core/wee-string.h"
 #include "../../core/wee-utf8.h"
@@ -370,7 +371,7 @@ gui_chat_display_word_raw (struct t_gui_window *window, struct t_gui_line *line,
                            int apply_style_inactive,
                            int nick_offline)
 {
-    char *next_char, *output, utf_char[16];
+    char *next_char, *output, utf_char[16], *ptr_char;
     int x, chars_displayed, display_char, size_on_screen;
 
     if (!simulate)
@@ -395,15 +396,20 @@ gui_chat_display_word_raw (struct t_gui_window *window, struct t_gui_line *line,
         next_char = utf8_next_char (string);
         if (next_char)
         {
+            ptr_char = utf_char;
+
             memcpy (utf_char, string, next_char - string);
             utf_char[next_char - string] = '\0';
+
             if (!gui_chat_utf_char_valid (utf_char))
                 snprintf (utf_char, sizeof (utf_char), " ");
+            else if (utf_char[0] == '\t')
+                ptr_char = config_tab_spaces;
 
             display_char = (window->buffer->type != GUI_BUFFER_TYPE_FREE)
                 || (x >= window->scroll->start_col);
 
-            size_on_screen = utf8_strlen_screen (utf_char);
+            size_on_screen = utf8_strlen_screen (ptr_char);
             if ((max_chars_on_screen > 0)
                 && (chars_displayed + size_on_screen > max_chars_on_screen))
             {
@@ -413,9 +419,9 @@ gui_chat_display_word_raw (struct t_gui_window *window, struct t_gui_line *line,
             {
                 if (!simulate)
                 {
-                    output = string_iconv_from_internal (NULL, utf_char);
+                    output = string_iconv_from_internal (NULL, ptr_char);
                     waddstr (GUI_WINDOW_OBJECTS(window)->win_chat,
-                             (output) ? output : utf_char);
+                             (output) ? output : ptr_char);
                     if (output)
                         free (output);
 
@@ -526,7 +532,8 @@ gui_chat_display_word (struct t_gui_window *window,
         if (window->win_chat_cursor_x + chars_to_display > gui_chat_get_real_width (window))
         {
             num_displayed = gui_chat_get_real_width (window) - window->win_chat_cursor_x;
-            pos_saved_char = gui_chat_string_real_pos (ptr_data, num_displayed);
+            pos_saved_char = gui_chat_string_real_pos (ptr_data, num_displayed,
+                                                       1);
             saved_char = ptr_data[pos_saved_char];
             ptr_data[pos_saved_char] = '\0';
             if ((count == 0) || (*lines_displayed >= num_lines - count))
@@ -600,10 +607,34 @@ gui_chat_display_day_changed (struct t_gui_window *window,
                               int simulate)
 {
     char temp_message[1024], message[1024], *message_with_color;
+    int year1, year1_last_yday;
 
     if (simulate
         || (!simulate && (window->win_chat_cursor_y >= window->win_chat_height)))
         return;
+
+    /*
+     * if date1 is given, compare date1 and date2; if date2 is date1 + 1 day,
+     * do not display date1 (so wee keep date1 if date2 is > date1 + 1 day)
+     */
+    if (date1)
+    {
+        if (date1->tm_year == date2->tm_year)
+        {
+            if (date1->tm_yday == date2->tm_yday - 1)
+                date1 = NULL;
+        }
+        else if ((date1->tm_year == date2->tm_year - 1) && (date2->tm_yday == 0))
+        {
+            /* date2 is 01/01, then check if date1 is 31/12 */
+            year1 = date1->tm_year + 1900;
+            year1_last_yday = (((year1 % 400) == 0)
+                              || (((year1 % 4) == 0) && ((year1 % 100) != 0))) ?
+                365 : 364;
+            if (date1->tm_yday == year1_last_yday)
+                date1 = NULL;
+        }
+    }
 
     /* build the message to display */
     if (date1)
@@ -765,7 +796,8 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                    short_name,
                                    short_name +
                                    gui_chat_string_real_pos (short_name,
-                                                             chars_to_display),
+                                                             chars_to_display,
+                                                             1),
                                    1, num_lines, count,
                                    pre_lines_displayed, lines_displayed,
                                    simulate,
@@ -1018,9 +1050,9 @@ gui_chat_display_time_to_prefix (struct t_gui_window *window,
                                                      (prefix_highlighted) ? prefix_highlighted : ptr_prefix,
                                                      (prefix_highlighted) ?
                                                      prefix_highlighted + gui_chat_string_real_pos (prefix_highlighted,
-                                                                                                    chars_to_display) :
+                                                                                                    chars_to_display, 1) :
                                                      ptr_prefix + gui_chat_string_real_pos (ptr_prefix,
-                                                                                            chars_to_display),
+                                                                                            chars_to_display, 1),
                                                      1, num_lines, count,
                                                      pre_lines_displayed,
                                                      lines_displayed,
@@ -1202,7 +1234,7 @@ gui_chat_display_line (struct t_gui_window *window, struct t_gui_line *line,
     struct t_gui_line *ptr_prev_line, *ptr_next_line;
     struct tm local_time, local_time2;
     struct timeval tv_time;
-    time_t *ptr_time;
+    time_t seconds, *ptr_time;
 
     if (!line)
         return 0;
@@ -1231,7 +1263,9 @@ gui_chat_display_line (struct t_gui_window *window, struct t_gui_line *line,
     lines_displayed = 0;
 
     /* display message before first line of buffer if date is not today */
-    if ((line->data->date != 0) && CONFIG_BOOLEAN(config_look_day_change))
+    if ((line->data->date != 0)
+        && CONFIG_BOOLEAN(config_look_day_change)
+        && window->buffer->day_change)
     {
         ptr_time = NULL;
         ptr_prev_line = gui_line_get_prev_displayed (line);
@@ -1245,7 +1279,8 @@ gui_chat_display_line (struct t_gui_window *window, struct t_gui_line *line,
         if (!ptr_prev_line)
         {
             gettimeofday (&tv_time, NULL);
-            localtime_r (&tv_time.tv_sec, &local_time);
+            seconds = tv_time.tv_sec;
+            localtime_r (&seconds, &local_time);
             localtime_r (&line->data->date, &local_time2);
             if ((local_time.tm_mday != local_time2.tm_mday)
                 || (local_time.tm_mon != local_time2.tm_mon)
@@ -1419,7 +1454,9 @@ gui_chat_display_line (struct t_gui_window *window, struct t_gui_line *line,
     }
 
     /* display message if day has changed after this line */
-    if ((line->data->date != 0) && CONFIG_BOOLEAN(config_look_day_change))
+    if ((line->data->date != 0)
+        && CONFIG_BOOLEAN(config_look_day_change)
+        && window->buffer->day_change)
     {
         ptr_time = NULL;
         ptr_next_line = gui_line_get_next_displayed (line);
@@ -1439,7 +1476,8 @@ gui_chat_display_line (struct t_gui_window *window, struct t_gui_line *line,
         {
             /* it was the last line => compare with current system time */
             gettimeofday (&tv_time, NULL);
-            ptr_time = &tv_time.tv_sec;
+            seconds = tv_time.tv_sec;
+            ptr_time = &seconds;
         }
         if (ptr_time && (*ptr_time != 0))
         {

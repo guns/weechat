@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -21,6 +21,7 @@
 #define __WEECHAT_XFER_H 1
 
 #include <unistd.h>
+#include <gcrypt.h>
 
 #define weechat_plugin weechat_xfer_plugin
 #define XFER_PLUGIN_NAME "xfer"
@@ -57,6 +58,8 @@ enum t_xfer_status
     XFER_STATUS_DONE,                  /* transfer done                     */
     XFER_STATUS_FAILED,                /* transfer failed                   */
     XFER_STATUS_ABORTED,               /* transfer aborted by user          */
+    XFER_STATUS_HASHING,               /* partial local file is being hashed*/
+    XFER_STATUS_HASHED,                /* received file has been hashed     */
     /* number of xfer status */
     XFER_NUM_STATUS,
 };
@@ -75,8 +78,23 @@ enum t_xfer_error
     XFER_ERROR_RECV_BLOCK,             /* unable to recv block from sender  */
     XFER_ERROR_WRITE_LOCAL,            /* unable to write to local file     */
     XFER_ERROR_SEND_ACK,               /* unable to send ACK to sender      */
+    XFER_ERROR_HASH_MISMATCH,          /* CRC32 does not match              */
+    XFER_ERROR_HASH_RESUME_ERROR,      /* other error with CRC32 hash       */
     /* number of errors */
     XFER_NUM_ERRORS,
+};
+
+/* hash status */
+
+enum t_xfer_hash_status
+{
+    XFER_HASH_STATUS_UNKNOWN = 0,      /* hashing not being performed       */
+    XFER_HASH_STATUS_IN_PROGRESS,      /* hash in progress                  */
+    XFER_HASH_STATUS_MATCH,            /* hash finished and matches target  */
+    XFER_HASH_STATUS_MISMATCH,         /* hash finished with mismatch       */
+    XFER_HASH_STATUS_RESUME_ERROR,     /* hash failed while resuming        */
+    /* number of hash status */
+    XFER_NUM_HASH_STATUS,
 };
 
 /* xfer block size */
@@ -122,8 +140,12 @@ struct t_xfer
     char *filename;                    /* filename                          */
     unsigned long long size;           /* file size                         */
     char *proxy;                       /* proxy to use (optional)           */
-    unsigned long local_address;       /* local IP address                  */
-    unsigned long remote_address;      /* remote IP address                 */
+    struct sockaddr *local_address;    /* local IP address                  */
+    socklen_t local_address_length;    /* local sockaddr length             */
+    char *local_address_str;           /* local IP address as string        */
+    struct sockaddr *remote_address;   /* remote IP address                 */
+    socklen_t remote_address_length;   /* remote sockaddr length            */
+    char *remote_address_str;          /* remote IP address as string       */
     int port;                          /* remote port                       */
 
     /* internal data */
@@ -153,6 +175,9 @@ struct t_xfer
     time_t last_activity;              /* time of last byte received/sent   */
     unsigned long long bytes_per_sec;  /* bytes per second                  */
     unsigned long long eta;            /* estimated time of arrival         */
+    gcry_md_hd_t *hash_handle;         /* handle for CRC32 hash             */
+    char *hash_target;                 /* the CRC32 hash to check against   */
+    enum t_xfer_hash_status hash_status; /* hash status                     */
     struct t_xfer *prev_xfer;          /* link to previous xfer             */
     struct t_xfer *next_xfer;          /* link to next xfer                 */
 };
@@ -161,6 +186,7 @@ extern struct t_weechat_plugin *weechat_xfer_plugin;
 extern char *xfer_type_string[];
 extern char *xfer_protocol_string[];
 extern char *xfer_status_string[];
+extern char *xfer_hash_status_string[];
 extern struct t_xfer *xfer_list, *last_xfer;
 extern int xfer_count;
 
@@ -169,6 +195,9 @@ extern struct t_xfer *xfer_search_by_number (int number);
 extern struct t_xfer *xfer_search_by_buffer (struct t_gui_buffer *buffer);
 extern void xfer_close (struct t_xfer *xfer, enum t_xfer_status status);
 extern void xfer_send_signal (struct t_xfer *xfer, const char *signal);
+extern void xfer_set_remote_address (struct t_xfer *xfer,
+                                     struct sockaddr *address, socklen_t length,
+                                     char *address_str);
 extern void xfer_free (struct t_xfer *xfer);
 extern int xfer_add_to_infolist (struct t_infolist *infolist,
                                  struct t_xfer *xfer);

@@ -1,7 +1,7 @@
 /*
  * plugin-script.c - common functions used by script plugins
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -154,30 +154,28 @@ plugin_script_init (struct t_weechat_plugin *weechat_plugin,
                                              "%s",
                                              string);
     }
-    weechat_hook_command (weechat_plugin->name,
-                          N_("list/load/unload scripts"),
-                          N_("list|listfull [<name>]"
-                             " || load [-q] <filename>"
-                             " || autoload"
-                             " || reload|unload [-q] [<name>]"),
-                          N_("    list: list loaded scripts\n"
-                             "listfull: list loaded scripts (verbose)\n"
-                             "    load: load a script\n"
-                             "autoload: load all scripts in \"autoload\" "
-                             "directory\n"
-                             "  reload: reload a script (if no name given, "
-                             "unload all scripts, then load all scripts in "
-                             "\"autoload\" directory)\n"
-                             "  unload: unload a script (if no name given, "
-                             "unload all scripts)\n"
-                             "filename: script (file) to load\n"
-                             "    name: a script name (name used in call to "
-                             "\"register\" function)\n"
-                             "      -q: quiet mode: do not display messages\n\n"
-                             "Without argument, this command "
-                             "lists all loaded scripts."),
-                          completion,
-                          init->callback_command, NULL);
+    weechat_hook_command (
+        weechat_plugin->name,
+        N_("list/load/unload scripts"),
+        N_("list|listfull [<name>]"
+           " || load [-q] <filename>"
+           " || autoload"
+           " || reload|unload [-q] [<name>]"),
+        N_("    list: list loaded scripts\n"
+           "listfull: list loaded scripts (verbose)\n"
+           "    load: load a script\n"
+           "autoload: load all scripts in \"autoload\" directory\n"
+           "  reload: reload a script (if no name given, unload all scripts, "
+           "then load all scripts in \"autoload\" directory)\n"
+           "  unload: unload a script (if no name given, unload all scripts)\n"
+           "filename: script (file) to load\n"
+           "    name: a script name (name used in call to \"register\" "
+           "function)\n"
+           "      -q: quiet mode: do not display messages\n"
+           "\n"
+           "Without argument, this command lists all loaded scripts."),
+        completion,
+        init->callback_command, NULL);
     if (string)
         free (string);
     if (completion)
@@ -206,6 +204,9 @@ plugin_script_init (struct t_weechat_plugin *weechat_plugin,
 
     /* add signal for "debug_dump" */
     weechat_hook_signal ("debug_dump", init->callback_signal_debug_dump, NULL);
+
+    /* add signal for "debug_libs" */
+    weechat_hook_signal ("debug_libs", init->callback_signal_debug_libs, NULL);
 
     /* add signal for "buffer_closed" */
     weechat_hook_signal ("buffer_closed",
@@ -253,7 +254,7 @@ plugin_script_valid (struct t_plugin_script *scripts,
 {
     struct t_plugin_script *ptr_script;
 
-    if (!script)
+    if (!scripts || !script)
         return 0;
 
     for (ptr_script = scripts; ptr_script;

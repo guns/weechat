@@ -1,7 +1,7 @@
 /*
  * plugin-api.c - extra functions for plugin API
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -385,6 +385,16 @@ plugin_api_info_get_internal (void *data, const char *info_name,
     else if (string_strcasecmp (info_name, "cursor_mode") == 0)
     {
         snprintf (value, sizeof (value), "%d", gui_cursor_mode);
+        return value;
+    }
+    else if (string_strcasecmp (info_name, "term_width") == 0)
+    {
+        snprintf (value, sizeof (value), "%d", gui_window_get_width ());
+        return value;
+    }
+    else if (string_strcasecmp (info_name, "term_height") == 0)
+    {
+        snprintf (value, sizeof (value), "%d", gui_window_get_height ());
         return value;
     }
 
@@ -1127,6 +1137,10 @@ plugin_api_init ()
                &plugin_api_info_get_internal, NULL);
     hook_info (NULL, "cursor_mode", N_("1 if cursor mode is enabled"), NULL,
                &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "term_width", N_("width of terminal"), NULL,
+               &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "term_height", N_("height of terminal"), NULL,
+               &plugin_api_info_get_internal, NULL);
 
     /* WeeChat core infolist hooks */
     hook_infolist (NULL, "bar", N_("list of bars"),
@@ -1211,6 +1225,8 @@ plugin_api_init ()
                 &gui_bar_window_hdata_bar_window_cb, NULL);
     hook_hdata (NULL, "buffer", N_("buffer"),
                 &gui_buffer_hdata_buffer_cb, NULL);
+    hook_hdata (NULL, "buffer_visited", N_("visited buffer"),
+                &gui_buffer_hdata_buffer_visited_cb, NULL);
     hook_hdata (NULL, "completion", N_("structure with completion"),
                 &gui_completion_hdata_completion_cb, NULL);
     hook_hdata (NULL, "completion_partial", N_("structure with partial completion"),

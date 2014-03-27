@@ -1,7 +1,7 @@
 /*
  * gui-curses-bar-window.c - bar window functions for Curses GUI
  *
- * Copyright (C) 2003-2013 Sebastien Helleu <flashcode@flashtux.org>
+ * Copyright (C) 2003-2014 Sébastien Helleu <flashcode@flashtux.org>
  *
  * This file is part of WeeChat, the extensible chat client.
  *
@@ -310,7 +310,7 @@ gui_bar_window_print_string (struct t_gui_bar_window *bar_window,
             case GUI_COLOR_RESET_CHAR:
                 string++;
                 gui_window_remove_color_style (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
-                                               A_BOLD | A_UNDERLINE | A_REVERSE);
+                                               A_ALL_ATTR);
                 gui_window_set_custom_color_fg_bg (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
                                                    CONFIG_COLOR(bar_window->bar->options[GUI_BAR_OPTION_COLOR_FG]),
                                                    CONFIG_COLOR(bar_window->bar->options[GUI_BAR_OPTION_COLOR_BG]));
@@ -405,7 +405,7 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
     int chars_available, index, size;
     int length_screen_before_cursor, length_screen_after_cursor;
     int diff, max_length, optimal_number_of_lines;
-    int some_data_not_displayed, separator_horizontal, separator_vertical;
+    int some_data_not_displayed;
     int index_item, index_subitem, index_line;
 
     if (!gui_init_ok)
@@ -582,7 +582,9 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
                             }
 
                             /* compute new start for displaying input */
-                            new_start_input = pos_after_start_input + gui_chat_string_real_pos (pos_after_start_input, diff);
+                            new_start_input = pos_after_start_input +
+                                gui_chat_string_real_pos (pos_after_start_input,
+                                                          diff, 1);
                             if (new_start_input > pos_cursor)
                                 new_start_input = pos_cursor;
 
@@ -640,13 +642,13 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
                                                                CONFIG_COLOR(bar_window->bar->options[GUI_BAR_OPTION_COLOR_FG]),
                                                                CONFIG_COLOR(bar_window->bar->options[GUI_BAR_OPTION_COLOR_BG]));
                             gui_window_remove_color_style (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
-                                                           A_BOLD | A_UNDERLINE | A_REVERSE);
+                                                           A_ALL_ATTR);
                             wclrtobot (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar);
                         }
                         else
                         {
                             gui_window_remove_color_style (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_bar,
-                                                           A_BOLD | A_UNDERLINE | A_REVERSE);
+                                                           A_ALL_ATTR);
                         }
                         while (x < bar_window->width)
                         {
@@ -745,47 +747,35 @@ gui_bar_window_draw (struct t_gui_bar_window *bar_window,
 
     if (CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_SEPARATOR]))
     {
-        separator_horizontal = ACS_HLINE;
-        separator_vertical = ACS_VLINE;
-        if (CONFIG_STRING(config_look_separator_horizontal)
-            && CONFIG_STRING(config_look_separator_horizontal)[0])
-        {
-            separator_horizontal = utf8_char_int (CONFIG_STRING(config_look_separator_horizontal));
-            if (separator_horizontal > 127)
-                separator_horizontal = ACS_HLINE;
-        }
-        if (CONFIG_STRING(config_look_separator_vertical)
-            && CONFIG_STRING(config_look_separator_vertical)[0])
-        {
-            separator_vertical = utf8_char_int (CONFIG_STRING(config_look_separator_vertical));
-            if (separator_vertical > 127)
-                separator_vertical = ACS_VLINE;
-        }
         switch (CONFIG_INTEGER(bar_window->bar->options[GUI_BAR_OPTION_POSITION]))
         {
             case GUI_BAR_POSITION_BOTTOM:
                 gui_window_set_weechat_color (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
                                               GUI_COLOR_SEPARATOR);
-                mvwhline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
-                          0, 0, separator_horizontal, bar_window->width);
+                gui_window_hline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
+                                  0, 0, bar_window->width,
+                                  CONFIG_STRING(config_look_separator_horizontal));
                 break;
             case GUI_BAR_POSITION_TOP:
                 gui_window_set_weechat_color (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
                                               GUI_COLOR_SEPARATOR);
-                mvwhline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
-                          0, 0, separator_horizontal, bar_window->width);
+                gui_window_hline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
+                                  0, 0, bar_window->width,
+                                  CONFIG_STRING(config_look_separator_horizontal));
                 break;
             case GUI_BAR_POSITION_LEFT:
                 gui_window_set_weechat_color (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
                                               GUI_COLOR_SEPARATOR);
-                mvwvline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
-                          0, 0, separator_vertical, bar_window->height);
+                gui_window_vline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
+                                  0, 0, bar_window->height,
+                                  CONFIG_STRING(config_look_separator_vertical));
                 break;
             case GUI_BAR_POSITION_RIGHT:
                 gui_window_set_weechat_color (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
                                               GUI_COLOR_SEPARATOR);
-                mvwvline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
-                          0, 0, separator_vertical, bar_window->height);
+                gui_window_vline (GUI_BAR_WINDOW_OBJECTS(bar_window)->win_separator,
+                                  0, 0, bar_window->height,
+                                  CONFIG_STRING(config_look_separator_vertical));
                 break;
             case GUI_BAR_NUM_POSITIONS:
                 break;
