@@ -1,6 +1,6 @@
 # Maintainer: Sung Pae <self@sungpae.com>
 pkgname=weechat-guns
-pkgver=v0.4.2.23.g4d03b21
+pkgver=
 pkgrel=1
 pkgdesc="Sung Pae's weechat build"
 arch=('x86_64')
