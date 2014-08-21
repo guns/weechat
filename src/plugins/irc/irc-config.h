@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_IRC_CONFIG_H
-#define __WEECHAT_IRC_CONFIG_H 1
+#ifndef WEECHAT_IRC_CONFIG_H
+#define WEECHAT_IRC_CONFIG_H 1
 
 #define IRC_CONFIG_NAME "irc"
 
@@ -119,10 +119,11 @@ extern struct t_config_option *irc_config_look_highlight_channel;
 extern struct t_config_option *irc_config_look_highlight_pv;
 extern struct t_config_option *irc_config_look_highlight_tags_restrict;
 extern struct t_config_option *irc_config_look_item_away_message;
-extern struct t_config_option *irc_config_look_item_channel_modes_hide_key;
+extern struct t_config_option *irc_config_look_item_channel_modes_hide_args;
 extern struct t_config_option *irc_config_look_item_display_server;
 extern struct t_config_option *irc_config_look_item_nick_modes;
 extern struct t_config_option *irc_config_look_item_nick_prefix;
+extern struct t_config_option *irc_config_look_join_auto_add_chantype;
 extern struct t_config_option *irc_config_look_msgbuffer_fallback;
 extern struct t_config_option *irc_config_look_new_channel_position;
 extern struct t_config_option *irc_config_look_new_pv_position;
@@ -157,6 +158,7 @@ extern struct t_config_option *irc_config_color_item_away;
 extern struct t_config_option *irc_config_color_item_channel_modes;
 extern struct t_config_option *irc_config_color_item_lag_counting;
 extern struct t_config_option *irc_config_color_item_lag_finished;
+extern struct t_config_option *irc_config_color_item_nick_modes;
 extern struct t_config_option *irc_config_color_message_join;
 extern struct t_config_option *irc_config_color_message_quit;
 extern struct t_config_option *irc_config_color_mirc_remap;
@@ -195,6 +197,7 @@ extern char **irc_config_nicks_hide_password;
 extern int irc_config_num_nicks_hide_password;
 
 extern void irc_config_set_nick_colors ();
+extern int irc_config_display_channel_modes_arguments (const char *modes);
 extern int irc_config_server_check_value_cb (void *data,
                                              struct t_config_option *option,
                                              const char *value);
@@ -219,4 +222,4 @@ extern int irc_config_read ();
 extern int irc_config_write (int write_temp_servers);
 extern void irc_config_free ();
 
-#endif /* __WEECHAT_IRC_CONFIG_H */
+#endif /* WEECHAT_IRC_CONFIG_H */

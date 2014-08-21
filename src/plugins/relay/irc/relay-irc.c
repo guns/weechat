@@ -438,7 +438,7 @@ relay_irc_signal_irc_outtags_cb (void *data, const char *signal,
             && relay_irc_command_relayed (irc_command))
         {
             /* get host for nick (it is self nick) */
-            snprintf (str_infolist_args, sizeof (str_infolist_args) - 1,
+            snprintf (str_infolist_args, sizeof (str_infolist_args),
                       "%s,%s,%s",
                       client->protocol_args,
                       irc_channel,
@@ -665,9 +665,8 @@ relay_irc_get_line_info (struct t_relay_client *client,
     {
         localvar_nick = weechat_buffer_get_string (buffer, "localvar_nick");
         if (localvar_nick && localvar_nick[0]
-            && (strcmp (ptr_nick, localvar_nick) == 0))
+            && ptr_nick && (strcmp (ptr_nick, localvar_nick) == 0))
         {
-            command = -1;
             return;
         }
     }
@@ -1146,9 +1145,8 @@ relay_irc_input_send (struct t_relay_client *client, const char *irc_channel,
                             RELAY_PLUGIN_NAME, buf);
         }
 
-        weechat_hook_signal_send ("irc_input_send",
-                                  WEECHAT_HOOK_SIGNAL_STRING,
-                                  buf);
+        (void) weechat_hook_signal_send ("irc_input_send",
+                                         WEECHAT_HOOK_SIGNAL_STRING, buf);
         free (buf);
     }
     free (vbuffer);
@@ -1387,7 +1385,12 @@ relay_irc_recv (struct t_relay_client *client, const char *data)
                     if (password)
                     {
                         if (strcmp (password, pos_password) == 0)
+                        {
                             RELAY_IRC_DATA(client, password_ok) = 1;
+                            weechat_hook_signal_send ("relay_client_auth_ok",
+                                                      WEECHAT_HOOK_SIGNAL_POINTER,
+                                                      client);
+                        }
                         free (password);
                     }
                 }
@@ -1630,58 +1633,58 @@ relay_irc_recv (struct t_relay_client *client, const char *data)
                 weechat_hashtable_set (hash_redirect, "signal", str_signal);
                 if (weechat_strcasecmp (irc_command, "mode") == 0)
                 {
-                    if (irc_argc == 1)
-                        redirect_msg = 1;
-                    weechat_hashtable_set (hash_redirect, "pattern",
-                                           "mode_channel");
                     if (irc_argc > 0)
                     {
+                        if (irc_argc == 1)
+                            redirect_msg = 1;
+                        weechat_hashtable_set (hash_redirect, "pattern",
+                                               "mode_channel");
                         weechat_hashtable_set (hash_redirect, "string",
                                                irc_argv[0]);
-                    }
-                    snprintf (str_server_channel,
-                              sizeof (str_server_channel),
-                              "%s,%s",
-                              client->protocol_args,
-                              irc_argv[0]);
-                    info = weechat_info_get ("irc_is_channel",
-                                             str_server_channel);
-                    if (info && (strcmp (info, "1") == 0))
-                    {
-                        /* command "MODE #channel ..." */
-                        if (irc_argc == 2)
+                        snprintf (str_server_channel,
+                                  sizeof (str_server_channel),
+                                  "%s,%s",
+                                  client->protocol_args,
+                                  irc_argv[0]);
+                        info = weechat_info_get ("irc_is_channel",
+                                                 str_server_channel);
+                        if (info && (strcmp (info, "1") == 0))
                         {
-                            if ((strcmp (irc_argv[1], "b") == 0)
-                                || (strcmp (irc_argv[1], "+b") == 0))
+                            /* command "MODE #channel ..." */
+                            if (irc_argc == 2)
                             {
-                                redirect_msg = 1;
-                                weechat_hashtable_set (hash_redirect, "pattern",
-                                                       "mode_channel_ban");
-                            }
-                            else if ((strcmp (irc_argv[1], "e") == 0)
-                                     || (strcmp (irc_argv[1], "+e") == 0))
-                            {
-                                redirect_msg = 1;
-                                weechat_hashtable_set (hash_redirect, "pattern",
-                                                       "mode_channel_ban_exception");
-                            }
-                            else if ((strcmp (irc_argv[1], "I") == 0)
-                                     || (strcmp (irc_argv[1], "+I") == 0))
-                            {
-                                redirect_msg = 1;
-                                weechat_hashtable_set (hash_redirect, "pattern",
-                                                       "mode_channel_invite");
+                                if ((strcmp (irc_argv[1], "b") == 0)
+                                    || (strcmp (irc_argv[1], "+b") == 0))
+                                {
+                                    redirect_msg = 1;
+                                    weechat_hashtable_set (hash_redirect, "pattern",
+                                                           "mode_channel_ban");
+                                }
+                                else if ((strcmp (irc_argv[1], "e") == 0)
+                                         || (strcmp (irc_argv[1], "+e") == 0))
+                                {
+                                    redirect_msg = 1;
+                                    weechat_hashtable_set (hash_redirect, "pattern",
+                                                           "mode_channel_ban_exception");
+                                }
+                                else if ((strcmp (irc_argv[1], "I") == 0)
+                                         || (strcmp (irc_argv[1], "+I") == 0))
+                                {
+                                    redirect_msg = 1;
+                                    weechat_hashtable_set (hash_redirect, "pattern",
+                                                           "mode_channel_invite");
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        /* command "MODE nick ..." */
-                        if (irc_argc == 1)
+                        else
                         {
-                            redirect_msg = 1;
-                            weechat_hashtable_set (hash_redirect, "pattern",
-                                                   "mode_user");
+                            /* command "MODE nick ..." */
+                            if (irc_argc == 1)
+                            {
+                                redirect_msg = 1;
+                                weechat_hashtable_set (hash_redirect, "pattern",
+                                                       "mode_user");
+                            }
                         }
                     }
                 }
@@ -1729,8 +1732,8 @@ relay_irc_recv (struct t_relay_client *client, const char *data)
                  */
                 if (redirect_msg)
                 {
-                    weechat_hook_hsignal_send ("irc_redirect_command",
-                                               hash_redirect);
+                    (void) weechat_hook_hsignal_send ("irc_redirect_command",
+                                                      hash_redirect);
                 }
                 weechat_hashtable_free (hash_redirect);
             }

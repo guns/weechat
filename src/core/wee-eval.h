@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_EVAL_H
-#define __WEECHAT_EVAL_H 1
+#ifndef WEECHAT_EVAL_H
+#define WEECHAT_EVAL_H 1
 
 #define EVAL_STR_FALSE "0"
 #define EVAL_STR_TRUE  "1"
@@ -35,14 +35,14 @@ enum t_eval_logical_op
 
 enum t_eval_comparison
 {
-    EVAL_COMPARE_EQUAL = 0,
+    EVAL_COMPARE_REGEX_MATCHING = 0,
+    EVAL_COMPARE_REGEX_NOT_MATCHING,
+    EVAL_COMPARE_EQUAL,
     EVAL_COMPARE_NOT_EQUAL,
     EVAL_COMPARE_LESS_EQUAL,
     EVAL_COMPARE_LESS,
     EVAL_COMPARE_GREATER_EQUAL,
     EVAL_COMPARE_GREATER,
-    EVAL_COMPARE_REGEX_MATCHING,
-    EVAL_COMPARE_REGEX_NOT_MATCHING,
     /* number of comparison strings */
     EVAL_NUM_COMPARISONS,
 };
@@ -52,6 +52,5 @@ extern char *eval_expression (const char *expr,
                               struct t_hashtable *pointers,
                               struct t_hashtable *extra_vars,
                               struct t_hashtable *options);
-extern void eval_end ();
 
-#endif /* __WEECHAT_EVAL_H */
+#endif /* WEECHAT_EVAL_H */

@@ -1,0 +1,93 @@
+= WeeChat Authors
+:author: Sébastien Helleu
+:email: flashcode@flashtux.org
+:lang: en
+
+
+== Developers
+
+* General code
+** Sébastien Helleu (FlashCode) <flashcode@flashtux.org>
+* Scripts plugins, debian packager
+** Emmanuel Bouthenot (kolter) <kolter@openics.org>
+
+== Contributors
+
+Alphabetically:
+
+* Ailin Nemui (Nei)
+* Aleksey V Zapparov
+* Alex Tarkovsky
+* Anders Bergh
+* Andrew Potter (talisein)
+* Antoine Pietri (seirl)
+* Asakura
+* Arvydas Sidorenko
+* Bazerka
+* Benoit Papillault (benoit)
+* Christian Heinz
+* Christopher O'Neill (deltafire)
+* David Flatz
+* Dmitry Kobylin
+* Dominik Honnef
+* Elián Hanisch (m4v)
+* Elizabeth Myers (Elizacat)
+* Emanuele Giaquinta
+* Esteban I. Ruiz Moreno (Exio)
+* Felix Eckhofer
+* Frank Zacharias
+* Gu1ll4um3r0m41n
+* Guido Berhoerster
+* Gwenn
+* Hasan Kiran (turgay)
+* Ivan Sichmann Freitas
+* Jason A. Donenfeld (zx2c4)
+* JD Horelick (jdhore)
+* Jim Ramsay (lack)
+* Jiri Golembiovsky (GolemJ)
+* Julien Louis (ptitlouis)
+* Krzysztof Koroscik (soltys)
+* Kyle Fuller (kylef)
+* Lázaro A.
+* Leonid Evdokimov
+* Maarten de Vries
+* Marco Paolone
+* Matt Robinson
+* Mantas Mikulėnas (grawity)
+* Mateusz Poszwa
+* Max Anton Teufel
+* Murilo Opsfelder Araujo
+* Nicolas Cavigneaux
+* Nils Görs (nils_2)
+* Odin
+* Patrick Steinhardt
+* Paul Komkoff
+* Pavel Shevchuk (Stalwart)
+* Peter Boström (pbos)
+* Pierre Carru
+* Piotr Szymaniak
+* Pistos
+* Quentin Glidic (SardemFF7)
+* Quentin Pradet
+* Quico Noizeux
+* Rettub
+* Rudolf Polzer (divVerent)
+* Ryuunosuke Ayanokouzi
+* Sergio Durigan Junior
+* Shawn Smith
+* Simon Arlott
+* Simon Kuhnle
+* Stefano Pigozzi
+* Stfn
+* Tom Alsberg
+* Tor Hveem (xt)
+* Valentin Lorentz (progval)
+* Voroskoi
+* Yannick Palanque
+
+== Contact
+
+Developers are connected to IRC:
+
+* server: 'irc.freenode.net'
+* channels: '#weechat' (English) and '#weechat-fr' (French)

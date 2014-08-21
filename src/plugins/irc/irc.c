@@ -189,6 +189,7 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
     /* modifiers */
     weechat_hook_modifier ("irc_color_decode", &irc_color_modifier_cb, NULL);
     weechat_hook_modifier ("irc_color_encode", &irc_color_modifier_cb, NULL);
+    weechat_hook_modifier ("irc_color_decode_ansi", &irc_color_modifier_cb, NULL);
 
     /* hook completions */
     irc_completion_init ();
@@ -210,8 +211,9 @@ weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
             if (!irc_server_alloc_with_url (argv[i]))
             {
                 weechat_printf (NULL,
-                                _("%s%s: error with server from URL "
-                                  "(\"%s\"), ignored"),
+                                _("%s%s: unable to create temporary server "
+                                  "\"%s\" (check if there is already a server "
+                                  "with this name)"),
                                 weechat_prefix ("error"), IRC_PLUGIN_NAME,
                                 argv[i]);
             }
@@ -279,6 +281,8 @@ weechat_plugin_end (struct t_weechat_plugin *plugin)
     irc_notify_end ();
 
     irc_redirect_end ();
+
+    irc_color_end ();
 
     return WEECHAT_RC_OK;
 }

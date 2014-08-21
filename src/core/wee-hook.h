@@ -18,8 +18,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_HOOK_H
-#define __WEECHAT_HOOK_H 1
+#ifndef WEECHAT_HOOK_H
+#define WEECHAT_HOOK_H 1
 
 #include <unistd.h>
 
@@ -213,6 +213,7 @@ struct t_hook_process
     t_hook_callback_process *callback; /* process callback (after child end)*/
     char *command;                     /* command executed by child         */
     struct t_hashtable *options;       /* options for process (see doc)     */
+    int detached;                      /* detached mode (background)        */
     long timeout;                      /* timeout (ms) (0 = no timeout)     */
     int child_read[3];                 /* read stdin/out/err data from child*/
     int child_write[3];                /* write stdin/out/err data for child*/
@@ -221,6 +222,7 @@ struct t_hook_process
     struct t_hook *hook_timer;         /* timer to check if child has died  */
     char *buffer[3];                   /* buffers for child stdin/out/err   */
     int buffer_size[3];                /* size of child stdin/out/err       */
+    int buffer_flush;                  /* bytes to flush output buffers     */
 };
 
 /* hook connect */
@@ -510,14 +512,14 @@ extern struct t_hook *hook_signal (struct t_weechat_plugin *plugin,
                                    const char *signal,
                                    t_hook_callback_signal *callback,
                                    void *callback_data);
-extern void hook_signal_send (const char *signal, const char *type_data,
-                              void *signal_data);
+extern int hook_signal_send (const char *signal, const char *type_data,
+                             void *signal_data);
 extern struct t_hook *hook_hsignal (struct t_weechat_plugin *plugin,
                                     const char *signal,
                                     t_hook_callback_hsignal *callback,
                                     void *callback_data);
-extern void hook_hsignal_send (const char *signal,
-                               struct t_hashtable *hashtable);
+extern int hook_hsignal_send (const char *signal,
+                              struct t_hashtable *hashtable);
 extern struct t_hook *hook_config (struct t_weechat_plugin *plugin,
                                    const char *option,
                                    t_hook_callback_config *callback,
@@ -598,4 +600,4 @@ extern int hook_add_to_infolist (struct t_infolist *infolist,
                                  const char *arguments);
 extern void hook_print_log ();
 
-#endif /* __WEECHAT_HOOK_H */
+#endif /* WEECHAT_HOOK_H */

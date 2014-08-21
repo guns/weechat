@@ -193,7 +193,7 @@ plugin_script_init (struct t_weechat_plugin *weechat_plugin,
                             init->callback_hdata, weechat_plugin);
         weechat_hook_infolist (string, N_("list of scripts"),
                                N_("script pointer (optional)"),
-                               N_("script name (can start or end with \"*\" as wildcard) (optional)"),
+                               N_("script name (wildcard \"*\" is allowed) (optional)"),
                                init->callback_infolist, NULL);
         snprintf (string, length, "%s_callback", weechat_plugin->name);
         weechat_hook_hdata (string, N_("callback of a script"),
@@ -907,9 +907,16 @@ plugin_script_remove_file (struct t_weechat_plugin *weechat_plugin,
     while (i < 2)
     {
         path_script = plugin_script_search_path (weechat_plugin, name);
-        /* script not found? */
+        /*
+         * script not found? (if path_script == name, that means the function
+         * above did not find the script)
+         */
         if (!path_script || (strcmp (path_script, name) == 0))
+        {
+            if (path_script)
+                free (path_script);
             break;
+        }
         num_found++;
         if (unlink (path_script) == 0)
         {
@@ -1088,8 +1095,8 @@ plugin_script_action_install (struct t_weechat_plugin *weechat_plugin,
 
     snprintf (str_signal, sizeof (str_signal),
               "%s_script_installed", weechat_plugin->name);
-    weechat_hook_signal_send (str_signal, WEECHAT_HOOK_SIGNAL_STRING,
-                              ptr_list);
+    (void) weechat_hook_signal_send (str_signal, WEECHAT_HOOK_SIGNAL_STRING,
+                                     ptr_list);
 
     free (*list);
     *list = NULL;
@@ -1148,8 +1155,8 @@ plugin_script_action_remove (struct t_weechat_plugin *weechat_plugin,
 
     snprintf (str_signal, sizeof (str_signal),
               "%s_script_removed", weechat_plugin->name);
-    weechat_hook_signal_send (str_signal, WEECHAT_HOOK_SIGNAL_STRING,
-                              ptr_list);
+    (void) weechat_hook_signal_send (str_signal, WEECHAT_HOOK_SIGNAL_STRING,
+                                     ptr_list);
 
     free (*list);
     *list = NULL;
@@ -1380,8 +1387,9 @@ plugin_script_hdata_script (struct t_weechat_plugin *weechat_plugin,
         WEECHAT_HDATA_VAR(struct t_plugin_script, unloading, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_plugin_script, prev_script, POINTER, 0, NULL, hdata_name);
         WEECHAT_HDATA_VAR(struct t_plugin_script, next_script, POINTER, 0, NULL, hdata_name);
-        weechat_hdata_new_list (hdata, "scripts", scripts);
-        weechat_hdata_new_list (hdata, "last_script", last_script);
+        weechat_hdata_new_list (hdata, "scripts", scripts,
+                                WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        weechat_hdata_new_list (hdata, "last_script", last_script, 0);
     }
     return hdata;
 }

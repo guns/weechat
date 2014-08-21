@@ -195,15 +195,13 @@ irc_ignore_check (struct t_irc_server *server, const char *channel,
     for (ptr_ignore = irc_ignore_list; ptr_ignore;
          ptr_ignore = ptr_ignore->next_ignore)
     {
-        server_match = 0;
-        channel_match = 0;
-
         if (strcmp (ptr_ignore->server, "*") == 0)
             server_match = 1;
         else
             server_match = (weechat_strcasecmp (ptr_ignore->server,
                                                 server->name) == 0);
 
+        channel_match = 0;
         if (!channel || (strcmp (ptr_ignore->channel, "*") == 0))
             channel_match = 1;
         else
@@ -253,8 +251,8 @@ irc_ignore_free (struct t_irc_ignore *ignore)
 {
     struct t_irc_ignore *ptr_ignore;
 
-    weechat_hook_signal_send ("irc_ignore_removing",
-                              WEECHAT_HOOK_SIGNAL_POINTER, ignore);
+    (void) weechat_hook_signal_send ("irc_ignore_removing",
+                                     WEECHAT_HOOK_SIGNAL_POINTER, ignore);
 
     /* decrement number for all ignore after this one */
     for (ptr_ignore = ignore->next_ignore; ptr_ignore;
@@ -288,8 +286,8 @@ irc_ignore_free (struct t_irc_ignore *ignore)
 
     free (ignore);
 
-    weechat_hook_signal_send ("irc_ignore_removed",
-                              WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    (void) weechat_hook_signal_send ("irc_ignore_removed",
+                                     WEECHAT_HOOK_SIGNAL_STRING, NULL);
 }
 
 /*
@@ -328,8 +326,8 @@ irc_ignore_hdata_ignore_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_ignore, channel, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_ignore, prev_ignore, POINTER, 0, NULL, hdata_name);
         WEECHAT_HDATA_VAR(struct t_irc_ignore, next_ignore, POINTER, 0, NULL, hdata_name);
-        WEECHAT_HDATA_LIST(irc_ignore_list);
-        WEECHAT_HDATA_LIST(last_irc_ignore);
+        WEECHAT_HDATA_LIST(irc_ignore_list, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        WEECHAT_HDATA_LIST(last_irc_ignore, 0);
     }
     return hdata;
 }

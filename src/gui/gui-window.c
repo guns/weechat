@@ -67,6 +67,10 @@ struct t_gui_window_tree *gui_windows_tree = NULL; /* windows tree          */
 int gui_window_cursor_x = 0;           /* cursor pos on screen              */
 int gui_window_cursor_y = 0;           /* cursor pos on screen              */
 
+int gui_window_bare_display = 0;       /* 1 for bare disp. (disable ncurses)*/
+struct t_hook *gui_window_bare_display_timer = NULL;
+                                       /* timer for bare display            */
+
 
 /*
  * Searches for a window by number.
@@ -662,8 +666,8 @@ gui_window_new (struct t_gui_window *parent_window, struct t_gui_buffer *buffer,
     }
 
     /* send signal */
-    hook_signal_send ("window_opened",
-                      WEECHAT_HOOK_SIGNAL_POINTER, new_window);
+    (void) hook_signal_send ("window_opened",
+                             WEECHAT_HOOK_SIGNAL_POINTER, new_window);
 
     return new_window;
 }
@@ -943,7 +947,8 @@ gui_window_free (struct t_gui_window *window)
 
     old_current_window = gui_current_window;
 
-    hook_signal_send ("window_closing", WEECHAT_HOOK_SIGNAL_POINTER, window);
+    (void) hook_signal_send ("window_closing",
+                             WEECHAT_HOOK_SIGNAL_POINTER, window);
 
     if (window->buffer)
         gui_buffer_add_value_num_displayed (window->buffer, -1);
@@ -994,14 +999,16 @@ gui_window_free (struct t_gui_window *window)
         i++;
     }
 
-    hook_signal_send ("window_closed", WEECHAT_HOOK_SIGNAL_POINTER, window);
+    (void) hook_signal_send ("window_closed",
+                             WEECHAT_HOOK_SIGNAL_POINTER, window);
 
     free (window);
 
     if (gui_current_window != old_current_window)
     {
-        hook_signal_send ("window_switch",
-                          WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+        (void) hook_signal_send ("window_switch",
+                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                 gui_current_window);
     }
 }
 
@@ -1081,7 +1088,7 @@ gui_window_switch_by_buffer (struct t_gui_window *window, int buffer_number)
 void
 gui_window_scroll (struct t_gui_window *window, char *scroll)
 {
-    int direction, stop, count_msg;
+    int direction, stop, count_msg, scroll_from_end_free_buffer;
     char time_letter, saved_char;
     time_t old_date, diff_date;
     char *pos, *error;
@@ -1089,221 +1096,239 @@ gui_window_scroll (struct t_gui_window *window, char *scroll)
     struct t_gui_line *ptr_line;
     struct tm *date_tmp, line_date, old_line_date;
 
-    if (window->buffer->lines->first_line)
-    {
-        direction = 1;
-        number = 0;
-        time_letter = ' ';
+    if (!window->buffer->lines->first_line)
+        return;
 
-        /* search direction */
+    direction = 1;
+    number = 0;
+    time_letter = ' ';
+    scroll_from_end_free_buffer = 0;
+
+    /* search direction */
+    if (scroll[0] == '-')
+    {
+        direction = -1;
+        scroll++;
         if (scroll[0] == '-')
         {
-            direction = -1;
+            scroll_from_end_free_buffer = 1;
             scroll++;
         }
-        else if (scroll[0] == '+')
-        {
-            direction = +1;
-            scroll++;
-        }
+    }
+    else if (scroll[0] == '+')
+    {
+        direction = +1;
+        scroll++;
+    }
 
-        /* search number and letter */
-        pos = scroll;
-        while (pos && pos[0] && isdigit ((unsigned char)pos[0]))
+    /* search number and letter */
+    pos = scroll;
+    while (pos && pos[0] && isdigit ((unsigned char)pos[0]))
+    {
+        pos++;
+    }
+    if (pos)
+    {
+        if (pos == scroll)
         {
-            pos++;
+            if (pos[0])
+                time_letter = scroll[0];
         }
-        if (pos)
+        else
         {
-            if (pos == scroll)
+            if (pos[0])
+                time_letter = pos[0];
+            saved_char = pos[0];
+            pos[0] = '\0';
+            error = NULL;
+            number = strtol (scroll, &error, 10);
+            if (!error || error[0])
+                number = 0;
+            pos[0] = saved_char;
+        }
+    }
+
+    /* at least number or letter has to he given */
+    if ((number == 0) && (time_letter == ' '))
+        return;
+
+    /* do the scroll! */
+    stop = 0;
+    count_msg = 0;
+    if (direction < 0)
+    {
+        /*
+         * it's not possible to scroll before first line of buffer on a buffer
+         * with free content
+         */
+        if (!scroll_from_end_free_buffer && !window->scroll->start_line
+           && (window->buffer->type == GUI_BUFFER_TYPE_FREE))
+            return;
+        ptr_line = (window->scroll->start_line) ?
+            window->scroll->start_line : window->buffer->lines->last_line;
+        while (ptr_line
+               && (!gui_line_is_displayed (ptr_line)
+                   || ((window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
+                       && (ptr_line->data->date == 0))))
+        {
+            ptr_line = ptr_line->prev_line;
+        }
+    }
+    else
+    {
+        ptr_line = (window->scroll->start_line) ?
+            window->scroll->start_line : window->buffer->lines->first_line;
+        while (ptr_line
+               && (!gui_line_is_displayed (ptr_line)
+                   || ((window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
+                       && (ptr_line->data->date == 0))))
+        {
+            ptr_line = ptr_line->next_line;
+        }
+    }
+
+    if (ptr_line)
+    {
+        old_date = ptr_line->data->date;
+        date_tmp = localtime (&old_date);
+        if (!date_tmp)
+            return;
+        memcpy (&old_line_date, date_tmp, sizeof (struct tm));
+    }
+
+    while (ptr_line)
+    {
+        ptr_line = (direction < 0) ?
+            gui_line_get_prev_displayed (ptr_line) : gui_line_get_next_displayed (ptr_line);
+
+        if (ptr_line
+            && ((window->buffer->type != GUI_BUFFER_TYPE_FORMATTED)
+                || (ptr_line->data->date != 0)))
+        {
+            if (time_letter == ' ')
             {
-                if (pos[0])
-                    time_letter = scroll[0];
+                count_msg++;
+                if (count_msg >= number)
+                    stop = 1;
             }
             else
             {
-                if (pos[0])
-                    time_letter = pos[0];
-                saved_char = pos[0];
-                pos[0] = '\0';
-                error = NULL;
-                number = strtol (scroll, &error, 10);
-                if (!error || error[0])
-                    number = 0;
-                pos[0] = saved_char;
-            }
-        }
-
-        /* at least number or letter has to he given */
-        if ((number == 0) && (time_letter == ' '))
-            return;
-
-        /* do the scroll! */
-        stop = 0;
-        count_msg = 0;
-        if (direction < 0)
-        {
-            ptr_line = (window->scroll->start_line) ?
-                window->scroll->start_line : window->buffer->lines->last_line;
-            while (ptr_line
-                   && (!gui_line_is_displayed (ptr_line)
-                       || ((window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-                           && (ptr_line->data->date == 0))))
-            {
-                ptr_line = ptr_line->prev_line;
-            }
-        }
-        else
-        {
-            ptr_line = (window->scroll->start_line) ?
-                window->scroll->start_line : window->buffer->lines->first_line;
-            while (ptr_line
-                   && (!gui_line_is_displayed (ptr_line)
-                       || ((window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-                           && (ptr_line->data->date == 0))))
-            {
-                ptr_line = ptr_line->next_line;
-            }
-        }
-
-        if (ptr_line)
-        {
-            old_date = ptr_line->data->date;
-            date_tmp = localtime (&old_date);
-            if (date_tmp)
-                memcpy (&old_line_date, date_tmp, sizeof (struct tm));
-        }
-
-        while (ptr_line)
-        {
-            ptr_line = (direction < 0) ?
-                gui_line_get_prev_displayed (ptr_line) : gui_line_get_next_displayed (ptr_line);
-
-            if (ptr_line
-                && ((window->buffer->type != GUI_BUFFER_TYPE_FORMATTED)
-                    || (ptr_line->data->date != 0)))
-            {
-                if (time_letter == ' ')
-                {
-                    count_msg++;
-                    if (count_msg >= number)
-                        stop = 1;
-                }
-                else
-                {
-                    date_tmp = localtime (&(ptr_line->data->date));
-                    if (date_tmp)
-                        memcpy (&line_date, date_tmp, sizeof (struct tm));
-                    if (old_date > ptr_line->data->date)
-                        diff_date = old_date - ptr_line->data->date;
-                    else
-                        diff_date = ptr_line->data->date - old_date;
-                    switch (time_letter)
-                    {
-                        case 's': /* seconds */
-                            if (number == 0)
-                            {
-                                /* stop if line has different second */
-                                if ((line_date.tm_sec != old_line_date.tm_sec)
-                                    || (line_date.tm_min != old_line_date.tm_min)
-                                    || (line_date.tm_hour != old_line_date.tm_hour)
-                                    || (line_date.tm_mday != old_line_date.tm_mday)
-                                    || (line_date.tm_mon != old_line_date.tm_mon)
-                                    || (line_date.tm_year != old_line_date.tm_year))
-                                    if (line_date.tm_sec != old_line_date.tm_sec)
-                                        stop = 1;
-                            }
-                            else if (diff_date >= number)
-                                stop = 1;
-                            break;
-                        case 'm': /* minutes */
-                            if (number == 0)
-                            {
-                                /* stop if line has different minute */
-                                if ((line_date.tm_min != old_line_date.tm_min)
-                                    || (line_date.tm_hour != old_line_date.tm_hour)
-                                    || (line_date.tm_mday != old_line_date.tm_mday)
-                                    || (line_date.tm_mon != old_line_date.tm_mon)
-                                    || (line_date.tm_year != old_line_date.tm_year))
-                                    stop = 1;
-                            }
-                            else if (diff_date >= number * 60)
-                                stop = 1;
-                            break;
-                        case 'h': /* hours */
-                            if (number == 0)
-                            {
-                                /* stop if line has different hour */
-                                if ((line_date.tm_hour != old_line_date.tm_hour)
-                                    || (line_date.tm_mday != old_line_date.tm_mday)
-                                    || (line_date.tm_mon != old_line_date.tm_mon)
-                                    || (line_date.tm_year != old_line_date.tm_year))
-                                    stop = 1;
-                            }
-                            else if (diff_date >= number * 60 * 60)
-                                stop = 1;
-                            break;
-                        case 'd': /* days */
-                            if (number == 0)
-                            {
-                                /* stop if line has different day */
-                                if ((line_date.tm_mday != old_line_date.tm_mday)
-                                    || (line_date.tm_mon != old_line_date.tm_mon)
-                                    || (line_date.tm_year != old_line_date.tm_year))
-                                    stop = 1;
-                            }
-                            else if (diff_date >= number * 60 * 60 * 24)
-                                stop = 1;
-                            break;
-                        case 'M': /* months */
-                            if (number == 0)
-                            {
-                                /* stop if line has different month */
-                                if ((line_date.tm_mon != old_line_date.tm_mon)
-                                    || (line_date.tm_year != old_line_date.tm_year))
-                                    stop = 1;
-                            }
-                            /*
-                             * we consider month is 30 days, who will notice
-                             * I'm too lazy to code exact date diff ? ;)
-                             */
-                            else if (diff_date >= number * 60 * 60 * 24 * 30)
-                                stop = 1;
-                            break;
-                        case 'y': /* years */
-                            if (number == 0)
-                            {
-                                /* stop if line has different year */
-                                if (line_date.tm_year != old_line_date.tm_year)
-                                    stop = 1;
-                            }
-                            /*
-                             * we consider year is 365 days, who will notice
-                             * I'm too lazy to code exact date diff ? ;)
-                             */
-                            else if (diff_date >= number * 60 * 60 * 24 * 365)
-                                stop = 1;
-                            break;
-                    }
-                }
-                if (stop)
-                {
-                    window->scroll->start_line = ptr_line;
-                    window->scroll->start_line_pos = 0;
-                    window->scroll->first_line_displayed =
-                        (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
-                    gui_buffer_ask_chat_refresh (window->buffer, 2);
+                date_tmp = localtime (&(ptr_line->data->date));
+                if (!date_tmp)
                     return;
+                memcpy (&line_date, date_tmp, sizeof (struct tm));
+                if (old_date > ptr_line->data->date)
+                    diff_date = old_date - ptr_line->data->date;
+                else
+                    diff_date = ptr_line->data->date - old_date;
+                switch (time_letter)
+                {
+                    case 's': /* seconds */
+                        if (number == 0)
+                        {
+                            /* stop if line has different second */
+                            if ((line_date.tm_sec != old_line_date.tm_sec)
+                                || (line_date.tm_min != old_line_date.tm_min)
+                                || (line_date.tm_hour != old_line_date.tm_hour)
+                                || (line_date.tm_mday != old_line_date.tm_mday)
+                                || (line_date.tm_mon != old_line_date.tm_mon)
+                                || (line_date.tm_year != old_line_date.tm_year))
+                                if (line_date.tm_sec != old_line_date.tm_sec)
+                                    stop = 1;
+                        }
+                        else if (diff_date >= number)
+                            stop = 1;
+                        break;
+                    case 'm': /* minutes */
+                        if (number == 0)
+                        {
+                            /* stop if line has different minute */
+                            if ((line_date.tm_min != old_line_date.tm_min)
+                                || (line_date.tm_hour != old_line_date.tm_hour)
+                                || (line_date.tm_mday != old_line_date.tm_mday)
+                                || (line_date.tm_mon != old_line_date.tm_mon)
+                                || (line_date.tm_year != old_line_date.tm_year))
+                                stop = 1;
+                        }
+                        else if (diff_date >= number * 60)
+                            stop = 1;
+                        break;
+                    case 'h': /* hours */
+                        if (number == 0)
+                        {
+                            /* stop if line has different hour */
+                            if ((line_date.tm_hour != old_line_date.tm_hour)
+                                || (line_date.tm_mday != old_line_date.tm_mday)
+                                || (line_date.tm_mon != old_line_date.tm_mon)
+                                || (line_date.tm_year != old_line_date.tm_year))
+                                stop = 1;
+                        }
+                        else if (diff_date >= number * 60 * 60)
+                            stop = 1;
+                        break;
+                    case 'd': /* days */
+                        if (number == 0)
+                        {
+                            /* stop if line has different day */
+                            if ((line_date.tm_mday != old_line_date.tm_mday)
+                                || (line_date.tm_mon != old_line_date.tm_mon)
+                                || (line_date.tm_year != old_line_date.tm_year))
+                                stop = 1;
+                        }
+                        else if (diff_date >= number * 60 * 60 * 24)
+                            stop = 1;
+                        break;
+                    case 'M': /* months */
+                        if (number == 0)
+                        {
+                            /* stop if line has different month */
+                            if ((line_date.tm_mon != old_line_date.tm_mon)
+                                || (line_date.tm_year != old_line_date.tm_year))
+                                stop = 1;
+                        }
+                        /*
+                         * we consider month is 30 days, who will notice
+                         * I'm too lazy to code exact date diff ? ;)
+                         */
+                        else if (diff_date >= number * 60 * 60 * 24 * 30)
+                            stop = 1;
+                        break;
+                    case 'y': /* years */
+                        if (number == 0)
+                        {
+                            /* stop if line has different year */
+                            if (line_date.tm_year != old_line_date.tm_year)
+                                stop = 1;
+                        }
+                        /*
+                         * we consider year is 365 days, who will notice
+                         * I'm too lazy to code exact date diff ? ;)
+                         */
+                        else if (diff_date >= number * 60 * 60 * 24 * 365)
+                            stop = 1;
+                        break;
                 }
             }
+            if (stop)
+            {
+                window->scroll->start_line = ptr_line;
+                window->scroll->start_line_pos = 0;
+                window->scroll->first_line_displayed =
+                    (window->scroll->start_line == gui_line_get_first_displayed (window->buffer));
+                gui_buffer_ask_chat_refresh (window->buffer, 2);
+                return;
+            }
         }
-        if (direction < 0)
-            gui_window_scroll_top (window);
-        else
-        {
-            if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-                gui_window_scroll_bottom (window);
-        }
+    }
+
+    if (direction < 0)
+    {
+        gui_window_scroll_top (window);
+    }
+    else
+    {
+        if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
+            gui_window_scroll_bottom (window);
     }
 }
 
@@ -1548,29 +1573,38 @@ gui_window_search_text (struct t_gui_window *window)
 void
 gui_window_search_start (struct t_gui_window *window)
 {
-    window->buffer->text_search = GUI_TEXT_SEARCH_BACKWARD;
+    window->buffer->text_search =
+        (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) ?
+        GUI_TEXT_SEARCH_BACKWARD : GUI_TEXT_SEARCH_FORWARD;
+
     if ((window->buffer->text_search_where == 0)
         ||  CONFIG_BOOLEAN(config_look_buffer_search_force_default))
     {
         /* set default search values */
         window->buffer->text_search_exact = CONFIG_BOOLEAN(config_look_buffer_search_case_sensitive);
         window->buffer->text_search_regex = CONFIG_BOOLEAN(config_look_buffer_search_regex);
-        switch (CONFIG_INTEGER(config_look_buffer_search_where))
+        if (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
         {
-            case CONFIG_LOOK_BUFFER_SEARCH_PREFIX:
-                window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX;
-                break;
-            case CONFIG_LOOK_BUFFER_SEARCH_MESSAGE:
-                window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
-                break;
-            case CONFIG_LOOK_BUFFER_SEARCH_PREFIX_MESSAGE:
-                window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX | GUI_TEXT_SEARCH_IN_MESSAGE;
-                break;
-            default:
-                window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
-                break;
+            switch (CONFIG_INTEGER(config_look_buffer_search_where))
+            {
+                case CONFIG_LOOK_BUFFER_SEARCH_PREFIX:
+                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX;
+                    break;
+                case CONFIG_LOOK_BUFFER_SEARCH_MESSAGE:
+                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
+                    break;
+                case CONFIG_LOOK_BUFFER_SEARCH_PREFIX_MESSAGE:
+                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX | GUI_TEXT_SEARCH_IN_MESSAGE;
+                    break;
+                default:
+                    window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
+                    break;
+            }
         }
+        else
+            window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_MESSAGE;
     }
+
     window->buffer->text_search_found = 0;
     gui_input_search_compile_regex (window->buffer);
     if (window->buffer->text_search_input)
@@ -1593,7 +1627,9 @@ gui_window_search_restart (struct t_gui_window *window)
 {
     window->scroll->start_line = NULL;
     window->scroll->start_line_pos = 0;
-    window->buffer->text_search = GUI_TEXT_SEARCH_BACKWARD;
+    window->buffer->text_search =
+        (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED) ?
+        GUI_TEXT_SEARCH_BACKWARD : GUI_TEXT_SEARCH_FORWARD;
     window->buffer->text_search_found = 0;
     gui_input_search_compile_regex (window->buffer);
     if (gui_window_search_text (window))
@@ -1657,13 +1693,15 @@ gui_window_zoom (struct t_gui_window *window)
     if (ptr_layout)
     {
         /* restore layout as it was before zooming a window */
-        hook_signal_send ("window_unzoom",
-                          WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+        (void) hook_signal_send ("window_unzoom",
+                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                 gui_current_window);
         gui_layout_window_apply (ptr_layout,
                                  ptr_layout->internal_id_current_window);
         gui_layout_remove (ptr_layout);
-        hook_signal_send ("window_unzoomed",
-                          WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+        (void) hook_signal_send ("window_unzoomed",
+                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                 gui_current_window);
     }
     else
     {
@@ -1672,12 +1710,14 @@ gui_window_zoom (struct t_gui_window *window)
         if (ptr_layout)
         {
             gui_layout_add (ptr_layout);
-            hook_signal_send ("window_zoom",
-                              WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+            (void) hook_signal_send ("window_zoom",
+                                     WEECHAT_HOOK_SIGNAL_POINTER,
+                                     gui_current_window);
             gui_layout_window_store (ptr_layout);
             gui_window_merge_all (window);
-            hook_signal_send ("window_zoomed",
-                              WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+            (void) hook_signal_send ("window_zoomed",
+                                     WEECHAT_HOOK_SIGNAL_POINTER,
+                                     gui_current_window);
         }
     }
 }
@@ -1722,9 +1762,9 @@ gui_window_hdata_window_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_window, ptr_tree, POINTER, 0, NULL, "window_tree");
         HDATA_VAR(struct t_gui_window, prev_window, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_window, next_window, POINTER, 0, NULL, hdata_name);
-        HDATA_LIST(gui_windows);
-        HDATA_LIST(last_gui_window);
-        HDATA_LIST(gui_current_window);
+        HDATA_LIST(gui_windows, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        HDATA_LIST(last_gui_window, 0);
+        HDATA_LIST(gui_current_window, 0);
     }
     return hdata;
 }
@@ -1779,7 +1819,7 @@ gui_window_hdata_window_tree_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_window_tree, child1, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_window_tree, child2, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_window_tree, window, POINTER, 0, NULL, "window");
-        HDATA_LIST(gui_windows_tree);
+        HDATA_LIST(gui_windows_tree, 0);
     }
     return hdata;
 }

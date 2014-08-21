@@ -265,7 +265,7 @@ irc_mode_channel_update (struct t_irc_server *server,
 
 /*
  * Checks if a mode is smart filtered (according to option
- * irc.look.smart_filter_mode).
+ * irc.look.smart_filter_mode and server prefix modes).
  *
  * Returns:
  *   1: the mode is smart filtered
@@ -273,7 +273,7 @@ irc_mode_channel_update (struct t_irc_server *server,
  */
 
 int
-irc_mode_smart_filtered (char mode)
+irc_mode_smart_filtered (struct t_irc_server *server, char mode)
 {
     const char *ptr_modes;
 
@@ -286,6 +286,10 @@ irc_mode_smart_filtered (char mode)
     /* if var is "*", ALL modes are smart filtered */
     if (strcmp (ptr_modes, "*") == 0)
         return 1;
+
+    /* if var is "+", modes from server prefixes are filtered */
+    if (strcmp (ptr_modes, "+") == 0)
+        return strchr (irc_server_get_prefix_modes (server), mode) ? 1 : 0;
 
     /*
      * if var starts with "-", smart filter all modes except following modes
@@ -392,8 +396,11 @@ irc_mode_channel_set (struct t_irc_server *server,
                     if (ptr_arg)
                         current_arg++;
 
-                    if (smart_filter && !irc_mode_smart_filtered (pos[0]))
+                    if (smart_filter
+                        && !irc_mode_smart_filtered (server, pos[0]))
+                    {
                         smart_filter = 0;
+                    }
 
                     if (pos[0] == 'k')
                     {
@@ -503,6 +510,7 @@ irc_mode_user_add (struct t_irc_server *server, char mode)
             server->nick_modes = nick_modes2;
             strcat (server->nick_modes, str_mode);
             weechat_bar_item_update ("input_prompt");
+            weechat_bar_item_update ("irc_nick_modes");
         }
     }
     else
@@ -510,6 +518,7 @@ irc_mode_user_add (struct t_irc_server *server, char mode)
         server->nick_modes = malloc (2);
         strcpy (server->nick_modes, str_mode);
         weechat_bar_item_update ("input_prompt");
+        weechat_bar_item_update ("irc_nick_modes");
     }
 }
 
@@ -534,6 +543,7 @@ irc_mode_user_remove (struct t_irc_server *server, char mode)
             if (nick_modes2)
                 server->nick_modes = nick_modes2;
             weechat_bar_item_update ("input_prompt");
+            weechat_bar_item_update ("irc_nick_modes");
         }
     }
 }
@@ -586,4 +596,5 @@ irc_mode_user_set (struct t_irc_server *server, const char *modes,
         modes++;
     }
     weechat_bar_item_update ("input_prompt");
+    weechat_bar_item_update ("irc_nick_modes");
 }

@@ -1,0 +1,334 @@
+= WeeChat szybki start
+:author: Sébastien Helleu
+:email: flashcode@flashtux.org
+:toc:
+:toc-title: Spis treści
+
+
+[[start]]
+== Uruchamianie WeeChat
+
+Zalecanym emulatorem terminala dla X (ale nieobowiązkowym) jest rxvt-unicode
+(posiada dobre wsparcie UTF-8, oraz nie ma problemów z domyślnymi skrótami
+klawiszowymi).
+
+Wywołaj z terminala:
+
+----
+$ weechat
+----
+
+[[help_options]]
+== Pomoc online / opcje
+
+WeeChat posiada pomoc dla wszystkich komend, wystarczy wywołać:
+
+----
+/help
+----
+
+Aby otrzymać pomoc dla konkretnej komendy wpisz:
+
+----
+/help komenda
+----
+
+Do ustawiania opcji służy:
+
+----
+/set config.sekcja.opcja wartość
+----
+
+(gdzie `config` jest nazwą konfiguracyjną (`weechat` dla rdzenia, lub nazwa
+wtyczki), `sekcja` sekcja pliku konfiguracyjnego, oraz `opcja` nazwa opcji).
+
+WeeChat natychmiast używa nowej wartości (*nigdy* nie musisz restartować WeeChat
+po zmianach w ustawieniach).
+
+Możesz użyć `/set` z częściową nazwą zmiennej oraz dziką kartą "*" na początku
+lub końcu, aby wyświetlić wszystkie opcje zawierające te litery.
+Na przykład:
+
+* wyświetli wszystkie opcje (WeeChat oraz wtyczek):
+
+----
+/set
+----
+
+* wyświetli opcje WeeChat:
+
+----
+/set weechat.*
+----
+
+* wyświetli opcje wtyczki IRC:
+
+----
+/set irc.*
+----
+
+Możesz wyświetlić pomoc dla opcji dzięki `/help`, na przykład:
+
+----
+/help weechat.look.highlight
+----
+
+Wszystkie ustawienia są zapisywane podczas wyjścia z WeeChat (lub za pomocą
+komendy `/save`, która wymusza zapisanie opcji).
+
+Możesz edytować ręcznie pliki konfiguracyjne (*.conf) i przeładować je za pomocą
+komendy `/reload`, jeśli nie chcesz użyć komendy `/set`.
+
+[[core_vs_plugins]]
+== Rdzeń vs wtyczki
+
+"Rdzeń" WeeChat jest używany tylko do wyświetlania danych na ekranie oraz
+interakcji z użytkownikiem, oznacza to, że rdzeń weechat bez wtyczek jest
+bezużyteczny (wierni użytkownicy: IRC był częścią rdzenia dla wersji ≤ 0.2.6).
+
+Wszystkie protokoły sieciowe jak IRC są dostarczane w oddzielnych wtyczkach.
+
+Użyj komendy `/plugin` do wyświetlenia załadowanych wtyczek, powinieneś zobaczyć
+na liście "irc" oraz inne wtyczki.
+
+[[create_irc_server]]
+== Tworzenie serwera IRC
+
+Serwer 'freenode' jest tworzony domyślnie przy pierwszym uruchomieniu.
+
+Możesz dodać inne serwery IRC za pomocą komendy '/server', na przykład:
+
+----
+/server add oftc irc.oftc.net/6667
+----
+
+Jak zawsze w razie wątpliwości dostępna jest pomoc:
+
+----
+/help server
+----
+
+[[irc_server_options]]
+== Ustawianie własnych opcji dla serwerów IRC
+
+WeeChat używa domyślnych wartości dla wszystkich serwerów ("fall backs"), jeśli
+nie określisz konkretnej wartości dla opcji serwera.
+Te domyślne opcje to "irc.server_default.*".
+
+Dla każdej opcji serwera WeeChat używa jej wartości jeśli jest zdefiniowana (nie
+"null"). W przeciwnym przypadku WeeChat używa wartości domyślnych ("irc.server_default.xxx").
+
+Na przykład znajdują się tam domyślne nicki (bazujące na Twoim loginie un*x),
+możesz je zmienić dla serwera freenode następującą komendą:
+
+----
+/set irc.server.freenode.nicks "mójnick,mójnick2,mójnick3,mójnick4,mójnick5"
+----
+
+Ustawienie nazwy użytkownika i imienia:
+
+----
+/set irc.server.freenode.username "Moja nazwa użytkownika"
+/set irc.server.freenode.realname "Moje imię"
+----
+
+Aby włączyć automatyczne łączenie się z serwerem przy starcie:
+
+----
+/set irc.server.freenode.autoconnect on
+----
+
+W celu połączenia z użyciem SSL:
+
+----
+/set irc.server.freenode.addresses "chat.freenode.net/7000"
+/set irc.server.freenode.ssl on
+/set irc.server.freenode.ssl_dhkey_size 1024
+----
+
+[NOTE]
+Freenode nie wspiera domyślnego rozmiaru klucza dhkey 2048, dlatego należy go
+ustawić na 1024.
+
+Jeśli SASL jest dostępny na serwerze, można użyć go do uwierzytelnienia (zostaniesz
+zidentyfikowany przed wejściem na kanał):
+
+----
+/set irc.server_default.sasl_mechanism dh-blowfish
+/set irc.server.freenode.sasl_username "mójnick"
+/set irc.server.freenode.sasl_password "xxxxxxx"
+----
+
+Żeby wykonać komendę po połączeniu z serwerem, na przykład uwierzytelnienie
+przez nickserv (tylko jeśli nie uwierzytelniasz się przez SASL):
+
+----
+/set irc.server.freenode.command "/msg nickserv identify xxxxxxx"
+----
+
+[NOTE]
+Opcja 'command' może zawierać wiele komend, należy je oddzielić ';' (średnik).
+
+Aby automatycznie wejść na kanały po połączeniu z serwerem:
+
+----
+/set irc.server.freenode.autojoin "#kanał1,#kanał2"
+----
+
+Aby usunąć wartość dla opcji serwera, używając w zamian wartości domyślnej,
+na przykład, aby używać domyślnych nicków (irc.server_default.nicks):
+
+----
+/set irc.server.freenode.nicks null
+----
+
+Inne opcje: możesz ustawić pozostałe opcje za pomocą komendy ("xxx" to
+nazwa opcji):
+
+----
+/set irc.server.freenode.xxx wartość
+----
+
+[[connect_to_irc_server]]
+== Łączenie się z serwerem IRC i automatyczne wchodzenie na kanały
+
+----
+/connect freenode
+----
+
+[NOTE]
+Ta komenda może być użyta do utworzenia i połączenia się z nowym serwerem bez
+użycia komendy `/server` (czy mam powtarzać, że pomoc dla tej komendy można
+uzyskać dzięki `/help connect` ?).
+
+Domyślnie bufory serwerów są połączone z buforem WeeChat 'core'. Aby przełączać
+się pomiędzy buforem 'core' a buforami serwerów możesz użyć key[ctrl-x].
+
+Jest możliwe wyłączenie automatycznego łączenia buforów serwerów, aby mieć
+oddzielne bufory dla serwerów:
+
+----
+/set irc.look.server_buffer independent
+----
+
+[[join_part_irc_channels]]
+== Wchodzenie/wychodzenie z kanałów IRC
+
+Wejście na kanał:
+
+----
+/join #kanał
+----
+
+Wyjście z kanału (zostawiając otwarty bufor):
+
+----
+/part [wiadomość pożegnalna]
+----
+
+Zamknięcie bufora serwera lub kanału (`/close` jest aliasem `/buffer close`):
+
+----
+/close
+----
+
+[[irc_private_messages]]
+== Prywatne wiadomości IRC
+
+Otworzenie bufora i wysłanie wiadomości do innego użytkownika (nick 'foo'):
+
+----
+/query foo to jest wiadomość
+----
+
+Zamykanie prywatnego bufora:
+
+----
+/close
+----
+
+[[buffer_window]]
+== Zarządzanie buforami/oknami
+
+Bufor jest to element łączący wtyczkę z numerem, kategorią,
+oraz nazwą. Zawiera on dane wyświetlane na ekranie.
+
+Okno jest widokiem na bufor. Domyślnie jedno okno wyświetla jeden bufor.
+Jeśli podzielisz ekran, ujrzysz wiele okien z wieloma buforami jednocześnie.
+
+Komendy do zarządzania buforami i oknami:
+
+----
+/buffer
+/window
+----
+
+(Nie będę powtarzać, że możesz uzyskać pomoc za pomocą /help na tych komendach)
+
+Na przykład, aby pionowo podzielić ekran na małe okno (1/3 szerokości),
+oraz duże okno (2/3), użyj komendy:
+
+----
+/window splitv 33
+----
+
+[[key_bindings]]
+== Skróty klawiszowe
+
+WeeChat używa domyślnie wiele klawiszy. Wszystkie z nich są w dokumentacji,
+ale powinieneś znać przynajmniej kilka najprzydatniejszych:
+
+- key[alt-]key[←]/key[→] lub key[F5]/key[F6]: przełącza na poprzedni/następny
+  bufor
+- key[F7]/key[F8]: przełącza na poprzednie/następne okno (jeśli ekran jest
+  podzielony)
+- key[F9]/key[F10]: przewija pasek z tematem kanału
+- key[F11]/key[F12]: przewija listę z nickami
+- key[Tab]: dopełnia tekst w pasku danych wejściowych, dokładnie jak w terminalu
+- key[PgUp]/key[PgDn]: przewija tekst w obecnym buforze
+- key[alt-a]: skocz do bufora z aktywnością (w hotliście)
+
+Zgodnie z Twoją klawiaturą i/lub potrzebami, możesz zmienić przypisanie
+dowolnego klawisza do komendy używając komendy `/key`.
+Przydatnym skrótem jest key[alt-k] do odnajdywania kodów klawiszy.
+
+Na przykład, aby przypisać key[alt-y] do komendy `/buffer close`:
+
+----
+/key bind (wciśnij alt-k) (wciśnij alt-y) /buffer close
+----
+
+Otrzymasz w linii poleceń:
+
+----
+/key bind meta-y /buffer close
+----
+
+Aby usunąć klawisz:
+
+----
+/key unbind meta-y
+----
+
+[[plugins_scripts]]
+== Wtyczki/skrypty
+
+W niektórych dystrybucjach, jak np Debian, wtyczki są dostarczane jako oddzielne
+pakiety (jak weechat-plugins).
+Wtyczki są automatycznie ładowane, kiedy zostaną wykryte (proszę spojrzeć do
+dokumentacji WeeChat, aby się dowiedzieć jak ładować/wyładowywać wtyczki lub
+skrypty).
+
+Wiele zewnętrznych skryptów (od społeczności) jest dostępnych dla WeeChat:
+http://weechat.org/scripts
+
+Możesz zarządzać skryptami w WeeChat dzięki komendzie `/script` (zobacz `/help script`
+po więcej informacji).
+
+[[more_doc]]
+== Więcej dokumentacji
+
+Możesz teraz używać WeeChat oraz przeczytać FAQ/dokumentację w razie innych pytań:
+http://weechat.org/doc
+
+Miłej pracy z WeeChat!

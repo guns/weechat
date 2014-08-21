@@ -278,6 +278,25 @@ plugin_api_command (struct t_weechat_plugin *plugin,
 }
 
 /*
+ * Modifier to decode ANSI colors.
+ */
+
+char *
+plugin_api_modifier_color_decode_ansi (void *data,
+                                       const char *modifier,
+                                       const char *modifier_data,
+                                       const char *string)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) modifier;
+
+    return gui_color_decode_ansi (string,
+                                  (modifier_data && (strcmp (modifier_data, "1") == 0)) ?
+                                  1: 0);
+}
+
+/*
  * Gets info about WeeChat.
  */
 
@@ -288,10 +307,11 @@ plugin_api_info_get_internal (void *data, const char *info_name,
     time_t inactivity;
     static char value[32], version_number[32] = { '\0' };
     static char weechat_dir_absolute_path[PATH_MAX] = { '\0' };
+    int rgb, limit;
+    char *pos, *color;
 
     /* make C compiler happy */
     (void) data;
-    (void) arguments;
 
     if (!info_name)
         return NULL;
@@ -397,6 +417,43 @@ plugin_api_info_get_internal (void *data, const char *info_name,
         snprintf (value, sizeof (value), "%d", gui_window_get_height ());
         return value;
     }
+    else if (string_strcasecmp (info_name, "color_ansi_regex") == 0)
+    {
+        return GUI_COLOR_REGEX_ANSI_DECODE;
+    }
+    else if (string_strcasecmp (info_name, "color_term2rgb") == 0)
+    {
+        if (arguments && arguments[0])
+        {
+            snprintf (value, sizeof (value),
+                      "%d",
+                      gui_color_convert_term_to_rgb (atoi (arguments)));
+            return value;
+        }
+    }
+    else if (string_strcasecmp (info_name, "color_rgb2term") == 0)
+    {
+        if (arguments && arguments[0])
+        {
+            limit = 256;
+            pos = strchr (arguments, ',');
+            if (pos)
+            {
+                color = string_strndup (arguments, pos - arguments);
+                if (!color)
+                    return NULL;
+                rgb = atoi (color);
+                limit = atoi (pos + 1);
+                free (color);
+            }
+            else
+                rgb = atoi (arguments);
+            snprintf (value, sizeof (value),
+                      "%d",
+                      gui_color_convert_rgb_to_term (rgb, limit));
+            return value;
+        }
+    }
 
     /* info not found */
     return NULL;
@@ -441,7 +498,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!gui_bar_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -479,7 +536,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!gui_bar_item_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -518,7 +575,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!gui_bar_window_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -569,7 +626,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!gui_buffer_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -613,7 +670,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
                 return NULL;
         }
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             for (ptr_line = ((struct t_gui_buffer *)pointer)->own_lines->first_line;
@@ -632,7 +689,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "filter") == 0)
     {
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             for (ptr_filter = gui_filters; ptr_filter;
@@ -657,7 +714,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!gui_buffer_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             for (ptr_history = (pointer) ?
@@ -679,7 +736,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && !hook_valid (pointer))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (!hook_add_to_infolist (ptr_infolist, pointer, arguments))
@@ -692,7 +749,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "hotlist") == 0)
     {
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             for (ptr_hotlist = gui_hotlist; ptr_hotlist;
@@ -709,7 +766,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "key") == 0)
     {
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (arguments && arguments[0])
@@ -733,7 +790,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "layout") == 0)
     {
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             for (ptr_layout = gui_layouts; ptr_layout;
@@ -754,7 +811,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (!pointer || (!gui_buffer_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (!gui_nicklist_add_to_infolist (ptr_infolist, pointer, arguments))
@@ -767,7 +824,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "option") == 0)
     {
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (!config_file_add_to_infolist (ptr_infolist, arguments))
@@ -784,7 +841,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!plugin_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -823,7 +880,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!proxy_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -858,7 +915,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
     }
     else if (string_strcasecmp (infolist_name, "url_options") == 0)
     {
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             for (i = 0; url_options[i].name; i++)
@@ -878,7 +935,7 @@ plugin_api_infolist_get_internal (void *data, const char *infolist_name,
         if (pointer && (!gui_window_valid (pointer)))
             return NULL;
 
-        ptr_infolist = infolist_new ();
+        ptr_infolist = infolist_new (NULL);
         if (ptr_infolist)
         {
             if (pointer)
@@ -1097,6 +1154,10 @@ plugin_api_infolist_free (struct t_infolist *infolist)
 void
 plugin_api_init ()
 {
+    /* WeeChat core modifiers */
+    hook_modifier (NULL, "color_decode_ansi",
+                   &plugin_api_modifier_color_decode_ansi, NULL);
+
     /* WeeChat core info hooks */
     hook_info (NULL, "version", N_("WeeChat version"), NULL,
                &plugin_api_info_get_internal, NULL);
@@ -1141,15 +1202,23 @@ plugin_api_init ()
                &plugin_api_info_get_internal, NULL);
     hook_info (NULL, "term_height", N_("height of terminal"), NULL,
                &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "color_ansi_regex", N_("POSIX extended regular expression to search ANSI escape codes"), NULL,
+               &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "color_term2rgb", N_("terminal color (0-255) converted to RGB color"),
+               N_("color (terminal color: 0-255)"),
+               &plugin_api_info_get_internal, NULL);
+    hook_info (NULL, "color_rgb2term", N_("RGB color converted to terminal color (0-255)"),
+               N_("rgb,limit (limit is optional and is set to 256 by default)"),
+               &plugin_api_info_get_internal, NULL);
 
     /* WeeChat core infolist hooks */
     hook_infolist (NULL, "bar", N_("list of bars"),
                    N_("bar pointer (optional)"),
-                   N_("bar name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("bar name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "bar_item", N_("list of bar items"),
                    N_("bar item pointer (optional)"),
-                   N_("bar item name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("bar item name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "bar_window", N_("list of bar windows"),
                    N_("bar window pointer (optional)"),
@@ -1157,7 +1226,7 @@ plugin_api_init ()
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "buffer", N_("list of buffers"),
                    N_("buffer pointer (optional)"),
-                   N_("buffer name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("buffer name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "buffer_lines", N_("lines of a buffer"),
                    N_("buffer pointer"),
@@ -1165,7 +1234,7 @@ plugin_api_init ()
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "filter", N_("list of filters"),
                    NULL,
-                   N_("filter name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("filter name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "history", N_("history of commands"),
                    N_("buffer pointer (if not set, return global history) (optional)"),
@@ -1174,8 +1243,8 @@ plugin_api_init ()
     hook_infolist (NULL, "hook", N_("list of hooks"),
                    N_("hook pointer (optional)"),
                    N_("type,arguments (type is command/timer/.., arguments to "
-                      "get only some hooks (can start or end with \"*\" as "
-                      "wildcard), both are optional)"),
+                      "get only some hooks (wildcard \"*\" is allowed), "
+                      "both are optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "hotlist", N_("list of buffers in hotlist"),
                    NULL,
@@ -1197,15 +1266,15 @@ plugin_api_init ()
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "option", N_("list of options"),
                    NULL,
-                   N_("option name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("option name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "plugin", N_("list of plugins"),
                    N_("plugin pointer (optional)"),
-                   N_("plugin name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("plugin name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "proxy", N_("list of proxies"),
                    N_("proxy pointer (optional)"),
-                   N_("proxy name (can start or end with \"*\" as wildcard) (optional)"),
+                   N_("proxy name (wildcard \"*\" is allowed) (optional)"),
                    &plugin_api_infolist_get_internal, NULL);
     hook_infolist (NULL, "url_options", N_("options for URL"),
                    NULL,

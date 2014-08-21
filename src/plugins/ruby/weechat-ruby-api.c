@@ -2840,7 +2840,7 @@ weechat_ruby_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        snprintf (timebuffer, sizeof (timebuffer) - 1, "%ld", (long int)date);
+        snprintf (timebuffer, sizeof (timebuffer), "%ld", (long int)date);
 
         func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
         func_argv[1] = API_PTR2STR(buffer);
@@ -2848,15 +2848,15 @@ weechat_ruby_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
         func_argv[3] = weechat_string_build_with_split_string (tags, ",");
         if (!func_argv[3])
             func_argv[3] = strdup ("");
-        func_argv[4] = (displayed) ? strdup ("1") : strdup ("0");
-        func_argv[5] = (highlight) ? strdup ("1") : strdup ("0");
+        func_argv[4] = &displayed;
+        func_argv[5] = &highlight;
         func_argv[6] = (prefix) ? (char *)prefix : empty_arg;
         func_argv[7] = (message) ? (char *)message : empty_arg;
 
         rc = (int *) weechat_ruby_exec (script_callback->script,
                                         WEECHAT_SCRIPT_EXEC_INT,
                                         script_callback->function,
-                                        "ssssssss", func_argv);
+                                        "ssssiiss", func_argv);
 
         if (!rc)
             ret = WEECHAT_RC_ERROR;
@@ -2869,10 +2869,6 @@ weechat_ruby_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
             free (func_argv[1]);
         if (func_argv[3])
             free (func_argv[3]);
-        if (func_argv[4])
-            free (func_argv[4]);
-        if (func_argv[5])
-            free (func_argv[5]);
 
         return ret;
     }
@@ -2928,7 +2924,7 @@ weechat_ruby_api_hook_signal_cb (void *data, const char *signal, const char *typ
     struct t_plugin_script_cb *script_callback;
     void *func_argv[3];
     char empty_arg[1] = { '\0' };
-    static char value_str[64];
+    static char str_value[64];
     int *rc, ret, free_needed;
 
     script_callback = (struct t_plugin_script_cb *)data;
@@ -2944,9 +2940,13 @@ weechat_ruby_api_hook_signal_cb (void *data, const char *signal, const char *typ
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
         {
-            snprintf (value_str, sizeof (value_str) - 1,
-                      "%d", *((int *)signal_data));
-            func_argv[2] = value_str;
+            str_value[0] = '\0';
+            if (signal_data)
+            {
+                snprintf (str_value, sizeof (str_value),
+                          "%d", *((int *)signal_data));
+            }
+            func_argv[2] = str_value;
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
         {
@@ -3011,11 +3011,11 @@ weechat_ruby_api_hook_signal_send (VALUE class, VALUE signal, VALUE type_data,
                                    VALUE signal_data)
 {
     char *c_signal, *c_type_data, *c_signal_data;
-    int number;
+    int number, rc;
 
-    API_FUNC(1, "hook_signal_send", API_RETURN_ERROR);
+    API_FUNC(1, "hook_signal_send", API_RETURN_INT(WEECHAT_RC_ERROR));
     if (NIL_P (signal) || NIL_P (type_data) || NIL_P (signal_data))
-        API_WRONG_ARGS(API_RETURN_ERROR);
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
 
     Check_Type (signal, T_STRING);
     Check_Type (type_data, T_STRING);
@@ -3027,26 +3027,26 @@ weechat_ruby_api_hook_signal_send (VALUE class, VALUE signal, VALUE type_data,
     {
         Check_Type (signal_data, T_STRING);
         c_signal_data = StringValuePtr (signal_data);
-        weechat_hook_signal_send (c_signal, c_type_data, c_signal_data);
-        API_RETURN_OK;
+        rc = weechat_hook_signal_send (c_signal, c_type_data, c_signal_data);
+        API_RETURN_INT(rc);
     }
     else if (strcmp (c_type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
     {
         Check_Type (signal_data, T_FIXNUM);
         number = FIX2INT (signal_data);
-        weechat_hook_signal_send (c_signal, c_type_data, &number);
-        API_RETURN_OK;
+        rc = weechat_hook_signal_send (c_signal, c_type_data, &number);
+        API_RETURN_INT(rc);
     }
     else if (strcmp (c_type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
     {
         Check_Type (signal_data, T_STRING);
         c_signal_data = StringValuePtr (signal_data);
-        weechat_hook_signal_send (c_signal, c_type_data,
-                                  API_STR2PTR(c_signal_data));
-        API_RETURN_OK;
+        rc = weechat_hook_signal_send (c_signal, c_type_data,
+                                       API_STR2PTR(c_signal_data));
+        API_RETURN_INT(rc);
     }
 
-    API_RETURN_ERROR;
+    API_RETURN_INT(WEECHAT_RC_ERROR);
 }
 
 int
@@ -3119,10 +3119,11 @@ weechat_ruby_api_hook_hsignal_send (VALUE class, VALUE signal, VALUE hashtable)
 {
     char *c_signal;
     struct t_hashtable *c_hashtable;
+    int rc;
 
-    API_FUNC(1, "hook_hsignal_send", API_RETURN_ERROR);
+    API_FUNC(1, "hook_hsignal_send", API_RETURN_INT(WEECHAT_RC_ERROR));
     if (NIL_P (signal) || NIL_P (hashtable))
-        API_WRONG_ARGS(API_RETURN_ERROR);
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
 
     Check_Type (signal, T_STRING);
     Check_Type (hashtable, T_HASH);
@@ -3133,12 +3134,12 @@ weechat_ruby_api_hook_hsignal_send (VALUE class, VALUE signal, VALUE hashtable)
                                                   WEECHAT_HASHTABLE_STRING,
                                                   WEECHAT_HASHTABLE_STRING);
 
-    weechat_hook_hsignal_send (c_signal, c_hashtable);
+    rc = weechat_hook_hsignal_send (c_signal, c_hashtable);
 
     if (c_hashtable)
         weechat_hashtable_free (c_hashtable);
 
-    API_RETURN_OK;
+    API_RETURN_INT(rc);
 }
 
 int

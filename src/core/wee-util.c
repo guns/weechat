@@ -103,6 +103,16 @@ struct t_rlimit_resource rlimit_resource[] =
 };
 #endif /* HAVE_SYS_RESOURCE_H */
 
+struct t_util_signal util_signals[] =
+{ { "hup", SIGHUP },
+  { "int", SIGINT },
+  { "quit", SIGQUIT },
+  { "kill", SIGKILL },
+  { "term", SIGTERM },
+  { "usr1", SIGUSR1 },
+  { "usr2", SIGUSR2 },
+  { NULL, 0 },
+};
 
 /*
  * Sets resource limit.
@@ -227,6 +237,9 @@ util_setrlimit ()
 int
 util_timeval_cmp (struct timeval *tv1, struct timeval *tv2)
 {
+    if (!tv1 || !tv2)
+        return (tv1) ? 1 : ((tv2) ? -1 : 0);
+
     if (tv1->tv_sec < tv2->tv_sec)
         return -1;
     if (tv1->tv_sec > tv2->tv_sec)
@@ -249,6 +262,9 @@ util_timeval_diff (struct timeval *tv1, struct timeval *tv2)
 {
     long diff_sec, diff_usec;
 
+    if (!tv1 || !tv2)
+        return 0;
+
     diff_sec = tv2->tv_sec - tv1->tv_sec;
     diff_usec = tv2->tv_usec - tv1->tv_usec;
 
@@ -268,6 +284,9 @@ void
 util_timeval_add (struct timeval *tv, long interval)
 {
     long usec;
+
+    if (!tv)
+        return;
 
     tv->tv_sec += (interval / 1000);
     usec = tv->tv_usec + ((interval % 1000) * 1000);
@@ -300,6 +319,28 @@ util_get_time_string (const time_t *date)
     }
 
     return text_time;
+}
+
+/*
+ * Gets a signal number with a name; only some commonly used signal names are
+ * supported here (see declaration of util_signals[]).
+ *
+ * Returns the signal number, -1 if not found.
+ */
+
+int
+util_signal_search (const char *name)
+{
+    int i;
+
+    for (i = 0; util_signals[i].name; i++)
+    {
+        if (string_strcasecmp (util_signals[i].name, name) == 0)
+            return util_signals[i].signal;
+    }
+
+    /* signal not found */
+    return -1;
 }
 
 /*
@@ -460,7 +501,7 @@ util_exec_on_files (const char *directory, int hidden_files, void *data,
         {
             if (hidden_files || (entry->d_name[0] != '.'))
             {
-                snprintf (complete_filename, sizeof (complete_filename) - 1,
+                snprintf (complete_filename, sizeof (complete_filename),
                           "%s/%s", directory, entry->d_name);
                 lstat (complete_filename, &statbuf);
                 if (!S_ISDIR(statbuf.st_mode))

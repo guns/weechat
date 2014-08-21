@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_GUI_MAIN_H
-#define __WEECHAT_GUI_MAIN_H 1
+#ifndef WEECHAT_GUI_MAIN_H
+#define WEECHAT_GUI_MAIN_H 1
 
 /* main functions (GUI dependent) */
 
@@ -26,12 +26,9 @@ extern void gui_main_get_password (const char *prompt1, const char *prompt2,
                                    const char *prompt3,
                                    char *password, int size);
 extern void gui_main_debug_libs ();
-extern void gui_main_loop ();
-extern void gui_main_pre_init (int *argc, char **argv[]);
-extern void gui_main_init ();
 extern void gui_main_end (int clean_exit);
 
 /* terminal functions (GUI dependent) */
 extern void gui_term_set_eat_newline_glitch (int value);
 
-#endif /* __WEECHAT_GUI_MAIN_H */
+#endif /* WEECHAT_GUI_MAIN_H */

@@ -23,7 +23,7 @@
  * this define is needed for strptime()
  * but is not used for OpenBSD, it causes bug with gcrypt (see bug #37373)
  */
-#if !defined(__OpenBSD__)
+#if !defined(__OpenBSD__) && !defined(__sun)
 #define _XOPEN_SOURCE 700
 #endif
 
@@ -174,22 +174,22 @@ script_repo_get_filename_loaded (struct t_script_repo *script)
     weechat_home = weechat_info_get ("weechat_dir", NULL);
     length = strlen (weechat_home) + strlen (script->name_with_extension) + 64;
     filename = malloc (length);
-    if (filename)
+    if (!filename)
+        return NULL;
+
+    snprintf (filename, length, "%s/%s/autoload/%s",
+              weechat_home,
+              script_language[script->language],
+              script->name_with_extension);
+    if (stat (filename, &st) != 0)
     {
-        snprintf (filename, length, "%s/%s/autoload/%s",
+        snprintf (filename, length, "%s/%s/%s",
                   weechat_home,
                   script_language[script->language],
                   script->name_with_extension);
         if (stat (filename, &st) != 0)
         {
-            snprintf (filename, length, "%s/%s/%s",
-                      weechat_home,
-                      script_language[script->language],
-                      script->name_with_extension);
-            if (stat (filename, &st) != 0)
-            {
-                filename[0] = '\0';
-            }
+            filename[0] = '\0';
         }
     }
 
@@ -1405,18 +1405,19 @@ script_repo_file_update_process_cb (void *data, const char *command,
 
     /* make C compiler happy */
     (void) command;
+    (void) out;
 
     quiet = (data == 0) ? 0 : 1;
 
     if (return_code >= 0)
     {
-        if ((err && err[0]) || (out && (strncmp (out, "error:", 6) == 0)))
+        if (err && err[0])
         {
             weechat_printf (NULL,
                             _("%s%s: error downloading list of scripts: %s"),
                             weechat_prefix ("error"),
                             SCRIPT_PLUGIN_NAME,
-                            (err && err[0]) ? err : out + 6);
+                            err);
             return WEECHAT_RC_OK;
         }
 
@@ -1520,8 +1521,8 @@ script_repo_hdata_script_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_script_repo, install_order, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_script_repo, prev_script, POINTER, 0, NULL, hdata_name);
         WEECHAT_HDATA_VAR(struct t_script_repo, next_script, POINTER, 0, NULL, hdata_name);
-        WEECHAT_HDATA_LIST(scripts_repo);
-        WEECHAT_HDATA_LIST(last_script_repo);
+        WEECHAT_HDATA_LIST(scripts_repo, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        WEECHAT_HDATA_LIST(last_script_repo, 0);
     }
     return hdata;
 }

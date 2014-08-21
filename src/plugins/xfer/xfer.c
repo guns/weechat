@@ -424,8 +424,9 @@ xfer_send_signal (struct t_xfer *xfer, const char *signal)
     {
         if (xfer_add_to_infolist (infolist, xfer))
         {
-            weechat_hook_signal_send (signal, WEECHAT_HOOK_SIGNAL_POINTER,
-                                      infolist);
+            (void) weechat_hook_signal_send (signal,
+                                             WEECHAT_HOOK_SIGNAL_POINTER,
+                                             infolist);
         }
         weechat_infolist_free (infolist);
     }
@@ -526,7 +527,7 @@ xfer_nick_auto_accepted (const char *server, const char *nick)
     {
         for (i = 0; i < num_nicks; i++)
         {
-            pos = strchr (nicks[i], '.');
+            pos = strrchr (nicks[i], '.');
             if (pos)
             {
                 if ((weechat_strncasecmp (server, nicks[i], pos - nicks[i]) == 0)
@@ -668,21 +669,14 @@ xfer_new (const char *plugin_name, const char *plugin_id,
         snprintf (str_address, sizeof (str_address), "?");
     }
 
-    new_xfer->local_address = calloc (1, sizeof (struct sockaddr_storage));
-    new_xfer->local_address_length = sizeof (struct sockaddr_storage);
-    new_xfer->remote_address = calloc (1, sizeof (struct sockaddr_storage));
-    new_xfer->remote_address_length = sizeof (struct sockaddr_storage);
-
     if (XFER_IS_RECV(type))
     {
         new_xfer->local_address_str = strdup ("");
-        new_xfer->remote_address_str = strdup (str_address);
-        memcpy (new_xfer->remote_address, address, address_length);
+        xfer_set_remote_address(new_xfer, address, address_length, str_address);
     }
     else
     {
-        new_xfer->local_address_str = strdup (str_address);
-        memcpy (new_xfer->local_address, address, address_length);
+        xfer_set_local_address(new_xfer, address, address_length, str_address);
         new_xfer->remote_address_str = strdup ("");
     }
 
@@ -834,18 +828,36 @@ xfer_new (const char *plugin_name, const char *plugin_id,
  */
 
 void
-xfer_set_remote_address (struct t_xfer *xfer, struct sockaddr *address,
-                         socklen_t length, char *address_str)
+xfer_set_remote_address (struct t_xfer *xfer, const struct sockaddr *address,
+                         socklen_t length, const char *address_str)
 {
     if (xfer->remote_address)
         free (xfer->remote_address);
-    xfer->remote_address = calloc (1, length);
+    xfer->remote_address = malloc (length);
     xfer->remote_address_length = length;
     memcpy (xfer->remote_address, address, length);
 
     if (xfer->remote_address_str)
         free (xfer->remote_address_str);
     xfer->remote_address_str = strdup ((address_str) ? address_str : "");
+}
+
+/*
+ * Sets the local address field.
+ */
+void
+xfer_set_local_address (struct t_xfer *xfer, const struct sockaddr *address,
+                         socklen_t length, const char *address_str)
+{
+    if (xfer->local_address)
+        free (xfer->local_address);
+    xfer->local_address = malloc (length);
+    xfer->local_address_length = length;
+    memcpy (xfer->local_address, address, length);
+
+    if (xfer->local_address_str)
+        free (xfer->local_address_str);
+    xfer->local_address_str = strdup ((address_str) ? address_str : "");
 }
 
 /*
@@ -927,11 +939,12 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
     const char *plugin_name, *plugin_id, *str_type, *str_protocol;
     const char *remote_nick, *local_nick, *charset_modifier, *filename, *proxy;
     const char *weechat_dir, *str_address, *str_port;
-    int type, protocol, args, port_start, port_end, sock, port, rc, own_ip_used;
+    int type, protocol, args, port_start, port_end, sock, port, rc;
     char *dir1, *dir2, *filename2, *short_filename, *pos, str_port_temp[16];
     struct stat st;
     struct addrinfo *ainfo, hints;
-    struct sockaddr_storage addr;
+    struct sockaddr_storage addr, own_ip_addr;
+    struct sockaddr *out_addr = (struct sockaddr*)&addr;
     socklen_t length;
     unsigned long long file_size;
     struct t_xfer *ptr_xfer;
@@ -964,7 +977,6 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
     file_size = 0;
 
     sock = -1;
-    port = 0;
 
     plugin_name = weechat_infolist_string (infolist, "plugin_name");
     plugin_id = weechat_infolist_string (infolist, "plugin_id");
@@ -1093,8 +1105,6 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
 
-    own_ip_used = 0;
-
     if (XFER_IS_RECV(type))
     {
         str_address = weechat_infolist_string (infolist, "remote_address");
@@ -1109,10 +1119,30 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
         {
             str_address = weechat_config_string (xfer_config_network_own_ip);
             hints.ai_flags = AI_NUMERICSERV;
-            own_ip_used = 1;
+
+            rc = getaddrinfo (str_address, str_port, &hints, &ainfo);
+            if ((rc == 0) && ainfo && ainfo->ai_addr)
+            {
+                out_addr = (struct sockaddr*)&own_ip_addr;
+                memset (&own_ip_addr,  0, sizeof (addr));
+                memcpy (&own_ip_addr, ainfo->ai_addr, ainfo->ai_addrlen);
+                length = ainfo->ai_addrlen;
+                freeaddrinfo (ainfo);
+            }
+            else
+            {
+                weechat_printf (NULL,
+                                _("%s%s: invalid address \"%s\" (option "
+                                  "xfer.network.own_ip): error %d %s"),
+                                weechat_prefix ("error"), XFER_PLUGIN_NAME,
+                                str_address, rc, gai_strerror (rc));
+                if (rc == 0)
+                    freeaddrinfo (ainfo);
+                goto error;
+            }
         }
-        else
-            str_address = weechat_infolist_string (infolist, "local_address");
+
+        str_address = weechat_infolist_string (infolist, "local_address");
     }
 
     rc = getaddrinfo (str_address, str_port, &hints, &ainfo);
@@ -1126,13 +1156,12 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
     else
     {
         weechat_printf (NULL,
-                        (own_ip_used) ?
-                        _("%s%s: invalid address \"%s\" (option "
-                          "xfer.network.own_ip): error %d %s") :
                         _("%s%s: unable to find address for \"%s\": "
                           "error %d %s"),
                         weechat_prefix ("error"), XFER_PLUGIN_NAME,
                         str_address, rc, gai_strerror (rc));
+        if (rc == 0)
+            freeaddrinfo (ainfo);
         goto error;
     }
 
@@ -1248,15 +1277,13 @@ xfer_add_cb (void *data, const char *signal, const char *type_data,
         ptr_xfer = xfer_new (plugin_name, plugin_id, type, protocol,
                              remote_nick, local_nick, charset_modifier,
                              short_filename, file_size, proxy,
-                             (struct sockaddr *)&addr, length, port, sock,
-                             filename2);
+                             out_addr, length, port, sock, filename2);
     }
     else
     {
         ptr_xfer = xfer_new (plugin_name, plugin_id, type, protocol,
                              remote_nick, local_nick, charset_modifier, NULL,
-                             0, proxy, (struct sockaddr *)&addr, length,
-                             port, sock, NULL);
+                             0, proxy, out_addr, length, port, sock, NULL);
     }
 
     if (!ptr_xfer)

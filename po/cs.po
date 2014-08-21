@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeeChat\n"
 "Report-Msgid-Bugs-To: flashcode@flashtux.org\n"
-"POT-Creation-Date: 2014-01-29 14:07+0100\n"
-"PO-Revision-Date: 2014-01-29 14:09+0100\n"
+"POT-Creation-Date: 2014-08-02 16:12+0200\n"
+"PO-Revision-Date: 2014-07-25 07:49+0200\n"
 "Last-Translator: Jiri Golembiovsky <golemj@gmail.com>\n"
 "Language-Team: weechat-dev <weechat-dev@nongnu.org>\n"
 "Language: cs\n"
@@ -29,6 +29,90 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+msgid "any string"
+msgstr "jakýkoliv řetězec"
+
+msgid "any char"
+msgstr "jakýkoliv znak"
+
+msgid "max chars"
+msgstr "maximálně znaků"
+
+#, fuzzy
+msgid ""
+"a WeeChat color name (default, black, (dark)gray, white, (light)red, "
+"(light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a "
+"terminal color number or an alias; attributes are allowed before color (for "
+"text color only, not background): \"*\" for bold, \"!\" for reverse, \"/\" "
+"for italic, \"_\" for underline"
+msgstr ""
+"jméno WeeChat barvy (default, black, (dark)gray, white, (light)red, "
+"(light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), "
+"číslo barvy terminálu nebo alias; před barvou jsou povoleny atributy (pouze "
+"pro barvu textu, ne pro barvu pozadí): \"*\" pro tučné, \"!\" pro obrácené, "
+"\"_\" pro podtržené"
+
+msgid "description"
+msgstr "popis"
+
+msgid "type"
+msgstr "typ"
+
+msgid "values"
+msgstr "hodnoty"
+
+msgid "default value"
+msgstr "výchozí hodnota"
+
+#. TRANSLATORS: please do not translate "(null)"
+msgid "undefined value allowed (null)"
+msgstr "povolena nedefinnovaná hodnota (null)"
+
+msgid "Plugin"
+msgstr "Plugin"
+
+msgid "Name"
+msgstr "Jméno"
+
+msgid "Description"
+msgstr "Popis"
+
+msgid "Arguments"
+msgstr "Argumenty"
+
+msgid "Hashtable (input)"
+msgstr "Hash tabulka (vstup)"
+
+msgid "Hashtable (output)"
+msgstr "Hash tabulka (výstup)"
+
+msgid "Pointer"
+msgstr "Ukazatel"
+
+#, fuzzy
+msgid "plugin"
+msgstr "Plugin"
+
+#, fuzzy
+msgid "variables"
+msgstr "čtení - proměnná"
+
+msgid "update allowed"
+msgstr ""
+
+msgid "lists"
+msgstr ""
+
+#, fuzzy
+msgid "Option"
+msgstr "<volba>"
+
+msgid "Type"
+msgstr ""
+
+msgid "Constants"
+msgstr ""
 
 #. TRANSLATORS: "%s %s" after "compiled on" is date and time
 #, c-format
@@ -98,17 +182,34 @@ msgstr "Chyba: domovský adresář (%s) není adresářem\n"
 msgid "Error: cannot create directory \"%s\"\n"
 msgstr "Chyba: nemohu vytvořit adresář \"%s\"\n"
 
+#. TRANSLATORS: the "under %s" can be "under screen" or "under tmux"
+#, c-format
+msgid ""
+"%sWarning: WeeChat is running under %s and $TERM is \"%s\", which can cause "
+"display bugs; $TERM should be set to \"screen-256color\" or \"screen\""
+msgstr ""
+
+#, c-format
+msgid "%sYou should add this line in the file %s:  %s"
+msgstr ""
+
+#, c-format
+msgid "Signal %s received, exiting WeeChat..."
+msgstr "Obdržen signál %s, ukončuji WeeChat..."
+
 msgid "List of bars:"
 msgstr "Seznam polí:"
 
-#, c-format
+#. TRANSLATORS: the last thing displayed is "width:" or "height:" with its value
+#, fuzzy, c-format
 msgid ""
-"  %s%s%s: %s%s%s (cond: %s), %s, filling: %s(top/bottom)/%s(left/right), %s: "
-"%s"
+"  %s%s%s: %s%s%s (conditions: %s), %s, filling: %s(top/bottom)/%s(left/"
+"right), %s: %s"
 msgstr ""
 "  %s%s%s: %s%s%s (podmínka: %s), %s, vyplňuje: %s(nahoře/dole)/%s(vlevo/"
 "vpravo), %s: %s"
 
+#. TRANSLATORS: "hidden" is displayed in list of buffers
 msgid "(hidden)"
 msgstr "(skrytý)"
 
@@ -188,10 +289,6 @@ msgstr "%sChyba: buffer nenalezen pro příkaz \"%s\""
 msgid "%sError: unable to scroll bar \"%s\""
 msgstr "%sChyba: nemohu posunout pole \"%s\""
 
-#, c-format
-msgid "%sError: unknown option for \"%s\" command"
-msgstr "%sChyba: neznámá volba pro příkaz \"%s\""
-
 #, fuzzy, c-format
 msgid "%sError: buffer number %d is out of range (it must be between 1 and %d)"
 msgstr "%sNekorektní číslo barvy \"%s\" (musí být mezi %d a %d)"
@@ -200,7 +297,7 @@ msgid "Buffers list:"
 msgstr "Seznam bufferů:"
 
 #, fuzzy, c-format
-msgid "  %s[%s%d%s]%s %s%s.%s%s%s (notify: %s)"
+msgid "  %s[%s%d%s]%s %s%s.%s%s%s (notify: %s)%s%s"
 msgstr "  %s[%s%d%s]%s (%s) %s%s%s (notifikace: %s)"
 
 #, c-format
@@ -325,20 +422,8 @@ msgstr "Filter \"%s\" smazán"
 msgid "Option \"%s%s%s\":"
 msgstr "Volba \"%s%s%s\":"
 
-msgid "description"
-msgstr "popis"
-
-msgid "type"
-msgstr "typ"
-
 msgid "boolean"
 msgstr "boolovský"
-
-msgid "values"
-msgstr "hodnoty"
-
-msgid "default value"
-msgstr "výchozí hodnota"
 
 msgid "(undefined)"
 msgstr "(nedefinováno)"
@@ -352,35 +437,8 @@ msgstr "řetězec"
 msgid "integer"
 msgstr "celé číslo"
 
-msgid "any string"
-msgstr "jakýkoliv řetězec"
-
-msgid "any char"
-msgstr "jakýkoliv znak"
-
-msgid "max chars"
-msgstr "maximálně znaků"
-
 msgid "color"
 msgstr "barva"
-
-#, fuzzy
-msgid ""
-"a WeeChat color name (default, black, (dark)gray, white, (light)red, "
-"(light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), a "
-"terminal color number or an alias; attributes are allowed before color (for "
-"text color only, not background): \"*\" for bold, \"!\" for reverse, \"/\" "
-"for italic, \"_\" for underline"
-msgstr ""
-"jméno WeeChat barvy (default, black, (dark)gray, white, (light)red, "
-"(light)green, brown, yellow, (light)blue, (light)magenta, (light)cyan), "
-"číslo barvy terminálu nebo alias; před barvou jsou povoleny atributy (pouze "
-"pro barvu textu, ne pro barvu pozadí): \"*\" pro tučné, \"!\" pro obrácené, "
-"\"_\" pro podtržené"
-
-#. TRANSLATORS: please do not translate "(null)"
-msgid "undefined value allowed (null)"
-msgstr "povolena nedefinnovaná hodnota (null)"
 
 #, c-format
 msgid "%sNo help available, \"%s\" is not a command or an option"
@@ -636,10 +694,6 @@ msgstr "Nebyl nalezen žádný plugin"
 msgid "  (no plugin)"
 msgstr "  (není plugin)"
 
-#, c-format
-msgid "%sError: wrong argument count for \"%s\" command"
-msgstr "%sChyba: špatný počet parametrů pro příkaz \"%s\""
-
 msgid "List of proxies:"
 msgstr "Seznam proxy:"
 
@@ -762,10 +816,10 @@ msgstr "výchozí hodnota"
 msgid "(unknown)"
 msgstr "(neznámý)"
 
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%sOption \"%s\" not found (tip: you can use \"*\" at beginning and/or end of "
-"option to see a sublist)"
+"%sOption \"%s\" not found (tip: you can use wildcard \"*\" in option to see "
+"a sublist)"
 msgstr ""
 "%sVolba \"%s\" nenalezena (tip: můžete použít  \"*\" na začátku a/nebo konci "
 "volby pro zobrazení podlistu)"
@@ -796,6 +850,22 @@ msgstr[1] "%s%d%s volby nastavení nalezeny"
 msgstr[2] "%s%d%s voleb nastavení nalezeno"
 
 #, fuzzy, c-format
+msgid "Environment variable \"%s\" is not defined"
+msgstr "čtení - proměnná"
+
+#, fuzzy, c-format
+msgid "%sError: failed to set variable \"%s\": %s"
+msgstr "%sChyba: selhalo nastavení volby \"%s\""
+
+#, c-format
+msgid "Variable \"%s\" unset"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "%sError: failed to unset variable \"%s\": %s"
+msgstr "%sChyba: selhalo nastavení volby \"%s\""
+
+#, fuzzy, c-format
 msgid "%s%d%s option with value changed"
 msgid_plural "%s%d%s options with value changed"
 msgstr[0] "%s%d%s volba nastavení nalezena"
@@ -820,10 +890,6 @@ msgid "Option changed"
 msgstr "Volba změněna"
 
 #, c-format
-msgid "%sReset of all options is not allowed"
-msgstr ""
-
-#, c-format
 msgid "%sFailed to unset option \"%s\""
 msgstr "%sSelhalo odnastavení volby \"%s\""
 
@@ -833,6 +899,10 @@ msgstr "Volba resetována: "
 #, c-format
 msgid "Option removed: %s"
 msgstr "Volba odebrána: %s"
+
+#, c-format
+msgid "%sReset of all options is not allowed"
+msgstr ""
 
 #, c-format
 msgid "%d option(s) reset, %d option(s) removed"
@@ -855,6 +925,10 @@ msgid ""
 "%sCan't upgrade: WeeChat binary \"%s\" does not have execute permissions"
 msgstr ""
 "%sNemohu aktualizovat: binární soubor WeeChat \"%s\" nemá přáva pro spuštění"
+
+#, fuzzy, c-format
+msgid "%sNo binary specified"
+msgstr "Žádné pole nejsou definovány"
 
 #, c-format
 msgid "Upgrading WeeChat with binary file: \"%s\"..."
@@ -1048,11 +1122,13 @@ msgstr "řídit buffery"
 
 #, fuzzy
 msgid ""
-"list || clear [<number>|<name>|-merged|-all] || move|merge <number> || swap "
-"<number1>|<name1> [<number2>|<name2>] || unmerge [<number>|-all] || renumber "
-"[<number1> [<number2> [<start>]]] || close [<n1>[-<n2>]|<name>] || notify "
-"<level> || localvar || set <property> <value> || get <property> || <number>|"
-"<name>"
+"list || clear [<number>|<name>|-merged|-all [<number>|<name>...]] || move "
+"<number>|-|+ || swap <number1>|<name1> [<number2>|<name2>] || merge <number> "
+"|| unmerge [<number>|-all] || hide [<number>|<name>|-all [<number>|"
+"<name>...]] || unhide [<number>|<name>|-all [<number>|<name>...]] || "
+"renumber [<number1> [<number2> [<start>]]] || close [<n1>[-<n2>]|<name>] || "
+"notify <level> || localvar || set <property> <value> || get <property> || "
+"<number>|-|+|<name>"
 msgstr ""
 "list || clear [<číslo>|-merged|-all] || move|merge <číslo> || unmerge "
 "[<číslo>] || close [<n1>[-<n2>]] || notify <úroveň> || localvar || set "
@@ -1063,13 +1139,16 @@ msgid ""
 "    list: list buffers (without argument, this list is displayed)\n"
 "   clear: clear buffer content (number for a buffer, -merged for merged "
 "buffers, -all for all buffers, or nothing for current buffer)\n"
-"    move: move buffer in the list (may be relative, for example -1)\n"
+"    move: move buffer in the list (may be relative, for example -1); \"-\" = "
+"move to first buffer number, \"+\" = move to last buffer number + 1\n"
 "    swap: swap two buffers (swap with current buffer if only one number/name "
 "given)\n"
 "   merge: merge current buffer to another buffer (chat area will be mix of "
 "both buffers)\n"
 "          (by default ctrl-x switches between merged buffers)\n"
 " unmerge: unmerge buffer from other buffers which have same number\n"
+"    hide: hide the buffer\n"
+"  unhide: unhide the buffer\n"
 "renumber: renumber buffers (works only if option weechat.look."
 "buffer_auto_renumber is off)\n"
 "   close: close buffer (number/range or name is optional)\n"
@@ -1088,6 +1167,8 @@ msgid ""
 "          '-': relative jump, sub number to current\n"
 "          '*': jump to number, using option \"weechat.look."
 "jump_current_to_previous_buffer\"\n"
+"       -: jump to first buffer number\n"
+"       +: jump to last buffer number\n"
 "    name: jump to buffer by (partial) name\n"
 "\n"
 "Examples:\n"
@@ -1110,7 +1191,9 @@ msgid ""
 "  jump to #weechat:\n"
 "    /buffer #weechat\n"
 "  jump to next buffer:\n"
-"    /buffer +1"
+"    /buffer +1\n"
+"  jump to last buffer number:\n"
+"    /buffer +"
 msgstr ""
 "    list: vypsat seznam bufferů (pokud nejsou uvedeny argumenty bude vypsán "
 "tento seznam)\n"
@@ -1161,20 +1244,26 @@ msgid "define color aliases and display palette of colors"
 msgstr "definuje alias barvy a zobrazí paletu barev"
 
 #, fuzzy
-msgid "alias <color> <name> || unalias <color> || reset || -o"
+msgid ""
+"alias <color> <name> || unalias <color> || reset || term2rgb <color> || "
+"rgb2term <rgb> [<limit>] || -o"
 msgstr "alias <barva> <name> || unalias <barva> || reset"
 
 #, fuzzy
 msgid ""
-"  alias: add an alias for a color\n"
-"unalias: delete an alias\n"
-"  color: color number (greater than or equal to 0, max depends on terminal, "
+"   alias: add an alias for a color\n"
+" unalias: delete an alias\n"
+"   color: color number (greater than or equal to 0, max depends on terminal, "
 "commonly 63 or 255)\n"
-"   name: alias name for color (for example: \"orange\")\n"
-"  reset: reset all color pairs (required when no more color pairs are "
+"    name: alias name for color (for example: \"orange\")\n"
+"   reset: reset all color pairs (required when no more color pairs are "
 "available if automatic reset is disabled, see option weechat.look."
 "color_pairs_auto_reset)\n"
-"     -o: send terminal/colors info to current buffer as input\n"
+"term2rgb: convert a terminal color (0-255) to RGB color\n"
+"rgb2term: convert a RGB color to terminal color (0-255)\n"
+"   limit: number of colors to use in terminal table (starting from 0); "
+"default is 256\n"
+"      -o: send terminal/colors info to current buffer as input\n"
 "\n"
 "Without argument, this command displays colors in a new buffer.\n"
 "\n"
@@ -1204,15 +1293,20 @@ msgstr ""
 msgid "launch explicit WeeChat or plugin command"
 msgstr "pustit uvedený WeeChat nebo plugin příkaz"
 
-msgid "<plugin> <command>"
+#, fuzzy
+msgid "[-buffer <name>] <plugin> <command>"
 msgstr "<plugin> <příkaz>"
 
+#, fuzzy
 msgid ""
-" plugin: plugin name ('weechat' for WeeChat internal command)\n"
+"-buffer: execute the command on this buffer\n"
+" plugin: execute the command from this plugin; 'core' for a WeeChat command, "
+"'*' for automatic plugin (it depends on the buffer where the command is "
+"executed)\n"
 "command: command to execute (a '/' is automatically added if not found at "
 "beginning of command)"
 msgstr ""
-" plugin: jméno pluginu ('weechat' pro WeeChat vnitřní příkaz)\n"
+" plugin: jméno pluginu ('core' pro WeeChat vnitřní příkaz)\n"
 " příkaz: příkaz, který spustit ('/' je automaticky dodáno, pokud není "
 "nalezeno na začátku příkazu)"
 
@@ -1290,7 +1384,7 @@ msgstr ""
 "   term: zobrazit informace o terminálu a dostupných barvách\n"
 "windows: zobrazit strom oken"
 
-msgid "evaluate expression and send result to buffer"
+msgid "evaluate expression"
 msgstr ""
 
 msgid "[-n] <expression> || [-n] -c <expression1> <operator> <expression2>"
@@ -1301,7 +1395,7 @@ msgid ""
 "        -c: evaluate as condition: use operators and parentheses, return a "
 "boolean value (\"0\" or \"1\")\n"
 "expression: expression to evaluate, variables with format ${variable} are "
-"replaced (see below)\n"
+"replaced (see below); many commands can be separated by semicolons\n"
 "  operator: a logical or comparison operator:\n"
 "            - logical operators:\n"
 "                &&  boolean \"and\"\n"
@@ -1326,12 +1420,13 @@ msgid ""
 "  \"50\" > \"100\"  ==> 1\n"
 "\n"
 "Some variables are replaced in expression, using the format ${variable}, "
-"variable can be, by order of priority :\n"
-"  1. a color (format: \"color:xxx\")\n"
-"  2. an info (format: \"info:name,arguments\", arguments are optional)\n"
-"  3. an option (format: \"file.section.option\")\n"
-"  4. a local variable in buffer\n"
-"  5. a hdata name/variable (the value is automatically converted to string), "
+"variable can be, by order of priority:\n"
+"  1. a string with escaped chars (format: \"esc:xxx\" or \"\\xxx\")\n"
+"  2. a color (format: \"color:xxx\")\n"
+"  3. an info (format: \"info:name,arguments\", arguments are optional)\n"
+"  4. an option (format: \"file.section.option\")\n"
+"  5. a local variable in buffer\n"
+"  6. a hdata name/variable (the value is automatically converted to string), "
 "by default \"window\" and \"buffer\" point to current window/buffer.\n"
 "Format for hdata can be one of following:\n"
 "  hdata.var1.var2...: start with a hdata (pointer must be known), and ask "
@@ -1344,13 +1439,16 @@ msgid ""
 "For name of hdata and variables, please look at \"Plugin API reference\", "
 "function \"weechat_hdata_get\".\n"
 "\n"
-"Examples:\n"
+"Examples (simple strings):\n"
 "  /eval -n ${info:version}                 ==> 0.4.3\n"
 "  /eval -n ${weechat.look.scroll_amount}   ==> 3\n"
 "  /eval -n ${window}                       ==> 0x2549aa0\n"
 "  /eval -n ${window.buffer}                ==> 0x2549320\n"
 "  /eval -n ${window.buffer.full_name}      ==> core.weechat\n"
 "  /eval -n ${window.buffer.number}         ==> 1\n"
+"  /eval -n ${\\t}                           ==> <tab>\n"
+"\n"
+"Examples (conditions):\n"
 "  /eval -n -c ${window.buffer.number} > 2  ==> 0\n"
 "  /eval -n -c ${window.win_width} > 100    ==> 1\n"
 "  /eval -n -c (8 > 12) || (5 > 2)          ==> 1\n"
@@ -1367,9 +1465,10 @@ msgstr ""
 "filtrovat zprávy v bufferu, pro jejich schováni/zobrazení podle tagů nebo "
 "regulárního výrazu"
 
+#, fuzzy
 msgid ""
-"list || enable|disable|toggle [<name>] || add <name> <buffer>[,<buffer>...] "
-"<tags> <regex> || del <name>|-all"
+"list || enable|disable|toggle [<name>|@] || add <name> <buffer>[,"
+"<buffer>...] <tags> <regex> || rename <name> <new_name> || del <name>|-all"
 msgstr ""
 "list || enable|disable|toggle [<jméno>] || add <jméno> <buffer>[,"
 "<buffer>...] <tags> <regex> || del <jméno>|-all"
@@ -1380,8 +1479,9 @@ msgid ""
 " enable: enable filters (filters are enabled by default)\n"
 "disable: disable filters\n"
 " toggle: toggle filters\n"
-"   name: filter name\n"
+"   name: filter name (\"@\" = enable/disable all filters in current buffer)\n"
 "    add: add a filter\n"
+" rename: rename a filter\n"
 "    del: delete a filter\n"
 "   -all: delete all filters\n"
 " buffer: comma separated list of buffers where filter is active:\n"
@@ -1389,12 +1489,14 @@ msgid ""
 "#weechat\")\n"
 "         - \"*\" means all buffers\n"
 "         - a name starting with '!' is excluded\n"
-"         - name can start or end with '*' to match many buffers\n"
+"         - wildcard \"*\" is allowed\n"
 "   tags: comma separated list of tags, for example \"irc_join,irc_part,"
 "irc_quit\"\n"
 "         - logical \"and\": use \"+\" between tags (for example: \"nick_toto"
 "+irc_action\")\n"
-"         - tags can start or end with '*'\n"
+"         - wildcard \"*\" is allowed\n"
+"         - if tag starts with '!', then it is excluded and must NOT be in "
+"message\n"
 "  regex: POSIX extended regular expression to search in line\n"
 "         - use '\\t' to separate prefix from message, special chars like '|' "
 "must be escaped: '\\|'\n"
@@ -1412,6 +1514,7 @@ msgid ""
 "  notify_none, notify_message, notify_private, notify_highlight,\n"
 "  nick_xxx (xxx is nick in message), prefix_nick_ccc (ccc is color of "
 "nick),\n"
+"  host_xxx (xxx is username + host in message),\n"
 "  irc_xxx (xxx is command name or number, see /server raw or /debug tags),\n"
 "  irc_numeric, irc_error, irc_action, irc_ctcp, irc_ctcp_reply, "
 "irc_smart_filter, away_info.\n"
@@ -1563,7 +1666,6 @@ msgid ""
 "  history_global_previous: recall previous command in global history\n"
 "  history_global_next: recall next command in global history\n"
 "  jump_smart: jump to next buffer with activity\n"
-"  jump_last_buffer: jump to last buffer\n"
 "  jump_last_buffer_displayed: jump to last buffer displayed (before last "
 "jump to a buffer)\n"
 "  jump_previously_visited_buffer: jump to previously visited buffer\n"
@@ -1582,6 +1684,7 @@ msgid ""
 "  zoom_merged_buffer: zoom on merged buffer\n"
 "  insert: insert text in command line (escaped chars are allowed, see /help "
 "print)\n"
+"  send: send text to the buffer\n"
 "  paste_start: start paste (bracketed paste mode)\n"
 "  paste_stop: stop paste (bracketed paste mode)\n"
 "\n"
@@ -1679,7 +1782,7 @@ msgid ""
 "   bar(xxx): bar \"xxx\"\n"
 "    item(*): any bar item\n"
 "  item(xxx): bar item \"xxx\"\n"
-"The key can start or end with '*' to match many mouse events.\n"
+"Wildcard \"*\" is allowed in key to match many mouse events.\n"
 "A special value for command with format \"hsignal:name\" can be used for "
 "context mouse, this will send the hsignal \"name\" with the focus hashtable "
 "as argument.\n"
@@ -1784,20 +1887,22 @@ msgstr ""
 msgid "execute a command silently"
 msgstr "vykonat příkaz v tichosti"
 
-msgid "[-current | -buffer <name> | -all] <command>"
+#, fuzzy
+msgid "[-core | -current | -buffer <name>] <command>"
 msgstr "[-current | -buffer <jméno> | -all] <příkaz>"
 
+#, fuzzy
 msgid ""
+"   -core: no output on WeeChat core buffer\n"
 "-current: no output on current buffer\n"
 " -buffer: no output on specified buffer\n"
 "    name: full buffer name (examples: \"irc.server.freenode\", \"irc."
 "freenode.#weechat\")\n"
-"    -all: no output on ALL buffers\n"
 " command: command to execute silently (a '/' is automatically added if not "
 "found at beginning of command)\n"
 "\n"
-"If no target is specified (-current, -buffer or -all), then default is to "
-"mute WeeChat core buffer only.\n"
+"If no target is specified (-core, -current or -buffer), then default is to "
+"mute all buffers.\n"
 "\n"
 "Examples:\n"
 "  config save:\n"
@@ -1868,25 +1973,30 @@ msgstr "barva textu pro jeméno bufferu"
 
 msgid ""
 "[-buffer <number>|<name>] [-core] [-escape] [-date <date>] [-tags <tags>] [-"
-"action|-error|-join|-network|-quit] <text> || -stdout|-stderr <text>"
+"action|-error|-join|-network|-quit] [<text>] || -stdout|-stderr [<text>] || -"
+"beep"
 msgstr ""
 
 msgid ""
-"-buffer: the buffer where text is displayed (default: current buffer)\n"
-"  -core: alias of \"-buffer core.weechat\"\n"
-"-escape: interpret escaped chars (for example \\a, \\07, \\x07)\n"
-"  -date: message date, format can be:\n"
-"           -n: 'n' seconds before now\n"
-"           +n: 'n' seconds in the future\n"
-"            n: 'n' seconds since the Epoch (see man time)\n"
-"           date/time (ISO 8601): yyyy-mm-ddThh:mm:ss, example: "
+" -buffer: display text in this buffer (default: buffer where command is "
+"executed)\n"
+"   -core: alias of \"-buffer core.weechat\"\n"
+"-current: display text on current buffer\n"
+" -escape: interpret escaped chars (for example \\a, \\07, \\x07)\n"
+"   -date: message date, format can be:\n"
+"            -n: 'n' seconds before now\n"
+"            +n: 'n' seconds in the future\n"
+"             n: 'n' seconds since the Epoch (see man time)\n"
+"            date/time (ISO 8601): yyyy-mm-ddThh:mm:ss, example: "
 "2014-01-19T04:32:55\n"
-"           time: hh:mm:ss (example: 04:32:55)\n"
-"  -tags: comma-separated list of tags (see /help filter for a list of tags "
+"            time: hh:mm:ss (example: 04:32:55)\n"
+"   -tags: comma-separated list of tags (see /help filter for a list of tags "
 "most commonly used)\n"
-"   text: text to display (prefix and message must be separated by \\t)\n"
-"-stdout: display text on stdout (escaped chars are interpreted)\n"
-"-stderr: display text on stderr (escaped chars are interpreted)\n"
+"    text: text to display (prefix and message must be separated by \"\\t\", "
+"if text starts with \"-\", then add a \"\\\" before)\n"
+" -stdout: display text on stdout (escaped chars are interpreted)\n"
+" -stderr: display text on stderr (escaped chars are interpreted)\n"
+"   -beep: alias of \"-stderr \\a\"\n"
 "\n"
 "The options -action ... -quit use the prefix defined in options \"weechat."
 "look.prefix_*\".\n"
@@ -1907,7 +2017,7 @@ msgid ""
 "  display a snowman (U+2603):\n"
 "    /print -escape \\u2603\n"
 "  send alert (BEL):\n"
-"    /print -stderr \\a"
+"    /print -beep"
 msgstr ""
 
 msgid "manage proxies"
@@ -2071,7 +2181,7 @@ msgid ""
 "  - options weechat.startup.command_{before|after}_plugins\n"
 "  - proxy options: username, password\n"
 "  - irc server options: autojoin, command, password, sasl_{username|"
-"password}\n"
+"password}, username, realname\n"
 "  - option relay.network.password\n"
 "  - command /eval.\n"
 "\n"
@@ -2090,27 +2200,28 @@ msgid ""
 "data.freenode}"
 msgstr ""
 
-msgid "set config options"
-msgstr "nastaví konfigurační možnosti"
+msgid "set config options and environment variables"
+msgstr ""
 
 #, fuzzy
-msgid "[<option> [<value>]] || diff [<option> [<option>...]]"
+msgid ""
+"[<option> [<value>]] || diff [<option> [<option>...]] || env [<variable> "
+"[<value>]]"
 msgstr "[<možnost> [<hodnota>]]"
 
 #, fuzzy
 msgid ""
-"option: name of an option (can start or end with '*' to list many options)\n"
-" value: new value for option\n"
+"option: name of an option (wildcard \"*\" is allowed)\n"
+" value: new value for option, according to type:\n"
+"          boolean: on, off or toggle\n"
+"          integer: number, ++number or --number\n"
+"           string: any string (\"\" for empty string)\n"
+"            color: color name, ++number or --number\n"
+"        Note: for all types, you can use null to remove option value "
+"(undefined value). This works only for some special plugin variables.\n"
 "  diff: display only changed options\n"
-"\n"
-"New value can be, according to variable type:\n"
-"  boolean: on, off or toggle\n"
-"  integer: number, ++number or --number\n"
-"   string: any string (\"\" for empty string)\n"
-"    color: color name, ++number or --number\n"
-"\n"
-"For all types, you can use null to remove option value (undefined value). "
-"This works only for some special plugin variables.\n"
+"   env: display or set an environment variable (use value \"\" to unset a "
+"variable)\n"
 "\n"
 "Examples:\n"
 "  display options about highlight:\n"
@@ -2120,7 +2231,14 @@ msgid ""
 "  display changed options:\n"
 "    /set diff\n"
 "  display changed options in irc plugin:\n"
-"    /set diff irc.*"
+"    /set diff irc.*\n"
+"  display value of environment variable LANG:\n"
+"    /set env LANG\n"
+"  set environment variable LANG and use it:\n"
+"    /set env LANG fr_FR.UTF-8\n"
+"    /upgrade\n"
+"  unset environment variable ABC:\n"
+"    /set env ABC \"\""
 msgstr ""
 "možnost: jméno nastavení (může začínat nebo končit '*' pro výpis více "
 "nastavení)\n"
@@ -2145,11 +2263,13 @@ msgstr ""
 msgid "unset/reset config options"
 msgstr "odnastavit/resetovat konfigurační možnosti"
 
-msgid "<option>"
-msgstr "<volba>"
+msgid "<option> || -mask <option>"
+msgstr ""
 
+#, fuzzy
 msgid ""
-"option: name of an option (may begin or end with \"*\" to mass-reset "
+"option: name of an option\n"
+" -mask: use a mask in option (wildcard \"*\" is allowed to mass-reset "
 "options, use carefully!)\n"
 "\n"
 "According to option, it's reset (for standard options) or removed (for "
@@ -2159,7 +2279,7 @@ msgid ""
 "  reset one option:\n"
 "    /unset weechat.look.item_time_format\n"
 "  reset all color options:\n"
-"    /unset weechat.color.*"
+"    /unset -mask weechat.color.*"
 msgstr ""
 "volba: jméno volby (může začínat nebo končit \"*\" pro hromadný reset voleb, "
 "používejte obezřetně!)\n"
@@ -2307,7 +2427,7 @@ msgid ""
 "|| scroll_horiz [-window <number>] [+/-]<value>[%] || scroll_up|scroll_down|"
 "scroll_top|scroll_bottom|scroll_beyond_end|scroll_previous_highlight|"
 "scroll_next_highlight|scroll_unread [-window <number>] || swap [-window "
-"<number>] [up|down|left|right] || zoom[-window <number>]"
+"<number>] [up|down|left|right] || zoom[-window <number>] || bare [<delay>]"
 msgstr ""
 "list || -1|+1|b#|up|down|left|right || splith|splitv [<pct>] || resize "
 "[+/-]<pct> || balance || merge [all] || page_up|page_down || refresh || "
@@ -2352,6 +2472,8 @@ msgid ""
 "         swap: swap buffers of two windows (with optional direction for "
 "target window)\n"
 "         zoom: zoom on window\n"
+"         bare: toggle bare display (with optional delay in seconds for "
+"automatic return to standard display mode)\n"
 "\n"
 "For splith and splitv, pct is a percentage which represents size of new "
 "window, computed with current window as size reference. For example 25 means "
@@ -2367,7 +2489,9 @@ msgid ""
 "  scroll to beginning of current day:\n"
 "    /window scroll -d\n"
 "  zoom on window #2:\n"
-"    /window zoom -window 2"
+"    /window zoom -window 2\n"
+"  enable bare display for 2 seconds:\n"
+"    /window bare 2"
 msgstr ""
 "         list: vypíše otevřená okna (bez paramatru implikuje tenhle list)\n"
 "           -1: přepne na přechozí okno\n"
@@ -2410,10 +2534,6 @@ msgstr ""
 "    /window scroll -2d\n"
 "  posunout na začátek aktuálního dne:\n"
 "    /window scroll -d"
-
-#, c-format
-msgid "%sError: missing arguments for \"%s\" command"
-msgstr "%sChyba: chybí argumenty pro příkaz \"%s\""
 
 msgid "names of buffers"
 msgstr "jména bufferů"
@@ -2514,9 +2634,23 @@ msgstr "jména polí"
 msgid "names of secured data (file sec.conf, section data)"
 msgstr ""
 
+#, fuzzy
+msgid "environment variables"
+msgstr "čtení - proměnná"
+
+#, fuzzy
+msgid "value of an environment variable"
+msgstr "čtení - proměnná"
+
 msgid ""
-"Warning: you should now issue /save to write \"save_config_on_exit\" option "
-"in configuration file"
+"Warning: option weechat.look.save_config_on_exit is disabled, so the option "
+"weechat.look.save_layout_on_exit is ignored"
+msgstr ""
+
+#, fuzzy
+msgid ""
+"Warning: you should now issue /save to write option weechat.look."
+"save_config_on_exit in configuration file"
 msgstr ""
 "Upozornění: mel by ste nyní provést /save pro zapsání volby "
 "\"save_config_on_exit\" do konfiguračního souboru"
@@ -2805,19 +2939,21 @@ msgstr ""
 "písmena, například: \"FlashCode|flashy\""
 
 msgid ""
-"comma separated list of tags to highlight; case insensitive comparison; each "
-"tag can start or end with \"*\" to match more than one tag; many tags can be "
-"separated by \"+\" to make a logical \"and\" between tags; examples: "
-"\"nick_flashcode\" for messages from nick \"FlashCode\", \"irc_notice"
-"+nick_toto*\" for notices from a nick starting with \"toto\""
+"comma separated list of tags to highlight; case insensitive comparison; "
+"wildcard \"*\" is allowed in each tag; many tags can be separated by \"+\" "
+"to make a logical \"and\" between tags; examples: \"nick_flashcode\" for "
+"messages from nick \"FlashCode\", \"irc_notice+nick_toto*\" for notices from "
+"a nick starting with \"toto\""
 msgstr ""
 
 msgid ""
-"add any buffer to hotlist (including current or visible buffers) if local "
-"variable \"away\" is set on buffer"
+"conditions to add a buffer in hotlist (if notify level is OK for the "
+"buffer); you can use in these conditions: \"window\" (current window "
+"pointer), \"buffer\" (buffer pointer to add in hotlist), \"priority\" (0 = "
+"low, 1 = message, 2 = private, 3 = highlight); by default a buffer is added "
+"to hotlist if you are away, or if the buffer is not visible on screen (not "
+"displayed in any window)"
 msgstr ""
-"přidat do hotlistu jakýkoliv buffer (včetně aktuálního nebo viditelných "
-"bufferů), když je nastavena hodnota \"away\" v bufferu"
 
 msgid "string displayed between buffers in hotlist"
 msgstr "řetězec zobrazený mezi buffery v hotlistu"
@@ -2860,6 +2996,11 @@ msgid "text displayed at the beginning of the hotlist"
 msgstr "řetězec zobrazený mezi buffery v hotlistu"
 
 msgid ""
+"remove buffers in hotlist: buffer = remove buffer by buffer, merged = remove "
+"all visible merged buffers at once"
+msgstr ""
+
+msgid ""
 "if set, uses short names to display buffer names in hotlist (start after "
 "first '.' in name)"
 msgstr ""
@@ -2867,13 +3008,11 @@ msgstr ""
 "hotlistu (začíná po první '.' ve jméně)"
 
 msgid ""
-"hotlist sort type (group_time_asc (default), group_time_desc, "
-"group_number_asc, group_number_desc, number_asc, number_desc)"
+"sort of hotlist: group_time_*: group by notify level (highlights first) then "
+"sort by time, group_number_*: group by notify level (highlights first) then "
+"sort by number, number_*: sort by number; asc = ascending sort, desc = "
+"descending sort"
 msgstr ""
-"druh řazení hotlistu (group_time_asc [skupina_čas_vzestupně] (výchozí), "
-"group_time_desc [skupina_čas_sestupne], group_number_asc "
-"[skupina_číslo_vzestupně], group_number_desc [skupina_číslo_sestupně], "
-"number_asc [číslo_vzestupně], number_desc [číslo_sestupně] )"
 
 #, fuzzy
 msgid "text displayed at the end of the hotlist"
@@ -3060,6 +3199,16 @@ msgstr ""
 
 msgid "string displayed after prefix"
 msgstr "řetězec zobrazený za prefixem"
+
+msgid "exit the bare display mode on any changes in input"
+msgstr ""
+
+#, fuzzy
+msgid ""
+"time format in bare display mode (see man strftime for date/time specifiers)"
+msgstr ""
+"časový formát pro \"time\" položku panelu (viz. man strftime pro specifikaci "
+"data/času)"
 
 msgid "use a marker (line or char) on buffers to show first unread line"
 msgstr ""
@@ -3353,6 +3502,10 @@ msgstr ""
 "barva textu pro aktuální jméno bufferu ve stavovém řádku, pokud jsou data "
 "zabezpečeny protokolem jako je SSL"
 
+#, fuzzy
+msgid "text color for number of nicks in nicklist (status bar)"
+msgstr "barva textu pro počet zpráv v hotlistu (stavový řádek)"
+
 msgid "text color for current buffer number in status bar"
 msgstr "barva textu pro aktuální číslo bufferu ve stavovém řádku"
 
@@ -3483,11 +3636,12 @@ msgid ""
 "defined with command /proxy"
 msgstr ""
 
+#, fuzzy
 msgid ""
 "comma separated list of plugins to load automatically at startup, \"*\" "
 "means all plugins found, a name beginning with \"!\" is a negative value to "
-"prevent a plugin from being loaded, names can start or end with \"*\" to "
-"match several plugins (examples: \"*\" or \"*,!lua,!tcl\")"
+"prevent a plugin from being loaded, wildcard \"*\" is allowed in names "
+"(examples: \"*\" or \"*,!lua,!tcl\")"
 msgstr ""
 "čárkou rozdělený seznam pluginů pro automatické načtení při spuštění \"*\" "
 "znamená všechny nalezené pluginy, jméno začínající \"!\" je negativní "
@@ -3519,8 +3673,8 @@ msgid "FATAL: error initializing configuration options"
 msgstr "FATÁLNÍ: chyba při inicializaci konfiguračních nastavení"
 
 #, c-format
-msgid "Writing configuration file %s %s"
-msgstr "Zapisuji soubor s nastavením %s %s"
+msgid "Writing configuration file %s%s%s"
+msgstr "Zapisuji soubor s nastavením %s%s%s"
 
 msgid "(default options)"
 msgstr "(výchozí volby)"
@@ -3607,11 +3761,15 @@ msgid "End of command '%s', timeout reached (%.1fs)"
 msgstr "Konec příkazu '%s', vypršel časový limit (%.lfs)"
 
 #, c-format
+msgid "%sError sending signal %d to pid %d: %s"
+msgstr ""
+
+#, c-format
 msgid "%sYou can not write text in this buffer"
 msgstr "%sDo tohoto bufferu nemůžete zapisovat text"
 
-#, c-format
-msgid "%sError with command \"%s\" (try /help %s)"
+#, fuzzy, c-format
+msgid "%sError with command \"%s\" (help on command: /help %s)"
 msgstr "%sChyba s příkazem \"%s\" (zkuste /help %s)"
 
 #, fuzzy, c-format
@@ -3733,13 +3891,7 @@ msgstr "na"
 msgid "off"
 msgstr "off"
 
-msgid "Passphrase"
-msgstr ""
-
 msgid "Passphrase is set"
-msgstr ""
-
-msgid "Passphrase is NOT set"
 msgstr ""
 
 msgid "Secured data:"
@@ -3751,20 +3903,28 @@ msgstr ""
 msgid "No secured data set"
 msgstr ""
 
-msgid "bytes"
-msgstr "bajtů"
-
+#. TRANSLATORS: file size unit "kilobyte"
 msgid "KB"
 msgstr "KB"
 
+#. TRANSLATORS: file size unit "megabyte"
 msgid "MB"
 msgstr "MB"
 
+#. TRANSLATORS: file size unit "gigabyte"
 msgid "GB"
 msgstr "GB"
 
+#. TRANSLATORS: file size unit "terabyte"
+msgid "TB"
+msgstr ""
+
+#, fuzzy
 msgid "byte"
-msgstr "bajt"
+msgid_plural "bytes"
+msgstr[0] "bajt"
+msgstr[1] "bajt"
+msgstr[2] "bajt"
 
 #, c-format
 msgid "debug: removing file: %s"
@@ -3845,6 +4005,10 @@ msgstr ""
 "poslední verze)"
 
 #, c-format
+msgid "curl error %d (%s) (URL: \"%s\")\n"
+msgstr ""
+
+#, c-format
 msgid "%sError: invalid limit for resource \"%s\": %s (must be >= -1)"
 msgstr ""
 
@@ -3889,9 +4053,12 @@ msgstr ""
 "Obnovit barvy [q] Zavřít buffer | Klávesy: [alt-c] Dočasně přepnout na barvy "
 "terminálu"
 
-#, c-format
-msgid "WeeChat color pairs (in use: %d, left: %d):"
+#, fuzzy, c-format
+msgid "WeeChat color pairs auto-allocated (in use: %d, left: %d):"
 msgstr "Barevné páry WeeChat (použito: %d, zbývá: %d):"
+
+msgid "(press alt-c to see the colors you can use in options)"
+msgstr ""
 
 #, c-format
 msgid "Last auto reset of pairs: %s"
@@ -3915,13 +4082,6 @@ msgstr "Barvy Weechat (použité: %d, zbývá: %d):"
 
 msgid "Terminal lost, exiting WeeChat..."
 msgstr "Terminál ztracen, ukončuji WeeChat..."
-
-#, c-format
-msgid "Signal %s received, exiting WeeChat..."
-msgstr "Obdržen signál %s, ukončuji WeeChat..."
-
-msgid "Signal SIGHUP received, reloading configuration files"
-msgstr "Obdržen signál SIGHUP, znovunačítám konfigurační soubory"
 
 #, fuzzy
 msgid "Mouse is enabled"
@@ -4055,9 +4215,6 @@ msgstr[2] "normálních"
 msgid "Debug disabled for cursor mode"
 msgstr "Ladění vypnuto pro \"%s\""
 
-msgid "Error: not enough memory to add a buffer to hotlist"
-msgstr "Chyba: nedostatek paměti pro přidáni bufferu do hotlistu"
-
 #, fuzzy, c-format
 msgid "New key binding (context \"%s\"): %s%s => %s%s"
 msgstr "Nová klávesová zkratka: %s%s => %s%s"
@@ -4101,6 +4258,12 @@ msgstr "příkazy weechat"
 msgid "%s%s: error, circular reference when calling alias \"%s\""
 msgstr "%s%s: chyba, cyklický odkaz při volání aliasu \"%s\""
 
+msgid "List of aliases:"
+msgstr "Seznam aliasů:"
+
+msgid "No alias defined"
+msgstr "Žádné aliasy nejsou definovány"
+
 #, c-format
 msgid "%s%s: error creating alias \"%s\" => \"%s\""
 msgstr "%s%s: chyba vytváření aliasu \"%s\" => \"%s\""
@@ -4109,15 +4272,9 @@ msgstr "%s%s: chyba vytváření aliasu \"%s\" => \"%s\""
 msgid "Alias \"%s\" => \"%s\" created"
 msgstr "Alias \"%s\" => \"%s\" vytvořen"
 
-msgid "List of aliases:"
-msgstr "Seznam aliasů:"
-
 #, c-format
 msgid "No alias found matching \"%s\""
 msgstr "Žádný alias odpovídající \"%s\" nenalezen"
-
-msgid "No alias defined"
-msgstr "Žádné aliasy nejsou definovány"
 
 #, c-format
 msgid "%sAlias \"%s\" not found"
@@ -4140,7 +4297,7 @@ msgid ""
 "with target command)\n"
 "            note: you can use %%command to use completion of an existing "
 "command\n"
-"     alias: name of alias (can start or end with \"*\" for alias listing)\n"
+"     alias: name of alias (wildcard \"*\" is allowed)\n"
 "   command: command name with arguments (many commands can be separated by "
 "semicolons)\n"
 "\n"
@@ -4220,7 +4377,8 @@ msgstr "%s%s: chyba vytváření doplňování pro alias \"%s\": alias nenalezen
 msgid "alias pointer (optional)"
 msgstr "ukazatel aliasu (volitelné)"
 
-msgid "alias name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "alias name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
 
@@ -4435,8 +4593,8 @@ msgid "%s%s: error creating charset \"%s\" => \"%s\""
 msgstr "%s%s: chyba vytváření znakové sady \"%s\" => \"%s\""
 
 msgid ""
-"global decoding charset: charset used to decode incoming messages (if "
-"decoding fails, fallback is UTF-8 because it is the WeeChat internal charset)"
+"global decoding charset: charset used to decode incoming messages when they "
+"are not UTF-8 valid"
 msgstr ""
 
 msgid ""
@@ -4476,6 +4634,188 @@ msgstr ""
 " encode: změní kódovací znakovou sadu\n"
 "charset: nová znaková sada pro aktuální buffer\n"
 "  reset: resetovat znakové sady aktuálního bufferu"
+
+msgid "Execution of external commands in WeeChat"
+msgstr ""
+
+#, c-format
+msgid "%s: end of command %d (\"%s\"), return code: %d"
+msgstr ""
+
+#, c-format
+msgid "%s: unexpected end of command %d (\"%s\")"
+msgstr ""
+
+#, fuzzy
+msgid "Executed commands"
+msgstr "příkazy weechat"
+
+msgid "No command is running"
+msgstr ""
+
+#, fuzzy
+msgid "Commands:"
+msgstr "příkazy weechat"
+
+#. TRANSLATORS: format: hours + minutes, for example: 3h59
+#, c-format
+msgid "%dh%02d"
+msgstr ""
+
+#. TRANSLATORS: format: minutes + seconds, for example: 3m59
+#, c-format
+msgid "%dm%02d"
+msgstr ""
+
+#. TRANSLATORS: format: seconds, for example: 59s
+#, c-format
+msgid "%ds"
+msgstr ""
+
+#. TRANSLATORS: %s before "ago" is elapsed time, for example: "3m59"
+#, fuzzy, c-format
+msgid "  %s%s%s %d%s%s%s: %s\"%s%s%s\"%s (pid: %d, started %s ago)"
+msgstr "  %s[%s%d%s]%s (%s) %s%s%s (notifikace: %s)"
+
+#, fuzzy, c-format
+msgid "%s%s: command id \"%s\" not found"
+msgstr "%s%s: příkaz \"%s\" nenalezen:"
+
+#, fuzzy, c-format
+msgid "%s%s: command with id \"%s\" is not running any more"
+msgstr "%s%s: skript \"%s\" nenačten"
+
+#, c-format
+msgid "%s%s: invalid options in option exec.command.default_options"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "%s%s: failed to run command \"%s\""
+msgstr "%s%s: nemůžu spustit funkci \"%s\""
+
+#, fuzzy, c-format
+msgid "%d commands removed"
+msgstr "    napojené příkazy:"
+
+#, fuzzy, c-format
+msgid "%s%s: command with id \"%s\" is still running"
+msgstr "%s%s: příkaz \"%s\" nenalezen:"
+
+#, fuzzy, c-format
+msgid "Command \"%s\" removed"
+msgstr "Alias \"%s\" odebrán"
+
+#, fuzzy
+msgid "execute external commands"
+msgstr "vykonat příkaz v tichosti"
+
+msgid ""
+"-list || [-sh|-nosh] [-bg|-nobg] [-stdin|-nostdin] [-buffer <name>] [-l|-o|-"
+"n|-nf] [-cl|-nocl] [-sw|-nosw] [-ln|-noln] [-flush|-noflush] [-color ansi|"
+"auto|irc|weechat|strip] [-rc|-norc] [-timeout <timeout>] [-name <name>] [-"
+"pipe <command>] [-hsignal <name>] <command> || -in <id> <text> || -inclose "
+"<id> [<text>] || -signal <id> <signal> || -kill <id> || -killall || -set "
+"<id> <property> <value> || -del <id>|-all [<id>...]"
+msgstr ""
+
+msgid ""
+"   -list: list commands\n"
+"     -sh: use the shell to execute the command (WARNING: use this option "
+"ONLY if all arguments are safe, see option -nosh)\n"
+"   -nosh: do not use the shell to execute the command (required if the "
+"command has some unsafe data, for example the content of a message from "
+"another user) (default)\n"
+"     -bg: run process in background: do not display process output neither "
+"return code (not compatible with options -o/-n)\n"
+"   -nobg: catch process output and display return code (default)\n"
+"  -stdin: create a pipe for sending data to the process (with /exec -in/-"
+"inclose)\n"
+"-nostdin: do not create a pipe for stdin (default)\n"
+" -buffer: display/send output of command on this buffer (if the buffer is "
+"not found, a new buffer with name \"exec.exec.xxx\" is created)\n"
+"      -l: display locally output of command on buffer (default)\n"
+"      -o: send output of command to the buffer (not compatible with option -"
+"bg)\n"
+"      -n: display output of command in a new buffer (not compatible with "
+"option -bg)\n"
+"     -nf: display output of command in a new buffer with free content (no "
+"word-wrap, no limit on number of lines) (not compatible with option -bg)\n"
+"     -cl: clear the new buffer before displaying output\n"
+"   -nocl: append to the new buffer without clear (default)\n"
+"     -sw: switch to the output buffer (default)\n"
+"   -nosw: don't switch to the output buffer\n"
+"     -ln: display line numbers (default in new buffer only)\n"
+"   -noln: don't display line numbers\n"
+"  -flush: display output of command in real time (default)\n"
+"-noflush: display output of command after its end\n"
+"  -color: action on ANSI colors in output:\n"
+"             ansi: keep ANSI codes as-is\n"
+"             auto: convert ANSI colors to WeeChat/IRC (default)\n"
+"              irc: convert ANSI colors to IRC colors\n"
+"          weechat: convert ANSI colors to WeeChat colors\n"
+"            strip: remove ANSI colors\n"
+"     -rc: display return code (default)\n"
+"   -norc: don't display return code\n"
+"-timeout: set a timeout for the command (in seconds)\n"
+"   -name: set a name for the command (to name it later with /exec)\n"
+"   -pipe: send the output to a WeeChat/plugin command (line by line); if "
+"there are spaces in command/arguments, enclose them with double quotes; "
+"variable $line is replaced by the line (by default the line is added after "
+"the command, separated by a space) (not compatible with options -bg/-o/-n)\n"
+"-hsignal: send the output as a hsignal (to be used for example in a trigger) "
+"(not compatible with options -bg/-o/-n)\n"
+" command: the command to execute; if beginning with \"url:\", the shell is "
+"disabled and the content of URL is downloaded and sent as output\n"
+"      id: command identifier: either its number or name (if set with \"-name "
+"xxx\")\n"
+"     -in: send text on standard input of process\n"
+"-inclose: same as -in, but stdin is closed after (and text is optional: "
+"without text, the stdin is just closed)\n"
+" -signal: send a signal to the process; the signal can be an integer or one "
+"of these names: hup, int, quit, kill, term, usr1, usr2\n"
+"   -kill: alias of \"-signal <id> kill\"\n"
+"-killall: kill all running processes\n"
+"    -set: set a hook property (see function hook_set in plugin API "
+"reference)\n"
+"property: hook property\n"
+"   value: new value for hook property\n"
+"    -del: delete a terminated command\n"
+"    -all: delete all terminated commands\n"
+"\n"
+"Default options can be set in the option exec.command.default_options.\n"
+"\n"
+"Examples:\n"
+"  /exec -n ls -l /tmp\n"
+"  /exec -n ps xu | grep weechat\n"
+"  /exec -n -norc url:http://pastebin.com/raw.php?i=xxxxxxxx\n"
+"  /exec -nf -noln links -dump http://weechat.org/files/doc/devel/"
+"weechat_user.en.html\n"
+"  /exec -o uptime\n"
+"  /exec -pipe \"/print Machine uptime:\" uptime\n"
+"  /exec -n tail -f /var/log/messages\n"
+"  /exec -kill 0"
+msgstr ""
+
+msgid "ids (numbers and names) of executed commands"
+msgstr ""
+
+msgid ""
+"default options for command /exec (see /help exec); example: \"-nosh -bg\" "
+"to run all commands in background (no output), and without using the shell"
+msgstr ""
+
+msgid ""
+"delay for purging finished commands (in seconds, 0 = purge commands "
+"immediately, -1 = never purge)"
+msgstr ""
+
+#, fuzzy
+msgid "text color for a running command flag in list of commands"
+msgstr "barva textu pro akce ve vstupní řádce"
+
+#, fuzzy
+msgid "text color for a finished command flag in list of commands"
+msgstr "barva textu pro akce ve vstupní řádce"
 
 #, fuzzy
 msgid "FIFO pipe for remote control"
@@ -4520,6 +4860,58 @@ msgstr "%s%s: chyba při otevírání souboru, zavírám ho"
 msgid "name of FIFO pipe"
 msgstr "jméno FIFO roury"
 
+#, fuzzy, c-format
+msgid "%s%s: script \"%s\" already registered (register ignored)"
+msgstr "%s%s: server \"%s\" již existuje, nemohu jej vytvořít!"
+
+#, c-format
+msgid ""
+"%s%s: unable to register script \"%s\" (another script already exists with "
+"this name)"
+msgstr ""
+"%s%s: nemohu registrovat skript \"%s\" (jiný skript se stejným jménem již "
+"existuje)"
+
+#, c-format
+msgid "%s: registered script \"%s\", version %s (%s)"
+msgstr "%s: zaregistrován skript \"%s\", verze %s (%s)"
+
+msgid "Support of scheme scripts (with Guile)"
+msgstr ""
+
+#, c-format
+msgid "%s: stdout/stderr: %s%s"
+msgstr "%s: stdout/stderr: %s%s"
+
+#, c-format
+msgid "%s%s: function \"%s\" must return a valid value"
+msgstr "%s%s: funkce \"%s\" musí vracet korektní hodnotu"
+
+#, c-format
+msgid "%s%s: error in function \"%s\""
+msgstr "%s%s: chyba ve funkci \"%s\""
+
+#, c-format
+msgid "%s: loading script \"%s\""
+msgstr "%s: načítám skript \"%s\""
+
+#, c-format
+msgid "%s%s: function \"register\" not found (or failed) in file \"%s\""
+msgstr ""
+"%s%s: funkce \"register\" nebyla nalezena (nebo selhala) v souboru \"%s\""
+
+#, c-format
+msgid "%s: unloading script \"%s\""
+msgstr "%s: odebírám skript \"%s\""
+
+#, c-format
+msgid "%s: script \"%s\" unloaded"
+msgstr "%s: skript \"%s\" odebrán"
+
+#, c-format
+msgid "%s%s: script \"%s\" not loaded"
+msgstr "%s%s: skript \"%s\" nenačten"
+
 msgid "away"
 msgstr "pryč"
 
@@ -4551,9 +4943,13 @@ msgid ""
 msgstr ""
 "%s%s: odpojuji se od %d %s (SSL připojení není podporováno pro aktualizaci)"
 
-#, c-format
-msgid "%s%s: error with server from URL (\"%s\"), ignored"
-msgstr "%s%s: chyba se serverem z URL (\"%s\"), ignorován"
+#, fuzzy, c-format
+msgid ""
+"%s%s: unable to create temporary server \"%s\" (check if there is already a "
+"server with this name)"
+msgstr ""
+"%s%s: nemohu registrovat skript \"%s\" (jiný skript se stejným jménem již "
+"existuje)"
 
 #, c-format
 msgid ""
@@ -4604,10 +5000,6 @@ msgid "%s: server %s%s%s created (temporary server, NOT SAVED!)"
 msgstr "%s: server %s%s%s vytvořen (dočasný server, NEUKLÁDA SE!)"
 
 #, c-format
-msgid "%s%s: unable to create server \"%s\""
-msgstr "%s%s: nemohu vytvořit server \"%s\""
-
-#, c-format
 msgid "%sCTCP query to %s%s%s: %s%s%s%s%s"
 msgstr "%sCTCP dotaz pro %s%s%s: %s%s%s%s%s"
 
@@ -4618,10 +5010,6 @@ msgstr "%s%s: \"%s\" příkaz nemůže být spuštěn v bufferu serveru"
 #, fuzzy, c-format
 msgid "%s%s: unable to resolve local address of server socket: error %d %s"
 msgstr "%s%s: nemohu nastavit \"neblokovaci\" volbu na soket"
-
-#, c-format
-msgid "%s%s: wrong arguments for \"%s\" command"
-msgstr "%s%s: špatné parametry pro příkaz \"%s\""
 
 #, c-format
 msgid "%s%s: not connected to server \"%s\"!"
@@ -4646,10 +5034,6 @@ msgstr "%s: seznamu ignorací:"
 #, c-format
 msgid "%s: no ignore in list"
 msgstr "%s: žádné ignorování v seznamu"
-
-#, c-format
-msgid "%s%s: missing arguments for \"%s\" command"
-msgstr "%s%s: chybí argumenty pro příkaz \"%s\""
 
 #, c-format
 msgid "%s%s: ignore already exists"
@@ -4678,10 +5062,6 @@ msgstr "%s%s: ignorování nenalezeno"
 #, c-format
 msgid "%s%s: wrong ignore number"
 msgstr "%s%s: nekorektní číslo ignorování"
-
-#, c-format
-msgid "%s%s: unknown option for \"%s\" command"
-msgstr "%s%s: neznámá volba pro příkaz \"%s\""
 
 #, c-format
 msgid "%s%s: command \"%s\" must be executed on connected irc server"
@@ -4854,10 +5234,6 @@ msgstr ""
 "nebo WeeChat mohou být ztraceny!"
 
 #, c-format
-msgid "%s%s: wrong argument count for \"%s\" command"
-msgstr "%s%s: špatný počet parametrů pro příkaz \"%s\""
-
-#, c-format
 msgid "%s%s: you are not on channel \"%s\""
 msgstr "%s%s: nejste na kanálu \"%s\""
 
@@ -4867,8 +5243,8 @@ msgstr "najít informace o administrátorovi serveru"
 msgid "[<target>]"
 msgstr "[<cíl>]"
 
-msgid "target: server"
-msgstr "cíl: server"
+msgid "target: server name"
+msgstr "cíl: server jméno"
 
 msgid "execute a command on all channels of all connected servers"
 msgstr "vykonat příkaz na všech kanálech všech připojených serverů"
@@ -4879,8 +5255,7 @@ msgstr "[-current] [-exclude=<kanál>[,<kanál>...]] <příkaz> [<argumenty>]"
 #, fuzzy
 msgid ""
 " -current: execute command for channels of current server only\n"
-" -exclude: exclude some channels ('*' is allowed at beginning or end of "
-"channel name, to exclude many channels)\n"
+" -exclude: exclude some channels (wildcard \"*\" is allowed)\n"
 "  command: command to execute\n"
 "arguments: arguments for command (special variables $nick, $channel and "
 "$server are replaced by their value)\n"
@@ -4908,6 +5283,46 @@ msgstr ""
 "  říct 'hello' všude, kromě #weechat a kanálů začínajících #linux:\n"
 "    /allchan -exclude=#weechat,#linux* msg * hello"
 
+#, fuzzy
+msgid "execute a command on all private buffers of all connected servers"
+msgstr "vykonat příkaz na všech kanálech všech připojených serverů"
+
+#, fuzzy
+msgid "[-current] [-exclude=<nick>[,<nick>...]] <command> [<arguments>]"
+msgstr "[-current] [-exclude=<kanál>[,<kanál>...]] <příkaz> [<argumenty>]"
+
+#, fuzzy
+msgid ""
+" -current: execute command for private buffers of current server only\n"
+" -exclude: exclude some nicks (wildcard \"*\" is allowed)\n"
+"  command: command to execute\n"
+"arguments: arguments for command (special variables $nick, $channel and "
+"$server are replaced by their value)\n"
+"\n"
+"Examples:\n"
+"  execute '/me is testing' on all private buffers:\n"
+"    /allpv me is testing\n"
+"  say 'hello' everywhere but not for nick foo:\n"
+"    /allpv -exclude=foo msg * hello\n"
+"  say 'hello' everywhere but not for nick foo and nicks beginning with bar:\n"
+"    /allpv -exclude=foo,bar* msg * hello\n"
+"  close all private buffers:\n"
+"    /allpv close"
+msgstr ""
+" -current: vynechat příkaz pouze pro kanály aktuálního serveru\n"
+" -exclude: vynechat některé kanály ('*' je povolená na začátku nebo konci "
+"jména kanáku pro vynechání více kanálů)\n"
+"   příkaz: příkaz, který spustit\n"
+"argumenty: argumenty příkazu\n"
+"\n"
+"Příkaldy:\n"
+"  vynechat '/me is testing' na všech kanálech:\n"
+"    /allchan me is testing\n"
+"  říct 'hello' všude, kromě #weechat:\n"
+"    /allchan -exclude=#weechat msg * hello\n"
+"  říct 'hello' všude, kromě #weechat a kanálů začínajících #linux:\n"
+"    /allchan -exclude=#weechat,#linux* msg * hello"
+
 msgid "execute a command on all connected servers"
 msgstr "vykonat příkaz na všech připojených serverech"
 
@@ -4916,8 +5331,7 @@ msgstr "[-exclude=<server>[,<server>...]] <příkaz> [<argumenty>]"
 
 #, fuzzy
 msgid ""
-" -exclude: exclude some servers ('*' is allowed at beginning or end of "
-"server name, to exclude many servers)\n"
+" -exclude: exclude some servers (wildcard \"*\" is allowed)\n"
 "  command: command to execute\n"
 "arguments: arguments for command (special variables $nick, $channel and "
 "$server are replaced by their value)\n"
@@ -4949,8 +5363,8 @@ msgstr "[<kanál>] [<přezdívka> [<přezdívka>...]]"
 
 #, fuzzy
 msgid ""
-"channel: channel for ban\n"
-"   nick: user or host to ban\n"
+"channel: channel name\n"
+"   nick: nick or host\n"
 "\n"
 "Without argument, this command display ban list for current channel."
 msgstr ""
@@ -5025,8 +5439,9 @@ msgstr "poslat CTCP zprávu (Client-To-Client Protocol)"
 msgid "<target> <type> [<arguments>]"
 msgstr "<příjemce> <typ> [<argumenty>]"
 
+#, fuzzy
 msgid ""
-" target: nick or channel to send CTCP to\n"
+" target: nick or channel name to send CTCP to\n"
 "   type: CTCP type (examples: \"version\", \"ping\", ..)\n"
 "arguments: arguments for CTCP"
 msgstr ""
@@ -5040,8 +5455,9 @@ msgstr "opustit a znovu se připojit ke kanálu"
 msgid "[<channel>[,<channel>...]] [<message>]"
 msgstr "[<kanál>[,<kanál>...]] [<zpráva_části>]"
 
+#, fuzzy
 msgid ""
-"channel: channel name for cycle\n"
+"channel: channel name\n"
 "message: part message (displayed to other users)"
 msgstr ""
 "       kanál: jméno kanálu, který opustit\n"
@@ -5053,8 +5469,9 @@ msgstr "spustit DCC (přenos souboru nebo rozhovor)"
 msgid "chat <nick> || send <nick> <file>"
 msgstr "chat <přezdívka> || send <přezdívka> <soubor>"
 
+#, fuzzy
 msgid ""
-"nick: nick for chat or file\n"
+"nick: nick\n"
 "file: filename (on local host)\n"
 "\n"
 "Examples:\n"
@@ -5078,11 +5495,13 @@ msgstr "odebrat status polo-operátora kanálu z přezdívky (přezdívek)"
 msgid "<nick> [<nick>...]"
 msgstr "<přezdívka> [<přezdívka>...]"
 
+#, fuzzy
 msgid ""
-"nick: nick or mask (can start or end with \"*\" as wildcard)\n"
+"nick: nick or mask (wildcard \"*\" is allowed)\n"
 "   *: remove channel half-operator status from everybody on channel except "
 "yourself"
 msgstr ""
+"jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
 
 msgid "remove channel operator status from nick(s)"
 msgstr "odebrat status operátora kanálu z přezdívky (přezdívek)"
@@ -5091,27 +5510,26 @@ msgstr "odebrat status operátora kanálu z přezdívky (přezdívek)"
 msgid "<nick> [<nick>...] || * -yes"
 msgstr "<přezdívka> [<přezdívka>...]"
 
+#, fuzzy
 msgid ""
-"nick: nick or mask (can start or end with \"*\" as wildcard)\n"
+"nick: nick or mask (wildcard \"*\" is allowed)\n"
 "   *: remove channel operator status from everybody on channel except "
 "yourself"
 msgstr ""
+"jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
 
 msgid "remove voice from nick(s)"
 msgstr "odebrat hlas z přezdívky (přezdívek)"
 
 #, fuzzy
 msgid ""
-"nick: nick or mask (can start or end with \"*\" as wildcard)\n"
+"nick: nick or mask (wildcard \"*\" is allowed)\n"
 "   *: remove voice from everybody on channel"
 msgstr ""
 "jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
 
 msgid "shutdown the server"
 msgstr "vypnout server"
-
-msgid "target: server name"
-msgstr "cíl: server jméno"
 
 #, fuzzy
 msgid "disconnect from one or all IRC servers"
@@ -5123,10 +5541,10 @@ msgstr "[[<server>] <maska_serveru>]"
 
 #, fuzzy
 msgid ""
-"  server: server name to disconnect\n"
+"  server: internal server name\n"
 "    -all: disconnect from all servers\n"
 "-pending: cancel auto-reconnection on servers currently reconnecting\n"
-"  reason: reason for quit"
+"  reason: reason for the \"quit\""
 msgstr ""
 "server: jméno serveru pro odpojení\n"
 "  -all: odpojit se od všech serverů"
@@ -5134,10 +5552,12 @@ msgstr ""
 msgid "give channel half-operator status to nick(s)"
 msgstr "dát status polo-operátora kanálu přezdívce (přezdívkám)"
 
+#, fuzzy
 msgid ""
-"nick: nick or mask (can start or end with \"*\" as wildcard)\n"
+"nick: nick or mask (wildcard \"*\" is allowed)\n"
 "   *: give channel half-operator status to everybody on channel"
 msgstr ""
+"jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
 
 msgid "ignore nicks/hosts from servers or channels"
 msgstr "ignorovat přezdívky/hosty na serveru nebo kanálu"
@@ -5199,11 +5619,11 @@ msgid "<nick> [<nick>...] [<channel>]"
 msgstr "<přezdívka> [<přezdívka>...]"
 
 msgid ""
-"   nick: nick to invite\n"
-"channel: channel to invite"
+"   nick: nick\n"
+"channel: channel name"
 msgstr ""
-"přezdívka: přezdívka, kterou pozvat\n"
-"    kanál: kanál na kterou ji pozvat"
+"přezdívka: přezdívka\n"
+"    kanál: jméno kanálu"
 
 msgid "check if a nick is currently on IRC"
 msgstr "zkontrolovat jestli je přezdívka momentálně na IRC"
@@ -5244,32 +5664,34 @@ msgstr ""
 "  /join #protectedchan,#weechat key\n"
 "  /join -server freenode #weechat"
 
-msgid "forcibly remove a user from a channel"
-msgstr "násilně odebrat uživatele z kanálu"
+#, fuzzy
+msgid "kick a user out of a channel"
+msgstr "přinutit uživatele opustit kanál(y)"
 
 msgid "[<channel>] <nick> [<reason>]"
 msgstr "[<kanál>] <přezdívka> [<důvod>]"
 
 #, fuzzy
 msgid ""
-"channel: channel where user is\n"
-"   nick: nick to kick\n"
-" reason: reason for kick (special variables $nick, $channel and $server are "
-"replaced by their value)"
+"channel: channel name\n"
+"   nick: nick\n"
+" reason: reason (special variables $nick, $channel and $server are replaced "
+"by their value)"
 msgstr ""
 "    kanál: kanál na kterém je uživatel\n"
 "přezdívka: přezdívka, kterou vykopnout\n"
 "    důvod: důvod pro vykopnutí"
 
-msgid "kicks and bans a nick from a channel"
-msgstr "vyhodit a zakázat přezdívku na kanálu"
+#, fuzzy
+msgid "kick a user out of a channel and ban the host"
+msgstr "přinutit uživatele opustit kanál(y)"
 
 #, fuzzy
 msgid ""
-"channel: channel where user is\n"
-"   nick: nick to kick and ban\n"
-" reason: reason for kick (special variables $nick, $channel and $channel are "
-"replaced by their value)\n"
+"channel: channel name\n"
+"   nick: nick\n"
+" reason: reason (special variables $nick, $channel and $server are replaced "
+"by their value)\n"
 "\n"
 "It is possible to kick/ban with a mask, nick will be extracted from mask and "
 "replaced by \"*\".\n"
@@ -5292,15 +5714,16 @@ msgstr ""
 msgid "close client-server connection"
 msgstr "zavřít spojení klient-server"
 
-msgid "<nick> <reason>"
+#, fuzzy
+msgid "<nick> [<reason>]"
 msgstr "<přezdívka> <důvod>"
 
 msgid ""
-"  nick: nick to kill\n"
-"reason: reason for kill"
+"  nick: nick\n"
+"reason: reason"
 msgstr ""
-"přezdívka: přezdívka, kterou zabít\n"
-"    důvod: důvod pro zabití"
+"přezdívka: přezdívka\n"
+"    důvod: důvod"
 
 msgid "list all servernames which are known by the server answering the query"
 msgstr ""
@@ -5493,9 +5916,10 @@ msgstr "poslat notifikační zprávu uživateli"
 msgid "[-server <server>] <target> <text>"
 msgstr "[-server <server>] <příjemce> <text>"
 
+#, fuzzy
 msgid ""
 "server: send to this server (internal name)\n"
-"target: nick or channel\n"
+"target: nick or channel name\n"
 "  text: text to send"
 msgstr ""
 "  server: poslat tomuto serveru (vnitřní jméno)\n"
@@ -5552,10 +5976,12 @@ msgstr ""
 msgid "give channel operator status to nick(s)"
 msgstr "dát status operátora kanálu přezdívce (přezdívkám)"
 
+#, fuzzy
 msgid ""
-"nick: nick or mask (can start or end with \"*\" as wildcard)\n"
+"nick: nick or mask (wildcard \"*\" is allowed)\n"
 "   *: give channel operator status to everybody on channel"
 msgstr ""
+"jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
 
 msgid "get operator privileges"
 msgstr "dát práva operátora"
@@ -5613,14 +6039,15 @@ msgstr "poslat soukromou zprávu přezdívce"
 msgid "[-server <server>] <nick>[,<nick>...] [<text>]"
 msgstr "[-server <server>] <přezdívka> [<text>]"
 
+#, fuzzy
 msgid ""
 "server: send to this server (internal name)\n"
-"  nick: nick for private conversation\n"
+"  nick: nick\n"
 "  text: text to send"
 msgstr ""
-"   server: poslat na tento server (vnitřní jméno)\n"
-"přezdívka: přezdívka pro soukromé spojení\n"
-"     text: text, který poslat"
+"  server: poslat tomuto serveru (vnitřní jméno)\n"
+"příjemce: přezdívka nebo kanál\n"
+"    text: text, který se má poslat"
 
 #, fuzzy
 msgid "quiet nicks or hosts"
@@ -5628,8 +6055,8 @@ msgstr "zruší zakázání pro přezdívku nebo hosta"
 
 #, fuzzy
 msgid ""
-"channel: channel for quiet\n"
-"   nick: user or host to quiet\n"
+"channel: channel name\n"
+"   nick: nick or host\n"
 "\n"
 "Without argument, this command display quiet list for current channel."
 msgstr ""
@@ -5655,8 +6082,9 @@ msgstr "znovu připojit k serveru/serverům"
 msgid "<server> [<server>...] [-nojoin] [-switch] || -all [-nojoin] [-switch]"
 msgstr "<server> [<server>...] [-nojoin] [-switch] || -all [-nojoin] [-switch]"
 
+#, fuzzy
 msgid ""
-" server: server name to reconnect\n"
+" server: server to reconnect (internal name)\n"
 "   -all: reconnect to all servers\n"
 "-nojoin: do not join any channel (even if autojoin is enabled on server)\n"
 "-switch: switch to next server address"
@@ -5676,6 +6104,10 @@ msgstr "[<volba>]"
 msgid "option: extra option, for some servers"
 msgstr "volba: extra volba pro některé servery"
 
+#, fuzzy
+msgid "force a user to leave a channel"
+msgstr "přinutit uživatele opustit kanál(y)"
+
 msgid "tell the server to restart itself"
 msgstr "říct serveru, aby se restartoval"
 
@@ -5684,13 +6116,6 @@ msgstr "násilně připojit uživatele ke kanálu/kanálům"
 
 msgid "<nick> <channel>[,<channel>...]"
 msgstr "<přezdívka> <kanál>[,<kanál>...]"
-
-msgid ""
-"   nick: nick\n"
-"channel: channel name"
-msgstr ""
-"přezdívka: přezdívka\n"
-"    kanál: jméno kanálu"
 
 msgid "change mode on channel, without having operator status"
 msgstr "změnit mód kanálu, bez nutnosti mít operátorské oprávnění"
@@ -5724,12 +6149,8 @@ msgstr "přinutit uživatele opustit kanál(y)"
 msgid "force a user to quit server with a reason"
 msgstr "přinutit uživatele opustit server s odůvodněním"
 
-msgid ""
-"  nick: nick\n"
-"reason: reason"
-msgstr ""
-"přezdívka: přezdívka\n"
-"    důvod: důvod"
+msgid "<nick> <reason>"
+msgstr "<přezdívka> <důvod>"
 
 msgid "register a new service"
 msgstr "zaregistrovat novou službu"
@@ -5850,9 +6271,10 @@ msgstr "odpojit spojení serveru"
 msgid "<server> <comment>"
 msgstr "<server> <komentář>"
 
+#, fuzzy
 msgid ""
 " server: server name\n"
-"comment: comment for quit"
+"comment: comment"
 msgstr ""
 "  server: jméno serveru\n"
 "komentář: komentář pro ukončení"
@@ -5901,9 +6323,10 @@ msgstr "získat/nastavit téma kanálu"
 msgid "[<channel>] [<topic>|-delete]"
 msgstr "[<kanál>] [<téma>|-delete]"
 
+#, fuzzy
 msgid ""
 "channel: channel name\n"
-"  topic: new topic for channel\n"
+"  topic: new topic\n"
 "-delete: delete channel topic"
 msgstr ""
 "  kanál: jméno kanálu\n"
@@ -5919,12 +6342,17 @@ msgstr "zruší zakázání pro přezdívku nebo hosta"
 msgid "[<channel>] <nick> [<nick>...]"
 msgstr "[<kanál>] <přezdívka> [<přezdívka>...]"
 
+#, fuzzy
 msgid ""
-"channel: channel for unban\n"
-"   nick: user or host to unban"
+"channel: channel name\n"
+"   nick: nick or host"
 msgstr ""
 "    kanál: kanál pro zrušení zakázání\n"
 "přezdívka: uživatel nebo host, kterému zrušit zakázání"
+
+#, fuzzy
+msgid "unquiet nicks or hosts"
+msgstr "zruší zakázání pro přezdívku nebo hosta"
 
 msgid "return a list of information about nicks"
 msgstr "vrátí seznam informací o přezdívkách"
@@ -5950,7 +6378,7 @@ msgstr "dá hlas přezdívce/přezdívkám"
 
 #, fuzzy
 msgid ""
-"nick: nick or mask (can start or end with \"*\" as wildcard)\n"
+"nick: nick or mask (wildcard \"*\" is allowed)\n"
 "   *: give voice to everybody on channel"
 msgstr ""
 "jméno aliasu (může začínat nebo končit \"*\" jako zástupný znak) (volitelné)"
@@ -6007,7 +6435,10 @@ msgid ""
 "\n"
 "Without argument, this command will do a whois on:\n"
 "- your own nick if buffer is a server/channel\n"
-"- remote nick if buffer is a private."
+"- remote nick if buffer is a private.\n"
+"\n"
+"If option irc.network.whois_double_nick is enabled, two nicks are sent (if "
+"only one nick is given), to get idle time in answer."
 msgstr ""
 
 msgid "ask for information about a nick which no longer exists"
@@ -6016,8 +6447,9 @@ msgstr "dotázat se na informace o přezdívce, která již neexistuje"
 msgid "<nick>[,<nick>...] [<count> [<target>]]"
 msgstr "<přezdívka>[,<přezdívka>...] [<počet> [<cíl>]]"
 
+#, fuzzy
 msgid ""
-"  nick: nick to search\n"
+"  nick: nick\n"
 " count: number of replies to return (full search if negative number)\n"
 "target: reply should match this mask"
 msgstr ""
@@ -6025,10 +6457,6 @@ msgstr ""
 "    počet: počet odpovědí, které vrátit (negativní číslo způsobí úplné "
 "vyhledávání)\n"
 "      cíl: odpověď musí odpovídat této masce"
-
-#, c-format
-msgid "%s%s: too few arguments for \"%s\" command"
-msgstr "%s%s: příliš málo parametrů pro příkaz \"%s\""
 
 #, c-format
 msgid "%s%s: command \"%s\" must be executed on irc buffer (server or channel)"
@@ -6173,9 +6601,9 @@ msgstr "velikost klíče použitého při použití výměny klíčů Diffie Hel
 
 msgid ""
 "SHA1 fingerprint of certificate which is trusted and accepted for the server "
-"(it must be exactly 40 hexadecimal digits without separators); if this "
-"option is set, the other checks on certificates are NOT performed (option "
-"\"ssl_verify\")"
+"(it must be exactly 40 hexadecimal digits without separators); many "
+"fingerprints can be separated by commas; if this option is set, the other "
+"checks on certificates are NOT performed (option \"ssl_verify\")"
 msgstr ""
 
 #, fuzzy
@@ -6190,7 +6618,7 @@ msgstr "příkaz spuštěný při startu WeeChat, před načtením pluginů"
 msgid ""
 "comma-separated list of client capabilities to enable for server if they are "
 "available; capabilities supported by WeeChat are: multi-prefix, userhost-in-"
-"names (example: \"multi-prefix,userhost-in-names\")"
+"names, away-notify (example: \"multi-prefix,userhost-in-names,away-notify\")"
 msgstr ""
 
 msgid ""
@@ -6222,11 +6650,13 @@ msgstr "doba (v sekundách) před novým zkušením znovupřipojení na server"
 msgid "nicknames to use on server (separated by comma)"
 msgstr "přezdívky použité na serveru (oddělené čárkami)"
 
-msgid "user name to use on server"
-msgstr "uživatelské jméno použité na serveru"
+#, fuzzy
+msgid "user name to use on server (note: content is evaluated, see /help eval)"
+msgstr "příkaz spuštěný při startu WeeChat, před načtením pluginů"
 
-msgid "real name to use on server"
-msgstr "skutečné jméno použité na serveru"
+#, fuzzy
+msgid "real name to use on server (note: content is evaluated, see /help eval)"
+msgstr "příkaz spuštěný při startu WeeChat, před načtením pluginů"
 
 msgid ""
 "custom local hostname/IP for server (optional, if empty local hostname is "
@@ -6401,9 +6831,9 @@ msgid "display host in part/quit messages"
 msgstr "zobrazovat hosta ve zprávách o odchodu/ukončení"
 
 msgid ""
-"comma-separated list of messages to display after joining a channel: 329 = "
-"channel creation date, 332 = topic, 333 = nick/date for topic, 353 = names "
-"on channel, 366 = names count"
+"comma-separated list of messages to display after joining a channel: 324 = "
+"channel modes, 329 = channel creation date, 332 = topic, 333 = nick/date for "
+"topic, 353 = names on channel, 366 = names count"
 msgstr ""
 
 msgid "display old topic when channel topic is changed"
@@ -6451,31 +6881,36 @@ msgstr ""
 msgid ""
 "restrict highlights to these tags on irc buffers (to have highlight on user "
 "messages but not server messages); tags must be separated by a comma and \"+"
-"\" can be used to make a logical \"and\" between tags; tags can start or end "
-"with \"*\" to match more than one tag; an empty value allows highlight on "
-"any tag"
+"\" can be used to make a logical \"and\" between tags; wildcard \"*\" is "
+"allowed in tags; an empty value allows highlight on any tag"
 msgstr ""
 
 msgid "display server away message in away bar item"
 msgstr "zobrazit zprávu nepřítomnosti na serveru v položce nepřítomnosti pole"
 
-#, fuzzy
 msgid ""
-"hide channel key in channel modes (this will hide all channel modes "
-"arguments if mode +k is set on channel)"
+"hide channel modes arguments if at least one of these modes is in channel "
+"modes (\"*\" to always hide all arguments, empty value to never hide "
+"arguments); example: \"kf\" to hide arguments if \"k\" or \"f\" are in "
+"channel modes"
 msgstr ""
-"schovat klíč kanálu pokud jsou zobrazeny módy v \"buffer_name\" položce "
-"panelu (toto schová všechny argumenty módů kanálu pokud je +k nastaveno na "
-"kanálu)"
 
 msgid "name of bar item where IRC server is displayed (for status bar)"
 msgstr "jméno položky pole, kde je IRC server zobrazen (pro stavový řádek)"
 
-msgid "display nick modes in \"input_prompt\" bar item"
-msgstr "zobrazovat módy přezdívky v položce pole \"input_prompt\""
+#, fuzzy
+msgid "display nick modes in bar item \"input_prompt\""
+msgstr "barva přípony přezdívky (přípona je uživatelský řetězec za přezdívkou)"
 
-msgid "display nick prefix in \"input_prompt\" bar item"
+#, fuzzy
+msgid "display nick prefix in bar item \"input_prompt\""
 msgstr "zobrazovat předponu přezdívky v položce pole \"input_prompt\""
+
+msgid ""
+"automatically add channel type in front of channel name on command /join if "
+"the channel name does not start with a valid channel type for the server; "
+"for example: \"/join weechat\" will in fact send: \"/join #weechat\""
+msgstr ""
 
 msgid ""
 "default target buffer for msgbuffer options when target is private and that "
@@ -6647,8 +7082,9 @@ msgstr ""
 
 #. TRANSLATORS: please do not translate "mode"
 msgid ""
-"enable smart filter for \"mode\" messages: \"*\" to filter all modes, \"xyz"
-"\" to filter only modes x/y/z, \"-xyz\" to filter all modes but not x/y/z; "
+"enable smart filter for \"mode\" messages: \"*\" to filter all modes, \"+\" "
+"to filter all modes in server prefixes (for example \"ovh\"), \"xyz\" to "
+"filter only modes x/y/z, \"-xyz\" to filter all modes but not x/y/z; "
 "examples: \"ovh\": filter modes o/v/h, \"-bkl\": filter all modes but not b/"
 "k/l"
 msgstr ""
@@ -6686,6 +7122,10 @@ msgstr ""
 msgid "color for lag indicator, when pong has been received from server"
 msgstr "barva ukazatele lagu, pokud bylo od serveru obdrženo pong"
 
+#, fuzzy
+msgid "color for nick modes in bar item \"input_prompt\""
+msgstr "barva přípony přezdívky (přípona je uživatelský řetězec za přezdívkou)"
+
 msgid "color for text in join messages"
 msgstr "barva textu vezprávách připojení"
 
@@ -6698,10 +7138,10 @@ msgid ""
 "integers between -1 (not specified) and 15, values are WeeChat color names "
 "or numbers (format is: \"1,-1:color1;2,7:color2\"), example: \"1,-1:"
 "darkgray;1,2:white,blue\" to remap black to \"darkgray\" and black on blue "
-"to \"white,blue\"; default WeeChat colors for IRC codes: 0:white, 1:black, 2:"
-"blue, 3:green, 4:lightred, 5:red, 6:magenta, 7:brown, 8:yellow, 9: "
-"lightgreen, 10:cyan, 11:lightcyan, 12:lightblue, 13:lightmagenta, 14:gray, "
-"15:white"
+"to \"white,blue\"; default WeeChat colors for IRC codes: 0=white, 1=black, "
+"2=blue, 3=green, 4=lightred, 5=red, 6=magenta, 7=brown, 8=yellow, "
+"9=lightgreen, 10=cyan, 11=lightcyan, 12=lightblue, 13=lightmagenta, 14=gray, "
+"15=white"
 msgstr ""
 
 msgid ""
@@ -6748,8 +7188,10 @@ msgstr ""
 
 msgid ""
 "default ban mask for commands /ban, /unban and /kickban; variables $nick, "
-"$user and $host are replaced by their values (extracted from \"nick!user@host"
-"\"); this default mask is used only if WeeChat knows the host for the nick"
+"$user, $ident and $host are replaced by their values (extracted from \"nick!"
+"user@host\"); $ident is the same as $user if $user does not start with \"~"
+"\", otherwise it is set to \"*\"; this default mask is used only if WeeChat "
+"knows the host for the nick"
 msgstr ""
 
 msgid "when off, colors codes are ignored in incoming messages"
@@ -6925,7 +7367,8 @@ msgstr "seznam IRC serverů"
 msgid "server pointer (optional)"
 msgstr "ukayatel serveru (volitelný)"
 
-msgid "server name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "server name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno serveru (může začínat nebo končit s \"*\" jako zástupný znakem) "
 "(volitelné)"
@@ -6945,8 +7388,9 @@ msgstr "seznam uživatelů pro IRC kanál"
 msgid "nick pointer (optional)"
 msgstr "ukazatel přezdívky (volitelné)"
 
-msgid "server,channel,nick (channel and nick are optional)"
-msgstr "server,kanál,přezdívka (kanál a přezdívka jsou volitelné)"
+#, fuzzy
+msgid "server,channel,nick (nick is optional)"
+msgstr "server,kanál (kanál je volitelný)"
 
 msgid "list of IRC ignores"
 msgstr "seznam pro IRC ignorování"
@@ -7029,7 +7473,7 @@ msgid "%snotify: %s%s%s%s%s%s%s%s%s is offline"
 msgstr "%snotifikace: %s%s%s se připojil %s%s"
 
 #, fuzzy, c-format
-msgid "%snotify: %s%s%s%s%s%s%s%s%s has joined"
+msgid "%snotify: %s%s%s%s%s%s%s%s%s has connected"
 msgstr "%snotifikace: %s%s%s se připojil %s%s"
 
 #, fuzzy, c-format
@@ -7066,6 +7510,10 @@ msgstr "%s%s: schopnost klienta, vyžaduji: sasl"
 #, c-format
 msgid "%s%s: client capability: sasl not supported"
 msgstr "%s%s: schopnost klienta: sasl není podporován"
+
+#, fuzzy, c-format
+msgid "%s%s: client capability, currently enabled: %s"
+msgstr "%s%s: schopnost klienta, povoleno: %s"
 
 #, c-format
 msgid "%s%s: client capability, enabled: %s"
@@ -7156,8 +7604,8 @@ msgid "%s%s%s%s has unset topic for %s%s%s"
 msgstr "%s%s%s%s zrušil téma pro %s%s%s"
 
 #, c-format
-msgid "%sWallops from %s%s %s(%s%s%s)%s: %s"
-msgstr "%sWallops od %s%s %s(%s%s%s)%s: %s"
+msgid "%sWallops from %s: %s"
+msgstr "%sWallops od %s: %s"
 
 #, c-format
 msgid "%sUser mode for %s%s%s is %s[%s%s%s]"
@@ -7421,10 +7869,6 @@ msgid "%s%s: error when allocating new server"
 msgstr "%s%s: chyba při alokování nového serveru"
 
 #, c-format
-msgid "%s%s: error creating new server \"%s\""
-msgstr "%s%s: chyba při vytváření nového zprávu \"%s\""
-
-#, c-format
 msgid ""
 "%s%s: sending data to server: null pointer (please report problem to "
 "developers)"
@@ -7642,7 +8086,7 @@ msgid "%s - client certificate info (%s):"
 msgstr " - informace o certifikátu klienta (%s):"
 
 #, c-format
-msgid "%sgnutls: unable to read certifcate \"%s\""
+msgid "%sgnutls: unable to read certificate \"%s\""
 msgstr "%sgnutls: nemůžu číst certifikát \"%s\""
 
 #, fuzzy, c-format
@@ -7901,6 +8345,58 @@ msgstr "seznam logovacích bufferů"
 msgid "logger pointer (optional)"
 msgstr "ukazatel logeru (volitelné)"
 
+#, fuzzy
+msgid "Support of lua scripts"
+msgstr "seznam skriptů"
+
+#, c-format
+msgid "%s%s: unable to run function \"%s\""
+msgstr "%s%s: nemůžu spustit funkci \"%s\""
+
+#, c-format
+msgid "%s%s: script \"%s\" not found"
+msgstr "%s%s: skript \"%s\" nenalezen"
+
+#, c-format
+msgid "%s%s: unable to create new sub-interpreter"
+msgstr "%s%s: nemohu vytvořit nový pod-interpreter"
+
+#, c-format
+msgid "%s%s: unable to redirect stdout and stderr"
+msgstr "%s%s: nemohu přesměrovat stdout a stderr"
+
+#, c-format
+msgid "%s%s: unable to load file \"%s\""
+msgstr "%s%s: nemůžu načíst soubor \"%s\""
+
+#, c-format
+msgid "%s%s: unable to execute file \"%s\""
+msgstr "%s%s: nemůžu spustit soubor \"%s\""
+
+#, fuzzy
+msgid "Support of perl scripts"
+msgstr "seznam skriptů"
+
+#, c-format
+msgid "%s%s: function \"%s\" must return one valid value (%d)"
+msgstr "%s%s: funkce \"%s\" musí vracet jednu validní hodnotu (%d)"
+
+#, c-format
+msgid "%s%s: function \"%s\" is internally misused"
+msgstr "%s%s: funkce \"%s\" je vnitřně špatně použitá"
+
+#, c-format
+msgid "%s%s: not enough memory in function \"%s\""
+msgstr "%s%s: nedostatek paměti ve funkci \"%s\""
+
+#, c-format
+msgid "%s%s: unable to parse file \"%s\""
+msgstr "%s%s: nemůžu parsovat soubor \"%s\""
+
+#, c-format
+msgid "%s%s: unable to initialize %s"
+msgstr "%s%s: nemohu inicializovat %s"
+
 msgid "WeeChat version"
 msgstr "verze WeeChat"
 
@@ -7965,13 +8461,30 @@ msgstr ""
 msgid "height of terminal"
 msgstr ""
 
+msgid "POSIX extended regular expression to search ANSI escape codes"
+msgstr ""
+
+msgid "terminal color (0-255) converted to RGB color"
+msgstr ""
+
+#, fuzzy
+msgid "color (terminal color: 0-255)"
+msgstr "Barvy terminálu:"
+
+msgid "RGB color converted to terminal color (0-255)"
+msgstr ""
+
+msgid "rgb,limit (limit is optional and is set to 256 by default)"
+msgstr ""
+
 msgid "list of bars"
 msgstr "seznam polí"
 
 msgid "bar pointer (optional)"
 msgstr "ukazatel pole (volitelný)"
 
-msgid "bar name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "bar name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno pole (může začínat nebo končit \"*\" jako zástupným znakem) (volitelné)"
 
@@ -7981,7 +8494,8 @@ msgstr "seznam položek polí"
 msgid "bar item pointer (optional)"
 msgstr "ukazatel položky pole (volitelný)"
 
-msgid "bar item name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "bar item name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno položky pole (může začínat nebo končit \"*\" jako zástupným znakem) "
 "(volitelné)"
@@ -7998,7 +8512,8 @@ msgstr "seznam bufferů"
 msgid "buffer pointer (optional)"
 msgstr "ukazatel bufferu (volitelný)"
 
-msgid "buffer name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "buffer name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno buferu (může začínat nebo končit \"*\" jako zástupným znakem) "
 "(volitelné)"
@@ -8012,7 +8527,8 @@ msgstr "ukazatel bufferu"
 msgid "list of filters"
 msgstr "seznam filtrů"
 
-msgid "filter name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "filter name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno filtru (může začínat nebo končit \"*\" jako zástupným znakem) "
 "(volitelné)"
@@ -8032,9 +8548,10 @@ msgstr "seznam napojení"
 msgid "hook pointer (optional)"
 msgstr "ukazatel přezdívky (volitelné)"
 
+#, fuzzy
 msgid ""
 "type,arguments (type is command/timer/.., arguments to get only some hooks "
-"(can start or end with \"*\" as wildcard), both are optional)"
+"(wildcard \"*\" is allowed), both are optional)"
 msgstr ""
 "typ,argumenty (typ je příkaz/časovač/..., argumenty pro získání jen "
 "některých napojení (může začínat nebo končit na \"*\"), oba jsou nepovinné)"
@@ -8062,7 +8579,8 @@ msgstr ""
 msgid "list of options"
 msgstr "seznam konfiguračních možností"
 
-msgid "option name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "option name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno volby (může začínat nebo končit \"*\" jako zástupným znakem) "
 "(volitelné)"
@@ -8073,7 +8591,8 @@ msgstr "seznam pluginů"
 msgid "plugin pointer (optional)"
 msgstr "ukazatel pluginu (volitelný)"
 
-msgid "plugin name (can start or end with \"*\" as wildcard) (optional)"
+#, fuzzy
+msgid "plugin name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno pluginu (může začínat nebo končit \"*\" jako zástupným znakem) "
 "(volitelné)"
@@ -8087,7 +8606,7 @@ msgid "proxy pointer (optional)"
 msgstr "ukazatel přesměrování (volitelné)"
 
 #, fuzzy
-msgid "proxy name (can start or end with \"*\" as wildcard) (optional)"
+msgid "proxy name (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno pole (může začínat nebo končit \"*\" jako zástupným znakem) (volitelné)"
 
@@ -8189,10 +8708,6 @@ msgstr "barva textu pro skupiny v seznamu přezdívek"
 msgid "nick in nicklist"
 msgstr "přezdívky v seznamu notifikací"
 
-#, fuzzy
-msgid "plugin"
-msgstr "Plugin"
-
 msgid "proxy"
 msgstr ""
 
@@ -8271,6 +8786,163 @@ msgstr "Pluginy odebrány"
 
 msgid "description of plugin option"
 msgstr "popis volby pluginu"
+
+msgid "list/load/unload scripts"
+msgstr "seznam/načíst/odebrat skirpty"
+
+#, fuzzy
+msgid ""
+"list|listfull [<name>] || load [-q] <filename> || autoload || reload|unload "
+"[-q] [<name>]"
+msgstr ""
+"list|listfull [<jméno>] || load <jméno_souboru> || autoload || reload|unload "
+"[<jméno>]"
+
+#, fuzzy
+msgid ""
+"    list: list loaded scripts\n"
+"listfull: list loaded scripts (verbose)\n"
+"    load: load a script\n"
+"autoload: load all scripts in \"autoload\" directory\n"
+"  reload: reload a script (if no name given, unload all scripts, then load "
+"all scripts in \"autoload\" directory)\n"
+"  unload: unload a script (if no name given, unload all scripts)\n"
+"filename: script (file) to load\n"
+"    name: a script name (name used in call to \"register\" function)\n"
+"      -q: quiet mode: do not display messages\n"
+"\n"
+"Without argument, this command lists all loaded scripts."
+msgstr ""
+"    list: vypíše načtené skripty\n"
+"listfull: vypíše načtené skripty s detailními informacemi\n"
+"    load: načte skript\n"
+"autolaod: načte všechny skripty v adresáři \"autoload\"\n"
+"  reload: znovu načte jeden skript (pokud není zadané žádné jméno odebere "
+"všechny skripty a pak načte skripty v adresáři \"autoload\")\n"
+"  unload: odebere skript (pokud není zadané žádné jméno odebere všechny "
+"skripty)\n"
+"filename: script (soubor) pro načtení\n"
+"    name: jméno scriptu (jméno použité ve volání funkce \"register\")\n"
+"\n"
+"Zavolání příkazu bez parametrů vypíše načtené skripty."
+
+msgid "list of scripts"
+msgstr "seznam skriptů"
+
+msgid "script pointer (optional)"
+msgstr "ukazatel skriptu (volitelný)"
+
+#, fuzzy
+msgid "script name (wildcard \"*\" is allowed) (optional)"
+msgstr ""
+"jméno skriptu (může začínat nebo končit \"*\" jako zástupným znakem) "
+"(volitelné)"
+
+#, fuzzy
+msgid "callback of a script"
+msgstr "seznam skriptů"
+
+#, fuzzy, c-format
+msgid ""
+"%s%s: warning, invalid pointer (\"%s\") for function \"%s\" (script: %s)"
+msgstr "%s%s: špatné parametry pro funkci \"%s\" (skript: %s)"
+
+#, fuzzy, c-format
+msgid "%s: error loading script \"%s\" (spaces or empty name not allowed)"
+msgstr "%s: chyba načítání skriptu \"%s\" (nedostatek paměti)"
+
+#, c-format
+msgid ""
+"%s%s: warning, license \"%s\" for script \"%s\" differs from plugin license "
+"(\"%s\")"
+msgstr ""
+"%s%s: varování, licence \"%s\" pro skript \"%s\" je rozdílná od licence "
+"pluginu (\"%s\")"
+
+#, c-format
+msgid "%s: error loading script \"%s\" (not enough memory)"
+msgstr "%s: chyba načítání skriptu \"%s\" (nedostatek paměti)"
+
+#, c-format
+msgid "%s: script removed: %s"
+msgstr "%s: skript odebrána: %s"
+
+#, c-format
+msgid "%s%s: failed to remove script: %s (%s)"
+msgstr "%s%s: nemohu odebrat skript: %s (%s)"
+
+#, c-format
+msgid "%s: script \"%s\" not found, nothing was removed"
+msgstr "%s: skript \"%s\" nenalezen, nic nebylo odebráno"
+
+#, c-format
+msgid "%s%s: failed to move script %s to %s (%s)"
+msgstr "%s%s: selhalo přesunutí skriptu %s na %s (%s)"
+
+#. TRANSLATORS: "%s" is language (for example "perl")
+#, c-format
+msgid "%s scripts loaded:"
+msgstr "načteny %s skripty:"
+
+#, c-format
+msgid "    file: %s"
+msgstr "    soubor: %s"
+
+#, c-format
+msgid "    written by \"%s\", license: %s"
+msgstr "    napsal \"%s\", licence: %s"
+
+msgid "  (none)"
+msgstr "  (žádný)"
+
+#, c-format
+msgid "%s: scripts unloaded"
+msgstr "%s: skripty odebrány"
+
+#, c-format
+msgid ""
+"%s%s: unable to call function \"%s\", script is not initialized (script: %s)"
+msgstr ""
+"%s%s: nemohu zavolat funkci \"%s\", skript není inicializován (skript: %s)"
+
+#, c-format
+msgid "%s%s: wrong arguments for function \"%s\" (script: %s)"
+msgstr "%s%s: špatné parametry pro funkci \"%s\" (skript: %s)"
+
+#, fuzzy
+msgid "Support of python scripts"
+msgstr "seznam skriptů"
+
+#, c-format
+msgid "%s%s: unable to initialize WeeChat module"
+msgstr "%s%s: nemohu inicialiyovat modul WeeChat"
+
+#, c-format
+msgid "%s%s: unable to redirect stdout"
+msgstr "%s%s: nemůžu přesměrovat stdout"
+
+#, c-format
+msgid "%s%s: unable to redirect stderr"
+msgstr "%s%s: nemohu přesměrovat stderr"
+
+msgid "path to python 2.x interpreter"
+msgstr "cesta k interpretru python 2.x"
+
+#, c-format
+msgid "%s%s: unable to launch global interpreter"
+msgstr "%s%s: nemohu spustit globální interpreter"
+
+#, c-format
+msgid "%s%s: unable to get current interpreter state"
+msgstr "%s%s: nemohu získat aktuální status interpretru"
+
+#, c-format
+msgid "%s%s: unable to free interpreter"
+msgstr "%s%s: nemohu uvolnit interpreter"
+
+#, c-format
+msgid "%s%s: not enough memory for parsing message"
+msgstr "%s%s: nedostatek paměti pro rozdělení zprávy"
 
 msgid "Actions (letter+enter):"
 msgstr "Akce (písmeno+enter):"
@@ -8386,7 +9058,7 @@ msgstr "Klienti pro přenos:"
 
 #, fuzzy, c-format
 msgid ""
-"  %s%s%s (%s%s%s), started on: %s, last activity: %s, bytes: %lu recv, %lu "
+"  %s%s%s (%s%s%s), started on: %s, last activity: %s, bytes: %llu recv, %llu "
 "sent"
 msgstr ""
 "  id: %d, %s%s%s (%s%s%s), spuštěn v: %s, poslední aktivita: %s, bytů: %lu "
@@ -8576,6 +9248,11 @@ msgstr ""
 "počítače)"
 
 msgid ""
+"delay for purging disconnected clients (in minutes, 0 = purge clients "
+"immediately, -1 = never purge)"
+msgstr ""
+
+msgid ""
 "compression level for packets sent to client with WeeChat protocol (0 = "
 "disable compression, 1 = low compression ... 9 = best compression)"
 msgstr ""
@@ -8631,6 +9308,16 @@ msgid ""
 "format for time in backlog messages (see man strftime for format) (not used "
 "if server capability \"server-time\" was enabled by client, because time is "
 "sent as irc tag); empty string = disable time in backlog messages"
+msgstr ""
+
+#, fuzzy
+msgid "number of clients for relay"
+msgstr "Seznam klientů pro přenos"
+
+#. TRANSLATORS: please do not translate the status names, they must be used in English
+msgid ""
+"status name (optional): connecting, waiting_auth, connected, auth_failed, "
+"disconnected"
 msgstr ""
 
 msgid "list of relay clients"
@@ -8695,9 +9382,13 @@ msgstr "%s: poslouchám na portu %d (přesměrování %s.%s, maximálně %d klie
 msgid "%s%s: not enough memory for listening on new port"
 msgstr "%s%s: nedostatek paměti pro poslouchání na portu"
 
-#, c-format
-msgid "%s%s: not enough memory for parsing message"
-msgstr "%s%s: nedostatek paměti pro rozdělení zprávy"
+#, fuzzy, c-format
+msgid "%s: invalid pointer in hdata path: \"%s\""
+msgstr "%sChyba: nemohu odpojit klávesu \"%s\""
+
+#, fuzzy, c-format
+msgid "%s: invalid buffer pointer in message: \"%s %s\""
+msgstr "%s%s: nekorektní znaková sada: \"%s\""
 
 #, fuzzy, c-format
 msgid "%s%s: failed to execute command \"%s\" for client %s%s%s"
@@ -8710,395 +9401,6 @@ msgid ""
 msgstr ""
 "%s%s: přijato příliš málo argumentů od IRC serveru pro příkaz \"%s"
 "\" (obdrženo: %d argumentů, očekáváno: alespoň %d)"
-
-#, fuzzy
-msgid "String modifier with regular expressions"
-msgstr "změnit řetězce modifikátorů pomocí regulárních výrazů"
-
-#, c-format
-msgid "%s%s: error compiling regular expression \"%s\""
-msgstr "%s%s: chyba při zpracování regulárního výrazu \"%s\""
-
-msgid "No rmodifier defined"
-msgstr "Žádné rmodifikátory nejsou definovány"
-
-msgid "List of rmodifiers:"
-msgstr "seznam rmodifikátory:"
-
-msgid "Default rmodifiers:"
-msgstr "Výchozí rmodifikátory:"
-
-#, c-format
-msgid "%s%s: error creating rmodifier \"%s\""
-msgstr "%s%s: chyba při vytváření rmodifikátoru \"%s\""
-
-#, c-format
-msgid "Rmodifier \"%s\" created"
-msgstr "Rmodifikátor \"%s\" vytvořen"
-
-#, c-format
-msgid "%d rmodifiers removed"
-msgstr "%d rmodifikátorů odebráno"
-
-#, c-format
-msgid "Rmodifier \"%s\" removed"
-msgstr "Rmodifikátor \"%s\" odebrán"
-
-#, c-format
-msgid "%sRmodifier \"%s\" not found"
-msgstr "%sRmodifikátor \"%s\" nenalezen"
-
-msgid "Default rmodifiers restored:"
-msgstr "Výchozí rmodifikátory obnoveny:"
-
-#, c-format
-msgid ""
-"%sError: \"-yes\" argument is required for restoring default rmodifiers "
-"(security reason)"
-msgstr ""
-"%sChyba: \"-yes\" argument je požadován pro obnovení výchozích rmodifikátorů "
-"(bezpečnostní opatření)"
-
-#, fuzzy, c-format
-msgid "%d rmodifier added"
-msgid_plural "%d rmodifiers added"
-msgstr[0] "%d rmodifikátorů odebráno"
-msgstr[1] "%d rmodifikátorů odebráno"
-msgstr[2] "%d rmodifikátorů odebráno"
-
-msgid "alter modifier strings with regular expressions"
-msgstr "změnit řetězce modifikátorů pomocí regulárních výrazů"
-
-#, fuzzy
-msgid ""
-"list|listdefault || add <name> <modifiers> <groups> <regex> || del <name>|-"
-"all [<name>...] || missing || default -yes"
-msgstr ""
-"list|listdefault || add <name> <modifiers> <groups> <regex> || del <name>|-"
-"all [<name>...] || default -yes"
-
-#, fuzzy
-msgid ""
-"       list: list all rmodifiers\n"
-"listdefault: list default rmodifiers\n"
-"        add: add a rmodifier\n"
-"       name: name of rmodifier\n"
-"  modifiers: comma separated list of modifiers\n"
-"     groups: action on groups captured in regular expression (inside "
-"parentheses): comma separated list of groups (from 1 to 9) with optional \"*"
-"\" after number to hide the group\n"
-"      regex: POSIX extended regular expression (case insensitive, can start "
-"by \"(?-i)\" to become case sensitive)\n"
-"        del: delete a rmodifier\n"
-"       -all: delete all rmodifiers\n"
-"    missing: add missing rmodifiers\n"
-"    default: restore default rmodifiers\n"
-"\n"
-"Examples:\n"
-"  hide everything typed after a command /password:\n"
-"    /rmodifier add password input_text_display 1,2* ^(/password +)(.*)\n"
-"  delete rmodifier \"password\":\n"
-"    /rmodifier del password\n"
-"  delete all rmodifiers:\n"
-"    /rmodifier del -all"
-msgstr ""
-"       list: vypíše všechny rmodifikátory\n"
-"listdefault: vypíše výchozí rmodifikátory\n"
-"        add: přidá rmodifikátor\n"
-"       name: jméno rmodifikátoru\n"
-"  modifiers: čárkou oddělený seznam modifikátorů\n"
-"     groups: akce na nalezených skupinách: čárkou oddělený seznam skupin (od "
-"1 do 9) s možností \"*\" za číslem pro schování skupiny\n"
-"      regex: regulární výraz\n"
-"        del: smaže rmodifikátor\n"
-"       -all: smaže všechny rmodifikátory\n"
-"    default: obnoví výchozí rmodifikátory\n"
-"\n"
-"Příklady:\n"
-"  schová vše napsané za příkazem /password:\n"
-"    /rmodifier add password input_text_display 1,2* ^(/password +)(.*)\n"
-"  smaže rmodifikátor \"password\":\n"
-"    /rmodifier del password\n"
-"  smaže všechny rmodifikátory:\n"
-"    /rmodifier del -all"
-
-msgid "list of rmodifiers"
-msgstr "seznam rmodifikátorů"
-
-#, c-format
-msgid "%s%s: error creating rmodifier \"%s\" => \"%s\""
-msgstr "%s%s: chyba vytváření rmodifikátoru \"%s\" => \"%s\""
-
-msgid "char used to hide part of a string"
-msgstr "znak použitý pro schování části řetězce"
-
-msgid "rmodifier pointer (optional)"
-msgstr "ukazatel rmodifikátoru (volitelné)"
-
-msgid "rmodifier name (can start or end with \"*\" as joker) (optional)"
-msgstr ""
-"jméno rmodifikátoru (může začínat nebo končit \"*\" jako zástupným znakem) "
-"(volitelné)"
-
-#, fuzzy, c-format
-msgid "%s%s: script \"%s\" already registered (register ignored)"
-msgstr "%s%s: server \"%s\" již existuje, nemohu jej vytvořít!"
-
-#, c-format
-msgid ""
-"%s%s: unable to register script \"%s\" (another script already exists with "
-"this name)"
-msgstr ""
-"%s%s: nemohu registrovat skript \"%s\" (jiný skript se stejným jménem již "
-"existuje)"
-
-#, c-format
-msgid "%s: registered script \"%s\", version %s (%s)"
-msgstr "%s: zaregistrován skript \"%s\", verze %s (%s)"
-
-msgid "Support of scheme scripts (with Guile)"
-msgstr ""
-
-#, c-format
-msgid "%s: stdout/stderr: %s%s"
-msgstr "%s: stdout/stderr: %s%s"
-
-#, c-format
-msgid "%s%s: function \"%s\" must return a valid value"
-msgstr "%s%s: funkce \"%s\" musí vracet korektní hodnotu"
-
-#, c-format
-msgid "%s%s: error in function \"%s\""
-msgstr "%s%s: chyba ve funkci \"%s\""
-
-#, c-format
-msgid "%s: loading script \"%s\""
-msgstr "%s: načítám skript \"%s\""
-
-#, c-format
-msgid "%s%s: function \"register\" not found (or failed) in file \"%s\""
-msgstr ""
-"%s%s: funkce \"register\" nebyla nalezena (nebo selhala) v souboru \"%s\""
-
-#, c-format
-msgid "%s: unloading script \"%s\""
-msgstr "%s: odebírám skript \"%s\""
-
-#, c-format
-msgid "%s: script \"%s\" unloaded"
-msgstr "%s: skript \"%s\" odebrán"
-
-#, c-format
-msgid "%s%s: script \"%s\" not loaded"
-msgstr "%s%s: skript \"%s\" nenačten"
-
-#, c-format
-msgid "%s%s: unknown option for command \"%s\""
-msgstr "%s%s: neznámá volba pro příkaz \"%s\""
-
-#, fuzzy
-msgid "Support of lua scripts"
-msgstr "seznam skriptů"
-
-#, c-format
-msgid "%s%s: unable to run function \"%s\""
-msgstr "%s%s: nemůžu spustit funkci \"%s\""
-
-#, c-format
-msgid "%s%s: script \"%s\" not found"
-msgstr "%s%s: skript \"%s\" nenalezen"
-
-#, c-format
-msgid "%s%s: unable to create new sub-interpreter"
-msgstr "%s%s: nemohu vytvořit nový pod-interpreter"
-
-#, c-format
-msgid "%s%s: unable to redirect stdout and stderr"
-msgstr "%s%s: nemohu přesměrovat stdout a stderr"
-
-#, c-format
-msgid "%s%s: unable to load file \"%s\""
-msgstr "%s%s: nemůžu načíst soubor \"%s\""
-
-#, c-format
-msgid "%s%s: unable to execute file \"%s\""
-msgstr "%s%s: nemůžu spustit soubor \"%s\""
-
-#, fuzzy
-msgid "Support of perl scripts"
-msgstr "seznam skriptů"
-
-#, c-format
-msgid "%s%s: function \"%s\" must return one valid value (%d)"
-msgstr "%s%s: funkce \"%s\" musí vracet jednu validní hodnotu (%d)"
-
-#, c-format
-msgid "%s%s: function \"%s\" is internally misused"
-msgstr "%s%s: funkce \"%s\" je vnitřně špatně použitá"
-
-#, c-format
-msgid "%s%s: not enough memory in function \"%s\""
-msgstr "%s%s: nedostatek paměti ve funkci \"%s\""
-
-#, c-format
-msgid "%s%s: unable to parse file \"%s\""
-msgstr "%s%s: nemůžu parsovat soubor \"%s\""
-
-#, c-format
-msgid "%s%s: unable to initialize %s"
-msgstr "%s%s: nemohu inicializovat %s"
-
-msgid "list/load/unload scripts"
-msgstr "seznam/načíst/odebrat skirpty"
-
-#, fuzzy
-msgid ""
-"list|listfull [<name>] || load [-q] <filename> || autoload || reload|unload "
-"[-q] [<name>]"
-msgstr ""
-"list|listfull [<jméno>] || load <jméno_souboru> || autoload || reload|unload "
-"[<jméno>]"
-
-#, fuzzy
-msgid ""
-"    list: list loaded scripts\n"
-"listfull: list loaded scripts (verbose)\n"
-"    load: load a script\n"
-"autoload: load all scripts in \"autoload\" directory\n"
-"  reload: reload a script (if no name given, unload all scripts, then load "
-"all scripts in \"autoload\" directory)\n"
-"  unload: unload a script (if no name given, unload all scripts)\n"
-"filename: script (file) to load\n"
-"    name: a script name (name used in call to \"register\" function)\n"
-"      -q: quiet mode: do not display messages\n"
-"\n"
-"Without argument, this command lists all loaded scripts."
-msgstr ""
-"    list: vypíše načtené skripty\n"
-"listfull: vypíše načtené skripty s detailními informacemi\n"
-"    load: načte skript\n"
-"autolaod: načte všechny skripty v adresáři \"autoload\"\n"
-"  reload: znovu načte jeden skript (pokud není zadané žádné jméno odebere "
-"všechny skripty a pak načte skripty v adresáři \"autoload\")\n"
-"  unload: odebere skript (pokud není zadané žádné jméno odebere všechny "
-"skripty)\n"
-"filename: script (soubor) pro načtení\n"
-"    name: jméno scriptu (jméno použité ve volání funkce \"register\")\n"
-"\n"
-"Zavolání příkazu bez parametrů vypíše načtené skripty."
-
-msgid "list of scripts"
-msgstr "seznam skriptů"
-
-msgid "script pointer (optional)"
-msgstr "ukazatel skriptu (volitelný)"
-
-msgid "script name (can start or end with \"*\" as wildcard) (optional)"
-msgstr ""
-"jméno skriptu (může začínat nebo končit \"*\" jako zástupným znakem) "
-"(volitelné)"
-
-#, fuzzy
-msgid "callback of a script"
-msgstr "seznam skriptů"
-
-#, fuzzy, c-format
-msgid ""
-"%s%s: warning, invalid pointer (\"%s\") for function \"%s\" (script: %s)"
-msgstr "%s%s: špatné parametry pro funkci \"%s\" (skript: %s)"
-
-#, fuzzy, c-format
-msgid "%s: error loading script \"%s\" (spaces or empty name not allowed)"
-msgstr "%s: chyba načítání skriptu \"%s\" (nedostatek paměti)"
-
-#, c-format
-msgid ""
-"%s%s: warning, license \"%s\" for script \"%s\" differs from plugin license "
-"(\"%s\")"
-msgstr ""
-"%s%s: varování, licence \"%s\" pro skript \"%s\" je rozdílná od licence "
-"pluginu (\"%s\")"
-
-#, c-format
-msgid "%s: error loading script \"%s\" (not enough memory)"
-msgstr "%s: chyba načítání skriptu \"%s\" (nedostatek paměti)"
-
-#, c-format
-msgid "%s: script removed: %s"
-msgstr "%s: skript odebrána: %s"
-
-#, c-format
-msgid "%s%s: failed to remove script: %s (%s)"
-msgstr "%s%s: nemohu odebrat skript: %s (%s)"
-
-#, c-format
-msgid "%s: script \"%s\" not found, nothing was removed"
-msgstr "%s: skript \"%s\" nenalezen, nic nebylo odebráno"
-
-#, c-format
-msgid "%s%s: failed to move script %s to %s (%s)"
-msgstr "%s%s: selhalo přesunutí skriptu %s na %s (%s)"
-
-#. TRANSLATORS: "%s" is language (for example "perl")
-#, c-format
-msgid "%s scripts loaded:"
-msgstr "načteny %s skripty:"
-
-#, c-format
-msgid "    file: %s"
-msgstr "    soubor: %s"
-
-#, c-format
-msgid "    written by \"%s\", license: %s"
-msgstr "    napsal \"%s\", licence: %s"
-
-msgid "  (none)"
-msgstr "  (žádný)"
-
-#, c-format
-msgid "%s: scripts unloaded"
-msgstr "%s: skripty odebrány"
-
-#, c-format
-msgid ""
-"%s%s: unable to call function \"%s\", script is not initialized (script: %s)"
-msgstr ""
-"%s%s: nemohu zavolat funkci \"%s\", skript není inicializován (skript: %s)"
-
-#, c-format
-msgid "%s%s: wrong arguments for function \"%s\" (script: %s)"
-msgstr "%s%s: špatné parametry pro funkci \"%s\" (skript: %s)"
-
-#, fuzzy
-msgid "Support of python scripts"
-msgstr "seznam skriptů"
-
-#, c-format
-msgid "%s%s: unable to initialize WeeChat module"
-msgstr "%s%s: nemohu inicialiyovat modul WeeChat"
-
-#, c-format
-msgid "%s%s: unable to redirect stdout"
-msgstr "%s%s: nemůžu přesměrovat stdout"
-
-#, c-format
-msgid "%s%s: unable to redirect stderr"
-msgstr "%s%s: nemohu přesměrovat stderr"
-
-msgid "path to python 2.x interpreter"
-msgstr "cesta k interpretru python 2.x"
-
-#, c-format
-msgid "%s%s: unable to launch global interpreter"
-msgstr "%s%s: nemohu spustit globální interpreter"
-
-#, c-format
-msgid "%s%s: unable to get current interpreter state"
-msgstr "%s%s: nemohu získat aktuální status interpretru"
-
-#, c-format
-msgid "%s%s: unable to free interpreter"
-msgstr "%s%s: nemohu uvolnit interpreter"
 
 #, fuzzy
 msgid "Support of ruby scripts"
@@ -9127,9 +9429,6 @@ msgstr "%s%s: nemůžu vyhodnotit funkci \"weechat_init\" v souboru \"%s\""
 #, c-format
 msgid "%s%s: unable to eval WeeChat ruby internal code"
 msgstr "%s%s: nemohu vyhodnotit interní kód WeeChat ruby"
-
-msgid "Scripts manager"
-msgstr ""
 
 #, fuzzy
 msgid "Scripts loaded:"
@@ -9250,9 +9549,6 @@ msgstr ""
 msgid "License"
 msgstr ""
 
-msgid "Description"
-msgstr "Popis"
-
 msgid "Tags"
 msgstr ""
 
@@ -9295,13 +9591,16 @@ msgstr ""
 
 #, c-format
 msgid ""
-"%d/%d scripts (filter: %s) | Sort: %s | Alt+key/input: i=install r=remove "
-"l=load L=reload u=unload A=autoload h=(un)hold v=view script | Input: "
-"q=close $=refresh s:x,y=sort words=filter *=reset filter | Mouse: "
-"left=select right=install/remove"
+"%d/%d scripts (filter: %s) | Sort: %s | Alt+key/input: i=install, r=remove, "
+"l=load, L=reload, u=unload, A=autoload, h=(un)hold, v=view script | Input: "
+"q=close, $=refresh, s:x,y=sort, words=filter, *=reset filter | Mouse: "
+"left=select, right=install/remove"
 msgstr ""
 
 msgid "Scripts"
+msgstr ""
+
+msgid "Scripts manager"
 msgstr ""
 
 #, fuzzy
@@ -9567,9 +9866,7 @@ msgid "URL for file with list of scripts"
 msgstr "seznam skriptů"
 
 #, fuzzy
-msgid ""
-"script name with extension (can start or end with \"*\" as wildcard) "
-"(optional)"
+msgid "script name with extension (wildcard \"*\" is allowed) (optional)"
 msgstr ""
 "jméno skriptu (může začínat nebo končit \"*\" jako zástupným znakem) "
 "(volitelné)"
@@ -9639,6 +9936,385 @@ msgstr "%s%s: nemohu vytvořit nový interpretr"
 #, c-format
 msgid "%s%s: error occurred while parsing file \"%s\": %s"
 msgstr "%s%s: nastala chyba během parsováni souboru \"%s\": %s"
+
+msgid ""
+"Text replacement and command execution on events triggered by WeeChat/plugins"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "%s%s: unable to create hook for trigger \"%s\" (bad arguments)"
+msgstr "%sChyba: nemohu přejmenovat filter \"%s\" na \"%s\""
+
+#, fuzzy, c-format
+msgid "%s%s: invalid regular expression in trigger \"%s\""
+msgstr "%s%s: chyba při zpracování regulárního výrazu \"%s\""
+
+#, c-format
+msgid "Trigger monitor (filter: %s) | Input: q=close, words=filter"
+msgstr ""
+
+#, fuzzy
+msgid "no variable"
+msgstr "čtení - proměnná"
+
+#, fuzzy
+msgid "empty variable"
+msgstr "čtení - proměnná"
+
+#, fuzzy, c-format
+msgid "%s  running command %s\"%s%s%s\"%s on buffer %s%s%s"
+msgstr "výchozí příkaz:"
+
+#, fuzzy
+msgid "Triggers enabled"
+msgstr "Filtr \"%s\" povolen"
+
+#, fuzzy
+msgid "Triggers disabled"
+msgstr "Filtr \"%s\" zakázán"
+
+#, fuzzy
+msgid "No trigger defined"
+msgstr "Žádné rmodifikátory nejsou definovány"
+
+#, fuzzy
+msgid "List of default triggers:"
+msgstr "Seznam aliasů:"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" restarted"
+msgstr "Pole \"%s\" vytvořeno"
+
+#, fuzzy, c-format
+msgid "%s%s: a disabled trigger can not be restarted"
+msgstr "%s%s: nemohu získat aktuální status interpretru"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" enabled"
+msgstr "Filtr \"%s\" povolen"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" disabled"
+msgstr "Filtr \"%s\" zakázán"
+
+#, fuzzy, c-format
+msgid "%s%s: invalid name for trigger"
+msgstr "%s%s: nekorektní znaková sada: \"%s\""
+
+#, fuzzy, c-format
+msgid "%s%s: trigger \"%s\" already exists"
+msgstr "%sChyba: filtr \"%s\" již existuje"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" renamed to \"%s\""
+msgstr "Filtr \"%s\" přejmenován na \"%s\""
+
+#, fuzzy, c-format
+msgid "%s%s: failed to rename trigger \"%s\""
+msgstr "%sChyba: selhalo vytvoření pole \"%s\""
+
+#, fuzzy
+msgid "List of triggers:"
+msgstr "Seznam proxy:"
+
+#, fuzzy, c-format
+msgid "%s%s: invalid hook type \"%s\""
+msgstr "%sChyba: nemohu napojit kalávesu \"%s\""
+
+#, fuzzy, c-format
+msgid "%s%s: invalid format for regular expression"
+msgstr "barva textu pro prefix chyby"
+
+#, fuzzy, c-format
+msgid "%s%s: invalid regular expression (compilation failed)"
+msgstr "%s%s: \"%s\" není validní regulární výraz (%s)"
+
+#, fuzzy, c-format
+msgid "%s%s: invalid return code \"%s\""
+msgstr "%sChyba: nemohu odpojit klávesu \"%s\""
+
+#, c-format
+msgid ""
+"%s%s: trigger \"%s\" already exists (choose another name or use option "
+"\"addreplace\" to overwrite it)"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "%s%s: failed to create trigger \"%s\""
+msgstr "%sChyba: selhalo vytvoření pole \"%s\""
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" created"
+msgstr "Pole \"%s\" vytvořeno"
+
+#, fuzzy, c-format
+msgid "%s%s: trigger \"%s\" not found"
+msgstr "%sKlávesa \"%s\" nenalezena"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" updated"
+msgstr "Pole \"%s\" zaktualizováno"
+
+#, fuzzy, c-format
+msgid "%s%s: trigger option \"%s\" not found"
+msgstr "%sChyba: plugin \"%s\" nenalezen"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" copied to \"%s\""
+msgstr "Filtr \"%s\" přejmenován na \"%s\""
+
+#, fuzzy, c-format
+msgid "%s%s: failed to copy trigger \"%s\""
+msgstr "%sChyba: selhalo vytvoření pole \"%s\""
+
+#, fuzzy, c-format
+msgid "%sTrigger \"%s\" not found"
+msgstr "%sKlávesa \"%s\" nenalezena"
+
+#, fuzzy, c-format
+msgid "%d triggers removed"
+msgstr "%d rmodifikátorů odebráno"
+
+#, fuzzy, c-format
+msgid "Trigger \"%s\" removed"
+msgstr "Rmodifikátor \"%s\" odebrán"
+
+msgid "Trigger:"
+msgstr ""
+
+#, fuzzy
+msgid "Default triggers restored:"
+msgstr "Výchozí rmodifikátory obnoveny:"
+
+#, fuzzy, c-format
+msgid ""
+"%s%s: \"-yes\" argument is required for restoring default triggers (security "
+"reason)"
+msgstr ""
+"%sChyba: \"-yes\" argument je požadován pro obnovení výchozích rmodifikátorů "
+"(bezpečnostní opatření)"
+
+msgid "manage triggers, the Swiss Army knife for WeeChat"
+msgstr ""
+
+msgid ""
+"list|listfull|listdefault || add|addoff|addreplace <name> <hook> "
+"[\"<arguments>\" [\"<conditions>\" [\"<regex>\" [\"<command>"
+"\" [\"<return_code>\"]]]]] || addinput [<hook>] || input|output|recreate "
+"<name> || set <name> <option> <value> || rename|copy <name> <new_name> || "
+"enable|disable|toggle [<name>|-all [<name>...]] || restart <name>|-all "
+"[<name>...] || show <name> || del <name>|-all [<name>...] || default -yes || "
+"monitor [<filter>]"
+msgstr ""
+
+msgid ""
+"       list: list triggers (without argument, this list is displayed)\n"
+"   listfull: list triggers with detailed info for each trigger\n"
+"listdefault: list default triggers\n"
+"        add: add a trigger\n"
+"     addoff: add a trigger (disabled)\n"
+" addreplace: add or replace an existing trigger\n"
+"       name: name of trigger\n"
+"       hook: signal, hsignal, modifier, print, command, command_run, timer, "
+"config, focus\n"
+"  arguments: arguments for the hook, depending on hook (separated by "
+"semicolons):\n"
+"             signal: name(s) of signal (required)\n"
+"             hsignal: name(s) of hsignal (required)\n"
+"             modifier: name(s) of modifier (required)\n"
+"             print: buffer, tags, message, strip colors\n"
+"             command: command (required), description, arguments, "
+"description of arguments, completion\n"
+"             command_run: command(s) (required)\n"
+"             timer: interval (required), align on second, max calls\n"
+"             config: name(s) of option (required)\n"
+"             focus: name(s) of area (required)\n"
+" conditions: evaluated conditions for the trigger\n"
+"      regex: one or more regular expressions to replace strings in "
+"variables\n"
+"    command: command to execute (many commands can be separated by \";\"\n"
+"return_code: return code in callback (ok (default), ok_eat, error)\n"
+"   addinput: set input with default arguments to create a trigger\n"
+"      input: set input with the command used to create the trigger\n"
+"     output: send the command to create the trigger on the buffer\n"
+"   recreate: same as \"input\", with option \"addreplace\" instead of \"add"
+"\"\n"
+"        set: set an option in a trigger\n"
+"     option: name of option: name, hook, arguments, conditions, regex, "
+"command, return_code\n"
+"             (for help on option, you can type: /help trigger.trigger.<name>."
+"<option>)\n"
+"      value: new value for the option\n"
+"     rename: rename a trigger\n"
+"       copy: copy a trigger\n"
+"     enable: enable trigger(s) (without arguments: enable triggers "
+"globally)\n"
+"    disable: disable trigger(s) (without arguments: disable triggers "
+"globally)\n"
+"     toggle: toggle trigger(s) (without arguments: toggle triggers "
+"globally)\n"
+"    restart: restart trigger(s) (recreate the hooks)\n"
+"       show: show detailed info on a trigger (with some stats)\n"
+"        del: delete a trigger\n"
+"       -all: do action on all triggers\n"
+"    default: restore default triggers\n"
+"    monitor: open the trigger monitor buffer, with optional filter:\n"
+"     filter: filter hooks/triggers to display (a hook must start with \"@\", "
+"for example \"@signal\"), many filters can be separated by commas; wildcard "
+"\"*\" is allowed in each trigger name\n"
+"\n"
+"When a trigger callback is called, following actions are performed, in this "
+"order:\n"
+"  1. check conditions; if false, exit\n"
+"  2. replace text using POSIX extended regular expression(s) (if defined in "
+"trigger)\n"
+"  3. execute command(s) (if defined in trigger)\n"
+"  4. exit with a return code (except for modifiers and focus)\n"
+"\n"
+"Examples (you can also look at default triggers with /trigger listdefault):\n"
+"  add text attributes *bold*, _underline_ and /italic/ (only in user "
+"messages):\n"
+"    /trigger add effects modifier weechat_print \"${tg_tag_nick}\" \"=="
+"\\*(\\S+)\\*==*${color:bold}$1${color:-bold}*== ==_(\\S+)_==_${color:"
+"underline}$1${color:-underline}_== ==/(\\S+)/==/${color:italic}$1${color:-"
+"italic}/\"\n"
+"  hide nicklist bar on small terminals:\n"
+"    /trigger add resize_small signal signal_sigwinch \"${info:term_width} < "
+"100\" \"\" \"/bar hide nicklist\"\n"
+"    /trigger add resize_big signal signal_sigwinch \"${info:term_width} >= "
+"100\" \"\" \"/bar show nicklist\"\n"
+"  silently save config each hour:\n"
+"    /trigger add cfgsave timer 3600000;0;0 \"\" \"\" \"/mute /save\"\n"
+"  open trigger monitor and show only modifiers and triggers whose name "
+"starts with \"resize\":\n"
+"    /trigger monitor @modifier,resize*"
+msgstr ""
+
+msgid "triggers"
+msgstr ""
+
+#, fuzzy
+msgid "options for triggers"
+msgstr "volby pro proxy"
+
+#, fuzzy
+msgid "value of a trigger option"
+msgstr "hodnoty pro konfigurační nastavení"
+
+#, fuzzy
+msgid "hooks for triggers"
+msgstr "volby pro proxy"
+
+msgid "hooks for triggers (for filter in monitor buffer)"
+msgstr ""
+
+#, fuzzy
+msgid "default arguments for a hook"
+msgstr "výchozí odchozí zpráva pro IRC kanál"
+
+#, fuzzy
+msgid "default conditions for a hook"
+msgstr "výchozí barva pozadí pro pole"
+
+msgid "default regular expression for a hook"
+msgstr ""
+
+#, fuzzy
+msgid "default command for a hook"
+msgstr "výchozí příkaz:"
+
+#, fuzzy
+msgid "default return codes for hook callback"
+msgstr "výchozí barva textu pro pole"
+
+#, c-format
+msgid ""
+"%s%s: invalid format for option \"regex\", see /help trigger.trigger.%s.regex"
+msgstr ""
+
+#, fuzzy, c-format
+msgid ""
+"%s%s: invalid regular expression in option \"regex\", see /help trigger."
+"trigger.%s.regex"
+msgstr "%s%s: chyba při zpracování regulárního výrazu \"%s\""
+
+msgid ""
+"if disabled, the hooks are removed from trigger, so it is not called any more"
+msgstr ""
+
+#, fuzzy
+msgid "type of hook used"
+msgstr "seznam napojení"
+
+msgid "arguments for the hook (depend on the hook type, see /help trigger)"
+msgstr ""
+
+msgid ""
+"condition(s) for running the command (it is checked in hook callback) (note: "
+"content is evaluated when trigger is run, see /help eval)"
+msgstr ""
+
+msgid ""
+"replace text with a POSIX extended regular expression (it is done only if "
+"conditions are OK, and before running the command) (note: content is "
+"evaluated when trigger is run, see /help eval); format is: \"/regex/replace/"
+"var\" (var is the hashtable variable to replace, it is optional), many regex "
+"can be separated by a space, for example: \"/regex1/replace1/var1 /regex2/"
+"replace2/var2\"; escaped chars are interpreted in the regex (for example "
+"\"\\n\"); the separator \"/\" can be replaced by any char (one or more "
+"identical chars); matching groups can be used in replace: $0 to $99, $+ for "
+"last match and $.cN to replace all chars of group N by char c"
+msgstr ""
+
+msgid ""
+"command(s) to run if conditions are OK, after regex replacements (many "
+"commands can be separated by semicolons)"
+msgstr ""
+
+msgid ""
+"return code for hook callback (see plugin API reference to know where ok_eat/"
+"error can be used efficiently)"
+msgstr ""
+
+msgid "enable trigger support"
+msgstr ""
+
+#, fuzzy
+msgid "strip colors in hashtable values displayed on monitor buffer"
+msgstr ""
+"ořezávat barvy z tématu rozhovoru (použito pouze při zobrazování titulku "
+"bufferu)"
+
+#, fuzzy
+msgid "text color for command flag (in /trigger list)"
+msgstr "barva textu pro akce ve vstupní řádce"
+
+#, fuzzy
+msgid "text color for conditions flag (in /trigger list)"
+msgstr "barva textu pro akce ve vstupní řádce"
+
+#, fuzzy
+msgid "text color for regex flag (in /trigger list)"
+msgstr "barva textu pro skupiny v seznamu přezdívek"
+
+#, fuzzy
+msgid "text color for return code flag (in /trigger list)"
+msgstr "barva textu pro skupiny v seznamu přezdívek"
+
+#, fuzzy
+msgid "text color for regular expressions"
+msgstr "barva textu pro prefix chyby"
+
+msgid "text color for replacement text (for regular expressions)"
+msgstr ""
+
+#, fuzzy
+msgid "text color for trigger name"
+msgstr "barva textu pro jeméno serveru"
+
+#, fuzzy
+msgid "text color for disabled trigger name"
+msgstr "barva textu pro jeméno serveru"
 
 msgid "  [A] Accept"
 msgstr "  [A] Akceptovat"
@@ -9972,7 +10648,8 @@ msgstr ""
 "automaticky obnovit přenos souboru pokud bylo ztraceno spojení se vzdáleným "
 "hostem"
 
-msgid "convert spaces to underscores when sending files"
+#, fuzzy
+msgid "convert spaces to underscores when sending and receiving files"
 msgstr "konvertovat mezery na podtržítka při odesílání souborů"
 
 msgid ""
@@ -10063,70 +10740,3 @@ msgstr "%s%s: nemohu nastavit \"neblokovaci\" volbu na soket"
 #, c-format
 msgid "%s%s: timeout for \"%s\" with %s"
 msgstr "%s%s: vypršel časový limit \"%s\" pro %s"
-
-msgid "Plugin"
-msgstr "Plugin"
-
-msgid "Name"
-msgstr "Jméno"
-
-msgid "Arguments"
-msgstr "Argumenty"
-
-msgid "Hashtable (input)"
-msgstr "Hash tabulka (vstup)"
-
-msgid "Hashtable (output)"
-msgstr "Hash tabulka (výstup)"
-
-msgid "Pointer"
-msgstr "Ukazatel"
-
-#, fuzzy
-msgid "variables"
-msgstr "čtení - proměnná"
-
-msgid "update allowed"
-msgstr ""
-
-msgid "lists"
-msgstr ""
-
-#, fuzzy
-msgid "Option"
-msgstr "<volba>"
-
-msgid "Type"
-msgstr ""
-
-msgid "Constants"
-msgstr ""
-
-#~ msgid "%s: notification deleted"
-#~ msgstr "%s: notifikace smazána"
-
-#, fuzzy
-#~ msgid "%snotify: %s%s%s has quit"
-#~ msgstr "%snotifikace: %s%s%s odešel %s%s"
-
-#~ msgid "No layout saved"
-#~ msgstr "Nebylo uloženo žádné rozložení"
-
-#, fuzzy
-#~ msgid "%sgnutls: fingerprint does NOT match"
-#~ msgstr "%sguntls: jméno hosta v certifikátu NODPOVÍDÁ \"%s\""
-
-#~ msgid "%s%s: could not find address for \"%s\", falling back to local IP"
-#~ msgstr "%s%s: nemůžu najít adresu pro \"%s\", navracím se k lokální IP"
-
-#, fuzzy
-#~ msgid "%s%s: connected to %s (%ld.%ld.%ld.%ld)"
-#~ msgstr "%s: rozhovor zavřen s %s (%d.%d.%d.%d)"
-
-#, fuzzy
-#~ msgid ""
-#~ "%s: sending file to %s (%ld.%ld.%ld.%ld, %s.%s), name: %s (local "
-#~ "filename: %s), %llu bytes (protocol: %s)"
-#~ msgstr ""
-#~ "%s: posílám soubor k %s: %s (lokální jméno souboru: %s), %llu bytů "
-#~ "(protokol: %s)"

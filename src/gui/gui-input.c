@@ -123,7 +123,14 @@ gui_input_replace_input (struct t_gui_buffer *buffer, const char *new_input)
 void
 gui_input_paste_pending_signal ()
 {
-    hook_signal_send ("input_paste_pending", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    if (CONFIG_BOOLEAN(config_look_bare_display_exit_on_input)
+        && gui_window_bare_display)
+    {
+        gui_window_bare_display_toggle (NULL);
+    }
+
+    (void) hook_signal_send ("input_paste_pending",
+                             WEECHAT_HOOK_SIGNAL_STRING, NULL);
 }
 
 /*
@@ -136,6 +143,12 @@ gui_input_text_changed_modifier_and_signal (struct t_gui_buffer *buffer,
                                             int stop_completion)
 {
     char str_buffer[128], *new_input;
+
+    if (CONFIG_BOOLEAN(config_look_bare_display_exit_on_input)
+        && gui_window_bare_display)
+    {
+        gui_window_bare_display_toggle (NULL);
+    }
 
     if (!gui_cursor_mode)
     {
@@ -166,7 +179,8 @@ gui_input_text_changed_modifier_and_signal (struct t_gui_buffer *buffer,
         gui_completion_stop (buffer->completion);
 
     /* send signal */
-    hook_signal_send ("input_text_changed", WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+    (void) hook_signal_send ("input_text_changed",
+                             WEECHAT_HOOK_SIGNAL_POINTER, buffer);
 }
 
 /*
@@ -176,8 +190,14 @@ gui_input_text_changed_modifier_and_signal (struct t_gui_buffer *buffer,
 void
 gui_input_text_cursor_moved_signal (struct t_gui_buffer *buffer)
 {
-    hook_signal_send ("input_text_cursor_moved", WEECHAT_HOOK_SIGNAL_POINTER,
-                      buffer);
+    if (CONFIG_BOOLEAN(config_look_bare_display_exit_on_input)
+        && gui_window_bare_display)
+    {
+        gui_window_bare_display_toggle (NULL);
+    }
+
+    (void) hook_signal_send ("input_text_cursor_moved",
+                             WEECHAT_HOOK_SIGNAL_POINTER, buffer);
 }
 
 /*
@@ -187,7 +207,14 @@ gui_input_text_cursor_moved_signal (struct t_gui_buffer *buffer)
 void
 gui_input_search_signal (struct t_gui_buffer *buffer)
 {
-    hook_signal_send ("input_search", WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+    if (CONFIG_BOOLEAN(config_look_bare_display_exit_on_input)
+        && gui_window_bare_display)
+    {
+        gui_window_bare_display_toggle (NULL);
+    }
+
+    (void) hook_signal_send ("input_search",
+                             WEECHAT_HOOK_SIGNAL_POINTER, buffer);
 }
 
 /*
@@ -382,6 +409,12 @@ gui_input_return (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
     char *command;
 
+    if (CONFIG_BOOLEAN(config_look_bare_display_exit_on_input)
+        && gui_window_bare_display)
+    {
+        gui_window_bare_display_toggle (NULL);
+    }
+
     window = gui_window_search_with_buffer (buffer);
     if (window && window->buffer->input
         && (window->buffer->input_buffer_size > 0))
@@ -547,8 +580,7 @@ gui_input_search_text (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED))
     {
         gui_window_search_start (window);
         gui_input_search_signal (buffer);
@@ -601,8 +633,7 @@ gui_input_search_switch_case (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
     {
         window->buffer->text_search_exact ^= 1;
         gui_window_search_restart (window);
@@ -621,8 +652,7 @@ gui_input_search_switch_regex (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
     {
         window->buffer->text_search_regex ^= 1;
         gui_window_search_restart (window);
@@ -640,9 +670,12 @@ gui_input_search_switch_where (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
     {
+        /* it's not possible to change that in a buffer with free content */
+        if (window->buffer->type == GUI_BUFFER_TYPE_FREE)
+            return;
+
         if (window->buffer->text_search_where == GUI_TEXT_SEARCH_IN_MESSAGE)
             window->buffer->text_search_where = GUI_TEXT_SEARCH_IN_PREFIX;
         else if (window->buffer->text_search_where == GUI_TEXT_SEARCH_IN_PREFIX)
@@ -664,8 +697,7 @@ gui_input_search_previous (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
     {
         window->buffer->text_search = GUI_TEXT_SEARCH_BACKWARD;
         (void) gui_window_search_text (window);
@@ -682,8 +714,7 @@ gui_input_search_next (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
     {
         window->buffer->text_search = GUI_TEXT_SEARCH_FORWARD;
         (void) gui_window_search_text (window);
@@ -700,8 +731,7 @@ gui_input_search_stop (struct t_gui_buffer *buffer)
     struct t_gui_window *window;
 
     window = gui_window_search_with_buffer (buffer);
-    if (window && (window->buffer->type == GUI_BUFFER_TYPE_FORMATTED)
-        && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
+    if (window && (window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED))
     {
         gui_window_search_stop (window);
         gui_input_search_signal (buffer);
@@ -1389,24 +1419,6 @@ gui_input_jump_smart (struct t_gui_buffer *buffer)
 }
 
 /*
- * Jumps to last buffer (default key: meta-j, meta-l).
- */
-
-void
-gui_input_jump_last_buffer (struct t_gui_buffer *buffer)
-{
-    struct t_gui_window *window;
-
-    window = gui_window_search_with_buffer (buffer);
-    if (window
-        && (window->buffer->text_search == GUI_TEXT_SEARCH_DISABLED)
-        && last_gui_buffer)
-    {
-        gui_buffer_switch_by_number (window, last_gui_buffer->number);
-    }
-}
-
-/*
  * Jumps to last buffer displayed (before last jump to a buffer) (default key:
  * meta-/).
  */
@@ -1566,7 +1578,7 @@ gui_input_switch_active_buffer (struct t_gui_buffer *buffer)
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_window *window;
 
-    ptr_buffer = gui_buffer_get_next_active_buffer (buffer);
+    ptr_buffer = gui_buffer_get_next_active_buffer (buffer, 0);
     if (ptr_buffer)
     {
         gui_buffer_set_active_buffer (ptr_buffer);
@@ -1586,7 +1598,7 @@ gui_input_switch_active_buffer_previous (struct t_gui_buffer *buffer)
     struct t_gui_buffer *ptr_buffer;
     struct t_gui_window *window;
 
-    ptr_buffer = gui_buffer_get_previous_active_buffer (buffer);
+    ptr_buffer = gui_buffer_get_previous_active_buffer (buffer, 0);
     if (ptr_buffer)
     {
         gui_buffer_set_active_buffer (ptr_buffer);
@@ -1605,6 +1617,7 @@ void
 gui_input_zoom_merged_buffer (struct t_gui_buffer *buffer)
 {
     struct t_gui_window *ptr_window;
+    struct t_gui_buffer *ptr_buffer;
     int buffer_was_zoomed;
 
     /* do nothing if current buffer is not merged with another buffer */
@@ -1648,10 +1661,25 @@ gui_input_zoom_merged_buffer (struct t_gui_buffer *buffer)
         buffer->lines = buffer->mixed_lines;
     }
 
+    /* set "zoomed" in merged buffers */
+    for (ptr_buffer = gui_buffers; ptr_buffer;
+         ptr_buffer = ptr_buffer->next_buffer)
+    {
+        if (ptr_buffer->number > buffer->number)
+            break;
+        if (ptr_buffer->number == buffer->number)
+        {
+            ptr_buffer->zoomed = (buffer->active == 2) ? 1 : 0;
+        }
+    }
+
+    gui_buffer_compute_num_displayed ();
+
     gui_buffer_ask_chat_refresh (buffer, 2);
 
-    hook_signal_send ((buffer_was_zoomed) ? "buffer_unzoomed" : "buffer_zoomed",
-                      WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+    (void) hook_signal_send ((buffer_was_zoomed) ?
+                             "buffer_unzoomed" : "buffer_zoomed",
+                             WEECHAT_HOOK_SIGNAL_POINTER, buffer);
 }
 
 /*

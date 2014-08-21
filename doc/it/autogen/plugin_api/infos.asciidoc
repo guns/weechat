@@ -1,0 +1,77 @@
+[width="100%",cols="^1,^2,6,6",options="header"]
+|===
+| Plugin | Nome | Descrizione | Argomenti
+
+| aspell | aspell_dict | elenco separato da virgole di dizionari usati nel buffer | puntatore al buffer ("0x12345678") o buffer con il nome completo ("irc.freenode.weechat")
+
+| fifo | fifo_filename | nome della pipe FIFO | -
+
+| irc | irc_buffer | ottiene puntatore al buffer per un server/canale/nick IRC | server,canale,nick (canale e nick sono opzionali)
+
+| irc | irc_is_channel | 1 se la stringa è il nome di un canale IRC valido per il server | server,canale (server è opzionale)
+
+| irc | irc_is_nick | 1 se la stringa è un nick IRC valido | nick
+
+| irc | irc_nick | ottiene nick corrente su un server | nome server
+
+| irc | irc_nick_color | ottiene il codice del colore del nick | nick
+
+| irc | irc_nick_color_name | ottiene il nome del colore del nick | nick
+
+| irc | irc_nick_from_host | ottiene nick dall'host IRC | host IRC (come `:nick!nome@server.com`)
+
+| irc | irc_server_isupport | 1 se il server supporta questa caratteristica (dal messaggio IRC 005) | server,caratteristica
+
+| irc | irc_server_isupport_value | valore della caratteristica, se supportata dal servre (dal messaggio IRC 005) | server,caratteristica
+
+| python | python2_bin | path per l'interprete python 2.x | -
+
+| relay | relay_client_count | number of clients for relay | status name (optional): connecting, waiting_auth, connected, auth_failed, disconnected
+
+| weechat | charset_internal | set caratteri interno di WeeChat | -
+
+| weechat | charset_terminal | set caratteri terminale | -
+
+| weechat | color_ansi_regex | POSIX extended regular expression to search ANSI escape codes | -
+
+| weechat | color_rgb2term | RGB color converted to terminal color (0-255) | rgb,limit (limit is optional and is set to 256 by default)
+
+| weechat | color_term2rgb | terminal color (0-255) converted to RGB color | color (terminal color: 0-255)
+
+| weechat | cursor_mode | 1 se la modalità cursore è abilitata | -
+
+| weechat | date | data di compilazione di WeeChat | -
+
+| weechat | dir_separator | separatore directory | -
+
+| weechat | filters_enabled | 1 se i filtri sono abilitati | -
+
+| weechat | inactivity | inattività della tastiera (secondi) | -
+
+| weechat | locale | locale usato per la traduzione dei messaggi | -
+
+| weechat | term_height | height of terminal | -
+
+| weechat | term_width | width of terminal | -
+
+| weechat | version | versione di WeeChat | -
+
+| weechat | version_git | Versione git di weechat (output del comando "git describe" solo per la versione di sviluppo, vuoto per una release stabile) | -
+
+| weechat | version_number | versione di WeeChat (come numero) | -
+
+| weechat | weechat_dir | directory WeeChat | -
+
+| weechat | weechat_libdir | directory "lib" di WeeChat | -
+
+| weechat | weechat_localedir | directory "locale" di WeeChat | -
+
+| weechat | weechat_sharedir | directory "share" di WeeChat | -
+
+| weechat | weechat_site | sito di WeeChat | -
+
+| weechat | weechat_site_download | sito di WeeChat, pagina di download | -
+
+| weechat | weechat_upgrading | 1 se si sta aggiornando WeeChat (comando `/upgrade`) | -
+
+|===

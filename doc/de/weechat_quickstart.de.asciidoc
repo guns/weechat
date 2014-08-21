@@ -1,0 +1,352 @@
+= WeeChat Quickstart Anleitung
+:author: Sébastien Helleu
+:email: flashcode@flashtux.org
+:lang: de
+:toc:
+
+
+[[start]]
+== Start von WeeChat
+
+Die bevorzugte Terminal-Emulation für X (aber nicht obligatorisch) ist
+rxvt-unicode (rxvt verfügt über eine gute UTF-8 Unterstützung und hat
+keine Probleme mit der Standard Tastaturbelegung).
+
+Programmstart aus Deiner shell:
+
+----
+$ weechat
+----
+
+[[help_options]]
+== Online-Hilfe / Optionen
+
+Für jeden Befehl bietet WeeChat eine Hilfe an:
+
+----
+/help
+----
+
+Um sich eine Hilfe für einen bestimmten Befehl anzeigen
+zu lassen:
+
+----
+/help Befehl
+----
+
+Um Optionen zu setzen benutzt man:
+
+----
+/set config.section.option Wert
+----
+
+(dabei ist 'config' der Konfigurationsname ('weechat' für den Kern von weechat,
+oder der Name einer Erweiterung), 'section' ein Abschnitt dieser Konfiguration und 'option'
+der Name der entsprechenden Option).
+
+WeeChat verwendet umgehend einen neu eingestellten Wert (WeeChat muss also zu *keinem* Zeitpunkt
+neu gestartet werden, nach dem die Konfiguration verändert wurde).
+
+Beim `/set` Befehl kann beim Optionnamen ein Platzhalter "*" zu Beginn oder am Ende
+der Zeichenkette verwendet werden um sich alle Optionen anzeigen zu lassen, die
+dem Suchmuster entsprechen.
+
+Zum Beispiel:
+
+Zeit alle Optionen an (WeeChat und Erweiterungen):
+
+----
+/set
+----
+
+Zeit alle WeeChat Optionen an:
+
+----
+/set weechat.*
+----
+
+Zeit alle Optionen der IRC-Erweiterung an:
+
+----
+/set irc.*
+----
+
+Du kannst dir mit dem Befehl `/help` eine Hilfe für Optionen anzeigen lassen, z.B.:
+
+----
+/help weechat.look.highlight
+----
+
+Beim Beenden von WeeChat werden alle Einstellungen gespeichert (mittels des
+Befehls `/save` kann das Sichern der Optionen manuell durchgeführt werden).
+
+Konfigurationsdateien (*.conf) können auch per Hand editiert und mit dem Befehl
+`/reload` neu eingelesen werden (falls man z.B. den `/set` Befehl nicht
+verwenden möchte).
+
+[[core_vs_plugins]]
+== Kern (Core) vs Erweiterungen
+
+Der Kern (core) von WeeChat ist ausschließlich dazu da, Daten auf dem Bildschirm
+darzustellen, um mit dem Benutzer zu interagieren. Dies bedeutet, WeeChat an sich
+-also nur WeeChat core- ohne jegliche Erweiterung ist unbrauchbar.
+(an die treuen User: IRC war ein Teil des Kerns der Versionen ≤ 0.2.6)
+
+Alle Netzwerkprotokolle, z.B. IRC, werden als separate Erweiterung bereit gestellt.
+
+Benutze den Befehl `/plugin` um alle Erweiterungen aufzulisten, "irc" sowie andere
+Erweiterungen sollten aufgelistet werden.
+
+[[create_irc_server]]
+== Einen IRC-Server erstellen
+
+Der Server 'freenode' wird standardmäßig beim ersten Programmstart erstellt.
+
+Ein weiterer IRC Server kann mit dem `/server` Befehl erstellt werden. Zum Beispiel:
+
+----
+/server add oftc irc.oftc.net/6667
+----
+
+Falls man nicht mehr weiter weiß, einfach die Hilfe verwenden:
+
+----
+/help server
+----
+
+[[irc_server_options]]
+== Setzen eigener IRC-Server Optionen
+
+WeeChat verwendet Vorgabewerte für alle Server (so genannte "fall backs"), falls
+Du keine eigenen Werte für entsprechende Server-Optionen bestimmt haben solltest.
+Diese Vorgabewerte sind in "irc.server_default.*" hinterlegt.
+
+Für jede Server-Option benutzt WeeChat den entsprechend gesetzten Wert - falls
+definiert (nicht "null"). Andernfalls verwendet WeeChat die Vorgabewerte
+("irc.server_default.xxx").
+
+Als Beispiel erwähnt ist die Vorgabe für Nicks, die auf den Un*x Login
+zurückgreift. Diese Vorgabe kann nun für den freenode-Server mittels folgendem Befehl
+überschrieben werden:
+
+----
+/set irc.server.freenode.nicks "meinNick,meinNick2,meinNick3,meinNick4,meinNick5"
+----
+
+Um den User- und realen Namen anzupassen:
+
+----
+/set irc.server.freenode.username "Mein User-Name"
+/set irc.server.freenode.realname "Mein wirklicher Name"
+----
+
+Um beim Start von WeeChat automatisch eine Verbindung zu einem Server
+herzustellen:
+
+----
+/set irc.server.freenode.autoconnect on
+----
+
+Um eine SSL Verbindung herzustellen:
+
+----
+/set irc.server.freenode.addresses "chat.freenode.net/7000"
+/set irc.server.freenode.ssl on
+/set irc.server.freenode.ssl_dhkey_size 1024
+----
+
+[NOTE]
+Freenode unterstützt nicht die standardmäßige Schlüsselgröße von 2048 Bytes.
+Deshalb muss die Schlüsselgröße auf 1024 Bytes angepasst werden.
+
+Sollte der Server SASL unterstützen, kann man sich damit automatisch Authentifizieren
+(dadurch identifiziert man sich beim Server, bevor man Channels (Chaträume) betritt):
+
+----
+/set irc.server_default.sasl_mechanism dh-blowfish
+/set irc.server.freenode.sasl_username "mynick"
+/set irc.server.freenode.sasl_password "xxxxxxx"
+----
+
+Unterstützt der Server keine SASL Authentifizierung, muss man sich bei "nickserv"
+identifizieren:
+
+----
+/set irc.server.freenode.command "/msg nickserv identify xxxxxxx"
+----
+
+[NOTE]
+Mehrere Befehle in der Option 'command' können durch ein ';' (Semikolon) voneinander getrennt werden.
+
+Um ein auto-join (automatisches 'betreten') von Channels (Räumen) nach der
+Verbindung zum Server durchzuführen, müssen die entsprechenden Channels in
+eine Liste eingetragen werden:
+
+----
+/set irc.server.freenode.autojoin "#channel1,#channel2"
+----
+
+Um einen Wert der Server-Optionen zu entfernen und stattdessen wieder den
+Vorgabewert zu nutzen, z.B. Nutzen der vorgegebenen Nicknamen
+(irc.server_default.nicks):
+
+----
+/set irc.server.freenode.nicks null
+----
+
+Andere Optionen: Du kannst andere Optionen mit folgendem Befehl festlegen ("xxx"
+ist der Optionsname):
+
+----
+/set irc.server.freenode.xxx Wert
+----
+
+[[connect_to_irc_server]]
+== Verbinden mit dem IRC-Server und auto-join der Channel
+
+----
+/connect freenode
+----
+
+[NOTE]
+Dieser Befehl kann dazu benutzt werden um einen neuen Server zu erstellen und
+sich mit ihm zu verbinden, ohne den Befehl `/server` zu benutzen (muss ich
+erwähnen, dass Du die Hilfe zu diesem Befehl mit `/help connect` aufrufen
+kannst?).
+
+Standardmäßig werden alle Server-Buffer und der Buffer des Kerns von WeeChat -der
+core-Buffer- zusammengelegt. Um zwischen dem core-Buffer und den Server-Buffern
+zu wechseln, kannst Du key[ctrl-x] benutzen.
+
+Es ist möglich das automatische Zusammenlegen der Server-Buffer zu deaktivieren,
+um eigenständige Server-Buffer zu verwenden:
+
+----
+/set irc.look.server_buffer independent
+----
+
+[[join_part_irc_channels]]
+== Betreten/verlassen der IRC-Channel
+
+Einen Channel betreten:
+
+----
+/join #channel
+----
+
+Einen Channel verlassen (der Buffer bleibt dabei geöffnet):
+
+----
+/part [quit message]
+----
+
+Schließen eines Server- oder Channel-Buffers (`/close` ist ein Alias für `/buffer close`):
+
+----
+/close
+----
+
+[[irc_private_messages]]
+== IRC private Nachrichten
+
+Öffnet einen Buffer und schickt eine Nachricht an einen User (Nick 'foo'):
+
+----
+/query foo Dies ist eine Nachricht
+----
+
+Schließt einen privaten Buffer:
+
+----
+/close
+----
+
+[[buffer_window]]
+== Buffer/Fenster Verwaltung
+
+Ein Buffer ist einer Erweiterung zugeordnet und besitzt eine Buffer-Nummer,
+einen Buffer-Namen und beinhaltet die auf dem Bildschirm dargestellten
+Zeilen.
+
+Ein Fenster ist die Ansicht eines Buffers. Standardmäßig nutzt WeeChat ein
+Fenster, in welchem ein Buffer darstellt wird. Wird der Bildschirm in
+mehrere Fenster aufgeteilt, kann man sich entsprechend der Anzahl der
+geteilten Fenster einen Buffer pro Fenster anzeigen lassen.
+
+Befehle, zum Verwalten von Buffern und Fenstern:
+
+----
+/buffer
+/window
+----
+
+(Ich muss nicht erwähnen, dass man zu diesen Befehlen eine Hilfe mit /help
+erhält)
+
+Beispiel: Um den Bildschirm vertikal in ein kleineres Fenster (1/3 Bildschirmbreite)
+und ein größeres Fenster (2/3 Bildschirmbreite) aufzuteilen:
+
+----
+/window splitv 33
+----
+
+[[key_bindings]]
+== Tastaturbelegung
+
+WeeChat verwendet viele Standardtasten. Alle Tastenbelegungen sind in der
+Dokumentation beschrieben. Im folgenden werden die wichtigsten Tastenbelegungen
+kurz erläutert:
+
+- key[alt-]key[←]/key[→] oder key[F5]/key[F6]: Wechsel zum
+  vorherigen/nächsten Buffer
+- key[F7]/key[F8]: Wechsel zum vorherigen/nächsten Fenster (falls der
+  Bildschirm aufgeteilt ist)
+- key[F9]/key[F10]: scrollt die Titelleiste
+- key[F11]/key[F12]: scrollt die Liste mit den Nicks
+- key[Tab]: komplettiert den Text in der Eingabezeile, ähnlich Deiner shell
+- key[PgUp]/key[PgDn]: scrollt den Text im aktiven Buffer
+- key[alt-a]: springt zum Buffer mit Aktivität (aus der Hotlist)
+
+Gemäß Deiner Tastatur und/oder Deinen Bedürfnissen kann jede Taste mit Hilfe
+des `/key` Befehls durch jedweden Befehl neu belegt werden.
+Eine nützliche Tastenkombination um Tastencodes zu ermitteln ist key[alt-k].
+
+Beispiel: Belegung von key[alt-y] mit dem Befehl `/buffer close`:
+
+----
+/key bind (drücke alt-k) (drücke alt-y) /buffer close
+----
+
+Du wirst folgende Befehlszeile erhalten:
+
+----
+/key bind meta-y /buffer close
+----
+
+Entfernen der Tastenbelegung:
+
+----
+/key unbind meta-y
+----
+
+[[plugins_scripts]]
+== Erweiterungen/Skripten
+
+Bei einigen Distributionen wie z.B. Debian, sind die Erweiterungen über separate Pakete
+erhältlich (z.B. weechat-plugins).
+Erweiterungen werden -sofern welche gefunden worden sind- automatisch geladen (Bitte beachte
+die Dokumentation zum installieren/entfernen von Erweiterungen und/oder Skripten).
+
+Viele externe Skripten (von Mitwirkenden) sind für WeeChat verfügbar, siehe:
+http://weechat.org/scripts
+
+Skripten können mit dem Befehl `/script` verwaltet werden (siehe `/help script` für
+weitere Informationen zur Bedienung).
+
+[[more_doc]]
+== Weitere Dokumentation
+
+Nun kannst Du WeeChat nutzen, für weitere Fragen lese die FAQ und/oder Dokumentation:
+http://weechat.org/doc
+
+Viel Spass mit WeeChat!

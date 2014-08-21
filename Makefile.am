@@ -23,18 +23,27 @@
 # (if needed, and only for a devel/rc version).
 BUILT_SOURCES = build-config-git.h
 build-config-git.h:
-	-$(abs_top_srcdir)/git-version.sh "$(abs_top_srcdir)" "$(VERSION)" config-git.h
+	-$(abs_top_srcdir)/scripts/git-version.sh "$(abs_top_srcdir)" "$(VERSION)" config-git.h
 
-SUBDIRS = po doc intl src
+if TESTS
+tests_dir = tests
+endif
 
-EXTRA_DIST = CMakeLists.txt \
+SUBDIRS = po doc intl src $(tests_dir)
+
+EXTRA_DIST = AUTHORS.asciidoc \
+             ChangeLog.asciidoc \
+             Contributing.asciidoc \
+             README.asciidoc \
+             ReleaseNotes.asciidoc \
+             CMakeLists.txt \
              config.rpath \
              config.h.cmake \
-             git-version.sh \
              makedist.sh \
              cmake/CMakeParseArguments.cmake \
              cmake/FindAsciidoc.cmake \
              cmake/FindAspell.cmake \
+             cmake/FindCppUTest.cmake \
              cmake/FindENCHANT.cmake \
              cmake/FindGCRYPT.cmake \
              cmake/FindGettext.cmake \
@@ -54,6 +63,8 @@ EXTRA_DIST = CMakeLists.txt \
              cmake/cmake_uninstall.cmake.in \
              po/CMakeLists.txt \
              po/srcfiles.cmake \
+             scripts/build.sh \
+             scripts/git-version.sh \
              weechat.png \
              weechat.pc.in \
              weechat.cygport.in

@@ -59,9 +59,9 @@ struct t_gui_bar_item *last_gui_bar_item = NULL; /* last bar item           */
 char *gui_bar_item_names[GUI_BAR_NUM_ITEMS] =
 { "input_paste", "input_prompt", "input_search", "input_text", "time",
   "buffer_count", "buffer_last_number", "buffer_plugin", "buffer_number",
-  "buffer_name", "buffer_modes", "buffer_filter", "buffer_zoom",
-  "buffer_nicklist_count", "scroll", "hotlist", "completion", "buffer_title",
-  "buffer_nicklist", "window_number"
+  "buffer_name", "buffer_short_name", "buffer_modes", "buffer_filter",
+  "buffer_zoom", "buffer_nicklist_count", "scroll", "hotlist", "completion",
+  "buffer_title", "buffer_nicklist", "window_number"
 };
 char *gui_bar_items_default_for_bars[][2] =
 { { GUI_BAR_DEFAULT_NAME_INPUT,
@@ -69,7 +69,7 @@ char *gui_bar_items_default_for_bars[][2] =
   { GUI_BAR_DEFAULT_NAME_TITLE,
     "buffer_title" },
   { GUI_BAR_DEFAULT_NAME_STATUS,
-    "[time],[buffer_count],[buffer_plugin],buffer_number+:+"
+    "[time],[buffer_last_number],[buffer_plugin],buffer_number+:+"
     "buffer_name+(buffer_modes)+{buffer_nicklist_count}+buffer_zoom+"
     "buffer_filter,[lag],[hotlist],completion,scroll" },
   { GUI_BAR_DEFAULT_NAME_NICKLIST,
@@ -1056,10 +1056,41 @@ gui_bar_item_default_buffer_name (void *data, struct t_gui_bar_item *item,
         return NULL;
 
     snprintf (str_name, sizeof (str_name), "%s%s",
-              gui_color_get_custom (gui_color_get_name (CONFIG_COLOR(config_color_status_name))),
+              gui_color_get_custom (
+                  gui_color_get_name (CONFIG_COLOR(config_color_status_name))),
               buffer->name);
 
     return strdup (str_name);
+}
+
+/*
+ * Default item for short name of buffer.
+ */
+
+char *
+gui_bar_item_default_buffer_short_name (void *data,
+                                        struct t_gui_bar_item *item,
+                                        struct t_gui_window *window,
+                                        struct t_gui_buffer *buffer,
+                                        struct t_hashtable *extra_info)
+{
+    char str_short_name[256];
+
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+    (void) extra_info;
+
+    if (!buffer)
+        return NULL;
+
+    snprintf (str_short_name, sizeof (str_short_name), "%s%s",
+              gui_color_get_custom (
+                  gui_color_get_name (CONFIG_COLOR(config_color_status_name))),
+              gui_buffer_get_short_name (buffer));
+
+    return strdup (str_short_name);
 }
 
 /*
@@ -1106,8 +1137,11 @@ gui_bar_item_default_buffer_filter (void *data, struct t_gui_bar_item *item,
     if (!buffer)
         return NULL;
 
-    if (!gui_filters_enabled || !gui_filters || !buffer->lines->lines_hidden)
+    if (!gui_filters_enabled || !gui_filters
+        || !buffer->filter || !buffer->lines->lines_hidden)
+    {
         return NULL;
+    }
 
     snprintf (str_filter, sizeof (str_filter),
               "%s%s",
@@ -1139,7 +1173,9 @@ gui_bar_item_default_buffer_nicklist_count (void *data,
     if (!buffer || !buffer->nicklist)
         return NULL;
 
-    snprintf (str_count, sizeof (str_count), "%d",
+    snprintf (str_count, sizeof (str_count),
+              "%s%d",
+              gui_color_get_custom (gui_color_get_name (CONFIG_COLOR(config_color_status_nicklist_count))),
               buffer->nicklist_visible_count);
 
     return strdup (str_count);
@@ -1326,11 +1362,11 @@ gui_bar_item_default_hotlist (void *data, struct t_gui_bar_item *item,
                 strcat (str_hotlist, GUI_COLOR_CUSTOM_BAR_FG);
                 if (CONFIG_INTEGER(config_look_hotlist_names_length) == 0)
                 {
-                    snprintf (format, sizeof (format) - 1, "%%s");
+                    snprintf (format, sizeof (format), "%%s");
                 }
                 else
                 {
-                    snprintf (format, sizeof (format) - 1,
+                    snprintf (format, sizeof (format),
                               "%%.%ds",
                               CONFIG_INTEGER(config_look_hotlist_names_length));
                 }
@@ -1976,6 +2012,19 @@ gui_bar_item_init ()
     gui_bar_item_hook_signal ("buffer_moved",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_NAME]);
 
+    /* buffer short name */
+    gui_bar_item_new (NULL,
+                      gui_bar_item_names[GUI_BAR_ITEM_BUFFER_SHORT_NAME],
+                      &gui_bar_item_default_buffer_short_name, NULL);
+    gui_bar_item_hook_signal ("window_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_SHORT_NAME]);
+    gui_bar_item_hook_signal ("buffer_switch",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_SHORT_NAME]);
+    gui_bar_item_hook_signal ("buffer_renamed",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_SHORT_NAME]);
+    gui_bar_item_hook_signal ("buffer_moved",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_SHORT_NAME]);
+
     /* buffer modes */
     gui_bar_item_new (NULL,
                       gui_bar_item_names[GUI_BAR_ITEM_BUFFER_MODES],
@@ -2005,6 +2054,8 @@ gui_bar_item_init ()
     gui_bar_item_hook_signal ("buffer_zoomed",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_ZOOM]);
     gui_bar_item_hook_signal ("buffer_unzoomed",
+                              gui_bar_item_names[GUI_BAR_ITEM_BUFFER_ZOOM]);
+    gui_bar_item_hook_signal ("buffer_switch",
                               gui_bar_item_names[GUI_BAR_ITEM_BUFFER_ZOOM]);
 
     /* buffer nicklist count */
@@ -2128,8 +2179,8 @@ gui_bar_item_hdata_bar_item_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_bar_item, build_callback_data, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_bar_item, prev_item, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_bar_item, next_item, POINTER, 0, NULL, hdata_name);
-        HDATA_LIST(gui_bar_items);
-        HDATA_LIST(last_gui_bar_item);
+        HDATA_LIST(gui_bar_items, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        HDATA_LIST(last_gui_bar_item, 0);
     }
     return hdata;
 }

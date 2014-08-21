@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_GUI_WINDOW_H
-#define __WEECHAT_GUI_WINDOW_H 1
+#ifndef WEECHAT_GUI_WINDOW_H
+#define WEECHAT_GUI_WINDOW_H 1
 
 struct t_infolist;
 struct t_gui_bar_window;
@@ -124,6 +124,8 @@ extern struct t_gui_window *gui_current_window;
 extern struct t_gui_window_tree *gui_windows_tree;
 extern int gui_window_cursor_x;
 extern int gui_window_cursor_y;
+extern int gui_window_bare_display;
+extern struct t_hook *gui_window_bare_display_timer;
 
 /* window functions */
 
@@ -229,6 +231,7 @@ extern void gui_window_switch_right (struct t_gui_window *window);
 extern int gui_window_balance (struct t_gui_window_tree *tree);
 extern void gui_window_swap (struct t_gui_window *window, int direction);
 extern void gui_window_refresh_screen (int full_refresh);
+extern void gui_window_bare_display_toggle (const char *delay);
 extern void gui_window_set_title (const char *title);
 extern void gui_window_send_clipboard (const char *storage_unit,
                                        const char *text);
@@ -237,4 +240,4 @@ extern void gui_window_move_cursor ();
 extern void gui_window_term_display_infos ();
 extern void gui_window_objects_print_log (struct t_gui_window *window);
 
-#endif /* __WEECHAT_GUI_WINDOW_H */
+#endif /* WEECHAT_GUI_WINDOW_H */

@@ -1,4 +1,5 @@
 usr/lib/weechat/plugins/aspell.so
+usr/lib/weechat/plugins/exec.so
 usr/lib/weechat/plugins/fifo.so
 usr/lib/weechat/plugins/guile.so
 usr/lib/weechat/plugins/perl.so
@@ -8,4 +9,4 @@ usr/lib/weechat/plugins/lua.so
 usr/lib/weechat/plugins/tcl.so
 usr/lib/weechat/plugins/script.so
 usr/lib/weechat/plugins/relay.so
-usr/lib/weechat/plugins/rmodifier.so
+usr/lib/weechat/plugins/trigger.so

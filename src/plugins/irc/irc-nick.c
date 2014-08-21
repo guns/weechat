@@ -664,6 +664,17 @@ irc_nick_new (struct t_irc_server *server, struct t_irc_channel *channel,
     new_nick->host = (host) ? strdup (host) : NULL;
     length = strlen (irc_server_get_prefix_chars (server));
     new_nick->prefixes = malloc (length + 1);
+    if (!new_nick->name || !new_nick->prefixes)
+    {
+        if (new_nick->name)
+            free (new_nick->name);
+        if (new_nick->host)
+            free (new_nick->host);
+        if (new_nick->prefixes)
+            free (new_nick->prefixes);
+        free (new_nick);
+        return NULL;
+    }
     if (new_nick->prefixes)
     {
         memset (new_nick->prefixes, ' ', length);
@@ -903,6 +914,7 @@ irc_nick_set_away (struct t_irc_server *server, struct t_irc_channel *channel,
                    struct t_irc_nick *nick, int is_away)
 {
     if (!is_away
+        || server->cap_away_notify
         || ((IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK) > 0)
             && ((IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS) == 0)
                 || (channel->nicks_count <= IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS)))))
@@ -1055,7 +1067,7 @@ char *
 irc_nick_default_ban_mask (struct t_irc_nick *nick)
 {
     const char *ptr_ban_mask;
-    char *pos_hostname, user[128], *res, *temp;
+    char *pos_hostname, user[128], ident[128], *res, *temp;
 
     if (!nick)
         return NULL;
@@ -1072,6 +1084,7 @@ irc_nick_default_ban_mask (struct t_irc_nick *nick)
 
     strncpy (user, nick->host, pos_hostname - nick->host);
     user[pos_hostname - nick->host] = '\0';
+    strcpy (ident, (user[0] != '~') ? user : "*");
     pos_hostname++;
 
     /* replace nick */
@@ -1082,6 +1095,13 @@ irc_nick_default_ban_mask (struct t_irc_nick *nick)
 
     /* replace user */
     temp = weechat_string_replace (res, "$user", user);
+    free (res);
+    if (!temp)
+        return NULL;
+    res = temp;
+
+    /* replace ident */
+    temp = weechat_string_replace (res, "$ident", ident);
     free (res);
     if (!temp)
         return NULL;

@@ -213,8 +213,7 @@ charset_config_init ()
         charset_config_file, ptr_section,
         "decode", "string",
         N_("global decoding charset: charset used to decode incoming messages "
-           "(if decoding fails, fallback is UTF-8 because it is the WeeChat "
-           "internal charset)"),
+           "when they are not UTF-8 valid"),
         NULL, 0, 0,
         (charset_terminal && charset_internal
          && (weechat_strcasecmp (charset_terminal,
@@ -494,7 +493,7 @@ charset_command_cb (void *data, struct t_gui_buffer *buffer, int argc,
         snprintf (option_name, length, "%s.%s", plugin_name, name);
     }
 
-    if ((argc > 1) && (weechat_strcasecmp (argv[1], "reset") == 0))
+    if (weechat_strcasecmp (argv[1], "reset") == 0)
     {
         charset_set (charset_config_section_decode, "decode", option_name,
                      NULL);

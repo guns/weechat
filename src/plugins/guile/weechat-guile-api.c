@@ -2292,7 +2292,7 @@ weechat_guile_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        snprintf (timebuffer, sizeof (timebuffer) - 1, "%ld", (long int)date);
+        snprintf (timebuffer, sizeof (timebuffer), "%ld", (long int)date);
 
         func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
         func_argv[1] = API_PTR2STR(buffer);
@@ -2300,15 +2300,15 @@ weechat_guile_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
         func_argv[3] = weechat_string_build_with_split_string (tags, ",");
         if (!func_argv[3])
             func_argv[3] = strdup ("");
-        func_argv[4] = (displayed) ? strdup ("1") : strdup ("0");
-        func_argv[5] = (highlight) ? strdup ("1") : strdup ("0");
+        func_argv[4] = &displayed;
+        func_argv[5] = &highlight;
         func_argv[6] = (prefix) ? (char *)prefix : empty_arg;
         func_argv[7] = (message) ? (char *)message : empty_arg;
 
         rc = (int *) weechat_guile_exec (script_callback->script,
                                          WEECHAT_SCRIPT_EXEC_INT,
                                          script_callback->function,
-                                         "ssssssss", func_argv);
+                                         "ssssiiss", func_argv);
 
         if (!rc)
             ret = WEECHAT_RC_ERROR;
@@ -2321,10 +2321,6 @@ weechat_guile_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
             free (func_argv[1]);
         if (func_argv[3])
             free (func_argv[3]);
-        if (func_argv[4])
-            free (func_argv[4]);
-        if (func_argv[5])
-            free (func_argv[5]);
 
         return ret;
     }
@@ -2365,7 +2361,7 @@ weechat_guile_api_hook_signal_cb (void *data, const char *signal,
     struct t_plugin_script_cb *script_callback;
     void *func_argv[3];
     char empty_arg[1] = { '\0' };
-    static char value_str[64];
+    static char str_value[64];
     int *rc, ret, free_needed;
 
     script_callback = (struct t_plugin_script_cb *)data;
@@ -2381,9 +2377,13 @@ weechat_guile_api_hook_signal_cb (void *data, const char *signal,
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
         {
-            snprintf (value_str, sizeof (value_str) - 1,
-                      "%d", *((int *)signal_data));
-            func_argv[2] = value_str;
+            str_value[0] = '\0';
+            if (signal_data)
+            {
+                snprintf (str_value, sizeof (str_value),
+                          "%d", *((int *)signal_data));
+            }
+            func_argv[2] = str_value;
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
         {
@@ -2436,44 +2436,44 @@ weechat_guile_api_hook_signal (SCM signal, SCM function, SCM data)
 
 SCM
 weechat_guile_api_hook_signal_send (SCM signal, SCM type_data,
-                                   SCM signal_data)
+                                    SCM signal_data)
 {
-    int number;
+    int number, rc;
 
-    API_FUNC(1, "hook_signal_send", API_RETURN_ERROR);
+    API_FUNC(1, "hook_signal_send", API_RETURN_INT(WEECHAT_RC_ERROR));
     if (!scm_is_string (signal) || !scm_is_string (type_data))
-        API_WRONG_ARGS(API_RETURN_ERROR);
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
 
     if (strcmp (API_SCM_TO_STRING(type_data), WEECHAT_HOOK_SIGNAL_STRING) == 0)
     {
         if (!scm_is_string (signal_data))
-            API_WRONG_ARGS(API_RETURN_ERROR);
-        weechat_hook_signal_send (API_SCM_TO_STRING(signal),
-                                  API_SCM_TO_STRING(type_data),
-                                  (void *)API_SCM_TO_STRING(signal_data));
-        API_RETURN_OK;
+            API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
+        rc = weechat_hook_signal_send (API_SCM_TO_STRING(signal),
+                                       API_SCM_TO_STRING(type_data),
+                                       (void *)API_SCM_TO_STRING(signal_data));
+        API_RETURN_INT(rc);
     }
     else if (strcmp (API_SCM_TO_STRING(type_data), WEECHAT_HOOK_SIGNAL_INT) == 0)
     {
         if (!scm_is_integer (signal_data))
-            API_WRONG_ARGS(API_RETURN_ERROR);
+            API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
         number = scm_to_int (signal_data);
-        weechat_hook_signal_send (API_SCM_TO_STRING(signal),
-                                  API_SCM_TO_STRING(type_data),
-                                  &number);
-        API_RETURN_OK;
+        rc = weechat_hook_signal_send (API_SCM_TO_STRING(signal),
+                                       API_SCM_TO_STRING(type_data),
+                                       &number);
+        API_RETURN_INT(rc);
     }
     else if (strcmp (API_SCM_TO_STRING(type_data), WEECHAT_HOOK_SIGNAL_POINTER) == 0)
     {
         if (!scm_is_string (signal_data))
-            API_WRONG_ARGS(API_RETURN_ERROR);
-        weechat_hook_signal_send (API_SCM_TO_STRING(signal),
-                                  API_SCM_TO_STRING(type_data),
-                                  API_STR2PTR(API_SCM_TO_STRING(signal_data)));
-        API_RETURN_OK;
+            API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
+        rc = weechat_hook_signal_send (API_SCM_TO_STRING(signal),
+                                       API_SCM_TO_STRING(type_data),
+                                       API_STR2PTR(API_SCM_TO_STRING(signal_data)));
+        API_RETURN_INT(rc);
     }
 
-    API_RETURN_ERROR;
+    API_RETURN_INT(WEECHAT_RC_ERROR);
 }
 
 int
@@ -2537,22 +2537,23 @@ SCM
 weechat_guile_api_hook_hsignal_send (SCM signal, SCM hashtable)
 {
     struct t_hashtable *c_hashtable;
+    int rc;
 
-    API_FUNC(1, "hook_hsignal_send", API_RETURN_ERROR);
+    API_FUNC(1, "hook_hsignal_send", API_RETURN_INT(WEECHAT_RC_ERROR));
     if (!scm_is_string (signal) || !scm_list_p (hashtable))
-        API_WRONG_ARGS(API_RETURN_ERROR);
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
 
     c_hashtable = weechat_guile_alist_to_hashtable (hashtable,
                                                     WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
                                                     WEECHAT_HASHTABLE_STRING,
                                                     WEECHAT_HASHTABLE_STRING);
 
-    weechat_hook_hsignal_send (API_SCM_TO_STRING(signal), c_hashtable);
+    rc = weechat_hook_hsignal_send (API_SCM_TO_STRING(signal), c_hashtable);
 
     if (c_hashtable)
         weechat_hashtable_free (c_hashtable);
 
-    API_RETURN_OK;
+    API_RETURN_INT(rc);
 }
 
 int

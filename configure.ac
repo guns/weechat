@@ -24,14 +24,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(WeeChat, 0.4.3, flashcode@flashtux.org)
+AC_INIT(WeeChat, 1.0, flashcode@flashtux.org)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 LICENSE="GPL3"
 
 # Checks for programs
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_MAKE_SET
 AC_GNU_SOURCE
 AC_PROG_LN_S
@@ -104,11 +105,11 @@ AH_VERBATIM([HAVE_ASPELL_VERSION_STRING], [#undef HAVE_ASPELL_VERSION_STRING])
 AH_VERBATIM([PLUGIN_ALIAS], [#undef PLUGIN_ALIAS])
 AH_VERBATIM([PLUGIN_ASPELL], [#undef PLUGIN_ASPELL])
 AH_VERBATIM([PLUGIN_CHARSET], [#undef PLUGIN_CHARSET])
+AH_VERBATIM([PLUGIN_EXEC], [#undef PLUGIN_EXEC])
 AH_VERBATIM([PLUGIN_FIFO], [#undef PLUGIN_FIFO])
 AH_VERBATIM([PLUGIN_IRC], [#undef PLUGIN_IRC])
 AH_VERBATIM([PLUGIN_LOGGER], [#undef PLUGIN_LOGGER])
 AH_VERBATIM([PLUGIN_RELAY], [#undef PLUGIN_RELAY])
-AH_VERBATIM([PLUGIN_RMODIFIER], [#undef PLUGIN_RMODIFIER])
 AH_VERBATIM([PLUGIN_SCRIPT], [#undef PLUGIN_SCRIPT])
 AH_VERBATIM([PLUGIN_PERL], [#undef PLUGIN_PERL])
 AH_VERBATIM([PLUGIN_PYTHON], [#undef PLUGIN_PYTHON])
@@ -116,7 +117,9 @@ AH_VERBATIM([PLUGIN_RUBY], [#undef PLUGIN_RUBY])
 AH_VERBATIM([PLUGIN_LUA], [#undef PLUGIN_LUA])
 AH_VERBATIM([PLUGIN_TCL], [#undef PLUGIN_TCL])
 AH_VERBATIM([PLUGIN_GUILE], [#undef PLUGIN_GUILE])
+AH_VERBATIM([PLUGIN_TRIGGER], [#undef PLUGIN_TRIGGER])
 AH_VERBATIM([PLUGIN_XFER], [#undef PLUGIN_XFER])
+AH_VERBATIM([TESTS], [#undef TESTS])
 AH_VERBATIM([MAN], [#undef MAN])
 AH_VERBATIM([DOC], [#undef DOC])
 AH_VERBATIM([WEECHAT_HOME], [#define WEECHAT_HOME "~/.weechat"])
@@ -131,11 +134,11 @@ AC_ARG_ENABLE(alias,        [  --disable-alias         turn off Alias plugin (de
 AC_ARG_ENABLE(aspell,       [  --disable-aspell        turn off Aspell plugin (default=compiled)],enable_aspell=$enableval,enable_aspell=yes)
 AC_ARG_ENABLE(enchant,      [  --enable-enchant        turn on Enchant lib for Aspell plugin (default=off)],enable_enchant=$enableval,enable_enchant=no)
 AC_ARG_ENABLE(charset,      [  --disable-charset       turn off Charset plugin (default=compiled if found)],enable_charset=$enableval,enable_charset=yes)
+AC_ARG_ENABLE(exec,         [  --disable-exec          turn off Exec plugin (default=compiled)],enable_exec=$enableval,enable_exec=yes)
 AC_ARG_ENABLE(fifo,         [  --disable-fifo          turn off Fifo plugin (default=compiled)],enable_fifo=$enableval,enable_fifo=yes)
 AC_ARG_ENABLE(irc,          [  --disable-irc           turn off IRC plugin (default=compiled)],enable_irc=$enableval,enable_irc=yes)
 AC_ARG_ENABLE(logger,       [  --disable-logger        turn off Logger plugin (default=compiled)],enable_logger=$enableval,enable_logger=yes)
 AC_ARG_ENABLE(relay,        [  --disable-relay         turn off Relay plugin (default=compiled)],enable_relay=$enableval,enable_relay=yes)
-AC_ARG_ENABLE(rmodifier,    [  --disable-rmodifier     turn off Rmodifier plugin (default=compiled)],enable_rmodifier=$enableval,enable_rmodifier=yes)
 AC_ARG_ENABLE(script,       [  --disable-script        turn off Script plugin (default=compiled)],enable_script=$enableval,enable_script=yes)
 AC_ARG_ENABLE(scripts,      [  --disable-scripts       turn off script plugins (perl, python, ...) (default=compiled if found)],enable_scripts=$enableval,enable_scripts=yes)
 AC_ARG_ENABLE(perl,         [  --disable-perl          turn off Perl script plugin (default=compiled if found)],enable_perl=$enableval,enable_perl=yes)
@@ -145,14 +148,16 @@ AC_ARG_ENABLE(ruby,         [  --disable-ruby          turn off Ruby script plug
 AC_ARG_ENABLE(lua,          [  --disable-lua           turn off Lua script plugin (default=compiled if found)],enable_lua=$enableval,enable_lua=yes)
 AC_ARG_ENABLE(tcl,          [  --disable-tcl           turn off Tcl script plugin (default=compiled if found)],enable_tcl=$enableval,enable_tcl=yes)
 AC_ARG_ENABLE(guile,        [  --disable-guile         turn off Guile (scheme) script plugin (default=compiled if found)],enable_guile=$enableval,enable_guile=yes)
+AC_ARG_ENABLE(trigger,      [  --disable-trigger       turn off Trigger plugin (default=compiled)],enable_trigger=$enableval,enable_trigger=yes)
 AC_ARG_ENABLE(xfer,         [  --disable-xfer          turn off Xfer (file transfer) plugin (default=compiled if found)],enable_xfer=$enableval,enable_xfer=yes)
 AC_ARG_WITH(lua-inc,        [  --with-lua-inc=DIR,     lua include files are in DIR (default=autodetect)],lua_inc=$withval,lua_inc='')
 AC_ARG_WITH(lua-lib,        [  --with-lua-lib=DIR,     lua library files are in DIR (default=autodetect)],lua_lib=$withval,lua_lib='')
 AC_ARG_WITH(lua-suffix,     [  --with-lua-suffix=ARG   lua is suffixed with ARG (default=autodetect)],lua_suffix=$withval,lua_suffix='')
 AC_ARG_WITH(tclconfig,      [  --with-tclconfig=DIR    directory containing tcl configuration (tclConfig.sh)],tclconfig=$withval,tclconfig='')
+AC_ARG_WITH(debug,          [  --with-debug            debugging: 0=no debug, 1=debug compilation (default=1)],debug=$withval,debug=1)
+AC_ARG_ENABLE(tests,        [  --enable-tests          turn on build of tests (default=not built)],enable_tests=$enableval,enable_tests=no)
 AC_ARG_ENABLE(man,          [  --enable-man            turn on build of man page (default=not built)],enable_man=$enableval,enable_man=no)
 AC_ARG_ENABLE(doc,          [  --enable-doc            turn on build of documentation (default=not built)],enable_doc=$enableval,enable_doc=no)
-AC_ARG_WITH(debug,          [  --with-debug            debugging: 0=no debug, 1=debug compilation (default=1)],debug=$withval,debug=1)
 
 AC_ARG_VAR(WEECHAT_HOME, [WeeChat home directory for config, logs, scripts.. (default is "~/.weechat")])
 AC_ARG_VAR(CA_FILE, [File containing the certificate authorities (default is "/etc/ssl/certs/ca-certificates.crt"). This is the default value of option "weechat.network.gnutls_ca_file".])
@@ -252,7 +257,7 @@ if test "x$ac_found_iconv_header" = "xyes" ; then
                 return 0;
             }
             return 1;
-      }],iconv_found="yes")
+      }],iconv_found="yes", iconv_found="no", iconv_found="assume-yes")
   if test "x$iconv_found" = "xno" ; then
      AC_MSG_RESULT(no)
   else
@@ -358,6 +363,18 @@ else
     not_asked="$not_asked charset"
 fi
 
+# ---------------------------------- exec --------------------------------------
+
+if test "x$enable_exec" = "xyes" ; then
+    EXEC_CFLAGS=""
+    EXEC_LFLAGS=""
+    AC_SUBST(EXEC_CFLAGS)
+    AC_SUBST(EXEC_LFLAGS)
+    AC_DEFINE(PLUGIN_EXEC)
+else
+    not_asked="$not_asked exec"
+fi
+
 # ---------------------------------- fifo --------------------------------------
 
 if test "x$enable_fifo" = "xyes" ; then
@@ -400,14 +417,6 @@ if test "x$enable_relay" = "xyes" ; then
     AC_DEFINE(PLUGIN_RELAY)
 else
     not_asked="$not_asked relay"
-fi
-
-# ------------------------------- rmodifier ------------------------------------
-
-if test "x$enable_rmodifier" = "xyes" ; then
-    AC_DEFINE(PLUGIN_RMODIFIER)
-else
-    not_asked="$not_asked rmodifier"
 fi
 
 # --------------------------------- script -------------------------------------
@@ -555,7 +564,7 @@ RUBY_VERSION=
 if test "x$enable_ruby" = "xyes" ; then
     RUBY_CFLAGS=""
     RUBY_LFLAGS=""
-    for v in "2.0" "1.9" "1.8" ; do
+    for v in "2.1" "2.0" "1.9" "1.8" ; do
         pkgconfig_ruby_found=`$PKGCONFIG --exists ruby-$v 2>/dev/null`
         if test "x$?" = "x0" ; then
             RUBY_VERSION=`$PKGCONFIG --modversion ruby-$v`
@@ -800,6 +809,18 @@ if test "x$enable_guile" = "xyes" ; then
     AC_DEFINE(PLUGIN_GUILE)
 fi
 
+# --------------------------------- trigger ------------------------------------
+
+if test "x$enable_trigger" = "xyes" ; then
+    TRIGGER_CFLAGS=""
+    TRIGGER_LFLAGS=""
+    AC_SUBST(TRIGGER_CFLAGS)
+    AC_SUBST(TRIGGER_LFLAGS)
+    AC_DEFINE(PLUGIN_TRIGGER)
+else
+    not_asked="$not_asked trigger"
+fi
+
 # ---------------------------------- xfer --------------------------------------
 
 if test "x$enable_xfer" = "xyes" ; then
@@ -884,6 +905,7 @@ fi
 # ------------------------------------------------------------------------------
 #                               large file support
 # ------------------------------------------------------------------------------
+
 if test "x$enable_largefile" = "xyes" ; then
    CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -D_LARGE_FILES"
 else
@@ -964,6 +986,36 @@ CURL_CFLAGS=`$CURL_CONFIG --cflags`
 CURL_LFLAGS=`$CURL_CONFIG --libs`
 AC_SUBST(CURL_CFLAGS)
 AC_SUBST(CURL_LFLAGS)
+
+# ------------------------------------------------------------------------------
+#                                    tests
+# ------------------------------------------------------------------------------
+
+if test "x$enable_tests" = "xyes" ; then
+    cpputest_found="no"
+    AC_MSG_CHECKING(for CppUTest headers and librairies)
+    echo
+    pkgconfig_cpputest_found=`$PKGCONFIG --exists cpputest 2>/dev/null`
+    if test "x$?" = "x0" ; then
+        CPPUTEST_VERSION=`$PKGCONFIG --modversion cpputest`
+        CPPUTEST_CFLAGS=`$PKGCONFIG --cflags cpputest`
+        CPPUTEST_LFLAGS=`$PKGCONFIG --libs cpputest`
+    else
+        AC_MSG_WARN([
+*** CppUTest couldn't be found on your system.
+*** WeeChat will be built without tests.])
+        enable_tests="no"
+        not_found="$not_found tests"
+    fi
+else
+    not_asked="$not_asked tests"
+fi
+
+if test "x$enable_tests" = "xyes" ; then
+    AC_SUBST(CPPUTEST_CFLAGS)
+    AC_SUBST(CPPUTEST_LFLAGS)
+    AC_DEFINE(TESTS)
+fi
 
 # ------------------------------------------------------------------------------
 #                           man page / documentation
@@ -1053,7 +1105,7 @@ AC_DEFINE_UNQUOTED(WEECHAT_SHAREDIR, "$WEECHAT_SHAREDIR")
 weechat_libdir=${libdir}/weechat
 AC_SUBST(weechat_libdir)
 
-COMMON_CFLAGS="-Wall -W -Werror-implicit-function-declaration"
+COMMON_CFLAGS="-Wall -Wextra -Werror-implicit-function-declaration"
 AC_MSG_CHECKING([whether we have GNU assembler])
 GAS=`as --version < /dev/null 2>/dev/null | grep GNU`
 if test "$GAS"; then
@@ -1113,11 +1165,11 @@ AM_CONDITIONAL(GUI_NCURSES,             test "$enable_ncurses" = "yes")
 AM_CONDITIONAL(PLUGIN_ALIAS,            test "$enable_alias" = "yes")
 AM_CONDITIONAL(PLUGIN_ASPELL,           test "$enable_aspell" = "yes")
 AM_CONDITIONAL(PLUGIN_CHARSET,          test "$enable_charset" = "yes")
+AM_CONDITIONAL(PLUGIN_EXEC,             test "$enable_exec" = "yes")
 AM_CONDITIONAL(PLUGIN_FIFO,             test "$enable_fifo" = "yes")
 AM_CONDITIONAL(PLUGIN_IRC,              test "$enable_irc" = "yes")
 AM_CONDITIONAL(PLUGIN_LOGGER,           test "$enable_logger" = "yes")
 AM_CONDITIONAL(PLUGIN_RELAY,            test "$enable_relay" = "yes")
-AM_CONDITIONAL(PLUGIN_RMODIFIER,        test "$enable_rmodifier" = "yes")
 AM_CONDITIONAL(PLUGIN_SCRIPT,           test "$enable_script" = "yes")
 AM_CONDITIONAL(PLUGIN_PERL,             test "$enable_perl" = "yes")
 AM_CONDITIONAL(PLUGIN_PYTHON,           test "$enable_python" = "yes")
@@ -1125,7 +1177,9 @@ AM_CONDITIONAL(PLUGIN_RUBY,             test "$enable_ruby" = "yes")
 AM_CONDITIONAL(PLUGIN_LUA,              test "$enable_lua" = "yes")
 AM_CONDITIONAL(PLUGIN_TCL,              test "$enable_tcl" = "yes")
 AM_CONDITIONAL(PLUGIN_GUILE,            test "$enable_guile" = "yes")
+AM_CONDITIONAL(PLUGIN_TRIGGER,          test "$enable_trigger" = "yes")
 AM_CONDITIONAL(PLUGIN_XFER,             test "$enable_xfer" = "yes")
+AM_CONDITIONAL(TESTS,                   test "$enable_tests" = "yes")
 AM_CONDITIONAL(MAN,                     test "$enable_man" = "yes")
 AM_CONDITIONAL(DOC,                     test "$enable_doc" = "yes")
 
@@ -1145,11 +1199,11 @@ AC_OUTPUT([Makefile
            src/plugins/alias/Makefile
            src/plugins/aspell/Makefile
            src/plugins/charset/Makefile
+           src/plugins/exec/Makefile
            src/plugins/fifo/Makefile
            src/plugins/irc/Makefile
            src/plugins/logger/Makefile
            src/plugins/relay/Makefile
-           src/plugins/rmodifier/Makefile
            src/plugins/script/Makefile
            src/plugins/perl/Makefile
            src/plugins/python/Makefile
@@ -1157,9 +1211,11 @@ AC_OUTPUT([Makefile
            src/plugins/lua/Makefile
            src/plugins/tcl/Makefile
            src/plugins/guile/Makefile
+           src/plugins/trigger/Makefile
            src/plugins/xfer/Makefile
            src/gui/Makefile
            src/gui/curses/Makefile
+           tests/Makefile
            intl/Makefile
            po/Makefile.in])
 
@@ -1188,6 +1244,9 @@ fi
 if test "x$enable_charset" = "xyes"; then
     listplugins="$listplugins charset"
 fi
+if test "x$enable_exec" = "xyes"; then
+    listplugins="$listplugins exec"
+fi
 if test "x$enable_fifo" = "xyes"; then
     listplugins="$listplugins fifo"
 fi
@@ -1199,9 +1258,6 @@ if test "x$enable_logger" = "xyes"; then
 fi
 if test "x$enable_relay" = "xyes"; then
     listplugins="$listplugins relay"
-fi
-if test "x$enable_rmodifier" = "xyes"; then
-    listplugins="$listplugins rmodifier"
 fi
 if test "x$enable_script" = "xyes"; then
     listplugins="$listplugins script"
@@ -1223,6 +1279,9 @@ if test "x$enable_tcl" = "xyes"; then
 fi
 if test "x$enable_guile" = "xyes"; then
     listplugins="$listplugins guile($GUILE_VERSION)"
+fi
+if test "x$enable_trigger" = "xyes"; then
+    listplugins="$listplugins trigger"
 fi
 if test "x$enable_xfer" = "xyes"; then
     listplugins="$listplugins xfer"
@@ -1247,6 +1306,11 @@ if test "x$debug" != "x0"; then
     msg_debug="yes"
 fi
 
+msg_tests="no"
+if test "x$enable_tests" = "xyes"; then
+    msg_tests="yes"
+fi
+
 if test "x$msg_man" = "x"; then
     msg_man="no"
 else
@@ -1264,6 +1328,7 @@ echo "   Interfaces............. :$listgui"
 echo "   Plugins................ :$listplugins"
 echo "   Optional features...... :$listoptional"
 echo "   Compile with debug..... : $msg_debug"
+echo "   Compile tests.......... : $msg_tests"
 echo "   Man page............... : $msg_man"
 echo "   Documentation.......... : $msg_doc"
 echo "   Certificate authorities : ${CA_FILE}"

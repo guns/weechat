@@ -72,10 +72,10 @@ hashtable_get_type (const char *type)
  * Returns the hash of the string.
  */
 
-unsigned long
+unsigned long long
 hashtable_hash_key_djb2 (const char *string)
 {
-    unsigned long hash;
+    unsigned long long hash;
     const char *ptr_string;
 
     hash = 5381;
@@ -93,28 +93,28 @@ hashtable_hash_key_djb2 (const char *string)
  * Returns the hash of the key, depending on the type.
  */
 
-unsigned long
+unsigned long long
 hashtable_hash_key_default_cb (struct t_hashtable *hashtable, const void *key)
 {
-    unsigned long hash;
+    unsigned long long hash;
 
     hash = 0;
 
     switch (hashtable->type_keys)
     {
         case HASHTABLE_INTEGER:
-            hash = (unsigned long)(*((int *)key));
+            hash = (unsigned long long)(*((int *)key));
             break;
         case HASHTABLE_STRING:
             hash = hashtable_hash_key_djb2 ((const char *)key);
             break;
         case HASHTABLE_POINTER:
-            hash = (unsigned long)((void *)key);
+            hash = (unsigned long long)((unsigned long)((void *)key));
             break;
         case HASHTABLE_BUFFER:
             break;
         case HASHTABLE_TIME:
-            hash = (unsigned long)(*((time_t *)key));
+            hash = (unsigned long long)(*((time_t *)key));
             break;
         case HASHTABLE_NUM_TYPES:
             break;
@@ -270,7 +270,7 @@ hashtable_alloc_type (enum t_hashtable_type type,
             *size = sizeof (void *);
             break;
         case HASHTABLE_BUFFER:
-            if (value)
+            if (value && (size_value > 0))
             {
                 *pointer = malloc (size_value);
                 if (*pointer)
@@ -307,8 +307,7 @@ hashtable_free_key (struct t_hashtable *hashtable,
     if (hashtable->callback_free_key)
     {
         (void) (hashtable->callback_free_key) (hashtable,
-                                               item->key,
-                                               item->value);
+                                               item->key);
     }
     else
     {
@@ -375,7 +374,7 @@ hashtable_set_with_size (struct t_hashtable *hashtable,
                          const void *key, int key_size,
                          const void *value, int value_size)
 {
-    unsigned long hash;
+    unsigned long long hash;
     struct t_hashtable_item *ptr_item, *pos_item, *new_item;
 
     if (!hashtable || !key
@@ -469,9 +468,9 @@ hashtable_set (struct t_hashtable *hashtable,
 
 struct t_hashtable_item *
 hashtable_get_item (struct t_hashtable *hashtable, const void *key,
-                    unsigned long *hash)
+                    unsigned long long *hash)
 {
-    unsigned long key_hash;
+    unsigned long long key_hash;
     struct t_hashtable_item *ptr_item;
 
     if (!hashtable || !key)
@@ -1109,7 +1108,7 @@ hashtable_add_to_infolist (struct t_hashtable *hashtable,
 void
 hashtable_remove_item (struct t_hashtable *hashtable,
                        struct t_hashtable_item *item,
-                       unsigned long hash)
+                       unsigned long long hash)
 {
     if (!hashtable || !item)
         return;
@@ -1139,7 +1138,7 @@ void
 hashtable_remove (struct t_hashtable *hashtable, const void *key)
 {
     struct t_hashtable_item *ptr_item;
-    unsigned long hash;
+    unsigned long long hash;
 
     if (!hashtable || !key)
         return;

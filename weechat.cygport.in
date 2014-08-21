@@ -87,21 +87,23 @@ weechat_CONTENTS="
     usr/lib/weechat/plugins/alias.dll
     usr/lib/weechat/plugins/aspell.dll
     usr/lib/weechat/plugins/charset.dll
+    usr/lib/weechat/plugins/exec.dll
     usr/lib/weechat/plugins/fifo.dll
     usr/lib/weechat/plugins/irc.dll
     usr/lib/weechat/plugins/logger.dll
     usr/lib/weechat/plugins/relay.dll
-    usr/lib/weechat/plugins/rmodifier.dll
     usr/lib/weechat/plugins/script.dll
+    usr/lib/weechat/plugins/trigger.dll
     usr/lib/weechat/plugins/xfer.dll
     usr/share/locale/
     usr/share/icons/
     usr/share/man/
-    usr/share/doc/weechat/AUTHORS
-    usr/share/doc/weechat/ChangeLog
+    usr/share/doc/weechat/AUTHORS.asciidoc
+    usr/share/doc/weechat/ChangeLog.asciidoc
+    usr/share/doc/weechat/Contributing.asciidoc
     usr/share/doc/weechat/COPYING
-    usr/share/doc/weechat/NEWS
-    usr/share/doc/weechat/README
+    usr/share/doc/weechat/README.asciidoc
+    usr/share/doc/weechat/ReleaseNotes.asciidoc
 "
 
 #

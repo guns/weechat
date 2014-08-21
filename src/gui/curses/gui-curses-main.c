@@ -49,6 +49,7 @@
 #include "../gui-color.h"
 #include "../gui-cursor.h"
 #include "../gui-filter.h"
+#include "../gui-hotlist.h"
 #include "../gui-input.h"
 #include "../gui-layout.h"
 #include "../gui-line.h"
@@ -59,10 +60,9 @@
 #include "gui-curses.h"
 
 
-int gui_reload_config = 0;
-int gui_signal_sigwinch_received = 0;
-int gui_term_cols = 0;
-int gui_term_lines = 0;
+int gui_signal_sigwinch_received = 0;  /* sigwinch signal (term resized)    */
+int gui_term_cols = 0;                 /* number of columns in terminal     */
+int gui_term_lines = 0;                /* number of lines in terminal       */
 
 
 /*
@@ -123,24 +123,6 @@ gui_main_get_password (const char *prompt1, const char *prompt2,
 }
 
 /*
- * Pre-initializes GUI (called before gui_init).
- */
-
-void
-gui_main_pre_init (int *argc, char **argv[])
-{
-    /* make C compiler happy */
-    (void) argc;
-    (void) argv;
-
-    /* pre-init colors */
-    gui_color_pre_init ();
-
-    /* init some variables for chat area */
-    gui_chat_init ();
-}
-
-/*
  * Initializes GUI.
  */
 
@@ -162,7 +144,7 @@ gui_main_init ()
     nodelay (stdscr, TRUE);
     raw ();
 
-    gui_color_init ();
+    gui_color_alloc ();
 
     /* build prefixes according to configuration */
     gui_chat_prefix_build ();
@@ -244,50 +226,6 @@ gui_main_init ()
         gui_mouse_disable ();
 
     gui_window_set_bracketed_paste_mode (CONFIG_BOOLEAN(config_look_paste_bracketed));
-}
-
-/*
- * Callback for system signal SIGQUIT: quits WeeChat.
- */
-
-void
-gui_main_signal_sigquit ()
-{
-    log_printf (_("Signal %s received, exiting WeeChat..."),
-                "SIGQUIT");
-    hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
-    weechat_quit = 1;
-}
-
-/*
- * Callback for system signal SIGTERM: quits WeeChat.
- */
-
-void
-gui_main_signal_sigterm ()
-{
-    log_printf (_("Signal %s received, exiting WeeChat..."),
-                "SIGTERM");
-    hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
-    weechat_quit = 1;
-}
-
-/*
- * Callback for system signal SIGHUP: reloads WeeChat configuration.
- */
-
-void
-gui_main_signal_sighup ()
-{
-    /*
-     * SIGHUP signal is received when terminal is closed (exit of WeeChat
-     * without using /quit command), that's why we set only flag to reload
-     * configuration files later (when terminal is closed, config files are NOT
-     * reloaded, but they are if signal SIGHUP is sent to WeeChat by user)
-     */
-    gui_reload_config = 1;
-
-    hook_signal_send ("signal_sighup", WEECHAT_HOOK_SIGNAL_STRING, NULL);
 }
 
 /*
@@ -375,9 +313,7 @@ gui_main_refreshs ()
     for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
     {
         if (ptr_bar->bar_refresh_needed)
-        {
             gui_bar_draw (ptr_bar);
-        }
     }
 
     /* refresh window if needed (if asked during refresh of bars) */
@@ -393,7 +329,7 @@ gui_main_refreshs ()
         if (ptr_win->refresh_needed)
         {
             gui_window_switch_to_buffer (ptr_win, ptr_win->buffer, 0);
-            gui_window_redraw_buffer (ptr_win->buffer);
+            gui_chat_draw (ptr_win->buffer, 1);
             ptr_win->refresh_needed = 0;
         }
     }
@@ -409,18 +345,21 @@ gui_main_refreshs ()
         }
     }
 
-    /* refresh bars if needed */
-    for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
+    if (!gui_window_bare_display)
     {
-        if (ptr_bar->bar_refresh_needed)
+        /* refresh bars if needed */
+        for (ptr_bar = gui_bars; ptr_bar; ptr_bar = ptr_bar->next_bar)
         {
-            gui_bar_draw (ptr_bar);
+            if (ptr_bar->bar_refresh_needed)
+            {
+                gui_bar_draw (ptr_bar);
+            }
         }
-    }
 
-    /* move cursor (for cursor mode) */
-    if (gui_cursor_mode)
-        gui_window_move_cursor ();
+        /* move cursor (for cursor mode) */
+        if (gui_cursor_mode)
+            gui_window_move_cursor ();
+    }
 }
 
 /*
@@ -436,13 +375,6 @@ gui_main_loop ()
     int max_fd;
     int ready;
 
-    /* catch SIGTERM signal: quit program */
-    util_catch_signal (SIGTERM, &gui_main_signal_sigterm);
-    util_catch_signal (SIGQUIT, &gui_main_signal_sigquit);
-
-    /* catch SIGHUP signal: reload configuration */
-    util_catch_signal (SIGHUP, &gui_main_signal_sighup);
-
     /* catch SIGWINCH signal: redraw screen */
     util_catch_signal (SIGWINCH, &gui_main_signal_sigwinch);
 
@@ -454,15 +386,6 @@ gui_main_loop ()
 
     while (!weechat_quit)
     {
-        /* reload config, if SIGHUP received */
-        if (gui_reload_config)
-        {
-            gui_reload_config = 0;
-            log_printf (_("Signal SIGHUP received, reloading configuration "
-                          "files"));
-            command_reload (NULL, NULL, 0, NULL, NULL);
-        }
-
         /* execute hook timers */
         hook_timer_exec ();
 
@@ -476,13 +399,13 @@ gui_main_loop ()
         }
 
         gui_main_refreshs ();
-        if (gui_window_refresh_needed)
+        if (gui_window_refresh_needed && !gui_window_bare_display)
             gui_main_refreshs ();
 
         if (gui_signal_sigwinch_received)
         {
-            hook_signal_send ("signal_sigwinch",
-                              WEECHAT_HOOK_SIGNAL_STRING, NULL);
+            (void) hook_signal_send ("signal_sigwinch",
+                                     WEECHAT_HOOK_SIGNAL_STRING, NULL);
             gui_signal_sigwinch_received = 0;
         }
 
@@ -582,6 +505,9 @@ gui_main_end (int clean_exit)
 
         /* free some variables used for nicklist */
         gui_nicklist_end ();
+
+        /* free some variables used for hotlist */
+        gui_hotlist_end ();
     }
 
     /* end of Curses output */

@@ -132,7 +132,8 @@ gui_key_default_bindings (int context)
         BIND(/* ^down       */ "meta-OB",            "/input history_global_next");
         BIND(/* ^down       */ "meta2-1;5B",         "/input history_global_next");
         BIND(/* m-a         */ "meta-a",             "/input jump_smart");
-        BIND(/* m-j,m-l     */ "meta-jmeta-l",       "/input jump_last_buffer");
+        BIND(/* m-j,m-f     */ "meta-jmeta-f",       "/buffer -");
+        BIND(/* m-j,m-l     */ "meta-jmeta-l",       "/buffer +");
         BIND(/* m-j,m-r     */ "meta-jmeta-r",       "/server raw");
         BIND(/* m-j,m-s     */ "meta-jmeta-s",       "/server jump");
         BIND(/* m-h         */ "meta-h",             "/input hotlist_clear");
@@ -198,6 +199,7 @@ gui_key_default_bindings (int context)
         BIND(/* m-w,m-s     */ "meta-wmeta-s",       "/window swap");
         BIND(/* m-z         */ "meta-z",             "/window zoom");
         BIND(/* m-=         */ "meta-=",             "/filter toggle");
+        BIND(/* m-=         */ "meta--",             "/filter toggle @");
         BIND(/* m-0         */ "meta-0",             "/buffer *10");
         BIND(/* m-1         */ "meta-1",             "/buffer *1");
         BIND(/* m-2         */ "meta-2",             "/buffer *2");
@@ -214,6 +216,7 @@ gui_key_default_bindings (int context)
         BIND(/* m-m         */ "meta-m",             "/mute mouse toggle");
         BIND(/* start paste */ "meta2-200~",         "/input paste_start");
         BIND(/* end paste   */ "meta2-201~",         "/input paste_stop");
+        BIND(/* bare display*/ "meta-l",             "/window bare");
 
         /* bind meta-j + {01..99} to switch to buffers # > 10 */
         for (i = 1; i < 100; i++)
@@ -408,8 +411,8 @@ gui_key_flush (int paste)
 
         if (key_str[0])
         {
-            hook_signal_send ("key_pressed",
-                              WEECHAT_HOOK_SIGNAL_STRING, key_str);
+            (void) hook_signal_send ("key_pressed",
+                                     WEECHAT_HOOK_SIGNAL_STRING, key_str);
 
             if (gui_current_window->buffer->text_search != GUI_TEXT_SEARCH_DISABLED)
                 input_old = (gui_current_window->buffer->input_buffer) ?
@@ -518,7 +521,7 @@ gui_key_read_cb (void *data, int fd)
     {
         /* no data on stdin, terminal lost */
         log_printf (_("Terminal lost, exiting WeeChat..."));
-        hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+        (void) hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
         weechat_quit = 1;
         return WEECHAT_RC_OK;
     }

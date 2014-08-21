@@ -18,8 +18,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_PYTHON_H
-#define __WEECHAT_PYTHON_H 1
+#ifndef WEECHAT_PYTHON_H
+#define WEECHAT_PYTHON_H 1
 
 #define weechat_plugin weechat_python_plugin
 #define PYTHON_PLUGIN_NAME "python"
@@ -32,6 +32,14 @@
 #define PyBytes_Check PyString_Check
 #define PyBytes_FromString PyString_FromString
 #define PyUnicode_FromString PyString_FromString
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+/* check of integer with Python >= 3.x */
+#define PY_INTEGER_CHECK(x) (PyLong_Check(x))
+#else
+/* check of integer with Python <= 2.x */
+#define PY_INTEGER_CHECK(x) (PyInt_Check(x) || PyLong_Check(x))
 #endif
 
 extern struct t_weechat_plugin *weechat_python_plugin;
@@ -53,4 +61,4 @@ extern void *weechat_python_exec (struct t_plugin_script *script,
                                   int ret_type, const char *function,
                                   char *format, void **argv);
 
-#endif /* __WEECHAT_PYTHON_H */
+#endif /* WEECHAT_PYTHON_H */

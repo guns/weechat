@@ -24,6 +24,9 @@
 ### common stuff
 ###
 
+DIR=$(cd $(dirname "$0"); pwd)
+cd $DIR
+
 AUTOGEN_LOG=autogen.log
 
 err ()
@@ -48,34 +51,20 @@ run ()
     fi
 }
 
-###
-### cleanning part
-###
-#  remove autotools stuff
-run "rm -rf config"
+# remove autotools stuff
 run "rm -f config.h.in"
 run "rm -f aclocal.m4 configure config.log config.status"
 run "rm -rf autom4te*.cache"
+
 # remove libtool stuff
 run "rm -f libtool"
+
 # remove gettext stuff
 run "rm -f ABOUT-NLS"
 run "rm -rf intl"
 
-###
-### configuration part
-###
-# create the config directory
-run "mkdir -p config/m4"
-run "mkdir intl"
-
-# execute autotools cmds
-run "autopoint -f"
-run "libtoolize --automake --force --copy"
-run "aclocal --force -I config/m4"
-run "autoheader"
-run "autoconf"
-run "automake --add-missing --copy --gnu"
+# execute autoreconf cmds
+run "autoreconf -fvi"
 
 # ending
 rm -f $AUTOGEN_LOG

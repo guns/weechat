@@ -361,6 +361,7 @@ irc_upgrade_read_cb (void *data,
                     str = weechat_infolist_string (infolist, "nick_modes");
                     if (str)
                         irc_upgrade_current_server->nick_modes = strdup (str);
+                    irc_upgrade_current_server->cap_away_notify = weechat_infolist_integer (infolist, "cap_away_notify");
                     str = weechat_infolist_string (infolist, "isupport");
                     if (str)
                         irc_upgrade_current_server->isupport = strdup (str);
@@ -719,7 +720,10 @@ irc_upgrade_load ()
     irc_upgrade_set_buffer_callbacks ();
 
     upgrade_file = weechat_upgrade_new (IRC_UPGRADE_FILENAME, 0);
+    if (!upgrade_file)
+        return 0;
     rc = weechat_upgrade_read (upgrade_file, &irc_upgrade_read_cb, NULL);
+    weechat_upgrade_close (upgrade_file);
 
     return rc;
 }

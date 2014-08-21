@@ -236,8 +236,9 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
         weechat_buffer_set (new_buffer, "localvar_set_channel", channel_name);
         if (server->is_away && server->away_message)
             weechat_buffer_set (new_buffer, "localvar_set_away", server->away_message);
-        weechat_hook_signal_send ("logger_backlog",
-                                  WEECHAT_HOOK_SIGNAL_POINTER, new_buffer);
+        (void) weechat_hook_signal_send ("logger_backlog",
+                                         WEECHAT_HOOK_SIGNAL_POINTER,
+                                         new_buffer);
         if (weechat_config_boolean (irc_config_network_send_unknown_commands))
             weechat_buffer_set (new_buffer, "input_get_unknown_commands", "1");
         if (channel_type == IRC_CHANNEL_TYPE_CHANNEL)
@@ -350,9 +351,9 @@ irc_channel_new (struct t_irc_server *server, int channel_type,
         free (channel_name_lower);
     }
 
-    weechat_hook_signal_send ((channel_type == IRC_CHANNEL_TYPE_CHANNEL) ?
-                              "irc_channel_opened" : "irc_pv_opened",
-                              WEECHAT_HOOK_SIGNAL_POINTER, new_buffer);
+    (void) weechat_hook_signal_send ((channel_type == IRC_CHANNEL_TYPE_CHANNEL) ?
+                                     "irc_channel_opened" : "irc_pv_opened",
+                                     WEECHAT_HOOK_SIGNAL_POINTER, new_buffer);
 
     /* all is OK, return address of new channel */
     return new_channel;
@@ -463,6 +464,39 @@ irc_channel_is_channel (struct t_irc_server *server, const char *string)
 }
 
 /*
+ * Returns a string with a channel type to add in front of a channel name,
+ * if it doesn't have a valid channel type for the given server.
+ *
+ * It returns an empty string if the channel already has a valid channel type,
+ * or if the option irc.look.join_auto_add_chantype is off.
+ */
+
+const char *
+irc_channel_get_auto_chantype (struct t_irc_server *server,
+                               const char *channel_name)
+{
+    static char chantype[2];
+
+    chantype[0] = '\0';
+    chantype[1] = '\0';
+
+    if (weechat_config_boolean (irc_config_look_join_auto_add_chantype)
+        && !irc_channel_is_channel (server, channel_name)
+        && server->chantypes
+        && server->chantypes[0])
+    {
+        /*
+         * use '#' if it's in chantypes (anywhere in the string), because it is
+         * the most common channel type, and fallback on first channel type
+         */
+        chantype[0] = (strchr (server->chantypes, '#')) ?
+            '#' : server->chantypes[0];
+    }
+
+    return chantype;
+}
+
+/*
  * Removes away for all nicks on a channel.
  */
 
@@ -491,9 +525,10 @@ irc_channel_check_away (struct t_irc_server *server,
 {
     if ((channel->type == IRC_CHANNEL_TYPE_CHANNEL) && channel->nicks)
     {
-        if ((IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK) > 0)
-            && ((IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS) == 0)
-                || (channel->nicks_count <= IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS))))
+        if (server->cap_away_notify
+            || ((IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK) > 0)
+                && ((IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS) == 0)
+                    || (channel->nicks_count <= IRC_SERVER_OPTION_INTEGER(server, IRC_SERVER_OPTION_AWAY_CHECK_MAX_NICKS)))))
         {
             channel->checking_away++;
             irc_server_sendf (server, IRC_SERVER_SEND_OUTQ_PRIO_LOW, NULL,

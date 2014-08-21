@@ -683,7 +683,7 @@ script_config_init ()
         "cache_expire", "integer",
         N_("local cache expiration time, in minutes (-1 = never expires, "
            "0 = always expire)"),
-        NULL, -1, 525600, "60", NULL, 0, NULL, NULL,
+        NULL, -1, 525600, "1440", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
     script_config_scripts_dir = weechat_config_new_option (
         script_config_file, ptr_section,
@@ -703,7 +703,7 @@ script_config_init ()
         script_config_file, ptr_section,
         "url", "string",
         N_("URL for file with list of scripts"),
-        NULL, 0, 0, "http://www.weechat.org/files/plugins.xml.gz", NULL, 0, NULL, NULL,
+        NULL, 0, 0, "http://weechat.org/files/plugins.xml.gz", NULL, 0, NULL, NULL,
         NULL, NULL, NULL, NULL);
 
     return 1;

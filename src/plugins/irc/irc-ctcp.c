@@ -113,7 +113,9 @@ irc_ctcp_display_request (struct t_irc_server *server,
                           time_t date,
                           const char *command,
                           struct t_irc_channel *channel,
-                          const char *nick,  const char *ctcp,
+                          const char *nick,
+                          const char *address,
+                          const char *ctcp,
                           const char *arguments,
                           const char *reply)
 {
@@ -126,7 +128,8 @@ irc_ctcp_display_request (struct t_irc_server *server,
                                                                NULL, "ctcp",
                                                                (channel) ? channel->buffer : NULL),
                               date,
-                              irc_protocol_tags (command, "irc_ctcp", NULL),
+                              irc_protocol_tags (command, "irc_ctcp", NULL,
+                                                 address),
                               _("%sCTCP requested by %s%s%s: %s%s%s%s%s%s"),
                               weechat_prefix ("network"),
                               irc_nick_color_for_message (server, NULL, nick),
@@ -147,7 +150,7 @@ irc_ctcp_display_request (struct t_irc_server *server,
 void
 irc_ctcp_display_reply_from_nick (struct t_irc_server *server, time_t date,
                                   const char *command, const char *nick,
-                                  char *arguments)
+                                  const char *address, char *arguments)
 {
     char *pos_end, *pos_space, *pos_args, *pos_usec;
     struct timeval tv;
@@ -191,7 +194,7 @@ irc_ctcp_display_reply_from_nick (struct t_irc_server *server, time_t date,
                                               date,
                                               irc_protocol_tags (command,
                                                                  "irc_ctcp",
-                                                                 NULL),
+                                                                 NULL, NULL),
                                               _("%sCTCP reply from %s%s%s: %s%s%s "
                                                 "%ld.%ld %s"),
                                               weechat_prefix ("network"),
@@ -221,7 +224,7 @@ irc_ctcp_display_reply_from_nick (struct t_irc_server *server, time_t date,
                                           date,
                                           irc_protocol_tags (command,
                                                              "irc_ctcp",
-                                                             NULL),
+                                                             NULL, address),
                                           _("%sCTCP reply from %s%s%s: %s%s%s%s%s"),
                                           weechat_prefix ("network"),
                                           irc_nick_color_for_message (server, NULL,
@@ -242,7 +245,8 @@ irc_ctcp_display_reply_from_nick (struct t_irc_server *server, time_t date,
                                                                        NULL, "ctcp",
                                                                        NULL),
                                       date,
-                                      irc_protocol_tags (command, NULL, NULL),
+                                      irc_protocol_tags (command, NULL, NULL,
+                                                         address),
                                       _("%sCTCP reply from %s%s%s: %s%s%s%s%s"),
                                       weechat_prefix ("network"),
                                       irc_nick_color_for_message (server, NULL,
@@ -278,6 +282,7 @@ irc_ctcp_reply_to_nick (struct t_irc_server *server,
     int number;
     char hash_key[32];
     const char *str_args;
+    char *str_args_color;
 
     hashtable = irc_server_sendf (server,
                                   IRC_SERVER_SEND_OUTQ_PRIO_LOW | IRC_SERVER_SEND_RETURN_HASHTABLE,
@@ -298,6 +303,9 @@ irc_ctcp_reply_to_nick (struct t_irc_server *server,
                 str_args = weechat_hashtable_get (hashtable, hash_key);
                 if (!str_args)
                     break;
+                str_args_color = irc_color_decode (str_args, 1);
+                if (!str_args_color)
+                    break;
                 weechat_printf_tags (irc_msgbuffer_get_target_buffer (server,
                                                                       nick,
                                                                       NULL,
@@ -306,7 +314,7 @@ irc_ctcp_reply_to_nick (struct t_irc_server *server,
                                      irc_protocol_tags (command,
                                                         "irc_ctcp,irc_ctcp_reply,"
                                                         "notify_none,no_highlight",
-                                                        NULL),
+                                                        NULL, NULL),
                                      _("%sCTCP reply to %s%s%s: %s%s%s%s%s"),
                                      weechat_prefix ("network"),
                                      irc_nick_color_for_message (server, NULL,
@@ -315,9 +323,10 @@ irc_ctcp_reply_to_nick (struct t_irc_server *server,
                                      IRC_COLOR_RESET,
                                      IRC_COLOR_CHAT_CHANNEL,
                                      ctcp,
-                                     (str_args[0]) ? IRC_COLOR_RESET : "",
-                                     (str_args[0]) ? " " : "",
-                                     str_args);
+                                     (str_args_color[0]) ? IRC_COLOR_RESET : "",
+                                     (str_args_color[0]) ? " " : "",
+                                     str_args_color);
+                free (str_args_color);
                 number++;
             }
         }
@@ -332,7 +341,7 @@ irc_ctcp_reply_to_nick (struct t_irc_server *server,
 char *
 irc_ctcp_replace_variables (struct t_irc_server *server, const char *format)
 {
-    char *res, *temp;
+    char *res, *temp, *username, *realname;
     const char *info;
     time_t now;
     struct tm *local_time;
@@ -408,22 +417,28 @@ irc_ctcp_replace_variables (struct t_irc_server *server, const char *format)
      *   Linux 2.6.32-5-amd64 / x86_64
      */
     buf_uname = (struct utsname *)malloc (sizeof (struct utsname));
-    if (buf_uname && (uname (buf_uname) >= 0))
+    if (buf_uname)
     {
-        snprintf (buf, sizeof (buf), "%s %s / %s",
-                  buf_uname->sysname, buf_uname->release,
-                  buf_uname->machine);
+        if (uname (buf_uname) >= 0)
+        {
+            snprintf (buf, sizeof (buf), "%s %s / %s",
+                      buf_uname->sysname, buf_uname->release,
+                      buf_uname->machine);
+            temp = weechat_string_replace (res, "$osinfo", buf);
+            free (res);
+            if (!temp)
+            {
+                free (buf_uname);
+                return NULL;
+            }
+            res = temp;
+        }
         free (buf_uname);
-        temp = weechat_string_replace (res, "$osinfo", buf);
-        free (res);
-        if (!temp)
-            return NULL;
-        res = temp;
     }
 
     /*
      * $site: WeeChat web site, example:
-     *   http://www.weechat.org/
+     *   http://weechat.org/
      */
     info = weechat_info_get ("weechat_site", "");
     temp = weechat_string_replace (res, "$site", info);
@@ -434,7 +449,7 @@ irc_ctcp_replace_variables (struct t_irc_server *server, const char *format)
 
     /*
      * $download: WeeChat download page, example:
-     *   http://www.weechat.org/download
+     *   http://weechat.org/download
      */
     info = weechat_info_get ("weechat_site_download", "");
     temp = weechat_string_replace (res, "$download", info);
@@ -463,23 +478,35 @@ irc_ctcp_replace_variables (struct t_irc_server *server, const char *format)
      * $username: user name, example:
      *   name
      */
-    temp = weechat_string_replace (res, "$username",
-                                   IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_USERNAME));
-    free (res);
-    if (!temp)
-        return NULL;
-    res = temp;
+    username = weechat_string_eval_expression (
+        IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_USERNAME),
+        NULL, NULL, NULL);
+    if (username)
+    {
+        temp = weechat_string_replace (res, "$username", username);
+        free (res);
+        if (!temp)
+            return NULL;
+        res = temp;
+        free (username);
+    }
 
     /*
      * $realname: real name, example:
      *   John doe
      */
-    temp = weechat_string_replace (res, "$realname",
-                                   IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_REALNAME));
-    free (res);
-    if (!temp)
-        return NULL;
-    res = temp;
+    realname = weechat_string_eval_expression (
+        IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_REALNAME),
+        NULL, NULL, NULL);
+    if (realname)
+    {
+        temp = weechat_string_replace (res, "$realname", realname);
+        free (res);
+        if (!temp)
+            return NULL;
+        res = temp;
+        free (realname);
+    }
 
     /* return result */
     return res;
@@ -629,16 +656,16 @@ irc_ctcp_recv_dcc (struct t_irc_server *server, const char *nick,
                                                  IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_PROXY));
                 weechat_infolist_new_var_string (item, "remote_address", pos_addr);
                 weechat_infolist_new_var_integer (item, "port", atoi (pos_port));
-                weechat_hook_signal_send ("xfer_add",
-                                          WEECHAT_HOOK_SIGNAL_POINTER,
-                                          infolist);
+                (void) weechat_hook_signal_send ("xfer_add",
+                                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                                 infolist);
             }
             weechat_infolist_free (infolist);
         }
 
-        weechat_hook_signal_send ("irc_dcc",
-                                  WEECHAT_HOOK_SIGNAL_STRING,
-                                  message);
+        (void) weechat_hook_signal_send ("irc_dcc",
+                                         WEECHAT_HOOK_SIGNAL_STRING,
+                                         message);
 
         if (filename)
             free (filename);
@@ -726,16 +753,16 @@ irc_ctcp_recv_dcc (struct t_irc_server *server, const char *nick,
                                                  (filename) ? filename : pos_file);
                 weechat_infolist_new_var_integer (item, "port", atoi (pos_port));
                 weechat_infolist_new_var_string (item, "start_resume", pos_start_resume);
-                weechat_hook_signal_send ("xfer_accept_resume",
-                                          WEECHAT_HOOK_SIGNAL_POINTER,
-                                          infolist);
+                (void) weechat_hook_signal_send ("xfer_accept_resume",
+                                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                                 infolist);
             }
             weechat_infolist_free (infolist);
         }
 
-        weechat_hook_signal_send ("irc_dcc",
-                                  WEECHAT_HOOK_SIGNAL_STRING,
-                                  message);
+        (void) weechat_hook_signal_send ("irc_dcc",
+                                         WEECHAT_HOOK_SIGNAL_STRING,
+                                         message);
 
         if (filename)
             free (filename);
@@ -823,16 +850,16 @@ irc_ctcp_recv_dcc (struct t_irc_server *server, const char *nick,
                                                  (filename) ? filename : pos_file);
                 weechat_infolist_new_var_integer (item, "port", atoi (pos_port));
                 weechat_infolist_new_var_string (item, "start_resume", pos_start_resume);
-                weechat_hook_signal_send ("xfer_start_resume",
-                                          WEECHAT_HOOK_SIGNAL_POINTER,
-                                          infolist);
+                (void) weechat_hook_signal_send ("xfer_start_resume",
+                                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                                 infolist);
             }
             weechat_infolist_free (infolist);
         }
 
-        weechat_hook_signal_send ("irc_dcc",
-                                  WEECHAT_HOOK_SIGNAL_STRING,
-                                  message);
+        (void) weechat_hook_signal_send ("irc_dcc",
+                                         WEECHAT_HOOK_SIGNAL_STRING,
+                                         message);
 
         if (filename)
             free (filename);
@@ -935,16 +962,16 @@ irc_ctcp_recv_dcc (struct t_irc_server *server, const char *nick,
                                                  IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_PROXY));
                 weechat_infolist_new_var_string (item, "remote_address", pos_addr);
                 weechat_infolist_new_var_integer (item, "port", atoi (pos_port));
-                weechat_hook_signal_send ("xfer_add",
-                                          WEECHAT_HOOK_SIGNAL_POINTER,
-                                          infolist);
+                (void) weechat_hook_signal_send ("xfer_add",
+                                                 WEECHAT_HOOK_SIGNAL_POINTER,
+                                                 infolist);
             }
             weechat_infolist_free (infolist);
         }
 
-        weechat_hook_signal_send ("irc_dcc",
-                                  WEECHAT_HOOK_SIGNAL_STRING,
-                                  message);
+        (void) weechat_hook_signal_send ("irc_dcc",
+                                         WEECHAT_HOOK_SIGNAL_STRING,
+                                         message);
 
         free (dcc_args);
     }
@@ -1006,7 +1033,7 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
                                                              (nick_is_me) ?
                                                              "irc_action,notify_none,no_highlight" :
                                                              "irc_action,notify_message",
-                                                             nick),
+                                                             nick, address),
                                           "%s%s%s%s%s%s%s",
                                           weechat_prefix ("action"),
                                           irc_nick_mode_for_display (server, ptr_nick, 0),
@@ -1044,7 +1071,7 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
                                                                  (nick_is_me) ?
                                                                  "irc_action,notify_none,no_highlight" :
                                                                  "irc_action,notify_private",
-                                                                 nick),
+                                                                 nick, address),
                                               "%s%s%s%s%s%s",
                                               weechat_prefix ("action"),
                                               (nick_is_me) ?
@@ -1053,9 +1080,9 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
                                               (pos_args) ? IRC_COLOR_RESET : "",
                                               (pos_args) ? " " : "",
                                               (pos_args) ? pos_args : "");
-                    weechat_hook_signal_send ("irc_pv",
-                                              WEECHAT_HOOK_SIGNAL_STRING,
-                                              message);
+                    (void) weechat_hook_signal_send ("irc_pv",
+                                                     WEECHAT_HOOK_SIGNAL_STRING,
+                                                     message);
                 }
             }
         }
@@ -1064,7 +1091,7 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
         {
             reply = irc_ctcp_get_reply (server, arguments + 1);
             irc_ctcp_display_request (server, date, command, channel, nick,
-                                      arguments + 1, pos_args, reply);
+                                      address, arguments + 1, pos_args, reply);
             if (!reply || reply[0])
             {
                 irc_ctcp_reply_to_nick (server, command, channel, nick,
@@ -1083,7 +1110,8 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
             if (reply)
             {
                 irc_ctcp_display_request (server, date, command, channel, nick,
-                                          arguments + 1, pos_args, reply);
+                                          address, arguments + 1, pos_args,
+                                          reply);
 
                 if (reply[0])
                 {
@@ -1108,7 +1136,7 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
                                               date,
                                               irc_protocol_tags (command,
                                                                  "irc_ctcp",
-                                                                 NULL),
+                                                                 NULL, address),
                                               _("%sUnknown CTCP requested by %s%s%s: "
                                                 "%s%s%s%s%s"),
                                               weechat_prefix ("network"),
@@ -1126,9 +1154,9 @@ irc_ctcp_recv (struct t_irc_server *server, time_t date, const char *command,
             }
         }
 
-        weechat_hook_signal_send ("irc_ctcp",
-                                  WEECHAT_HOOK_SIGNAL_STRING,
-                                  message);
+        (void) weechat_hook_signal_send ("irc_ctcp",
+                                         WEECHAT_HOOK_SIGNAL_STRING,
+                                         message);
 
         if (pos_space)
             pos_space[0] = ' ';

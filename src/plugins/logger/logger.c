@@ -19,8 +19,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* this define is needed for strptime() (not on OpenBSD) */
-#if !defined(__OpenBSD__)
+/* this define is needed for strptime() (not on OpenBSD/Sun) */
+#if !defined(__OpenBSD__) && !defined(__sun)
 #define _XOPEN_SOURCE 700
 #endif
 
@@ -887,28 +887,26 @@ logger_command_cb (void *data, struct t_gui_buffer *buffer,
         return WEECHAT_RC_OK;
     }
 
-    if (argc > 1)
+    if (weechat_strcasecmp (argv[1], "set") == 0)
     {
-        if (weechat_strcasecmp (argv[1], "set") == 0)
-        {
-            if (argc > 2)
-                logger_set_buffer (buffer, argv[2]);
-            return WEECHAT_RC_OK;
-        }
-
-        if (weechat_strcasecmp (argv[1], "flush") == 0)
-        {
-            logger_flush ();
-            return WEECHAT_RC_OK;
-        }
-
-        if (weechat_strcasecmp (argv[1], "disable") == 0)
-        {
-            logger_set_buffer (buffer, "0");
-        }
+        if (argc > 2)
+            logger_set_buffer (buffer, argv[2]);
+        return WEECHAT_RC_OK;
     }
 
-    return WEECHAT_RC_OK;
+    if (weechat_strcasecmp (argv[1], "flush") == 0)
+    {
+        logger_flush ();
+        return WEECHAT_RC_OK;
+    }
+
+    if (weechat_strcasecmp (argv[1], "disable") == 0)
+    {
+        logger_set_buffer (buffer, "0");
+        return WEECHAT_RC_OK;
+    }
+
+    return WEECHAT_RC_ERROR;
 }
 
 /*

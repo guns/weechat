@@ -23,15 +23,15 @@
 #
 
 %define name weechat
-%define version 0.4.3
+%define version 1.0
 %define release 1
 
 Name:      %{name}
 Summary:   portable, fast, light and extensible IRC client
 Version:   %{version}
 Release:   %{release}
-Source:    http://www.weechat.org/files/src/%{name}-%{version}.tar.gz
-URL:       http://www.weechat.org/
+Source:    http://weechat.org/files/src/%{name}-%{version}.tar.gz
+URL:       http://weechat.org/
 Group:     Productivity/Networking/IRC
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
 Requires:  perl, python, ruby, lua, tcl, guile, gcrypt, gnutls, ncurses, libcurl
@@ -65,7 +65,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}.lang
 %defattr(-,root,root,0755)
-%doc AUTHORS ChangeLog COPYING INSTALL NEWS README
+%doc AUTHORS.asciidoc ChangeLog.asciidoc Contributing.asciidoc COPYING README.asciidoc ReleaseNotes.asciidoc
 %doc %{_docdir}/%{name}/*.html
 %{_mandir}/man1/%{name}.1*
 %{_mandir}/*/man1/%{name}.1*
@@ -77,6 +77,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/share/icons/hicolor/32x32/apps/weechat.png
 
 %changelog
+* Fri Aug 15 2014 Sébastien Helleu <flashcode@flashtux.org> 1.0-1
+- Released version 1.0
 * Sun Feb 09 2014 Sébastien Helleu <flashcode@flashtux.org> 0.4.3-1
 - Released version 0.4.3
 * Sun Oct 06 2013 Sébastien Helleu <flashcode@flashtux.org> 0.4.2-1

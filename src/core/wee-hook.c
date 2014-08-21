@@ -482,7 +482,7 @@ hook_command_build_completion (struct t_hook_command *hook_command)
     {
         /*
          * build static part of template: it's first argument(s) which does not
-         * contain "%" or "|"
+         * contain "%"
          */
         last_space = NULL;
         ptr_template = hook_command->cplt_templates[i];
@@ -493,7 +493,7 @@ hook_command_build_completion (struct t_hook_command *hook_command)
                 last_space = ptr_template;
                 break;
             }
-            else if ((ptr_template[0] == '%') || (ptr_template[0] == '|'))
+            else if (ptr_template[0] == '%')
                 break;
             ptr_template = utf8_next_char (ptr_template);
         }
@@ -674,11 +674,8 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
     if (!buffer || !string || !string[0])
         return -1;
 
-    rc = hook_command_run_exec (buffer, string);
-    if (rc == WEECHAT_RC_OK_EAT)
+    if (hook_command_run_exec (buffer, string) == WEECHAT_RC_OK_EAT)
         return 1;
-
-    rc = -1;
 
     argv = string_split (string, " ", 0, 0, &argc);
     if (argc == 0)
@@ -726,12 +723,9 @@ hook_command_exec (struct t_gui_buffer *buffer, int any_plugin,
         ptr_hook = next_hook;
     }
 
-    if (!hook_plugin && !hook_other_plugin)
-    {
-        /* command not found at all */
-        rc = -1;
-    }
-    else
+    rc = -1;
+
+    if (hook_plugin || hook_other_plugin)
     {
         if (!hook_plugin && (count_other_plugin > 1)
             && (hook_other_plugin->priority == hook_other_plugin2->priority))
@@ -1351,7 +1345,9 @@ hook_process_hashtable (struct t_weechat_plugin *plugin,
 {
     struct t_hook *new_hook;
     struct t_hook_process *new_hook_process;
-    char *stdout_buffer, *stderr_buffer;
+    char *stdout_buffer, *stderr_buffer, *error;
+    const char *ptr_value;
+    long number;
 
     stdout_buffer = NULL;
     stderr_buffer = NULL;
@@ -1384,6 +1380,8 @@ hook_process_hashtable (struct t_weechat_plugin *plugin,
     new_hook_process->callback = callback;
     new_hook_process->command = strdup (command);
     new_hook_process->options = (options) ? hashtable_dup (options) : NULL;
+    new_hook_process->detached = (options && hashtable_has_key (options,
+                                                                "detached"));
     new_hook_process->timeout = timeout;
     new_hook_process->child_read[HOOK_PROCESS_STDIN] = -1;
     new_hook_process->child_read[HOOK_PROCESS_STDOUT] = -1;
@@ -1402,6 +1400,20 @@ hook_process_hashtable (struct t_weechat_plugin *plugin,
     new_hook_process->buffer_size[HOOK_PROCESS_STDIN] = 0;
     new_hook_process->buffer_size[HOOK_PROCESS_STDOUT] = 0;
     new_hook_process->buffer_size[HOOK_PROCESS_STDERR] = 0;
+    new_hook_process->buffer_flush = HOOK_PROCESS_BUFFER_SIZE;
+    if (options)
+    {
+        ptr_value = hashtable_get (options, "buffer_flush");
+        if (ptr_value && ptr_value[0])
+        {
+            number = strtol (ptr_value, &error, 10);
+            if (error && !error[0]
+                && (number >= 1) && (number <= HOOK_PROCESS_BUFFER_SIZE))
+            {
+                new_hook_process->buffer_flush = (int)number;
+            }
+        }
+    }
 
     hook_add_to_list (new_hook);
 
@@ -1468,20 +1480,38 @@ hook_process_child (struct t_hook *hook_process)
         close (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDIN]));
 
     /* redirect stdout/stderr to pipe (so that parent process can read them) */
-    close (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]));
-    close (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]));
-    if (dup2 (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDOUT]),
+    if (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]) >= 0)
+    {
+        close (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]));
+        if (dup2 (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDOUT]),
               STDOUT_FILENO) < 0)
-    {
-        _exit (EXIT_FAILURE);
+        {
+            _exit (EXIT_FAILURE);
+        }
     }
-    if (dup2 (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDERR]),
-              STDERR_FILENO) < 0)
+    else
     {
-        _exit (EXIT_FAILURE);
+        /* detached mode: write stdout in /dev/null */
+        f = freopen ("/dev/null", "w", stdout);
+        (void) f;
+    }
+    if (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]) >= 0)
+    {
+        close (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]));
+        if (dup2 (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDERR]),
+                  STDERR_FILENO) < 0)
+        {
+            _exit (EXIT_FAILURE);
+        }
+    }
+    else
+    {
+        /* detached mode: write stderr in /dev/null */
+        f = freopen ("/dev/null", "w", stderr);
+        (void) f;
     }
 
-    rc = EXIT_SUCCESS;
+    rc = EXIT_FAILURE;
 
     if (strncmp (HOOK_PROCESS(hook_process, command), "url:", 4) == 0)
     {
@@ -1492,8 +1522,6 @@ hook_process_child (struct t_hook *hook_process)
             ptr_url++;
         }
         rc = weeurl_download (ptr_url, HOOK_PROCESS(hook_process, options));
-        if (rc != 0)
-            fprintf (stderr, "Error with URL '%s'\n", ptr_url);
     }
     else
     {
@@ -1542,7 +1570,8 @@ hook_process_child (struct t_hook *hook_process)
              * if no arguments were found in hashtable, make an automatic split
              * of command, like the shell does
              */
-            exec_args = string_split_shell (HOOK_PROCESS(hook_process, command));
+            exec_args = string_split_shell (HOOK_PROCESS(hook_process, command),
+                                            NULL);
         }
 
         if (exec_args)
@@ -1570,7 +1599,6 @@ hook_process_child (struct t_hook *hook_process)
             string_free_split (exec_args);
         fprintf (stderr, "Error with command '%s'\n",
                  HOOK_PROCESS(hook_process, command));
-        rc = EXIT_FAILURE;
     }
 
     fflush (stdout);
@@ -1586,15 +1614,15 @@ hook_process_child (struct t_hook *hook_process)
 void
 hook_process_send_buffers (struct t_hook *hook_process, int callback_rc)
 {
-    int i, size;
+    int size;
 
     /* add '\0' at end of stdout and stderr */
-    for (i = 0; i < 2; i++)
-    {
-        size = HOOK_PROCESS(hook_process, buffer_size[i]);
-        if (size > 0)
-            HOOK_PROCESS(hook_process, buffer[i])[size] = '\0';
-    }
+    size = HOOK_PROCESS(hook_process, buffer_size[HOOK_PROCESS_STDOUT]);
+    if (size > 0)
+        HOOK_PROCESS(hook_process, buffer[HOOK_PROCESS_STDOUT])[size] = '\0';
+    size = HOOK_PROCESS(hook_process, buffer_size[HOOK_PROCESS_STDERR]);
+    if (size > 0)
+        HOOK_PROCESS(hook_process, buffer[HOOK_PROCESS_STDERR])[size] = '\0';
 
     /* send buffers to callback */
     (void) (HOOK_PROCESS(hook_process, callback))
@@ -1647,6 +1675,12 @@ hook_process_child_read (struct t_hook *hook_process, int fd,
     {
         hook_process_add_to_buffer (hook_process, index_buffer,
                                     buffer, num_read);
+        if (HOOK_PROCESS(hook_process, buffer_size[index_buffer]) >=
+            HOOK_PROCESS(hook_process, buffer_flush))
+        {
+            hook_process_send_buffers (hook_process,
+                                       WEECHAT_HOOK_PROCESS_RUNNING);
+        }
     }
     else if (num_read == 0)
     {
@@ -1719,13 +1753,21 @@ hook_process_timer_cb (void *arg_hook_process, int remaining_calls)
     }
     else
     {
-        if (!HOOK_PROCESS(hook_process, hook_fd[HOOK_PROCESS_STDOUT])
-            && !HOOK_PROCESS(hook_process, hook_fd[HOOK_PROCESS_STDERR]))
+        if (waitpid (HOOK_PROCESS(hook_process, child_pid),
+                     &status, WNOHANG) > 0)
         {
-            if (waitpid (HOOK_PROCESS(hook_process, child_pid), &status, WNOHANG) > 0)
+            if (WIFEXITED(status))
             {
+                /* child terminated normally */
                 rc = WEXITSTATUS(status);
                 hook_process_send_buffers (hook_process, rc);
+                unhook (hook_process);
+            }
+            else if (WIFSIGNALED(status))
+            {
+                /* child terminated by a signal */
+                hook_process_send_buffers (hook_process,
+                                           WEECHAT_HOOK_PROCESS_ERROR);
                 unhook (hook_process);
             }
         }
@@ -1760,11 +1802,14 @@ hook_process_run (struct t_hook *hook_process)
             goto error;
     }
 
-    /* create pipes for stdout/err */
-    if (pipe (pipes[HOOK_PROCESS_STDOUT]) < 0)
-        goto error;
-    if (pipe (pipes[HOOK_PROCESS_STDERR]) < 0)
-        goto error;
+    /* create pipes for stdout/err (if not running in detached mode) */
+    if (!HOOK_PROCESS(hook_process, detached))
+    {
+        if (pipe (pipes[HOOK_PROCESS_STDOUT]) < 0)
+            goto error;
+        if (pipe (pipes[HOOK_PROCESS_STDERR]) < 0)
+            goto error;
+    }
 
     /* assign pipes to variables in hook */
     for (i = 0; i < 3; i++)
@@ -1802,24 +1847,36 @@ hook_process_run (struct t_hook *hook_process)
         close (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDIN]));
         HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDIN]) = -1;
     }
-    close (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDOUT]));
-    HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDOUT]) = -1;
-    close (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDERR]));
-    HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDERR]) = -1;
+    if (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]) >= 0)
+    {
+        close (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDOUT]));
+        HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDOUT]) = -1;
+    }
+    if (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]) >= 0)
+    {
+        close (HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDERR]));
+        HOOK_PROCESS(hook_process, child_write[HOOK_PROCESS_STDERR]) = -1;
+    }
 
-    HOOK_PROCESS(hook_process, hook_fd[HOOK_PROCESS_STDOUT]) =
-        hook_fd (hook_process->plugin,
-                 HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]),
-                 1, 0, 0,
-                 &hook_process_child_read_stdout_cb,
-                 hook_process);
+    if (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]) >= 0)
+    {
+        HOOK_PROCESS(hook_process, hook_fd[HOOK_PROCESS_STDOUT]) =
+            hook_fd (hook_process->plugin,
+                     HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDOUT]),
+                     1, 0, 0,
+                     &hook_process_child_read_stdout_cb,
+                     hook_process);
+    }
 
-    HOOK_PROCESS(hook_process, hook_fd[HOOK_PROCESS_STDERR]) =
-        hook_fd (hook_process->plugin,
-                 HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]),
-                 1, 0, 0,
-                 &hook_process_child_read_stderr_cb,
-                 hook_process);
+    if (HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]) >= 0)
+    {
+        HOOK_PROCESS(hook_process, hook_fd[HOOK_PROCESS_STDERR]) =
+            hook_fd (hook_process->plugin,
+                     HOOK_PROCESS(hook_process, child_read[HOOK_PROCESS_STDERR]),
+                     1, 0, 0,
+                     &hook_process_child_read_stderr_cb,
+                     hook_process);
+    }
 
     timeout = HOOK_PROCESS(hook_process, timeout);
     interval = 100;
@@ -2201,11 +2258,13 @@ hook_signal (struct t_weechat_plugin *plugin, const char *signal,
  * Sends a signal.
  */
 
-void
+int
 hook_signal_send (const char *signal, const char *type_data, void *signal_data)
 {
     struct t_hook *ptr_hook, *next_hook;
     int rc;
+
+    rc = WEECHAT_RC_OK;
 
     hook_exec_start ();
 
@@ -2231,6 +2290,8 @@ hook_signal_send (const char *signal, const char *type_data, void *signal_data)
     }
 
     hook_exec_end ();
+
+    return rc;
 }
 
 /*
@@ -2278,11 +2339,13 @@ hook_hsignal (struct t_weechat_plugin *plugin, const char *signal,
  * Sends a hsignal (signal with hashtable).
  */
 
-void
+int
 hook_hsignal_send (const char *signal, struct t_hashtable *hashtable)
 {
     struct t_hook *ptr_hook, *next_hook;
     int rc;
+
+    rc = WEECHAT_RC_OK;
 
     hook_exec_start ();
 
@@ -2308,6 +2371,8 @@ hook_hsignal_send (const char *signal, struct t_hashtable *hashtable)
     }
 
     hook_exec_end ();
+
+    return rc;
 }
 
 /*
@@ -3201,6 +3266,11 @@ hook_focus_get_data (struct t_hashtable *hashtable_focus1,
 void
 hook_set (struct t_hook *hook, const char *property, const char *value)
 {
+    ssize_t num_written;
+    char *error;
+    long number;
+    int rc;
+
     /* invalid hook? */
     if (!hook_valid (hook))
         return;
@@ -3218,9 +3288,9 @@ hook_set (struct t_hook *hook, const char *property, const char *value)
             && (HOOK_PROCESS(hook, child_write[HOOK_PROCESS_STDIN]) >= 0))
         {
             /* send data on child's stdin */
-            write (HOOK_PROCESS(hook, child_write[HOOK_PROCESS_STDIN]),
-                   value,
-                   strlen (value));
+            num_written = write (HOOK_PROCESS(hook, child_write[HOOK_PROCESS_STDIN]),
+                                 value, strlen (value));
+            (void) num_written;
         }
     }
     else if (string_strcasecmp (property, "stdin_close") == 0)
@@ -3232,6 +3302,34 @@ hook_set (struct t_hook *hook, const char *property, const char *value)
             /* close stdin pipe */
             close (HOOK_PROCESS(hook, child_write[HOOK_PROCESS_STDIN]));
             HOOK_PROCESS(hook, child_write[HOOK_PROCESS_STDIN]) = -1;
+        }
+    }
+    else if (string_strcasecmp (property, "signal") == 0)
+    {
+        if (!hook->deleted
+            && (hook->type == HOOK_TYPE_PROCESS)
+            && (HOOK_PROCESS(hook, child_pid) > 0))
+        {
+            error = NULL;
+            number = strtol (value, &error, 10);
+            if (!error || error[0])
+            {
+                /* not a number? look for signal by name */
+                number = util_signal_search (value);
+            }
+            if (number >= 0)
+            {
+                rc = kill (HOOK_PROCESS(hook, child_pid), (int)number);
+                if (rc < 0)
+                {
+                    gui_chat_printf (NULL,
+                                     _("%sError sending signal %d to pid %d: %s"),
+                                     gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                     (int)number,
+                                     HOOK_PROCESS(hook, child_pid),
+                                     strerror (errno));
+                }
+            }
         }
     }
 }
@@ -3664,7 +3762,9 @@ hook_add_to_infolist_pointer (struct t_infolist *infolist, struct t_hook *hook)
                     return 0;
                 if (!infolist_new_var_string (ptr_item, "options", hashtable_get_string (HOOK_PROCESS(hook, options), "keys_values")))
                     return 0;
-                if (!infolist_new_var_integer (ptr_item, "timeout", HOOK_PROCESS(hook, timeout)))
+                if (!infolist_new_var_integer (ptr_item, "detached", HOOK_PROCESS(hook, detached)))
+                    return 0;
+                if (!infolist_new_var_integer (ptr_item, "timeout", (int)(HOOK_PROCESS(hook, timeout))))
                     return 0;
                 if (!infolist_new_var_integer (ptr_item, "child_read_stdin", HOOK_PROCESS(hook, child_read[HOOK_PROCESS_STDIN])))
                     return 0;
@@ -4146,7 +4246,8 @@ hook_print_log ()
                                     HOOK_PROCESS(ptr_hook, options),
                                     hashtable_get_string (HOOK_PROCESS(ptr_hook, options),
                                                           "keys_values"));
-                        log_printf ("    timeout . . . . . . . : %d",    HOOK_PROCESS(ptr_hook, timeout));
+                        log_printf ("    detached. . . . . . . : %d",    HOOK_PROCESS(ptr_hook, detached));
+                        log_printf ("    timeout . . . . . . . : %ld",   HOOK_PROCESS(ptr_hook, timeout));
                         log_printf ("    child_read[stdin] . . : %d",    HOOK_PROCESS(ptr_hook, child_read[HOOK_PROCESS_STDIN]));
                         log_printf ("    child_write[stdin]. . : %d",    HOOK_PROCESS(ptr_hook, child_write[HOOK_PROCESS_STDIN]));
                         log_printf ("    child_read[stdout]. . : %d",    HOOK_PROCESS(ptr_hook, child_read[HOOK_PROCESS_STDOUT]));

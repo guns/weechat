@@ -516,12 +516,15 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->string_expand_home = &string_expand_home;
         new_plugin->string_remove_quotes = &string_remove_quotes;
         new_plugin->string_strip = &string_strip;
+        new_plugin->string_convert_escaped_chars = &string_convert_escaped_chars;
         new_plugin->string_mask_to_regex = &string_mask_to_regex;
         new_plugin->string_regex_flags = &string_regex_flags;
         new_plugin->string_regcomp = &string_regcomp;
         new_plugin->string_has_highlight = &string_has_highlight;
         new_plugin->string_has_highlight_regex = &string_has_highlight_regex;
+        new_plugin->string_replace_regex = &string_replace_regex;
         new_plugin->string_split = &string_split;
+        new_plugin->string_split_shell = &string_split_shell;
         new_plugin->string_free_split = &string_free_split;
         new_plugin->string_build_with_split_string = &string_build_with_split_string;
         new_plugin->string_split_command = &string_split_command;
@@ -587,6 +590,7 @@ plugin_load (const char *filename, int argc, char **argv)
         new_plugin->hashtable_has_key = &hashtable_has_key;
         new_plugin->hashtable_map = &hashtable_map;
         new_plugin->hashtable_map_string = &hashtable_map_string;
+        new_plugin->hashtable_dup = &hashtable_dup;
         new_plugin->hashtable_get_integer = &hashtable_get_integer;
         new_plugin->hashtable_get_string = &hashtable_get_string;
         new_plugin->hashtable_set_pointer = &hashtable_set_pointer;
@@ -862,8 +866,8 @@ plugin_load (const char *filename, int argc, char **argv)
                          name);
     }
 
-    hook_signal_send ("plugin_loaded", WEECHAT_HOOK_SIGNAL_STRING,
-                      (char *)filename);
+    (void) hook_signal_send ("plugin_loaded",
+                             WEECHAT_HOOK_SIGNAL_STRING, (char *)filename);
 
     return new_plugin;
 }
@@ -1046,7 +1050,8 @@ plugin_unload (struct t_weechat_plugin *plugin)
                          _("Plugin \"%s\" unloaded"),
                          (name) ? name : "???");
     }
-    hook_signal_send ("plugin_unloaded", WEECHAT_HOOK_SIGNAL_STRING, name);
+    (void) hook_signal_send ("plugin_unloaded",
+                             WEECHAT_HOOK_SIGNAL_STRING, name);
     if (name)
         free (name);
 }
@@ -1243,8 +1248,8 @@ plugin_hdata_plugin_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_weechat_plugin, debug, INTEGER, 0, NULL, NULL);
         HDATA_VAR(struct t_weechat_plugin, prev_plugin, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_weechat_plugin, next_plugin, POINTER, 0, NULL, hdata_name);
-        HDATA_LIST(weechat_plugins);
-        HDATA_LIST(last_weechat_plugin);
+        HDATA_LIST(weechat_plugins, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        HDATA_LIST(last_weechat_plugin, 0);
     }
     return hdata;
 }

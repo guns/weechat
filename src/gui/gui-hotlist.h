@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_GUI_HOTLIST_H
-#define __WEECHAT_GUI_HOTLIST_H 1
+#ifndef WEECHAT_GUI_HOTLIST_H
+#define WEECHAT_GUI_HOTLIST_H 1
 
 enum t_gui_hotlist_priority
 {
@@ -65,5 +65,6 @@ extern struct t_hdata *gui_hotlist_hdata_hotlist_cb (void *data,
 extern int gui_hotlist_add_to_infolist (struct t_infolist *infolist,
                                         struct t_gui_hotlist *hotlist);
 extern void gui_hotlist_print_log ();
+extern void gui_hotlist_end ();
 
-#endif /* __WEECHAT_GUI_HOTLIST_H */
+#endif /* WEECHAT_GUI_HOTLIST_H */

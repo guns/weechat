@@ -113,6 +113,7 @@ struct t_config_option *config_look_highlight;
 struct t_config_option *config_look_highlight_regex;
 struct t_config_option *config_look_highlight_tags;
 struct t_config_option *config_look_hotlist_add_buffer_if_away;
+struct t_config_option *config_look_hotlist_add_conditions;
 struct t_config_option *config_look_hotlist_buffer_separator;
 struct t_config_option *config_look_hotlist_count_max;
 struct t_config_option *config_look_hotlist_count_min_msg;
@@ -121,6 +122,7 @@ struct t_config_option *config_look_hotlist_names_length;
 struct t_config_option *config_look_hotlist_names_level;
 struct t_config_option *config_look_hotlist_names_merged_buffers;
 struct t_config_option *config_look_hotlist_prefix;
+struct t_config_option *config_look_hotlist_remove;
 struct t_config_option *config_look_hotlist_short_names;
 struct t_config_option *config_look_hotlist_sort;
 struct t_config_option *config_look_hotlist_suffix;
@@ -155,6 +157,8 @@ struct t_config_option *config_look_prefix_buffer_align_more;
 struct t_config_option *config_look_prefix_buffer_align_more_after;
 struct t_config_option *config_look_prefix_same_nick;
 struct t_config_option *config_look_prefix_suffix;
+struct t_config_option *config_look_bare_display_exit_on_input;
+struct t_config_option *config_look_bare_display_time_format;
 struct t_config_option *config_look_read_marker;
 struct t_config_option *config_look_read_marker_always_show;
 struct t_config_option *config_look_read_marker_string;
@@ -226,6 +230,7 @@ struct t_config_option *config_color_status_data_private;
 struct t_config_option *config_color_status_filter;
 struct t_config_option *config_color_status_name;
 struct t_config_option *config_color_status_name_ssl;
+struct t_config_option *config_color_status_nicklist_count;
 struct t_config_option *config_color_status_number;
 struct t_config_option *config_color_status_more;
 struct t_config_option *config_color_status_time;
@@ -301,6 +306,23 @@ config_change_sys_rlimit (void *data, struct t_config_option *option)
 }
 
 /*
+ * Callback for changes on options "weechat.look.save_{config|layout}_on_exit".
+ */
+
+void
+config_change_save_config_layout_on_exit ()
+{
+    if (gui_init_ok && !CONFIG_BOOLEAN(config_look_save_config_on_exit)
+        && (CONFIG_INTEGER(config_look_save_layout_on_exit) != CONFIG_LOOK_SAVE_LAYOUT_ON_EXIT_NONE))
+    {
+        gui_chat_printf (NULL,
+                         _("Warning: option weechat.look.save_config_on_exit "
+                           "is disabled, so the option "
+                           "weechat.look.save_layout_on_exit is ignored"));
+    }
+}
+
+/*
  * Callback for changes on option "weechat.look.save_config_on_exit".
  */
 
@@ -315,9 +337,25 @@ config_change_save_config_on_exit (void *data, struct t_config_option *option)
     {
         gui_chat_printf (NULL,
                          _("Warning: you should now issue /save to write "
-                           "\"save_config_on_exit\" option in configuration "
-                           "file"));
+                           "option weechat.look.save_config_on_exit in "
+                           "configuration file"));
     }
+
+    config_change_save_config_layout_on_exit ();
+}
+
+/*
+ * Callback for changes on option "weechat.look.save_layout_on_exit".
+ */
+
+void
+config_change_save_layout_on_exit (void *data, struct t_config_option *option)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) option;
+
+    config_change_save_config_layout_on_exit ();
 }
 
 /*
@@ -897,7 +935,8 @@ config_day_change_timer_cb (void *data, int remaining_calls)
 
         /* send signal "day_changed" */
         strftime (str_time, sizeof (str_time), "%Y-%m-%d", local_time);
-        hook_signal_send ("day_changed", WEECHAT_HOOK_SIGNAL_STRING, str_time);
+        (void) hook_signal_send ("day_changed",
+                                 WEECHAT_HOOK_SIGNAL_STRING, str_time);
     }
 
     config_day_change_old_day = new_mday;
@@ -1275,65 +1314,63 @@ config_weechat_proxy_read_cb (void *data, struct t_config_file *config_file,
     /* make C compiler happy */
     (void) data;
     (void) config_file;
-    (void) section;
 
-    if (option_name)
+    if (!option_name)
+        return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
+
+    pos_option = strchr (option_name, '.');
+    if (!pos_option)
+        return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
+
+    proxy_name = string_strndup (option_name, pos_option - option_name);
+    if (!proxy_name)
+        return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
+
+    pos_option++;
+
+    /* search temporary proxy */
+    for (ptr_temp_proxy = weechat_temp_proxies; ptr_temp_proxy;
+         ptr_temp_proxy = ptr_temp_proxy->next_proxy)
     {
-        pos_option = strchr (option_name, '.');
-        if (pos_option)
+        if (strcmp (ptr_temp_proxy->name, proxy_name) == 0)
+            break;
+    }
+    if (!ptr_temp_proxy)
+    {
+        /* create new temporary proxy */
+        ptr_temp_proxy = proxy_alloc (proxy_name);
+        if (ptr_temp_proxy)
         {
-            proxy_name = string_strndup (option_name, pos_option - option_name);
-            if (proxy_name)
-            {
-                pos_option++;
-                for (ptr_temp_proxy = weechat_temp_proxies; ptr_temp_proxy;
-                     ptr_temp_proxy = ptr_temp_proxy->next_proxy)
-                {
-                    if (strcmp (ptr_temp_proxy->name, proxy_name) == 0)
-                        break;
-                }
-                if (!ptr_temp_proxy)
-                {
-                    /* create new temp proxy */
-                    ptr_temp_proxy = proxy_alloc (proxy_name);
-                    if (ptr_temp_proxy)
-                    {
-                        /* add new temp proxy at end of queue */
-                        ptr_temp_proxy->prev_proxy = last_weechat_temp_proxy;
-                        ptr_temp_proxy->next_proxy = NULL;
-
-                        if (!weechat_temp_proxies)
-                            weechat_temp_proxies = ptr_temp_proxy;
-                        else
-                            last_weechat_temp_proxy->next_proxy = ptr_temp_proxy;
-                        last_weechat_temp_proxy = ptr_temp_proxy;
-                    }
-                }
-
-                if (ptr_temp_proxy)
-                {
-                    index_option = proxy_search_option (pos_option);
-                    if (index_option >= 0)
-                    {
-                        proxy_create_option_temp (ptr_temp_proxy, index_option,
-                                                  value);
-                    }
-                    else
-                    {
-                        gui_chat_printf (NULL,
-                                         _("%sWarning: unknown option for "
-                                           "section \"%s\": %s (value: \"%s\")"),
-                                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                                         section->name,
-                                         option_name,
-                                         value);
-                    }
-                }
-
-                free (proxy_name);
-            }
+            /* add new proxy at the end */
+            ptr_temp_proxy->prev_proxy = last_weechat_temp_proxy;
+            ptr_temp_proxy->next_proxy = NULL;
+            if (!weechat_temp_proxies)
+                weechat_temp_proxies = ptr_temp_proxy;
+            else
+                last_weechat_temp_proxy->next_proxy = ptr_temp_proxy;
+            last_weechat_temp_proxy = ptr_temp_proxy;
         }
     }
+
+    if (ptr_temp_proxy)
+    {
+        index_option = proxy_search_option (pos_option);
+        if (index_option >= 0)
+        {
+            proxy_create_option_temp (ptr_temp_proxy, index_option,
+                                      value);
+        }
+        else
+        {
+            gui_chat_printf (NULL,
+                             _("%sWarning: unknown option for section \"%s\": "
+                               "%s (value: \"%s\")"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             section->name, option_name, value);
+        }
+    }
+
+    free (proxy_name);
 
     return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
 }
@@ -1356,63 +1393,62 @@ config_weechat_bar_read_cb (void *data, struct t_config_file *config_file,
     (void) config_file;
     (void) section;
 
-    if (option_name)
+    if (!option_name)
+        return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
+
+    pos_option = strchr (option_name, '.');
+    if (!pos_option)
+        return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
+
+    bar_name = string_strndup (option_name, pos_option - option_name);
+    if (!bar_name)
+        return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
+
+    pos_option++;
+
+    /* search temporary bar */
+    for (ptr_temp_bar = gui_temp_bars; ptr_temp_bar;
+         ptr_temp_bar = ptr_temp_bar->next_bar)
     {
-        pos_option = strchr (option_name, '.');
-        if (pos_option)
+        if (strcmp (ptr_temp_bar->name, bar_name) == 0)
+            break;
+    }
+    if (!ptr_temp_bar)
+    {
+        /* create new temporary bar */
+        ptr_temp_bar = gui_bar_alloc (bar_name);
+        if (ptr_temp_bar)
         {
-            bar_name = string_strndup (option_name, pos_option - option_name);
-            if (bar_name)
-            {
-                pos_option++;
-                for (ptr_temp_bar = gui_temp_bars; ptr_temp_bar;
-                     ptr_temp_bar = ptr_temp_bar->next_bar)
-                {
-                    if (strcmp (ptr_temp_bar->name, bar_name) == 0)
-                        break;
-                }
-                if (!ptr_temp_bar)
-                {
-                    /* create new temp bar */
-                    ptr_temp_bar = gui_bar_alloc (bar_name);
-                    if (ptr_temp_bar)
-                    {
-                        /* add new temp bar at end of queue */
-                        ptr_temp_bar->prev_bar = last_gui_temp_bar;
-                        ptr_temp_bar->next_bar = NULL;
-
-                        if (!gui_temp_bars)
-                            gui_temp_bars = ptr_temp_bar;
-                        else
-                            last_gui_temp_bar->next_bar = ptr_temp_bar;
-                        last_gui_temp_bar = ptr_temp_bar;
-                    }
-                }
-
-                if (ptr_temp_bar)
-                {
-                    index_option = gui_bar_search_option (pos_option);
-                    if (index_option >= 0)
-                    {
-                        gui_bar_create_option_temp (ptr_temp_bar, index_option,
-                                                    value);
-                    }
-                    else
-                    {
-                        gui_chat_printf (NULL,
-                                         _("%sWarning: unknown option for "
-                                           "section \"%s\": %s (value: \"%s\")"),
-                                         gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                                         section->name,
-                                         option_name,
-                                         value);
-                    }
-                }
-
-                free (bar_name);
-            }
+            /* add new bar at the end */
+            ptr_temp_bar->prev_bar = last_gui_temp_bar;
+            ptr_temp_bar->next_bar = NULL;
+            if (!gui_temp_bars)
+                gui_temp_bars = ptr_temp_bar;
+            else
+                last_gui_temp_bar->next_bar = ptr_temp_bar;
+            last_gui_temp_bar = ptr_temp_bar;
         }
     }
+
+    if (ptr_temp_bar)
+    {
+        index_option = gui_bar_search_option (pos_option);
+        if (index_option >= 0)
+        {
+            gui_bar_create_option_temp (ptr_temp_bar, index_option,
+                                        value);
+        }
+        else
+        {
+            gui_chat_printf (NULL,
+                             _("%sWarning: unknown option for section \"%s\": "
+                               "%s (value: \"%s\")"),
+                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                             section->name, option_name, value);
+        }
+    }
+
+    free (bar_name);
 
     return WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
 }
@@ -2098,7 +2134,8 @@ config_weechat_init_options ()
         "buffer_search_where", "integer",
         N_("default text search in buffer: in message, prefix, prefix and "
            "message"),
-        "prefix|message|prefix_message", 0, 0, "message", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        "prefix|message|prefix_message", 0, 0, "prefix_message",
+        NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_buffer_time_format = config_file_new_option (
         weechat_config_file, ptr_section,
         "buffer_time_format", "string",
@@ -2254,18 +2291,23 @@ config_weechat_init_options ()
         weechat_config_file, ptr_section,
         "highlight_tags", "string",
         N_("comma separated list of tags to highlight; case insensitive "
-           "comparison; each tag can start or end with \"*\" to match more "
-           "than one tag; many tags can be separated by \"+\" to make a "
-           "logical \"and\" between tags; examples: \"nick_flashcode\" for "
-           "messages from nick \"FlashCode\", \"irc_notice+nick_toto*\" for "
-           "notices from a nick starting with \"toto\""),
+           "comparison; wildcard \"*\" is allowed in each tag; many tags can "
+           "be separated by \"+\" to make a logical \"and\" between tags; "
+           "examples: \"nick_flashcode\" for messages from nick \"FlashCode\", "
+           "\"irc_notice+nick_toto*\" for notices from a nick starting with "
+           "\"toto\""),
         NULL, 0, 0, "", NULL, 0, NULL, NULL, &config_change_highlight_tags, NULL, NULL, NULL);
-    config_look_hotlist_add_buffer_if_away = config_file_new_option (
+    config_look_hotlist_add_conditions = config_file_new_option (
         weechat_config_file, ptr_section,
-        "hotlist_add_buffer_if_away", "boolean",
-        N_("add any buffer to hotlist (including current or visible buffers) "
-           "if local variable \"away\" is set on buffer"),
-        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        "hotlist_add_conditions", "string",
+        N_("conditions to add a buffer in hotlist (if notify level is OK for "
+           "the buffer); you can use in these conditions: \"window\" (current "
+           "window pointer), \"buffer\" (buffer pointer to add in hotlist), "
+           "\"priority\" (0 = low, 1 = message, 2 = private, 3 = highlight); "
+           "by default a buffer is added to hotlist if you are away, or if the "
+           "buffer is not visible on screen (not displayed in any window)"),
+        NULL, 0, 0, "${away} || ${buffer.num_displayed} == 0",
+        NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_hotlist_buffer_separator = config_file_new_option (
         weechat_config_file, ptr_section,
         "hotlist_buffer_separator", "string",
@@ -2311,6 +2353,13 @@ config_weechat_init_options ()
         "hotlist_prefix", "string",
         N_("text displayed at the beginning of the hotlist"),
         NULL, 0, 0, "H: ", NULL, 0, NULL, NULL, &config_change_buffer_content, NULL, NULL, NULL);
+    config_look_hotlist_remove = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "hotlist_remove", "integer",
+        N_("remove buffers in hotlist: buffer = remove buffer by buffer, "
+           "merged = remove all visible merged buffers at once"),
+        "buffer|merged",
+        0, 0, "merged", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_look_hotlist_short_names = config_file_new_option (
         weechat_config_file, ptr_section,
         "hotlist_short_names", "boolean",
@@ -2320,9 +2369,10 @@ config_weechat_init_options ()
     config_look_hotlist_sort = config_file_new_option (
         weechat_config_file, ptr_section,
         "hotlist_sort", "integer",
-        N_("hotlist sort type (group_time_asc (default), "
-           "group_time_desc, group_number_asc, group_number_desc, "
-           "number_asc, number_desc)"),
+        N_("sort of hotlist: group_time_*: group by notify level (highlights "
+           "first) then sort by time, group_number_*: group by notify level "
+           "(highlights first) then sort by number, number_*: sort by number; "
+           "asc = ascending sort, desc = descending sort"),
         "group_time_asc|group_time_desc|group_number_asc|"
         "group_number_desc|number_asc|number_desc",
         0, 0, "group_time_asc", NULL, 0, NULL, NULL, &config_change_hotlist_sort, NULL, NULL, NULL);
@@ -2559,6 +2609,17 @@ config_weechat_init_options ()
         "prefix_suffix", "string",
         N_("string displayed after prefix"),
         NULL, 0, 0, "|", NULL, 0, NULL, NULL, &config_change_buffers, NULL, NULL, NULL);
+    config_look_bare_display_exit_on_input = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "bare_display_exit_on_input", "boolean",
+        N_("exit the bare display mode on any changes in input"),
+        NULL, 0, 0, "on", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    config_look_bare_display_time_format = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "bare_display_time_format", "string",
+        N_("time format in bare display mode (see man strftime for date/time "
+           "specifiers)"),
+        NULL, 0, 0, "%H:%M", NULL, 0, NULL, NULL, &config_change_buffer_content, NULL, NULL, NULL);
     config_look_read_marker = config_file_new_option (
         weechat_config_file, ptr_section,
         "read_marker", "integer",
@@ -2585,7 +2646,8 @@ config_weechat_init_options ()
         weechat_config_file, ptr_section,
         "save_layout_on_exit", "integer",
         N_("save layout on exit (buffers, windows, or both)"),
-        "none|buffers|windows|all", 0, 0, "none", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+        "none|buffers|windows|all", 0, 0, "none", NULL, 0, NULL, NULL,
+        &config_change_save_layout_on_exit, NULL, NULL, NULL);
     config_look_scroll_amount = config_file_new_option (
         weechat_config_file, ptr_section,
         "scroll_amount", "integer",
@@ -3044,6 +3106,12 @@ config_weechat_init_options ()
            "secured with a protocol like SSL"),
         NULL, -1, 0, "lightgreen", NULL, 0,
         NULL, NULL, &config_change_color, NULL, NULL, NULL);
+    config_color_status_nicklist_count = config_file_new_option (
+        weechat_config_file, ptr_section,
+        "status_nicklist_count", "color",
+        N_("text color for number of nicks in nicklist (status bar)"),
+        NULL, -1, 0, "default", NULL, 0,
+        NULL, NULL, &config_change_color, NULL, NULL, NULL);
     config_color_status_number = config_file_new_option (
         weechat_config_file, ptr_section,
         "status_number", "color",
@@ -3271,8 +3339,8 @@ config_weechat_init_options ()
         N_("comma separated list of plugins to load automatically "
            "at startup, \"*\" means all plugins found, a name beginning with "
            "\"!\" is a negative value to prevent a plugin from being loaded, "
-           "names can start or end with \"*\" to match several plugins "
-           "(examples: \"*\" or \"*,!lua,!tcl\")"),
+           "wildcard \"*\" is allowed in names (examples: \"*\" or "
+           "\"*,!lua,!tcl\")"),
         NULL, 0, 0, "*", NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     config_plugin_debug = config_file_new_option (
         weechat_config_file, ptr_section,

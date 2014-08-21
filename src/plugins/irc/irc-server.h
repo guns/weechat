@@ -18,8 +18,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_IRC_SERVER_H
-#define __WEECHAT_IRC_SERVER_H 1
+#ifndef WEECHAT_IRC_SERVER_H
+#define WEECHAT_IRC_SERVER_H 1
 
 #include <sys/time.h>
 #include <regex.h>
@@ -173,6 +173,7 @@ struct t_irc_server
                                     /* (nick____1, nick____2, ...)           */
     char *nick;                     /* current nickname                      */
     char *nick_modes;               /* nick modes                            */
+    int cap_away_notify;            /* 1 if capability away-notify is enabled*/
     char *isupport;                 /* copy of message 005 (ISUPPORT)        */
     char *prefix_modes;             /* prefix modes from msg 005 (eg "ohv")  */
     char *prefix_chars;             /* prefix chars from msg 005 (eg "@%+")  */
@@ -326,4 +327,4 @@ extern int irc_server_add_to_infolist (struct t_infolist *infolist,
                                        struct t_irc_server *server);
 extern void irc_server_print_log ();
 
-#endif /* __WEECHAT_IRC_SERVER_H */
+#endif /* WEECHAT_IRC_SERVER_H */

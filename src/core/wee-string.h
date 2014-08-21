@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_STRING_H
-#define __WEECHAT_STRING_H 1
+#ifndef WEECHAT_STRING_H
+#define WEECHAT_STRING_H 1
 
 #include <regex.h>
 
@@ -48,6 +48,7 @@ extern char *string_remove_quotes (const char *string, const char *quotes);
 extern char *string_strip (const char *string, int left, int right,
                            const char *chars);
 extern char *string_convert_escaped_chars (const char *string);
+extern int string_is_word_char (const char *string);
 extern char *string_mask_to_regex (const char *mask);
 extern const char *string_regex_flags (const char *regex, int default_flags,
                                        int *flags);
@@ -57,12 +58,17 @@ extern int string_has_highlight (const char *string,
 extern int string_has_highlight_regex_compiled (const char *string,
                                                 regex_t *regex);
 extern int string_has_highlight_regex (const char *string, const char *regex);
+extern char *string_replace_regex (const char *string, void *regex,
+                                   const char *replace,
+                                   const char reference_char,
+                                   char *(*callback)(void *data, const char *text),
+                                   void *callback_data);
 extern char **string_split (const char *string, const char *separators,
                             int keep_eol, int num_items_max, int *num_items);
 extern char **string_split_shared (const char *string, const char *separators,
                                    int keep_eol, int num_items_max,
                                    int *num_items);
-extern char **string_split_shell (const char *string);
+extern char **string_split_shell (const char *string, int *num_items);
 extern void string_free_split (char **split_string);
 extern void string_free_split_shared (char **split_string);
 extern char *string_build_with_split_string (const char **split_string,
@@ -92,4 +98,4 @@ extern const char *string_shared_get (const char *string);
 extern void string_shared_free (const char *string);
 extern void string_end ();
 
-#endif /* __WEECHAT_STRING_H */
+#endif /* WEECHAT_STRING_H */

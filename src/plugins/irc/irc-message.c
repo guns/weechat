@@ -101,8 +101,12 @@ irc_message_parse (struct t_irc_server *server, const char *message,
     if (ptr_message[0] == ':')
     {
         /* read host/nick */
+        pos3 = strchr (ptr_message, '@');
         pos2 = strchr (ptr_message, '!');
         pos = strchr (ptr_message, ' ');
+        /* if the prefix doesn't contain a '!', split the nick at '@' */
+        if (!pos2 || (pos && pos2 > pos))
+            pos2 = pos3;
         if (pos2 && (!pos || pos > pos2))
         {
             if (nick)
@@ -123,6 +127,12 @@ irc_message_parse (struct t_irc_server *server, const char *message,
                 ptr_message++;
             }
         }
+        else
+        {
+            if (host)
+                *host = strdup (ptr_message + 1);
+            ptr_message += strlen (ptr_message);
+        }
     }
 
     /* now we have: ptr_message --> "PRIVMSG #channel :hello!" */
@@ -141,6 +151,12 @@ irc_message_parse (struct t_irc_server *server, const char *message,
             /* now we have: pos --> "#channel :hello!" */
             if (arguments)
                 *arguments = strdup (pos);
+            if ((pos[0] == ':')
+                && ((strncmp (ptr_message, "JOIN ", 5) == 0)
+                    || (strncmp (ptr_message, "PART ", 5) == 0)))
+            {
+                pos++;
+            }
             if (pos[0] != ':')
             {
                 if (irc_channel_is_channel (server, pos))

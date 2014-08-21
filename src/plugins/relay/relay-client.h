@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_RELAY_CLIENT_H
-#define __WEECHAT_RELAY_CLIENT_H 1
+#ifndef WEECHAT_RELAY_CLIENT_H
+#define WEECHAT_RELAY_CLIENT_H 1
 
 #ifdef HAVE_GNUTLS
 #include <gnutls/gnutls.h>
@@ -93,8 +93,8 @@ struct t_relay_client
     time_t end_time;                   /* time of client disconnection      */
     struct t_hook *hook_fd;            /* hook for socket or child pipe     */
     time_t last_activity;              /* time of last byte received/sent   */
-    unsigned long bytes_recv;          /* bytes received from client        */
-    unsigned long bytes_sent;          /* bytes sent to client              */
+    unsigned long long bytes_recv;     /* bytes received from client        */
+    unsigned long long bytes_sent;     /* bytes sent to client              */
     enum t_relay_client_data_type recv_data_type; /* type recv from client  */
     enum t_relay_client_data_type send_data_type; /* type sent to client    */
     char *partial_message;             /* partial text message received     */
@@ -113,6 +113,7 @@ extern int relay_client_count;
 extern int relay_client_valid (struct t_relay_client *client);
 extern struct t_relay_client *relay_client_search_by_number (int number);
 extern struct t_relay_client *relay_client_search_by_id (int id);
+extern int relay_client_status_search (const char *name);
 extern void relay_client_set_desc (struct t_relay_client *client);
 extern int relay_client_recv_cb (void *arg_client, int fd);
 extern int relay_client_send (struct t_relay_client *client, const char *data,
@@ -131,4 +132,4 @@ extern int relay_client_add_to_infolist (struct t_infolist *infolist,
                                          struct t_relay_client *client);
 extern void relay_client_print_log ();
 
-#endif /* __WEECHAT_RELAY_CLIENT_H */
+#endif /* WEECHAT_RELAY_CLIENT_H */

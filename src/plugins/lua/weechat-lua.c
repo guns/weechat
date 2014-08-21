@@ -455,8 +455,9 @@ weechat_lua_load (const char *filename)
                                         &weechat_lua_api_buffer_input_data_cb,
                                         &weechat_lua_api_buffer_close_cb);
 
-    weechat_hook_signal_send ("lua_script_loaded", WEECHAT_HOOK_SIGNAL_STRING,
-                              lua_current_script->filename);
+    (void) weechat_hook_signal_send ("lua_script_loaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING,
+                                     lua_current_script->filename);
 
     return 1;
 }
@@ -514,8 +515,11 @@ weechat_lua_unload (struct t_plugin_script *script)
     if (interpreter)
         lua_close (interpreter);
 
-    weechat_hook_signal_send ("lua_script_unloaded",
-                              WEECHAT_HOOK_SIGNAL_STRING, filename);
+    if (lua_current_script)
+        lua_current_interpreter = lua_current_script->interpreter;
+
+    (void) weechat_hook_signal_send ("lua_script_unloaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING, filename);
     if (filename)
         free (filename);
 }
@@ -640,6 +644,8 @@ weechat_lua_command_cb (void *data, struct t_gui_buffer *buffer,
         {
             weechat_lua_unload_all ();
         }
+        else
+            return WEECHAT_RC_ERROR;
     }
     else
     {
@@ -689,12 +695,7 @@ weechat_lua_command_cb (void *data, struct t_gui_buffer *buffer,
             lua_quiet = 0;
         }
         else
-        {
-            weechat_printf (NULL,
-                            weechat_gettext ("%s%s: unknown option for "
-                                             "command \"%s\""),
-                            weechat_prefix ("error"), LUA_PLUGIN_NAME, "lua");
-        }
+            return WEECHAT_RC_ERROR;
     }
 
     return WEECHAT_RC_OK;

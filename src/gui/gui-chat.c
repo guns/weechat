@@ -644,10 +644,10 @@ gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
     char *modifier_data, *new_msg, *ptr_msg, *lines_waiting;
     struct t_gui_line *ptr_line;
 
-    if (!gui_buffer_valid (buffer))
+    if (!message)
         return;
 
-    if (!message)
+    if (!gui_buffer_valid (buffer))
         return;
 
     if (gui_init_ok)
@@ -655,7 +655,7 @@ gui_chat_printf_date_tags (struct t_gui_buffer *buffer, time_t date,
         if (!buffer)
             buffer = gui_buffer_search_main ();
 
-        if (!buffer)
+        if (!buffer || buffer->closing)
             return;
 
         if (buffer->type != GUI_BUFFER_TYPE_FORMATTED)
@@ -842,10 +842,16 @@ gui_chat_printf_y (struct t_gui_buffer *buffer, int y, const char *message, ...)
     struct t_gui_line *ptr_line;
     int i, num_lines_to_add;
 
+    if (!gui_buffer_valid (buffer))
+        return;
+
     if (gui_init_ok)
     {
         if (!buffer)
             buffer = gui_buffer_search_main ();
+
+        if (!buffer || buffer->closing)
+            return;
 
         if (buffer->type != GUI_BUFFER_TYPE_FREE)
             buffer = gui_buffers;
@@ -863,7 +869,7 @@ gui_chat_printf_y (struct t_gui_buffer *buffer, int y, const char *message, ...)
     /* no message: delete line */
     if (!vbuffer[0])
     {
-        if (gui_init_ok)
+        if (gui_init_ok && (y >= 0))
         {
             for (ptr_line = buffer->own_lines->first_line; ptr_line;
                  ptr_line = ptr_line->next_line)
@@ -885,7 +891,13 @@ gui_chat_printf_y (struct t_gui_buffer *buffer, int y, const char *message, ...)
     {
         if (gui_init_ok)
         {
-            num_lines_to_add = 0;
+            /* if y is negative, add a line -N lines after the last line */
+            if (y < 0)
+            {
+                y = (buffer->own_lines && buffer->own_lines->last_line) ?
+                    buffer->own_lines->last_line->data->y - y : (-1 * y) - 1;
+            }
+            /* compute the number of lines to add before y */
             if (buffer->own_lines && buffer->own_lines->last_line)
                 num_lines_to_add = y - buffer->own_lines->last_line->data->y - 1;
             else

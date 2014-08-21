@@ -1,0 +1,30 @@
+language: c
+
+compiler:
+    - gcc
+    - clang
+
+env:
+    - BUILDTOOL=cmake
+    - BUILDTOOL=autotools
+
+before_script:
+    - echo 'APT::Install-Recommends "false";' | sudo tee -a /etc/apt/apt.conf
+    - sudo apt-get update -qq
+    - wget http://weechat.org/files/tests/ubuntu/precise/amd64/libcpputest-dev_3.4-3_amd64.deb
+    - sudo dpkg -i libcpputest-dev_3.4-3_amd64.deb
+    - sudo apt-get -y install devscripts equivs python-pip libenchant-dev autopoint
+    - sudo mk-build-deps -i debian/control
+    - sudo pip install msgcheck pylint
+
+script:
+    - ./scripts/build.sh
+    - msgcheck po/*.po
+    - pylint doc/docgen.py
+
+after_success:
+    - weechat --help
+    - weechat -r /quit
+
+matrix:
+    fast_finish: true

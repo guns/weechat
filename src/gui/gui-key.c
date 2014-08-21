@@ -642,59 +642,48 @@ gui_key_new (struct t_gui_buffer *buffer, int context, const char *key,
     if (!key || !command)
         return NULL;
 
-    if ((new_key = malloc (sizeof (*new_key))))
+    new_key = malloc (sizeof (*new_key));
+    if (!new_key)
+        return NULL;
+
+    new_key->key = gui_key_get_internal_code (key);
+    if (!new_key->key)
+        new_key->key = strdup (key);
+    new_key->command = strdup (command);
+    gui_key_set_areas (new_key);
+    gui_key_set_score (new_key);
+
+    if (buffer)
     {
-        new_key->key = gui_key_get_internal_code (key);
-        if (!new_key->key)
-            new_key->key = strdup (key);
-        if (!new_key->key)
-        {
-            free (new_key);
-            return NULL;
-        }
-        new_key->command = strdup (command);
-        if (!new_key->command)
-        {
-            free (new_key->key);
-            free (new_key);
-            return NULL;
-        }
-        gui_key_set_areas (new_key);
-        gui_key_set_score (new_key);
-
-        if (buffer)
-        {
-            gui_key_insert_sorted (&buffer->keys, &buffer->last_key,
-                                   &buffer->keys_count, new_key);
-        }
-        else
-        {
-            gui_key_insert_sorted (&gui_keys[context],
-                                   &last_gui_key[context],
-                                   &gui_keys_count[context], new_key);
-        }
-
-        expanded_name = gui_key_get_expanded_name (new_key->key);
-
-        hook_signal_send ("key_bind",
-                          WEECHAT_HOOK_SIGNAL_STRING, expanded_name);
-
-        if (gui_key_verbose)
-        {
-            gui_chat_printf (NULL,
-                             _("New key binding (context \"%s\"): "
-                               "%s%s => %s%s"),
-                             gui_key_context_string[context],
-                             (expanded_name) ? expanded_name : new_key->key,
-                             GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
-                             GUI_COLOR(GUI_COLOR_CHAT),
-                             new_key->command);
-        }
-        if (expanded_name)
-                free (expanded_name);
+        gui_key_insert_sorted (&buffer->keys, &buffer->last_key,
+                               &buffer->keys_count, new_key);
     }
     else
-        return NULL;
+    {
+        gui_key_insert_sorted (&gui_keys[context],
+                               &last_gui_key[context],
+                               &gui_keys_count[context], new_key);
+    }
+
+    expanded_name = gui_key_get_expanded_name (new_key->key);
+
+    (void) hook_signal_send ("key_bind",
+                             WEECHAT_HOOK_SIGNAL_STRING, expanded_name);
+
+    if (gui_key_verbose)
+    {
+        gui_chat_printf (NULL,
+                         _("New key binding (context \"%s\"): "
+                           "%s%s => %s%s"),
+                         gui_key_context_string[context],
+                         (expanded_name) ? expanded_name : new_key->key,
+                         GUI_COLOR(GUI_COLOR_CHAT_DELIMITERS),
+                         GUI_COLOR(GUI_COLOR_CHAT),
+                         new_key->command);
+    }
+
+    if (expanded_name)
+        free (expanded_name);
 
     return new_key;
 }
@@ -896,8 +885,8 @@ gui_key_unbind (struct t_gui_buffer *buffer, int context, const char *key)
             gui_key_free (&gui_keys[context], &last_gui_key[context],
                           &gui_keys_count[context], ptr_key);
         }
-        hook_signal_send ("key_unbind",
-                          WEECHAT_HOOK_SIGNAL_STRING, (char *)key);
+        (void) hook_signal_send ("key_unbind",
+                                 WEECHAT_HOOK_SIGNAL_STRING, (char *)key);
         return 1;
     }
 
@@ -1129,50 +1118,54 @@ gui_key_focus_command (const char *key, int context,
             gui_chat_printf (NULL, _("Command for key: \"%s\""),
                              ptr_key->command);
         }
-        commands = string_split_command (ptr_key->command, ';');
-        if (commands)
+        if (ptr_key->command)
         {
-            for (i = 0; commands[i]; i++)
+            commands = string_split_command (ptr_key->command, ';');
+            if (commands)
             {
-                if (string_strncasecmp (commands[i], "hsignal:", 8) == 0)
+                for (i = 0; commands[i]; i++)
                 {
-                    if (commands[i][8])
+                    if (string_strncasecmp (commands[i], "hsignal:", 8) == 0)
                     {
-                        if (debug)
-                        {
-                            gui_chat_printf (NULL,
-                                             _("Sending hsignal: \"%s\""),
-                                             commands[i] + 8);
-                        }
-                        hook_hsignal_send (commands[i] + 8, hashtable);
-                    }
-                }
-                else
-                {
-                    command = string_replace_with_callback (commands[i],
-                                                            "${", "}",
-                                                            &gui_key_focus_command_replace_cb,
-                                                            hashtable,
-                                                            &errors);
-                    if (command)
-                    {
-                        if (errors == 0)
+                        if (commands[i][8])
                         {
                             if (debug)
                             {
                                 gui_chat_printf (NULL,
-                                                 _("Executing command: \"%s\" "
-                                                   "on buffer \"%s\""),
-                                                 command,
-                                                 ptr_buffer->full_name);
+                                                 _("Sending hsignal: \"%s\""),
+                                                 commands[i] + 8);
                             }
-                            input_data (ptr_buffer, command);
+                            (void) hook_hsignal_send (commands[i] + 8,
+                                                      hashtable);
                         }
-                        free (command);
+                    }
+                    else
+                    {
+                        command = string_replace_with_callback (commands[i],
+                                                                "${", "}",
+                                                                &gui_key_focus_command_replace_cb,
+                                                                hashtable,
+                                                                &errors);
+                        if (command)
+                        {
+                            if (errors == 0)
+                            {
+                                if (debug)
+                                {
+                                    gui_chat_printf (NULL,
+                                                     _("Executing command: \"%s\" "
+                                                       "on buffer \"%s\""),
+                                                     command,
+                                                     ptr_buffer->full_name);
+                                }
+                                input_data (ptr_buffer, command);
+                            }
+                            free (command);
+                        }
                     }
                 }
+                string_free_split (commands);
             }
-            string_free_split_command (commands);
         }
         hashtable_free (hashtable);
         return 1;
@@ -1257,6 +1250,34 @@ end:
 }
 
 /*
+ * Checks if the given combo of keys is complete or not.
+ * It's not complete if the end of string is in the middle of a key
+ * (for example meta- without the following char/key).
+ *
+ * Returns:
+ *   0: key is incomplete (truncated)
+ *   1: key is complete
+ */
+
+int
+gui_key_is_complete (const char *key)
+{
+    int length;
+
+    if (!key || !key[0])
+        return 1;
+
+    length = strlen (key);
+
+    if (((length >= 1) && (strcmp (key + length - 1, "\x01") == 0))
+        || ((length >= 2) && (strcmp (key + length - 2, "\x01[") == 0))
+        || ((length >= 3) && (strcmp (key + length - 3, "\x01[[") == 0)))
+        return 0;
+
+    return 1;
+}
+
+/*
  * Processes a new key pressed.
  *
  * Returns:
@@ -1267,9 +1288,11 @@ end:
 int
 gui_key_pressed (const char *key_str)
 {
-    int i, first_key, context, length, length_key;
+    int i, first_key, context, length, length_key, rc, signal_sent;
     struct t_gui_key *ptr_key;
-    char **commands, *pos;
+    char *pos, signal_name[128], **commands;
+
+    signal_sent = 0;
 
     /* add key to buffer */
     first_key = (gui_key_combo_buffer[0] == '\0');
@@ -1297,13 +1320,14 @@ gui_key_pressed (const char *key_str)
         if (pos)
         {
             pos[0] = '\0';
-            gui_mouse_event_end ();
+            if (!gui_window_bare_display)
+                gui_mouse_event_end ();
             gui_mouse_event_init ();
         }
         return 0;
     }
 
-    if (strcmp (gui_key_combo_buffer, "\x01[[M") == 0)
+    if (strstr (gui_key_combo_buffer, "\x01[[M"))
     {
         gui_key_combo_buffer[0] = '\0';
         gui_mouse_event_init ();
@@ -1350,8 +1374,13 @@ gui_key_pressed (const char *key_str)
         if (strcmp (ptr_key->key, gui_key_combo_buffer) == 0)
         {
             /* exact combo found => execute command */
+            snprintf (signal_name, sizeof (signal_name),
+                      "key_combo_%s", gui_key_context_string[context]);
+            rc = hook_signal_send (signal_name,
+                                   WEECHAT_HOOK_SIGNAL_STRING,
+                                   gui_key_combo_buffer);
             gui_key_combo_buffer[0] = '\0';
-            if (ptr_key->command)
+            if ((rc != WEECHAT_RC_OK_EAT) && ptr_key->command)
             {
                 commands = string_split_command (ptr_key->command, ';');
                 if (commands)
@@ -1360,7 +1389,7 @@ gui_key_pressed (const char *key_str)
                     {
                         input_data (gui_current_window->buffer, commands[i]);
                     }
-                    string_free_split_command (commands);
+                    string_free_split (commands);
                 }
             }
         }
@@ -1368,6 +1397,16 @@ gui_key_pressed (const char *key_str)
     }
     else if (context == GUI_KEY_CONTEXT_CURSOR)
     {
+        signal_sent = 1;
+        snprintf (signal_name, sizeof (signal_name),
+                  "key_combo_%s", gui_key_context_string[context]);
+        if (hook_signal_send (signal_name,
+                              WEECHAT_HOOK_SIGNAL_STRING,
+                              gui_key_combo_buffer) == WEECHAT_RC_OK_EAT)
+        {
+            gui_key_combo_buffer[0] = '\0';
+            return 0;
+        }
         if (gui_key_focus (gui_key_combo_buffer, GUI_KEY_CONTEXT_CURSOR))
         {
             gui_key_combo_buffer[0] = '\0';
@@ -1375,7 +1414,21 @@ gui_key_pressed (const char *key_str)
         }
     }
 
-    gui_key_combo_buffer[0] = '\0';
+    if (!signal_sent)
+    {
+        snprintf (signal_name, sizeof (signal_name),
+                  "key_combo_%s", gui_key_context_string[context]);
+        if (hook_signal_send (signal_name,
+                              WEECHAT_HOOK_SIGNAL_STRING,
+                              gui_key_combo_buffer) == WEECHAT_RC_OK_EAT)
+        {
+            gui_key_combo_buffer[0] = '\0';
+            return 0;
+        }
+    }
+
+    if (gui_key_is_complete (gui_key_combo_buffer))
+        gui_key_combo_buffer[0] = '\0';
 
     /*
      * if this is first key and not found (even partial) => return 1
@@ -1857,22 +1910,22 @@ gui_key_hdata_key_cb (void *data, const char *hdata_name)
                       "gui_keys%s%s",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : "_",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : gui_key_context_string[i]);
-            hdata_new_list(hdata, str_list, &gui_keys[i]);
+            hdata_new_list(hdata, str_list, &gui_keys[i], 0);
             snprintf (str_list, sizeof (str_list),
                       "last_gui_key%s%s",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : "_",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : gui_key_context_string[i]);
-            hdata_new_list(hdata, str_list, &last_gui_key[i]);
+            hdata_new_list(hdata, str_list, &last_gui_key[i], 0);
             snprintf (str_list, sizeof (str_list),
                       "gui_default_keys%s%s",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : "_",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : gui_key_context_string[i]);
-            hdata_new_list(hdata, str_list, &gui_default_keys[i]);
+            hdata_new_list(hdata, str_list, &gui_default_keys[i], 0);
             snprintf (str_list, sizeof (str_list),
                       "last_gui_default_key%s%s",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : "_",
                       (i == GUI_KEY_CONTEXT_DEFAULT) ? "" : gui_key_context_string[i]);
-            hdata_new_list(hdata, str_list, &last_gui_default_key[i]);
+            hdata_new_list(hdata, str_list, &last_gui_default_key[i], 0);
         }
     }
     return hdata;
@@ -1905,7 +1958,10 @@ gui_key_add_to_infolist (struct t_infolist *infolist, struct t_gui_key *key)
     if (expanded_key)
     {
         if (!infolist_new_var_string (ptr_item, "key", expanded_key))
+        {
+            free (expanded_key);
             return 0;
+        }
         free (expanded_key);
     }
     if (!infolist_new_var_integer (ptr_item, "area_type1", key->area_type[0]))

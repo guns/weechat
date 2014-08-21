@@ -34,6 +34,8 @@
 #include "wee-utf8.h"
 #include "../gui/gui-buffer.h"
 #include "../gui/gui-chat.h"
+#include "../gui/gui-filter.h"
+#include "../gui/gui-window.h"
 #include "../plugins/plugin.h"
 
 
@@ -67,19 +69,16 @@ input_exec_command (struct t_gui_buffer *buffer,
                     struct t_weechat_plugin *plugin,
                     const char *string)
 {
-    int rc;
-    char *command, *pos, *ptr_args;
+    char *command, *command_name, *pos;
 
     if ((!string) || (!string[0]))
         return;
 
     command = strdup (string);
     if (!command)
-        return ;
+        return;
 
-    /* look for end of command */
-    ptr_args = NULL;
-
+    /* ignore spaces at the end of command */
     pos = &command[strlen (command) - 1];
     if (pos[0] == ' ')
     {
@@ -88,44 +87,43 @@ input_exec_command (struct t_gui_buffer *buffer,
         pos[1] = '\0';
     }
 
-    rc = hook_command_exec (buffer, any_plugin, plugin, command);
-
+    /* extract command name */
     pos = strchr (command, ' ');
-    if (pos)
+    command_name = (pos) ?
+        string_strndup (command, pos - command) : strdup (command);
+    if (!command_name)
     {
-        pos[0] = '\0';
-        pos++;
-        while (pos[0] == ' ')
-            pos++;
-        ptr_args = pos;
-        if (!ptr_args[0])
-            ptr_args = NULL;
+        free (command);
+        return;
     }
 
-    switch (rc)
+    /* execute command */
+    switch (hook_command_exec (buffer, any_plugin, plugin, command))
     {
         case 0: /* command hooked, KO */
-            gui_chat_printf (NULL,
-                             _("%sError with command \"%s\" (try /help %s)"),
-                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                             command + 1, command + 1);
+            gui_chat_printf_date_tags (NULL, 0, GUI_FILTER_TAG_NO_FILTER,
+                                       _("%sError with command \"%s\" (help on "
+                                         "command: /help %s)"),
+                                       gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                       command, command_name + 1);
             break;
         case 1: /* command hooked, OK (executed) */
             break;
         case -2: /* command is ambiguous (exists for other plugins) */
-            gui_chat_printf (NULL,
-                             _("%sError: ambiguous command \"%s\": it exists "
-                               "in many plugins and not in \"%s\" plugin"),
-                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                             command + 1,
-                             plugin_get_name (plugin));
+            gui_chat_printf_date_tags (NULL, 0, GUI_FILTER_TAG_NO_FILTER,
+                                       _("%sError: ambiguous command \"%s\": "
+                                         "it exists in many plugins and not in "
+                                         "\"%s\" plugin"),
+                                       gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                       command_name,
+                                       plugin_get_name (plugin));
             break;
         case -3: /* command is running */
-            gui_chat_printf (NULL,
-                             _("%sError: too much calls to command \"%s\" "
-                               "(looping)"),
-                             gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                             command + 1);
+            gui_chat_printf_date_tags (NULL, 0, GUI_FILTER_TAG_NO_FILTER,
+                                       _("%sError: too much calls to command "
+                                         "\"%s\" (looping)"),
+                                       gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                       command_name);
             break;
         default: /* no command hooked */
             /*
@@ -138,15 +136,16 @@ input_exec_command (struct t_gui_buffer *buffer,
             }
             else
             {
-                gui_chat_printf (NULL,
-                                 _("%sError: unknown command \"%s\" (type "
-                                   "/help for help)"),
-                                 gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
-                                 command + 1);
+                gui_chat_printf_date_tags (NULL, 0, GUI_FILTER_TAG_NO_FILTER,
+                                           _("%sError: unknown command \"%s\" "
+                                             "(type /help for help)"),
+                                           gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+                                           command_name);
             }
             break;
     }
     free (command);
+    free (command_name);
 }
 
 /*
@@ -156,11 +155,18 @@ input_exec_command (struct t_gui_buffer *buffer,
 void
 input_data (struct t_gui_buffer *buffer, const char *data)
 {
-    char *pos, *buf, str_buffer[128], *new_data;
+    char *pos, *buf, str_buffer[128], *new_data, *buffer_full_name;
     const char *ptr_data, *ptr_data_for_buffer;
-    int length, char_size;
+    int length, char_size, first_command;
 
-    if (!buffer || !data || !data[0] || (data[0] == '\r') || (data[0] == '\n'))
+    if (!buffer || !gui_buffer_valid (buffer)
+        || !data || !data[0] || (data[0] == '\r') || (data[0] == '\n'))
+    {
+        return;
+    }
+
+    buffer_full_name = strdup (buffer->full_name);
+    if (!buffer_full_name)
         return;
 
     /* execute modifier "input_text_for_buffer" */
@@ -171,56 +177,79 @@ input_data (struct t_gui_buffer *buffer, const char *data)
                                    str_buffer,
                                    data);
 
-    /* data not dropped? */
-    if (!new_data || new_data[0])
+    /* data was dropped? */
+    if (new_data && !new_data[0])
+        goto end;
+
+    first_command = 1;
+    ptr_data = (new_data) ? new_data : data;
+    while (ptr_data && ptr_data[0])
     {
-        ptr_data = (new_data) ? new_data : data;
-        while (ptr_data && ptr_data[0])
+        /*
+         * if the buffer pointer is not valid any more (or if it's another
+         * buffer), use the current buffer for the next command
+         */
+        if (!first_command
+            && (!gui_buffer_valid (buffer)
+                || (strcmp (buffer->full_name, buffer_full_name) != 0)))
         {
-            pos = strchr (ptr_data, '\n');
-            if (pos)
-                pos[0] = '\0';
-
-            ptr_data_for_buffer = string_input_for_buffer (ptr_data);
-            if (ptr_data_for_buffer)
-            {
-                /*
-                 * input string is NOT a command, send it to buffer input
-                 * callback
-                 */
-                if (string_is_command_char (ptr_data_for_buffer))
-                {
-                    char_size = utf8_char_size (ptr_data_for_buffer);
-                    length = strlen (ptr_data_for_buffer) + char_size + 1;
-                    buf = malloc (length);
-                    if (buf)
-                    {
-                        memcpy (buf, ptr_data_for_buffer, char_size);
-                        snprintf (buf + char_size, length - char_size,
-                                  "%s", ptr_data_for_buffer);
-                        input_exec_data (buffer, buf);
-                        free (buf);
-                    }
-                }
-                else
-                    input_exec_data (buffer, ptr_data_for_buffer);
-            }
-            else
-            {
-                /* input string is a command */
-                input_exec_command (buffer, 1, buffer->plugin, ptr_data);
-            }
-
-            if (pos)
-            {
-                pos[0] = '\n';
-                ptr_data = pos + 1;
-            }
-            else
-                ptr_data = NULL;
+            if (!gui_current_window || !gui_current_window->buffer)
+                break;
+            buffer = gui_current_window->buffer;
+            free (buffer_full_name);
+            buffer_full_name = strdup (buffer->full_name);
+            if (!buffer_full_name)
+                break;
         }
+
+        pos = strchr (ptr_data, '\n');
+        if (pos)
+            pos[0] = '\0';
+
+        ptr_data_for_buffer = string_input_for_buffer (ptr_data);
+        if (ptr_data_for_buffer)
+        {
+            /*
+             * input string is NOT a command, send it to buffer input
+             * callback
+             */
+            if (string_is_command_char (ptr_data_for_buffer))
+            {
+                char_size = utf8_char_size (ptr_data_for_buffer);
+                length = strlen (ptr_data_for_buffer) + char_size + 1;
+                buf = malloc (length);
+                if (buf)
+                {
+                    memcpy (buf, ptr_data_for_buffer, char_size);
+                    snprintf (buf + char_size, length - char_size,
+                              "%s", ptr_data_for_buffer);
+                    input_exec_data (buffer, buf);
+                    free (buf);
+                }
+            }
+            else
+                input_exec_data (buffer, ptr_data_for_buffer);
+        }
+        else
+        {
+            /* input string is a command */
+            input_exec_command (buffer, 1, buffer->plugin, ptr_data);
+        }
+
+        if (pos)
+        {
+            pos[0] = '\n';
+            ptr_data = pos + 1;
+        }
+        else
+            ptr_data = NULL;
+
+        first_command = 0;
     }
 
+end:
     if (new_data)
         free (new_data);
+    if (buffer_full_name)
+        free (buffer_full_name);
 }

@@ -29,10 +29,26 @@
 #include "relay-weechat-protocol.h"
 #include "relay-weechat-msg.h"
 #include "relay-weechat-nicklist.h"
+#include "../relay-buffer.h"
 #include "../relay-client.h"
 #include "../relay-config.h"
 #include "../relay-raw.h"
 
+
+/*
+ * Checks if the buffer pointer is a relay buffer (relay raw/list).
+ *
+ * Returns:
+ *   1: buffer is a relay buffer (raw/list)
+ *   0: buffer is NOT a relay buffer
+ */
+
+int
+relay_weechat_is_relay_buffer (struct t_gui_buffer *buffer)
+{
+    return ((relay_raw_buffer && (buffer == relay_raw_buffer))
+            || (relay_buffer && (buffer == relay_buffer))) ? 1 : 0;
+}
 
 /*
  * Gets buffer pointer with argument from a command.
@@ -49,7 +65,6 @@ relay_weechat_protocol_get_buffer (const char *arg)
     struct t_gui_buffer *ptr_buffer;
     long unsigned int value;
     int rc;
-    char *pos, *plugin;
     struct t_hdata *ptr_hdata;
 
     ptr_buffer = NULL;
@@ -72,18 +87,7 @@ relay_weechat_protocol_get_buffer (const char *arg)
         }
     }
     else
-    {
-        pos = strchr (arg, '.');
-        if (pos)
-        {
-            plugin = weechat_strndup (arg, pos - arg);
-            if (plugin)
-            {
-                ptr_buffer = weechat_buffer_search (plugin, pos + 1);
-                free (plugin);
-            }
-        }
-    }
+        ptr_buffer = weechat_buffer_search ("==", arg);
 
     return ptr_buffer;
 }
@@ -187,7 +191,12 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(init)
                     if (password)
                     {
                         if (strcmp (password, pos) == 0)
+                        {
                             RELAY_WEECHAT_DATA(client, password_ok) = 1;
+                            weechat_hook_signal_send ("relay_client_auth_ok",
+                                                      WEECHAT_HOOK_SIGNAL_POINTER,
+                                                      client);
+                        }
                         free (password);
                     }
                 }
@@ -222,9 +231,11 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(hdata)
     msg = relay_weechat_msg_new (id);
     if (msg)
     {
-        relay_weechat_msg_add_hdata (msg, argv[0],
-                                     (argc > 1) ? argv_eol[1] : NULL);
-        relay_weechat_msg_send (client, msg);
+        if (relay_weechat_msg_add_hdata (msg, argv[0],
+                                         (argc > 1) ? argv_eol[1] : NULL))
+        {
+            relay_weechat_msg_send (client, msg);
+        }
         relay_weechat_msg_free (msg);
     }
 
@@ -318,7 +329,18 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(nicklist)
     {
         ptr_buffer = relay_weechat_protocol_get_buffer (argv[0]);
         if (!ptr_buffer)
+        {
+            if (weechat_relay_plugin->debug >= 1)
+            {
+                weechat_printf (NULL,
+                                _("%s: invalid buffer pointer in message: "
+                                  "\"%s %s\""),
+                                RELAY_PLUGIN_NAME,
+                                command,
+                                argv_eol[0]);
+            }
             return WEECHAT_RC_OK;
+        }
     }
 
     msg = relay_weechat_msg_new (id);
@@ -328,6 +350,43 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(nicklist)
         relay_weechat_msg_send (client, msg);
         relay_weechat_msg_free (msg);
     }
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * Timer callback for input command.
+ */
+
+int
+relay_weechat_protocol_input_timer_cb (void *data,
+                                       int remaining_calls)
+{
+    char **timer_args;
+    int i;
+    struct t_gui_buffer *ptr_buffer;
+
+    /* make C compiler happy */
+    (void) remaining_calls;
+
+    timer_args = (char **)data;
+
+    if (!timer_args)
+        return WEECHAT_RC_ERROR;
+
+    if (timer_args[0] && timer_args[1])
+    {
+        ptr_buffer = weechat_buffer_search ("==", timer_args[0]);
+        if (ptr_buffer)
+            weechat_command (ptr_buffer, timer_args[1]);
+    }
+
+    for (i = 0; i < 2; i++)
+    {
+        if (timer_args[i])
+            free (timer_args[i]);
+    }
+    free (timer_args);
 
     return WEECHAT_RC_OK;
 }
@@ -344,16 +403,43 @@ RELAY_WEECHAT_PROTOCOL_CALLBACK(nicklist)
 RELAY_WEECHAT_PROTOCOL_CALLBACK(input)
 {
     struct t_gui_buffer *ptr_buffer;
-    char *pos;
+    char *pos, **timer_args;
 
     RELAY_WEECHAT_PROTOCOL_MIN_ARGS(2);
 
     ptr_buffer = relay_weechat_protocol_get_buffer (argv[0]);
-    if (ptr_buffer)
+    if (!ptr_buffer)
     {
-        pos = strchr (argv_eol[0], ' ');
-        if (pos)
-            weechat_command (ptr_buffer, pos + 1);
+        if (weechat_relay_plugin->debug >= 1)
+        {
+            weechat_printf (NULL,
+                            _("%s: invalid buffer pointer in message: "
+                              "\"%s %s\""),
+                            RELAY_PLUGIN_NAME,
+                            command,
+                            argv_eol[0]);
+        }
+        return WEECHAT_RC_OK;
+    }
+
+    pos = strchr (argv_eol[0], ' ');
+    if (pos)
+    {
+        /*
+         * use a timer to execute the command after we go back in the
+         * WeeChat main loop (some commands like /upgrade executed now can
+         * cause a crash)
+         */
+        timer_args = malloc (2 * sizeof (*timer_args));
+        if (timer_args)
+        {
+            timer_args[0] = strdup (weechat_buffer_get_string (ptr_buffer,
+                                                               "full_name"));
+            timer_args[1] = strdup (pos + 1);
+            weechat_hook_timer (1, 0, 1,
+                                &relay_weechat_protocol_input_timer_cb,
+                                timer_args);
+        }
     }
 
     return WEECHAT_RC_OK;
@@ -416,7 +502,7 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
         if (!ptr_buffer)
             return WEECHAT_RC_OK;
 
-        /* send signal only if buffer is synchronized with flag "buffer" */
+        /* send signal only if sync with flag "buffer" */
         if (relay_weechat_protocol_is_sync (ptr_client, ptr_buffer,
                                             RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER))
         {
@@ -458,6 +544,31 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
     }
     else if ((strcmp (signal, "buffer_merged") == 0)
              || (strcmp (signal, "buffer_unmerged") == 0))
+    {
+        ptr_buffer = (struct t_gui_buffer *)signal_data;
+        if (!ptr_buffer)
+            return WEECHAT_RC_OK;
+
+        /* send signal only if sync with flag "buffers" or "buffer" */
+        if (relay_weechat_protocol_is_sync (ptr_client, ptr_buffer,
+                                            RELAY_WEECHAT_PROTOCOL_SYNC_BUFFERS |
+                                            RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER))
+        {
+            msg = relay_weechat_msg_new (str_signal);
+            if (msg)
+            {
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (long unsigned int)ptr_buffer);
+                relay_weechat_msg_add_hdata (msg, cmd_hdata,
+                                             "number,full_name,"
+                                             "prev_buffer,next_buffer");
+                relay_weechat_msg_send (ptr_client, msg);
+                relay_weechat_msg_free (msg);
+            }
+        }
+    }
+    else if ((strcmp (signal, "buffer_hidden") == 0)
+             || (strcmp (signal, "buffer_unhidden") == 0))
     {
         ptr_buffer = (struct t_gui_buffer *)signal_data;
         if (!ptr_buffer)
@@ -528,13 +639,35 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
             }
         }
     }
+    else if (strcmp (signal, "buffer_cleared") == 0)
+    {
+        ptr_buffer = (struct t_gui_buffer *)signal_data;
+        if (!ptr_buffer || relay_weechat_is_relay_buffer (ptr_buffer))
+            return WEECHAT_RC_OK;
+
+        /* send signal only if sync with flag "buffer" */
+        if (relay_weechat_protocol_is_sync (ptr_client, ptr_buffer,
+                                            RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER))
+        {
+            msg = relay_weechat_msg_new (str_signal);
+            if (msg)
+            {
+                snprintf (cmd_hdata, sizeof (cmd_hdata),
+                          "buffer:0x%lx", (long unsigned int)ptr_buffer);
+                relay_weechat_msg_add_hdata (msg, cmd_hdata,
+                                             "number,full_name");
+                relay_weechat_msg_send (ptr_client, msg);
+                relay_weechat_msg_free (msg);
+            }
+        }
+    }
     else if (strncmp (signal, "buffer_localvar_", 16) == 0)
     {
         ptr_buffer = (struct t_gui_buffer *)signal_data;
         if (!ptr_buffer)
             return WEECHAT_RC_OK;
 
-        /* send signal only if buffer is synchronized with flag "buffer" */
+        /* send signal only if sync with flag "buffer" */
         if (relay_weechat_protocol_is_sync (ptr_client, ptr_buffer,
                                             RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER))
         {
@@ -570,10 +703,10 @@ relay_weechat_protocol_signal_buffer_cb (void *data, const char *signal,
 
         ptr_buffer = weechat_hdata_pointer (ptr_hdata_line_data, ptr_line_data,
                                             "buffer");
-        if (!ptr_buffer || (relay_raw_buffer && (ptr_buffer == relay_raw_buffer)))
+        if (!ptr_buffer || relay_weechat_is_relay_buffer (ptr_buffer))
             return WEECHAT_RC_OK;
 
-        /* send line only if buffer is synchronized with flag "buffer" */
+        /* send signal only if sync with flag "buffer" */
         if (relay_weechat_protocol_is_sync (ptr_client, ptr_buffer,
                                             RELAY_WEECHAT_PROTOCOL_SYNC_BUFFER))
         {
@@ -1261,6 +1394,7 @@ relay_weechat_protocol_recv (struct t_relay_client *client, const char *data)
 
     if (id)
         free (id);
+    free (command);
     if (argv)
         weechat_string_free_split (argv);
     if (argv_eol)

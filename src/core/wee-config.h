@@ -18,8 +18,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_CONFIG_H
-#define __WEECHAT_CONFIG_H 1
+#ifndef WEECHAT_CONFIG_H
+#define WEECHAT_CONFIG_H 1
 
 #include <regex.h>
 #include "wee-config-file.h"
@@ -64,6 +64,12 @@ enum t_config_look_prefix_buffer_align
     CONFIG_LOOK_PREFIX_BUFFER_ALIGN_NONE = 0,
     CONFIG_LOOK_PREFIX_BUFFER_ALIGN_LEFT,
     CONFIG_LOOK_PREFIX_BUFFER_ALIGN_RIGHT,
+};
+
+enum t_config_look_hotlist_remove
+{
+    CONFIG_LOOK_HOTLIST_REMOVE_BUFFER = 0,
+    CONFIG_LOOK_HOTLIST_REMOVE_MERGED,
 };
 
 enum t_config_look_hotlist_sort
@@ -144,7 +150,7 @@ extern struct t_config_option *config_look_emphasized_attributes;
 extern struct t_config_option *config_look_highlight;
 extern struct t_config_option *config_look_highlight_regex;
 extern struct t_config_option *config_look_highlight_tags;
-extern struct t_config_option *config_look_hotlist_add_buffer_if_away;
+extern struct t_config_option *config_look_hotlist_add_conditions;
 extern struct t_config_option *config_look_hotlist_buffer_separator;
 extern struct t_config_option *config_look_hotlist_count_max;
 extern struct t_config_option *config_look_hotlist_count_min_msg;
@@ -153,6 +159,7 @@ extern struct t_config_option *config_look_hotlist_names_length;
 extern struct t_config_option *config_look_hotlist_names_level;
 extern struct t_config_option *config_look_hotlist_names_merged_buffers;
 extern struct t_config_option *config_look_hotlist_prefix;
+extern struct t_config_option *config_look_hotlist_remove;
 extern struct t_config_option *config_look_hotlist_short_names;
 extern struct t_config_option *config_look_hotlist_sort;
 extern struct t_config_option *config_look_hotlist_suffix;
@@ -187,6 +194,8 @@ extern struct t_config_option *config_look_prefix_buffer_align_more;
 extern struct t_config_option *config_look_prefix_buffer_align_more_after;
 extern struct t_config_option *config_look_prefix_same_nick;
 extern struct t_config_option *config_look_prefix_suffix;
+extern struct t_config_option *config_look_bare_display_exit_on_input;
+extern struct t_config_option *config_look_bare_display_time_format;
 extern struct t_config_option *config_look_read_marker;
 extern struct t_config_option *config_look_read_marker_always_show;
 extern struct t_config_option *config_look_read_marker_string;
@@ -256,6 +265,7 @@ extern struct t_config_option *config_color_status_data_private;
 extern struct t_config_option *config_color_status_filter;
 extern struct t_config_option *config_color_status_name;
 extern struct t_config_option *config_color_status_name_ssl;
+extern struct t_config_option *config_color_status_nicklist_count;
 extern struct t_config_option *config_color_status_number;
 extern struct t_config_option *config_color_status_more;
 extern struct t_config_option *config_color_status_time;
@@ -313,4 +323,4 @@ extern int config_weechat_read ();
 extern int config_weechat_write ();
 extern void config_weechat_free ();
 
-#endif /* __WEECHAT_CONFIG_H */
+#endif /* WEECHAT_CONFIG_H */

@@ -49,6 +49,7 @@
 #include "../weechat-plugin.h"
 #include "irc.h"
 #include "irc-server.h"
+#include "irc-bar-item.h"
 #include "irc-buffer.h"
 #include "irc-channel.h"
 #include "irc-color.h"
@@ -257,7 +258,6 @@ irc_server_strcasecmp (struct t_irc_server *server,
     int casemapping, rc;
 
     casemapping = (server) ? server->casemapping : IRC_SERVER_CASEMAPPING_RFC1459;
-    rc = 0;
     switch (casemapping)
     {
         case IRC_SERVER_CASEMAPPING_RFC1459:
@@ -293,7 +293,6 @@ irc_server_strncasecmp (struct t_irc_server *server,
     int casemapping, rc;
 
     casemapping = (server) ? server->casemapping : IRC_SERVER_CASEMAPPING_RFC1459;
-    rc = 0;
     switch (casemapping)
     {
         case IRC_SERVER_CASEMAPPING_RFC1459:
@@ -973,6 +972,7 @@ irc_server_alloc (const char *name)
     new_server->nick_alternate_number = -1;
     new_server->nick = NULL;
     new_server->nick_modes = NULL;
+    new_server->cap_away_notify = 0;
     new_server->isupport = NULL;
     new_server->prefix_modes = NULL;
     new_server->prefix_chars = NULL;
@@ -1258,13 +1258,6 @@ irc_server_alloc_with_url (const char *irc_url)
                 free (server_autojoin);
             }
         }
-    }
-    else
-    {
-        weechat_printf (NULL,
-                        _("%s%s: error creating new server \"%s\""),
-                        weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                        pos_address);
     }
 
     free (irc_url2);
@@ -1725,16 +1718,17 @@ irc_server_send_signal (struct t_irc_server *server, const char *signal,
             {
                 snprintf (full_message_tags, length,
                           "%s;%s", tags, full_message);
-                weechat_hook_signal_send (str_signal,
-                                          WEECHAT_HOOK_SIGNAL_STRING,
-                                          (void *)full_message_tags);
+                (void) weechat_hook_signal_send (str_signal,
+                                                 WEECHAT_HOOK_SIGNAL_STRING,
+                                                 (void *)full_message_tags);
                 free (full_message_tags);
             }
         }
         else
         {
-            weechat_hook_signal_send (str_signal, WEECHAT_HOOK_SIGNAL_STRING,
-                                      (void *)full_message);
+            (void) weechat_hook_signal_send (str_signal,
+                                             WEECHAT_HOOK_SIGNAL_STRING,
+                                             (void *)full_message);
         }
         free (str_signal);
     }
@@ -2008,7 +2002,7 @@ irc_server_send_one_msg (struct t_irc_server *server, int flags,
             if (pos)
                 pos[0] = '\0';
 
-            snprintf (buffer, sizeof (buffer) - 1, "%s\r\n", ptr_msg);
+            snprintf (buffer, sizeof (buffer), "%s\r\n", ptr_msg);
 
             /* anti-flood: look whether we should queue outgoing message or not */
             time_now = time (NULL);
@@ -2610,71 +2604,93 @@ irc_server_recv_cb (void *data, int fd)
 {
     struct t_irc_server *server;
     static char buffer[4096 + 2];
-    int num_read;
+    int num_read, msgq_flush, end_recv;
 
     /* make C compiler happy */
     (void) fd;
 
     server = (struct t_irc_server *)data;
-
     if (!server)
         return WEECHAT_RC_ERROR;
 
-#ifdef HAVE_GNUTLS
-    if (server->ssl_connected)
-        num_read = gnutls_record_recv (server->gnutls_sess, buffer,
-                                       sizeof (buffer) - 2);
-    else
-#endif
-        num_read = recv (server->sock, buffer, sizeof (buffer) - 2, 0);
+    msgq_flush = 0;
+    end_recv = 0;
 
-    if (num_read > 0)
+    while (!end_recv)
     {
-        buffer[num_read] = '\0';
-        irc_server_msgq_add_buffer (server, buffer);
-        irc_server_msgq_flush ();
-    }
-    else
-    {
+        end_recv = 1;
+
 #ifdef HAVE_GNUTLS
         if (server->ssl_connected)
-        {
-            if ((num_read == 0)
-                || ((num_read != GNUTLS_E_AGAIN) && (num_read != GNUTLS_E_INTERRUPTED)))
-            {
-                weechat_printf (server->buffer,
-                                _("%s%s: reading data on socket: error %d %s"),
-                                weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                                num_read,
-                                (num_read == 0) ? _("(connection closed by peer)") :
-                                gnutls_strerror (num_read));
-                weechat_printf (server->buffer,
-                                _("%s%s: disconnecting from server..."),
-                                weechat_prefix ("network"),
-                                IRC_PLUGIN_NAME);
-                irc_server_disconnect (server, !server->is_connected, 1);
-            }
-        }
+            num_read = gnutls_record_recv (server->gnutls_sess, buffer,
+                                           sizeof (buffer) - 2);
         else
 #endif
+            num_read = recv (server->sock, buffer, sizeof (buffer) - 2, 0);
+
+        if (num_read > 0)
         {
-            if ((num_read == 0)
-                || ((errno != EAGAIN) && (errno != EWOULDBLOCK)))
+            buffer[num_read] = '\0';
+            irc_server_msgq_add_buffer (server, buffer);
+            msgq_flush = 1;  /* the flush will be done after the loop */
+#ifdef HAVE_GNUTLS
+            if (server->ssl_connected
+                && (gnutls_record_check_pending (server->gnutls_sess) > 0))
             {
-                weechat_printf (server->buffer,
-                                _("%s%s: reading data on socket: error %d %s"),
-                                weechat_prefix ("error"), IRC_PLUGIN_NAME,
-                                errno,
-                                (num_read == 0) ? _("(connection closed by peer)") :
-                                strerror (errno));
-                weechat_printf (server->buffer,
-                                _("%s%s: disconnecting from server..."),
-                                weechat_prefix ("network"),
-                                IRC_PLUGIN_NAME);
-                irc_server_disconnect (server, !server->is_connected, 1);
+                /*
+                 * if there are unread data in the gnutls buffers,
+                 * go on with recv
+                 */
+                end_recv = 0;
+            }
+#endif
+        }
+        else
+        {
+#ifdef HAVE_GNUTLS
+            if (server->ssl_connected)
+            {
+                if ((num_read == 0)
+                    || ((num_read != GNUTLS_E_AGAIN)
+                        && (num_read != GNUTLS_E_INTERRUPTED)))
+                {
+                    weechat_printf (server->buffer,
+                                    _("%s%s: reading data on socket: error %d %s"),
+                                    weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                                    num_read,
+                                    (num_read == 0) ? _("(connection closed by peer)") :
+                                    gnutls_strerror (num_read));
+                    weechat_printf (server->buffer,
+                                    _("%s%s: disconnecting from server..."),
+                                    weechat_prefix ("network"),
+                                    IRC_PLUGIN_NAME);
+                    irc_server_disconnect (server, !server->is_connected, 1);
+                }
+            }
+            else
+#endif
+            {
+                if ((num_read == 0)
+                    || ((errno != EAGAIN) && (errno != EWOULDBLOCK)))
+                {
+                    weechat_printf (server->buffer,
+                                    _("%s%s: reading data on socket: error %d %s"),
+                                    weechat_prefix ("error"), IRC_PLUGIN_NAME,
+                                    errno,
+                                    (num_read == 0) ? _("(connection closed by peer)") :
+                                    strerror (errno));
+                    weechat_printf (server->buffer,
+                                    _("%s%s: disconnecting from server..."),
+                                    weechat_prefix ("network"),
+                                    IRC_PLUGIN_NAME);
+                    irc_server_disconnect (server, !server->is_connected, 1);
+                }
             }
         }
     }
+
+    if (msgq_flush)
+        irc_server_msgq_flush ();
 
     return WEECHAT_RC_OK;
 }
@@ -2851,13 +2867,12 @@ irc_server_timer_cb (void *data, int remaining_calls)
             {
                 /* check away (only if lag check was not done) */
                 away_check = IRC_SERVER_OPTION_INTEGER(ptr_server, IRC_SERVER_OPTION_AWAY_CHECK);
-                if (away_check > 0)
+                if (!ptr_server->cap_away_notify
+                    && (away_check > 0)
+                    && ((ptr_server->last_away_check == 0)
+                        || (current_time >= ptr_server->last_away_check + (away_check * 60))))
                 {
-                    if ((ptr_server->last_away_check == 0)
-                        || (current_time >= ptr_server->last_away_check + (away_check * 60)))
-                    {
-                        irc_server_check_away (ptr_server);
-                    }
+                    irc_server_check_away (ptr_server);
                 }
             }
 
@@ -3118,21 +3133,23 @@ irc_server_reconnect_schedule (struct t_irc_server *server)
 void
 irc_server_login (struct t_irc_server *server)
 {
-    const char *username, *realname, *capabilities;
-    char *password, *username2;
+    const char *capabilities;
+    char *password, *username, *realname, *username2;
 
-    password = weechat_string_eval_expression (IRC_SERVER_OPTION_STRING(server,
-                                                                        IRC_SERVER_OPTION_PASSWORD),
-                                               NULL, NULL, NULL);
-    username = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_USERNAME);
-    realname = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_REALNAME);
+    password = weechat_string_eval_expression (
+        IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_PASSWORD),
+        NULL, NULL, NULL);
+    username = weechat_string_eval_expression (
+        IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_USERNAME),
+        NULL, NULL, NULL);
+    realname = weechat_string_eval_expression (
+        IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_REALNAME),
+        NULL, NULL, NULL);
+
     capabilities = IRC_SERVER_OPTION_STRING(server, IRC_SERVER_OPTION_CAPABILITIES);
 
     if (password && password[0])
         irc_server_sendf (server, 0, NULL, "PASS %s", password);
-
-    if (password)
-        free (password);
 
     if (!server->nick)
     {
@@ -3169,6 +3186,13 @@ irc_server_login (struct t_irc_server *server)
         0, 1,
         &irc_server_timer_connection_cb,
         server);
+
+    if (password)
+        free (password);
+    if (username)
+        free (username);
+    if (realname)
+        free (realname);
 }
 
 /*
@@ -3502,8 +3526,9 @@ irc_server_create_buffer (struct t_irc_server *server)
     weechat_buffer_set (server->buffer, "localvar_set_charset_modifier",
                         charset_modifier);
 
-    weechat_hook_signal_send ("logger_backlog",
-                              WEECHAT_HOOK_SIGNAL_POINTER, server->buffer);
+    (void) weechat_hook_signal_send ("logger_backlog",
+                                     WEECHAT_HOOK_SIGNAL_POINTER,
+                                     server->buffer);
 
     if (weechat_config_boolean (irc_config_network_send_unknown_commands))
         weechat_buffer_set (server->buffer, "input_get_unknown_commands", "1");
@@ -3531,13 +3556,45 @@ irc_server_create_buffer (struct t_irc_server *server)
         weechat_buffer_merge (server->buffer, ptr_buffer_for_merge);
     }
 
-    weechat_hook_signal_send ("irc_server_opened",
-                              WEECHAT_HOOK_SIGNAL_POINTER, server->buffer);
+    (void) weechat_hook_signal_send ("irc_server_opened",
+                                     WEECHAT_HOOK_SIGNAL_POINTER,
+                                     server->buffer);
 
     return server->buffer;
 }
 
 #ifdef HAVE_GNUTLS
+/*
+ * Compares two fingerprints: one hexadecimal (given by user), the second binary
+ * (received from IRC server).
+ *
+ * Returns:
+ *    0: fingerprints are the same
+ *   -1: fingerprints are different
+ */
+
+int
+irc_server_compare_fingerprints (const char *fingerprint,
+                                 const unsigned char *fingerprint_server,
+                                 ssize_t fingerprint_size)
+{
+    ssize_t i;
+    unsigned int value;
+
+    if ((ssize_t)strlen (fingerprint) != fingerprint_size * 2)
+        return -1;
+
+    for (i = 0; i < fingerprint_size; i++)
+    {
+        if (sscanf (&fingerprint[i * 2], "%02x", &value) != 1)
+            return -1;
+        if (value != fingerprint_server[i])
+            return -1;
+    }
+
+    /* fingerprints are the same */
+    return 0;
+}
 
 /*
  * Checks if a GnuTLS session uses the certificate with a given fingerprint.
@@ -3550,21 +3607,18 @@ irc_server_create_buffer (struct t_irc_server *server)
 int
 irc_server_check_certificate_fingerprint (struct t_irc_server *server,
                                           gnutls_x509_crt_t certificate,
-                                          const char *good_fingerprint)
+                                          const char *good_fingerprints)
 {
-    unsigned char fingerprint[20];
-    size_t i, fingerprint_size;
-    unsigned int value;
+    unsigned char fingerprint_server[20];
+    char **fingerprints;
+    int i, rc;
+    size_t fingerprint_size;
 
-    fingerprint_size = sizeof (fingerprint);
-
-    /* invalid length for good_fingerprint? */
-    if (strlen (good_fingerprint) != fingerprint_size * 2)
-        return 0;
+    fingerprint_size = sizeof (fingerprint_server);
 
     /* calculate the SHA1 fingerprint for the certificate */
     if (gnutls_x509_crt_get_fingerprint (certificate, GNUTLS_DIG_SHA1,
-                                         fingerprint,
+                                         fingerprint_server,
                                          &fingerprint_size) != GNUTLS_E_SUCCESS)
     {
         weechat_printf (server->buffer,
@@ -3574,17 +3628,28 @@ irc_server_check_certificate_fingerprint (struct t_irc_server *server,
         return 0;
     }
 
-    /* compare the fingerprints */
-    for (i = 0; i < fingerprint_size; i++)
+    /* split good_fingerprints */
+    fingerprints = weechat_string_split (good_fingerprints, ",", 0, 0, NULL);
+    if (!fingerprints)
+        return 0;
+
+    rc = 0;
+
+    for (i = 0; fingerprints[i]; i++)
     {
-        if (sscanf (&good_fingerprint[i * 2], "%02x", &value) != 1)
-            return 0;
-        if (value != fingerprint[i])
-            return 0;
+        /* check if the fingerprint matches */
+        if (irc_server_compare_fingerprints (fingerprints[i],
+                                             fingerprint_server,
+                                             fingerprint_size) == 0)
+        {
+            rc = 1;
+            break;
+        }
     }
 
-    /* fingerprint matches */
-    return 1;
+    weechat_string_free_split (fingerprints);
+
+    return rc;
 }
 
 /*
@@ -3930,7 +3995,8 @@ irc_server_gnutls_callback (void *data, gnutls_session_t tls_session,
                 else
                 {
                     weechat_printf (server->buffer,
-                                    _("%sgnutls: unable to read certifcate \"%s\""),
+                                    _("%sgnutls: unable to read certificate "
+                                      "\"%s\""),
                                     weechat_prefix ("error"), cert_path2);
                 }
             }
@@ -3982,7 +4048,7 @@ irc_server_connect (struct t_irc_server *server)
         weechat_buffer_set (server->buffer, "display", "auto");
     }
 
-    weechat_bar_item_update ("buffer_name");
+    irc_bar_item_update_channel ();
 
     irc_server_set_index_current_address (server,
                                           server->index_current_address);
@@ -4162,8 +4228,8 @@ irc_server_connect (struct t_irc_server *server)
 #endif
 
     /* send signal "irc_server_connecting" with server name */
-    weechat_hook_signal_send ("irc_server_connecting",
-                              WEECHAT_HOOK_SIGNAL_STRING, server->name);
+    (void) weechat_hook_signal_send ("irc_server_connecting",
+                                     WEECHAT_HOOK_SIGNAL_STRING, server->name);
 
     return 1;
 }
@@ -4269,7 +4335,9 @@ irc_server_disconnect (struct t_irc_server *server, int switch_address,
         free (server->nick_modes);
         server->nick_modes = NULL;
         weechat_bar_item_update ("input_prompt");
+        weechat_bar_item_update ("irc_nick_modes");
     }
+    server->cap_away_notify = 0;
     server->is_away = 0;
     server->away_time = 0;
     server->lag = 0;
@@ -4299,8 +4367,8 @@ irc_server_disconnect (struct t_irc_server *server, int switch_address,
     server->disconnected = 1;
 
     /* send signal "irc_server_disconnected" with server name */
-    weechat_hook_signal_send ("irc_server_disconnected",
-                              WEECHAT_HOOK_SIGNAL_STRING, server->name);
+    (void) weechat_hook_signal_send ("irc_server_disconnected",
+                                     WEECHAT_HOOK_SIGNAL_STRING, server->name);
 }
 
 /*
@@ -4795,6 +4863,7 @@ irc_server_hdata_server_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_server, nick_alternate_number, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, nick, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, nick_modes, STRING, 0, NULL, NULL);
+        WEECHAT_HDATA_VAR(struct t_irc_server, cap_away_notify, INTEGER, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, isupport, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, prefix_modes, STRING, 0, NULL, NULL);
         WEECHAT_HDATA_VAR(struct t_irc_server, prefix_chars, STRING, 0, NULL, NULL);
@@ -4836,8 +4905,8 @@ irc_server_hdata_server_cb (void *data, const char *hdata_name)
         WEECHAT_HDATA_VAR(struct t_irc_server, last_channel, POINTER, 0, NULL, "irc_channel");
         WEECHAT_HDATA_VAR(struct t_irc_server, prev_server, POINTER, 0, NULL, hdata_name);
         WEECHAT_HDATA_VAR(struct t_irc_server, next_server, POINTER, 0, NULL, hdata_name);
-        WEECHAT_HDATA_LIST(irc_servers);
-        WEECHAT_HDATA_LIST(last_irc_server);
+        WEECHAT_HDATA_LIST(irc_servers, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        WEECHAT_HDATA_LIST(last_irc_server, 0);
     }
     return hdata;
 }
@@ -5002,6 +5071,8 @@ irc_server_add_to_infolist (struct t_infolist *infolist,
     if (!weechat_infolist_new_var_string (ptr_item, "nick", server->nick))
         return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "nick_modes", server->nick_modes))
+        return 0;
+    if (!weechat_infolist_new_var_integer (ptr_item, "cap_away_notify", server->cap_away_notify))
         return 0;
     if (!weechat_infolist_new_var_string (ptr_item, "isupport", server->isupport))
         return 0;
@@ -5348,6 +5419,7 @@ irc_server_print_log ()
         weechat_log_printf ("  nick_alternate_number: %d",    ptr_server->nick_alternate_number);
         weechat_log_printf ("  nick . . . . . . . . : '%s'",  ptr_server->nick);
         weechat_log_printf ("  nick_modes . . . . . : '%s'",  ptr_server->nick_modes);
+        weechat_log_printf ("  cap_away_notify. . . : %d",    ptr_server->cap_away_notify);
         weechat_log_printf ("  isupport . . . . . . : '%s'",  ptr_server->isupport);
         weechat_log_printf ("  prefix_modes . . . . : '%s'",  ptr_server->prefix_modes);
         weechat_log_printf ("  prefix_chars . . . . : '%s'",  ptr_server->prefix_chars);

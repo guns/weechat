@@ -53,7 +53,7 @@ irc_info_create_string_with_pointer (char **string, void *pointer)
         *string = malloc (64);
         if (*string)
         {
-            snprintf (*string, 64 - 1, "0x%lx", (long unsigned int)pointer);
+            snprintf (*string, 64, "0x%lx", (long unsigned int)pointer);
         }
     }
 }
@@ -640,7 +640,7 @@ irc_info_init ()
     weechat_hook_infolist ("irc_server",
                            N_("list of IRC servers"),
                            N_("server pointer (optional)"),
-                           N_("server name (can start or end with \"*\" as wildcard) (optional)"),
+                           N_("server name (wildcard \"*\" is allowed) (optional)"),
                            &irc_info_get_infolist_cb, NULL);
     weechat_hook_infolist ("irc_channel",
                            N_("list of channels for an IRC server"),
@@ -650,7 +650,7 @@ irc_info_init ()
     weechat_hook_infolist ("irc_nick",
                            N_("list of nicks for an IRC channel"),
                            N_("nick pointer (optional)"),
-                           N_("server,channel,nick (channel and nick are optional)"),
+                           N_("server,channel,nick (nick is optional)"),
                            &irc_info_get_infolist_cb, NULL);
     weechat_hook_infolist ("irc_ignore",
                            N_("list of IRC ignores"),
@@ -660,7 +660,7 @@ irc_info_init ()
     weechat_hook_infolist ("irc_notify",
                            N_("list of notify"),
                            N_("notify pointer (optional)"),
-                           N_("server name (can start or end with \"*\" as wildcard) (optional)"),
+                           N_("server name (wildcard \"*\" is allowed) (optional)"),
                            &irc_info_get_infolist_cb, NULL);
 
     /* hdata hooks */

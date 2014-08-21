@@ -468,8 +468,9 @@ weechat_perl_load (const char *filename)
                                         &weechat_perl_api_buffer_input_data_cb,
                                         &weechat_perl_api_buffer_close_cb);
 
-    weechat_hook_signal_send ("perl_script_loaded", WEECHAT_HOOK_SIGNAL_STRING,
-                              perl_current_script->filename);
+    (void) weechat_hook_signal_send ("perl_script_loaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING,
+                                     perl_current_script->filename);
 
     return 1;
 }
@@ -537,13 +538,17 @@ weechat_perl_unload (struct t_plugin_script *script)
         perl_destruct (interpreter);
         perl_free (interpreter);
     }
+    if (perl_current_script)
+    {
+        PERL_SET_CONTEXT (perl_current_script->interpreter);
+    }
 #else
     if (interpreter)
         free (interpreter);
 #endif
 
-    weechat_hook_signal_send ("perl_script_unloaded",
-                              WEECHAT_HOOK_SIGNAL_STRING, filename);
+    (void) weechat_hook_signal_send ("perl_script_unloaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING, filename);
     if (filename)
         free (filename);
 }
@@ -668,6 +673,8 @@ weechat_perl_command_cb (void *data, struct t_gui_buffer *buffer,
         {
             weechat_perl_unload_all ();
         }
+        else
+            return WEECHAT_RC_ERROR;
     }
     else
     {
@@ -717,12 +724,7 @@ weechat_perl_command_cb (void *data, struct t_gui_buffer *buffer,
             perl_quiet = 0;
         }
         else
-        {
-            weechat_printf (NULL,
-                            weechat_gettext ("%s%s: unknown option for "
-                                             "command \"%s\""),
-                            weechat_prefix ("error"), PERL_PLUGIN_NAME, "perl");
-        }
+            return WEECHAT_RC_ERROR;
     }
 
     return WEECHAT_RC_OK;

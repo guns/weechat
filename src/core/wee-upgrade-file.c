@@ -197,7 +197,7 @@ upgrade_file_new (const char *filename, int write)
     {
         /* build name of file */
         length = strlen (weechat_home) + 1 + strlen (filename) + 16 + 1;
-        new_upgrade_file->filename = malloc (length + 1);
+        new_upgrade_file->filename = malloc (length);
         if (!new_upgrade_file->filename)
         {
             free (new_upgrade_file);
@@ -618,7 +618,7 @@ upgrade_file_read_object (struct t_upgrade_file *upgrade_file)
         goto end;
     }
 
-    infolist = infolist_new ();
+    infolist = infolist_new (NULL);
     if (!infolist)
     {
         UPGRADE_ERROR(_("read - infolist creation"), "");
@@ -759,6 +759,8 @@ upgrade_file_read (struct t_upgrade_file *upgrade_file,
     {
         UPGRADE_ERROR(_("read - bad signature (upgrade file format may have "
                         "changed since last version)"), "");
+        if (signature)
+            free (signature);
         return 0;
     }
 
@@ -780,5 +782,6 @@ upgrade_file_read (struct t_upgrade_file *upgrade_file,
 void
 upgrade_file_close (struct t_upgrade_file *upgrade_file)
 {
-    fclose (upgrade_file->file);
+    if (upgrade_file && upgrade_file->file)
+        fclose (upgrade_file->file);
 }

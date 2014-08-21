@@ -145,7 +145,7 @@ relay_websocket_client_handshake_valid (struct t_relay_client *client)
     value = weechat_hashtable_get (client->http_headers, "Upgrade");
     if (!value)
         return -1;
-    if (strcmp (value, "websocket") != 0)
+    if (weechat_strcasecmp (value, "websocket") != 0)
         return -1;
 
     /* check if we have header "Sec-WebSocket-Key" with non-empty value */
@@ -214,6 +214,8 @@ relay_websocket_build_handshake (struct t_relay_client *client)
     result = gcry_md_read (hd, GCRY_MD_SHA1);
     weechat_string_encode_base64 ((char *)result, length, sec_websocket_accept);
     gcry_md_close (hd);
+
+    free (key);
 
     /* build the handshake (it will be sent as-is to client) */
     snprintf (handshake, sizeof (handshake),

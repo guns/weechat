@@ -61,8 +61,8 @@ gui_filter_check_line (struct t_gui_line_data *line_data)
     struct t_gui_filter *ptr_filter;
     int rc;
 
-    /* line is always displayed if filters are disabled */
-    if (!gui_filters_enabled)
+    /* line is always displayed if filters are disabled (globally or in buffer) */
+    if (!gui_filters_enabled || !line_data->buffer->filter)
         return 1;
 
     if (gui_line_has_tag_no_filter (line_data))
@@ -154,8 +154,8 @@ gui_filter_buffer (struct t_gui_buffer *buffer,
     if (buffer->lines->lines_hidden != lines_hidden)
     {
         buffer->lines->lines_hidden = lines_hidden;
-        hook_signal_send ("buffer_lines_hidden",
-                          WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+        (void) hook_signal_send ("buffer_lines_hidden",
+                                 WEECHAT_HOOK_SIGNAL_POINTER, buffer);
     }
 
     if (lines_changed)
@@ -210,8 +210,8 @@ gui_filter_global_enable ()
     {
         gui_filters_enabled = 1;
         gui_filter_all_buffers ();
-        hook_signal_send ("filters_enabled",
-                          WEECHAT_HOOK_SIGNAL_STRING, NULL);
+        (void) hook_signal_send ("filters_enabled",
+                                 WEECHAT_HOOK_SIGNAL_STRING, NULL);
     }
 }
 
@@ -226,8 +226,8 @@ gui_filter_global_disable ()
     {
         gui_filters_enabled = 0;
         gui_filter_all_buffers ();
-        hook_signal_send ("filters_disabled",
-                          WEECHAT_HOOK_SIGNAL_STRING, NULL);
+        (void) hook_signal_send ("filters_disabled",
+                                 WEECHAT_HOOK_SIGNAL_STRING, NULL);
     }
 }
 
@@ -284,6 +284,7 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
 
     regex1 = NULL;
     regex2 = NULL;
+
     if (strcmp (ptr_start_regex, "*") != 0)
     {
         pos_tab = strstr (ptr_start_regex, "\\t");
@@ -299,7 +300,7 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
             pos_regex_message = ptr_start_regex;
         }
 
-        if (regex_prefix)
+        if (regex_prefix && regex_prefix[0])
         {
             regex1 = malloc (sizeof (*regex1));
             if (regex1)
@@ -314,18 +315,24 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
             }
         }
 
-        regex2 = malloc (sizeof (*regex2));
-        if (regex2)
+        if (pos_regex_message && pos_regex_message[0])
         {
-            if (string_regcomp (regex2, pos_regex_message,
-                                REG_EXTENDED | REG_ICASE | REG_NOSUB) != 0)
+            regex2 = malloc (sizeof (*regex2));
+            if (regex2)
             {
-                if (regex_prefix)
-                    free (regex_prefix);
-                if (regex1)
-                    free (regex1);
-                free (regex2);
-                return NULL;
+                if (string_regcomp (regex2, pos_regex_message,
+                                    REG_EXTENDED | REG_ICASE | REG_NOSUB) != 0)
+                {
+                    if (regex_prefix)
+                        free (regex_prefix);
+                    if (regex1)
+                    {
+                        regfree (regex1);
+                        free (regex1);
+                    }
+                    free (regex2);
+                    return NULL;
+                }
             }
         }
 
@@ -380,8 +387,8 @@ gui_filter_new (int enabled, const char *name, const char *buffer_name,
         last_gui_filter = new_filter;
         new_filter->next_filter = NULL;
 
-        hook_signal_send ("filter_added",
-                          WEECHAT_HOOK_SIGNAL_POINTER, new_filter);
+        (void) hook_signal_send ("filter_added",
+                                 WEECHAT_HOOK_SIGNAL_POINTER, new_filter);
     }
 
     return new_filter;
@@ -419,8 +426,8 @@ gui_filter_free (struct t_gui_filter *filter)
 {
     int i;
 
-    hook_signal_send ("filter_removing",
-                      WEECHAT_HOOK_SIGNAL_POINTER, filter);
+    (void) hook_signal_send ("filter_removing",
+                             WEECHAT_HOOK_SIGNAL_POINTER, filter);
 
     /* free data */
     if (filter->name)
@@ -464,7 +471,7 @@ gui_filter_free (struct t_gui_filter *filter)
 
     free (filter);
 
-    hook_signal_send ("filter_removed", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    (void) hook_signal_send ("filter_removed", WEECHAT_HOOK_SIGNAL_STRING, NULL);
 }
 
 /*
@@ -509,8 +516,8 @@ gui_filter_hdata_filter_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_gui_filter, regex_message, POINTER, 0, NULL, NULL);
         HDATA_VAR(struct t_gui_filter, prev_filter, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_gui_filter, next_filter, POINTER, 0, NULL, hdata_name);
-        HDATA_LIST(gui_filters);
-        HDATA_LIST(last_gui_filter);
+        HDATA_LIST(gui_filters, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        HDATA_LIST(last_gui_filter, 0);
     }
     return hdata;
 }

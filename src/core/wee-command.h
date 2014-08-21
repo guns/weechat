@@ -18,8 +18,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_COMMAND_H
-#define __WEECHAT_COMMAND_H 1
+#ifndef WEECHAT_COMMAND_H
+#define WEECHAT_COMMAND_H 1
 
 #define COMMAND_CALLBACK(__command)                                     \
     int                                                                 \
@@ -45,18 +45,6 @@
         return WEECHAT_RC_OK;                                           \
     }
 
-#define COMMAND_MIN_ARGS(__min, __command)                              \
-    if (argc < __min)                                                   \
-    {                                                                   \
-        gui_chat_printf_date_tags (                                     \
-            NULL, 0,                                                    \
-            GUI_FILTER_TAG_NO_FILTER,                                   \
-            _("%sError: missing arguments for \"%s\" command"),         \
-            gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],                     \
-            __command);                                                 \
-        return WEECHAT_RC_ERROR;                                        \
-    }
-
 struct t_gui_buffer;
 
 extern int command_reload (void *data, struct t_gui_buffer *buffer,
@@ -68,4 +56,4 @@ extern void command_version_display (struct t_gui_buffer *buffer,
                                      int translated_string,
                                      int display_git_version);
 
-#endif /* __WEECHAT_COMMAND_H */
+#endif /* WEECHAT_COMMAND_H */

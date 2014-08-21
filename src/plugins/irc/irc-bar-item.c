@@ -176,22 +176,13 @@ irc_bar_item_buffer_plugin (void *data, struct t_gui_bar_item *item,
  */
 
 char *
-irc_bar_item_buffer_name (void *data, struct t_gui_bar_item *item,
-                          struct t_gui_window *window,
-                          struct t_gui_buffer *buffer,
-                          struct t_hashtable *extra_info)
+irc_bar_item_buffer_name_content (struct t_gui_buffer *buffer, int short_name)
 {
     char buf[512], buf_name[256], modes[128];
     const char *name;
     int part_from_channel, display_server;
     struct t_irc_server *server;
     struct t_irc_channel *channel;
-
-    /* make C compiler happy */
-    (void) data;
-    (void) item;
-    (void) window;
-    (void) extra_info;
 
     if (!buffer)
         return NULL;
@@ -228,7 +219,7 @@ irc_bar_item_buffer_name (void *data, struct t_gui_bar_item *item,
                           (server && display_server) ? IRC_COLOR_BAR_DELIM : "",
                           (server && display_server) ? "/" : "",
                           (server && server->ssl_connected) ? IRC_COLOR_STATUS_NAME_SSL : IRC_COLOR_STATUS_NAME,
-                          channel->name,
+                          (short_name) ? weechat_buffer_get_string (buffer, "short_name") : channel->name,
                           (part_from_channel) ? IRC_COLOR_BAR_DELIM : "",
                           (part_from_channel) ? ")" : "");
             }
@@ -236,7 +227,8 @@ irc_bar_item_buffer_name (void *data, struct t_gui_bar_item *item,
     }
     else
     {
-        name = weechat_buffer_get_string (buffer, "name");
+        name = weechat_buffer_get_string (buffer,
+                                          (short_name) ? "short_name" : "name");
         if (name)
             snprintf (buf_name, sizeof (buf_name), "%s", name);
     }
@@ -250,6 +242,45 @@ irc_bar_item_buffer_name (void *data, struct t_gui_bar_item *item,
 }
 
 /*
+ * Returns content of bar item "buffer_name": bar item with buffer name.
+ */
+
+char *
+irc_bar_item_buffer_name (void *data, struct t_gui_bar_item *item,
+                          struct t_gui_window *window,
+                          struct t_gui_buffer *buffer,
+                          struct t_hashtable *extra_info)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+    (void) extra_info;
+
+    return irc_bar_item_buffer_name_content (buffer, 0);
+}
+
+/*
+ * Returns content of bar item "buffer_short_name": bar item with buffer short
+ * name.
+ */
+
+char *
+irc_bar_item_buffer_short_name (void *data, struct t_gui_bar_item *item,
+                                struct t_gui_window *window,
+                                struct t_gui_buffer *buffer,
+                                struct t_hashtable *extra_info)
+{
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+    (void) extra_info;
+
+    return irc_bar_item_buffer_name_content (buffer, 1);
+}
+
+/*
  * Returns content of bar item "buffer_modes": bar item with buffer modes.
  */
 
@@ -260,7 +291,7 @@ irc_bar_item_buffer_modes (void *data, struct t_gui_bar_item *item,
                            struct t_hashtable *extra_info)
 {
     char modes[128], *modes_without_args;
-    const char *pos_space, *pos_key;
+    const char *pos_space;
     int part_from_channel;
     struct t_irc_server *server;
     struct t_irc_channel *channel;
@@ -287,17 +318,13 @@ irc_bar_item_buffer_modes (void *data, struct t_gui_bar_item *item,
         && (strcmp (channel->modes, "+") != 0))
     {
         modes_without_args = NULL;
-        if (weechat_config_boolean (irc_config_look_item_channel_modes_hide_key))
+        if (!irc_config_display_channel_modes_arguments (channel->modes))
         {
             pos_space = strchr(channel->modes, ' ');
             if (pos_space)
             {
-                pos_key = strchr(channel->modes, 'k');
-                if (pos_key && (pos_key < pos_space))
-                {
-                    modes_without_args = weechat_strndup (channel->modes,
-                                                          pos_space - channel->modes);
-                }
+                modes_without_args = weechat_strndup (channel->modes,
+                                                      pos_space - channel->modes);
             }
         }
         snprintf (modes, sizeof (modes),
@@ -491,7 +518,7 @@ irc_bar_item_input_prompt (void *data, struct t_gui_bar_item *item,
                       IRC_COLOR_INPUT_NICK,
                       server->nick,
                       IRC_COLOR_BAR_DELIM,
-                      IRC_COLOR_BAR_FG,
+                      IRC_COLOR_ITEM_NICK_MODES,
                       server->nick_modes,
                       IRC_COLOR_BAR_DELIM);
         }
@@ -502,6 +529,45 @@ irc_bar_item_input_prompt (void *data, struct t_gui_bar_item *item,
                       IRC_COLOR_INPUT_NICK,
                       server->nick);
         }
+    }
+
+    return buf;
+}
+
+/*
+ * Returns content of bar item "nick_modes": bar item with nick modes.
+ */
+
+char *
+irc_bar_item_nick_modes (void *data, struct t_gui_bar_item *item,
+                         struct t_gui_window *window,
+                         struct t_gui_buffer *buffer,
+                         struct t_hashtable *extra_info)
+{
+    struct t_irc_server *server;
+    char *buf;
+    int length;
+
+    /* make C compiler happy */
+    (void) data;
+    (void) item;
+    (void) window;
+    (void) extra_info;
+
+    if (!buffer)
+        return NULL;
+
+    irc_buffer_get_server_and_channel (buffer, &server, NULL);
+    if (!server || !server->nick_modes || !server->nick_modes[0])
+        return NULL;
+
+    length = 64 + strlen (server->nick_modes) + 1;
+    buf = malloc (length);
+    if (buf)
+    {
+        snprintf (buf, length, "%s%s",
+                  IRC_COLOR_ITEM_NICK_MODES,
+                  server->nick_modes);
     }
 
     return buf;
@@ -570,12 +636,26 @@ irc_bar_item_buffer_switch (void *data, const char *signal,
     weechat_bar_item_update ("away");
     weechat_bar_item_update ("buffer_title");
     weechat_bar_item_update ("buffer_name");
+    weechat_bar_item_update ("buffer_short_name");
     weechat_bar_item_update ("buffer_modes");
     weechat_bar_item_update ("irc_channel");
     weechat_bar_item_update ("lag");
     weechat_bar_item_update ("input_prompt");
+    weechat_bar_item_update ("irc_nick_modes");
 
     return WEECHAT_RC_OK;
+}
+
+/*
+ * Updates bar items with the channel.
+ */
+
+void
+irc_bar_item_update_channel ()
+{
+    weechat_bar_item_update ("buffer_name");
+    weechat_bar_item_update ("buffer_short_name");
+    weechat_bar_item_update ("irc_channel");
 }
 
 /*
@@ -589,10 +669,12 @@ irc_bar_item_init ()
     weechat_bar_item_new ("buffer_title", &irc_bar_item_buffer_title, NULL);
     weechat_bar_item_new ("buffer_plugin", &irc_bar_item_buffer_plugin, NULL);
     weechat_bar_item_new ("buffer_name", &irc_bar_item_buffer_name, NULL);
+    weechat_bar_item_new ("buffer_short_name", &irc_bar_item_buffer_short_name, NULL);
     weechat_bar_item_new ("buffer_modes", &irc_bar_item_buffer_modes, NULL);
     weechat_bar_item_new ("irc_channel", &irc_bar_item_channel, NULL);
     weechat_bar_item_new ("lag", &irc_bar_item_lag, NULL);
     weechat_bar_item_new ("input_prompt", &irc_bar_item_input_prompt, NULL);
+    weechat_bar_item_new ("irc_nick_modes", &irc_bar_item_nick_modes, NULL);
     weechat_hook_focus ("buffer_nicklist",
                         &irc_bar_item_focus_buffer_nicklist, NULL);
     weechat_hook_signal ("buffer_switch",

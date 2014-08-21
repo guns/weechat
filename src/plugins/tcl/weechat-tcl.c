@@ -364,8 +364,9 @@ weechat_tcl_load (const char *filename)
                                         &weechat_tcl_api_buffer_input_data_cb,
                                         &weechat_tcl_api_buffer_close_cb);
 
-    weechat_hook_signal_send ("tcl_script_loaded", WEECHAT_HOOK_SIGNAL_STRING,
-                              tcl_current_script->filename);
+    (void) weechat_hook_signal_send ("tcl_script_loaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING,
+                                     tcl_current_script->filename);
 
     return 1;
 }
@@ -422,8 +423,8 @@ weechat_tcl_unload (struct t_plugin_script *script)
 
     Tcl_DeleteInterp(interp);
 
-    weechat_hook_signal_send ("tcl_script_unloaded",
-                              WEECHAT_HOOK_SIGNAL_STRING, filename);
+    (void) weechat_hook_signal_send ("tcl_script_unloaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING, filename);
     if (filename)
         free (filename);
 }
@@ -548,6 +549,8 @@ weechat_tcl_command_cb (void *data, struct t_gui_buffer *buffer,
         {
             weechat_tcl_unload_all ();
         }
+        else
+            return WEECHAT_RC_ERROR;
     }
     else
     {
@@ -597,12 +600,7 @@ weechat_tcl_command_cb (void *data, struct t_gui_buffer *buffer,
             tcl_quiet = 0;
         }
         else
-        {
-            weechat_printf (NULL,
-                            weechat_gettext ("%s%s: unknown option for "
-                                             "command \"%s\""),
-                            weechat_prefix ("error"), TCL_PLUGIN_NAME, "tcl");
-        }
+            return WEECHAT_RC_ERROR;
     }
 
     return WEECHAT_RC_OK;

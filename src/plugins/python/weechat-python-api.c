@@ -2430,7 +2430,7 @@ weechat_python_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
 
     if (script_callback && script_callback->function && script_callback->function[0])
     {
-        snprintf (timebuffer, sizeof (timebuffer) - 1, "%ld", (long int)date);
+        snprintf (timebuffer, sizeof (timebuffer), "%ld", (long int)date);
 
         func_argv[0] = (script_callback->data) ? script_callback->data : empty_arg;
         func_argv[1] = API_PTR2STR(buffer);
@@ -2438,15 +2438,15 @@ weechat_python_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
         func_argv[3] = weechat_string_build_with_split_string (tags, ",");
         if (!func_argv[3])
             func_argv[3] = strdup ("");
-        func_argv[4] = (displayed) ? strdup ("1") : strdup ("0");
-        func_argv[5] = (highlight) ? strdup ("1") : strdup ("0");
+        func_argv[4] = PyLong_FromLong((long)displayed);
+        func_argv[5] = PyLong_FromLong((long)highlight);
         func_argv[6] = (prefix) ? (char *)prefix : empty_arg;
         func_argv[7] = (message) ? (char *)message : empty_arg;
 
         rc = (int *) weechat_python_exec (script_callback->script,
                                           WEECHAT_SCRIPT_EXEC_INT,
                                           script_callback->function,
-                                          "ssssssss", func_argv);
+                                          "ssssOOss", func_argv);
 
         if (!rc)
             ret = WEECHAT_RC_ERROR;
@@ -2460,9 +2460,13 @@ weechat_python_api_hook_print_cb (void *data, struct t_gui_buffer *buffer,
         if (func_argv[3])
             free (func_argv[3]);
         if (func_argv[4])
-            free (func_argv[4]);
+        {
+            Py_XDECREF((PyObject *)func_argv[4]);
+        }
         if (func_argv[5])
-            free (func_argv[5]);
+        {
+            Py_XDECREF((PyObject *)func_argv[5]);
+        }
 
         return ret;
     }
@@ -2508,7 +2512,7 @@ weechat_python_api_hook_signal_cb (void *data, const char *signal, const char *t
     struct t_plugin_script_cb *script_callback;
     void *func_argv[3];
     char empty_arg[1] = { '\0' };
-    static char value_str[64];
+    static char str_value[64];
     int *rc, ret, free_needed;
 
     script_callback = (struct t_plugin_script_cb *)data;
@@ -2524,9 +2528,13 @@ weechat_python_api_hook_signal_cb (void *data, const char *signal, const char *t
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
         {
-            snprintf (value_str, sizeof (value_str) - 1,
-                      "%d", *((int *)signal_data));
-            func_argv[2] = value_str;
+            str_value[0] = '\0';
+            if (signal_data)
+            {
+                snprintf (str_value, sizeof (str_value),
+                          "%d", *((int *)signal_data));
+            }
+            func_argv[2] = str_value;
         }
         else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
         {
@@ -2584,38 +2592,38 @@ static PyObject *
 weechat_python_api_hook_signal_send (PyObject *self, PyObject *args)
 {
     char *signal, *type_data, *signal_data, *error;
-    int number;
+    int number, rc;
 
-    API_FUNC(1, "hook_signal_send", API_RETURN_ERROR);
+    API_FUNC(1, "hook_signal_send", API_RETURN_INT(WEECHAT_RC_ERROR));
     signal = NULL;
     type_data = NULL;
     signal_data = NULL;
     if (!PyArg_ParseTuple (args, "sss", &signal, &type_data, &signal_data))
-        API_WRONG_ARGS(API_RETURN_ERROR);
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
 
     if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_STRING) == 0)
     {
-        weechat_hook_signal_send (signal, type_data, signal_data);
-        API_RETURN_OK;
+        rc = weechat_hook_signal_send (signal, type_data, signal_data);
+        API_RETURN_INT(rc);
     }
     else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_INT) == 0)
     {
         error = NULL;
         number = (int)strtol (signal_data, &error, 10);
         if (error && !error[0])
-        {
-            weechat_hook_signal_send (signal, type_data, &number);
-        }
-        API_RETURN_OK;
+            rc = weechat_hook_signal_send (signal, type_data, &number);
+        else
+            rc = WEECHAT_RC_ERROR;
+        API_RETURN_INT(rc);
     }
     else if (strcmp (type_data, WEECHAT_HOOK_SIGNAL_POINTER) == 0)
     {
-        weechat_hook_signal_send (signal, type_data,
-                                  API_STR2PTR(signal_data));
-        API_RETURN_OK;
+        rc = weechat_hook_signal_send (signal, type_data,
+                                       API_STR2PTR(signal_data));
+        API_RETURN_INT(rc);
     }
 
-    API_RETURN_ERROR;
+    API_RETURN_INT(WEECHAT_RC_ERROR);
 }
 
 int
@@ -2687,24 +2695,25 @@ weechat_python_api_hook_hsignal_send (PyObject *self, PyObject *args)
     char *signal;
     struct t_hashtable *hashtable;
     PyObject *dict;
+    int rc;
 
-    API_FUNC(1, "hook_hsignal_send", API_RETURN_ERROR);
+    API_FUNC(1, "hook_hsignal_send", API_RETURN_INT(WEECHAT_RC_ERROR));
     signal = NULL;
     dict = NULL;
     if (!PyArg_ParseTuple (args, "sO", &signal, &dict))
-        API_WRONG_ARGS(API_RETURN_ERROR);
+        API_WRONG_ARGS(API_RETURN_INT(WEECHAT_RC_ERROR));
 
     hashtable = weechat_python_dict_to_hashtable (dict,
                                                   WEECHAT_SCRIPT_HASHTABLE_DEFAULT_SIZE,
                                                   WEECHAT_HASHTABLE_STRING,
                                                   WEECHAT_HASHTABLE_STRING);
 
-    weechat_hook_hsignal_send (signal, hashtable);
+    rc = weechat_hook_hsignal_send (signal, hashtable);
 
     if (hashtable)
         weechat_hashtable_free (hashtable);
 
-    API_RETURN_OK;
+    API_RETURN_INT(rc);
 }
 
 int

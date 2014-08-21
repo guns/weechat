@@ -209,8 +209,8 @@ gui_completion_stop (struct t_gui_completion *completion)
     if (completion->partial_completion_list)
     {
         gui_completion_partial_list_free_all (completion);
-        hook_signal_send ("partial_completion",
-                          WEECHAT_HOOK_SIGNAL_STRING, NULL);
+        (void) hook_signal_send ("partial_completion",
+                                 WEECHAT_HOOK_SIGNAL_STRING, NULL);
     }
 }
 
@@ -478,7 +478,8 @@ int
 gui_completion_get_matching_template (struct t_gui_completion *completion,
                                       struct t_hook *hook_command)
 {
-    int i, length, fallback;
+    int i, j, length, fallback, num_items;
+    char **items;
 
     /* without at least one argument, we can't find matching template! */
     if (completion->base_command_arg_index <= 1)
@@ -488,13 +489,23 @@ gui_completion_get_matching_template (struct t_gui_completion *completion,
 
     for (i = 0; i < HOOK_COMMAND(hook_command, cplt_num_templates); i++)
     {
-        length = strlen (HOOK_COMMAND(hook_command, cplt_templates_static)[i]);
-        if ((strncmp (HOOK_COMMAND(hook_command, cplt_templates_static)[i],
-                      completion->args, length) == 0)
-            && (completion->args[length] == ' '))
+        items = string_split (HOOK_COMMAND(hook_command, cplt_templates_static)[i],
+                              "|", 0, 0, &num_items);
+        if (items)
         {
-            return i;
+            for (j = 0; j < num_items; j++)
+            {
+                length = strlen (items[j]);
+                if ((strncmp (items[j], completion->args, length) == 0)
+                    && (completion->args[length] == ' '))
+                {
+                    string_free_split (items);
+                    return i;
+                }
+            }
+            string_free_split (items);
         }
+
         /*
          * try to find a fallback template if we don't find any matching
          * template, for example with these templates (command /set):
@@ -1052,8 +1063,8 @@ gui_completion_complete (struct t_gui_completion *completion)
                      */
                     gui_completion_partial_build_list (completion,
                                                        common_prefix_size);
-                    hook_signal_send ("partial_completion",
-                                      WEECHAT_HOOK_SIGNAL_STRING, NULL);
+                    (void) hook_signal_send ("partial_completion",
+                                             WEECHAT_HOOK_SIGNAL_STRING, NULL);
                     return;
                 }
 

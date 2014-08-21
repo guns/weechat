@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_GUI_KEY_H
-#define __WEECHAT_GUI_KEY_H 1
+#ifndef WEECHAT_GUI_KEY_H
+#define WEECHAT_GUI_KEY_H 1
 
 struct t_hashtable;
 
@@ -58,7 +58,7 @@ struct t_gui_key
     int area_type[2];               /* type of areas (for cursor/mouse)     */
     char *area_name[2];             /* name of areas (for cursor/mouse)     */
     char *area_key;                 /* key after area (after ":")           */
-    char *command;                  /* associated command (may be NULL)     */
+    char *command;                  /* associated command                   */
     int score;                      /* score, for sorting keys              */
     struct t_gui_key *prev_key;     /* link to previous key                 */
     struct t_gui_key *next_key;     /* link to next key                     */
@@ -141,4 +141,4 @@ extern void gui_key_print_log (struct t_gui_buffer *buffer);
 
 extern void gui_key_default_bindings ();
 
-#endif /* __WEECHAT_GUI_KEY_H */
+#endif /* WEECHAT_GUI_KEY_H */

@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_GUI_INPUT_H
-#define __WEECHAT_GUI_INPUT_H 1
+#ifndef WEECHAT_GUI_INPUT_H
+#define WEECHAT_GUI_INPUT_H 1
 
 struct t_gui_buffer;
 
@@ -70,7 +70,6 @@ extern void gui_input_history_local_next (struct t_gui_buffer *buffer);
 extern void gui_input_history_global_previous (struct t_gui_buffer *buffer);
 extern void gui_input_history_global_next (struct t_gui_buffer *buffer);
 extern void gui_input_jump_smart (struct t_gui_buffer *buffer);
-extern void gui_input_jump_last_buffer (struct t_gui_buffer *buffer);
 extern void gui_input_jump_last_buffer_displayed (struct t_gui_buffer *buffer);
 extern void gui_input_jump_previously_visited_buffer (struct t_gui_buffer *buffer);
 extern void gui_input_jump_next_visited_buffer (struct t_gui_buffer *buffer);
@@ -87,4 +86,4 @@ extern void gui_input_insert (struct t_gui_buffer *buffer, const char *args);
 extern void gui_input_undo (struct t_gui_buffer *buffer);
 extern void gui_input_redo (struct t_gui_buffer *buffer);
 
-#endif /* __WEECHAT_GUI_INPUT_H */
+#endif /* WEECHAT_GUI_INPUT_H */

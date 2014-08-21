@@ -41,9 +41,11 @@
 #include "../plugins/plugin.h"
 
 
-char *logical_ops[EVAL_NUM_LOGICAL_OPS] = { "||", "&&" };
-char *comparisons[EVAL_NUM_COMPARISONS] = { "==", "!=", "<=", "<", ">=", ">",
-                                            "=~", "!~" };
+char *logical_ops[EVAL_NUM_LOGICAL_OPS] =
+{ "||", "&&" };
+
+char *comparisons[EVAL_NUM_COMPARISONS] =
+{ "=~", "!~", "==", "!=", "<=", "<", ">=", ">" };
 
 struct t_hashtable *eval_hashtable_pointers = NULL;
 
@@ -252,14 +254,20 @@ eval_replace_vars_cb (void *data, const char *text)
             return strdup (ptr_value);
     }
 
-    /* 2. look for a color */
+    /* 2. convert escaped chars */
+    if (strncmp (text, "esc:", 4) == 0)
+        return string_convert_escaped_chars (text + 4);
+    if ((text[0] == '\\') && text[1] && (text[1] != '\\'))
+        return string_convert_escaped_chars (text);
+
+    /* 3. look for a color */
     if (strncmp (text, "color:", 6) == 0)
     {
         ptr_value = gui_color_get_custom (text + 6);
         return strdup ((ptr_value) ? ptr_value : "");
     }
 
-    /* 3. look for an info */
+    /* 4. look for an info */
     if (strncmp (text, "info:", 5) == 0)
     {
         ptr_value = NULL;
@@ -279,7 +287,7 @@ eval_replace_vars_cb (void *data, const char *text)
         return strdup ((ptr_value) ? ptr_value : "");
     }
 
-    /* 4. look for name of option: if found, return this value */
+    /* 5. look for name of option: if found, return this value */
     if (strncmp (text, "sec.data.", 9) == 0)
     {
         ptr_value = hashtable_get (secure_hashtable_data, text + 9);
@@ -312,7 +320,7 @@ eval_replace_vars_cb (void *data, const char *text)
         }
     }
 
-    /* 5. look for local variable in buffer */
+    /* 6. look for local variable in buffer */
     ptr_buffer = hashtable_get (pointers, "buffer");
     if (ptr_buffer)
     {
@@ -321,7 +329,7 @@ eval_replace_vars_cb (void *data, const char *text)
             return strdup (ptr_value);
     }
 
-    /* 6. look for hdata */
+    /* 7. look for hdata */
     value = NULL;
     hdata_name = NULL;
     list_name = NULL;
@@ -387,16 +395,13 @@ eval_replace_vars (const char *expr, struct t_hashtable *pointers,
                    struct t_hashtable *extra_vars,
                    const char *prefix, const char *suffix)
 {
-    int errors;
     void *ptr[2];
 
     ptr[0] = pointers;
     ptr[1] = extra_vars;
 
     return string_replace_with_callback (expr, prefix, suffix,
-                                         &eval_replace_vars_cb,
-                                         ptr,
-                                         &errors);
+                                         &eval_replace_vars_cb, ptr, NULL);
 }
 
 /*
@@ -502,10 +507,52 @@ end:
 }
 
 /*
- * Evaluates a condition (this function must not be called directly).
+ * Searches a string in another at same level (skip sub-expressions between
+ * parentheses).
  *
- * Argument keep_parentheses is almost always 0, it is 1 only if the expression
- * is a regex (to keep flags inside the parentheses).
+ * For example: eval_strstr_level ("(x || y) || z", "||")
+ * will return a pointer on  "|| z" (because the first "||" is
+ * in a sub-expression, which is skipped).
+ *
+ * Returns pointer to string found, or NULL if not found.
+ */
+
+const char *
+eval_strstr_level (const char *string, const char *search)
+{
+    const char *ptr_string;
+    int level, length;
+
+    if (!string || !search)
+        return NULL;
+
+    length = strlen (search);
+
+    ptr_string = string;
+    level = 0;
+    while (ptr_string[0])
+    {
+        if (ptr_string[0] == '(')
+        {
+            level++;
+        }
+        else if (ptr_string[0] == ')')
+        {
+            if (level > 0)
+                level--;
+        }
+
+        if ((level == 0) && (strncmp (ptr_string, search, length) == 0))
+            return ptr_string;
+
+        ptr_string++;
+    }
+
+    return NULL;
+}
+
+/*
+ * Evaluates a condition (this function must not be called directly).
  *
  * For return value, see function eval_expression().
  *
@@ -513,14 +560,15 @@ end:
  */
 
 char *
-eval_expression_condition (const char *expr, struct t_hashtable *pointers,
+eval_expression_condition (const char *expr,
+                           struct t_hashtable *pointers,
                            struct t_hashtable *extra_vars,
-                           int keep_parentheses,
-                           const char *prefix, const char *suffix)
+                           const char *prefix,
+                           const char *suffix)
 {
     int logic, comp, length, level, rc;
-    const char *pos_end;
-    char *expr2, *sub_expr, *pos, *pos2, *value, *tmp_value, *tmp_value2;
+    const char *pos, *pos_end;
+    char *expr2, *sub_expr, *value, *tmp_value, *tmp_value2;
 
     value = NULL;
 
@@ -550,73 +598,6 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
         return NULL;
 
     /*
-     * evaluate sub-expressions between parentheses and replace them with their
-     * value
-     */
-    if (!keep_parentheses)
-    {
-        while ((pos = strchr (expr2, '(')) != NULL)
-        {
-            level = 0;
-            pos2 = pos + 1;
-            while (pos2[0])
-            {
-                if (pos2[0] == '(')
-                    level++;
-                else if (pos2[0] == ')')
-                {
-                    if (level == 0)
-                        break;
-                    level--;
-                }
-                pos2++;
-            }
-            /* closing parenthesis not found */
-            if (pos2[0] != ')')
-                goto end;
-            sub_expr = string_strndup (pos + 1, pos2 - pos - 1);
-            if (!sub_expr)
-                goto end;
-            tmp_value = eval_expression_condition (sub_expr, pointers,
-                                                   extra_vars,
-                                                   0, prefix, suffix);
-            free (sub_expr);
-            if (!pos[1])
-            {
-                /* nothing around parentheses, then return value of sub-expression as-is */
-                value = tmp_value;
-                goto end;
-            }
-            /*
-             * build a string with string before '(' +
-             * result of sub-expression + string after ')'
-             */
-            length = (pos - expr2) + 1
-                + ((tmp_value) ? strlen (tmp_value) : 0)
-                + 1 + strlen (pos2 + 1)
-                + 1;
-            tmp_value2 = malloc (length);
-            if (!tmp_value2)
-                goto end;
-            tmp_value2[0] = '\0';
-            if (pos > expr2)
-            {
-                strncat (tmp_value2, expr2, pos - expr2);
-                strcat (tmp_value2, " ");
-            }
-            if (tmp_value)
-                strcat (tmp_value2, tmp_value);
-            if (pos2[1])
-            {
-                strcat (tmp_value2, " ");
-                strcat (tmp_value2, pos2 + 1);
-            }
-            free (expr2);
-            expr2 = tmp_value2;
-        }
-    }
-
-    /*
      * search for a logical operator, and if one is found:
      * - split expression into two sub-expressions
      * - evaluate first sub-expression
@@ -625,7 +606,7 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
      */
     for (logic = 0; logic < EVAL_NUM_LOGICAL_OPS; logic++)
     {
-        pos = strstr (expr2, logical_ops[logic]);
+        pos = eval_strstr_level (expr2, logical_ops[logic]);
         if (pos > expr2)
         {
             pos_end = pos - 1;
@@ -638,14 +619,14 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
                 goto end;
             tmp_value = eval_expression_condition (sub_expr, pointers,
                                                    extra_vars,
-                                                   0, prefix, suffix);
+                                                   prefix, suffix);
             free (sub_expr);
             rc = eval_is_true (tmp_value);
             if (tmp_value)
                 free (tmp_value);
             /*
-             * if rc == 0 with "&&" or rc == 1 with "||", no need to evaluate
-             * second sub-expression, just return the rc
+             * if rc == 0 with "&&" or rc == 1 with "||", no need to
+             * evaluate second sub-expression, just return the rc
              */
             if ((!rc && (logic == EVAL_LOGICAL_OP_AND))
                 || (rc && (logic == EVAL_LOGICAL_OP_OR)))
@@ -659,7 +640,7 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
                 pos++;
             }
             tmp_value = eval_expression_condition (pos, pointers, extra_vars,
-                                                   0, prefix, suffix);
+                                                   prefix, suffix);
             rc = eval_is_true (tmp_value);
             if (tmp_value)
                 free (tmp_value);
@@ -677,7 +658,7 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
      */
     for (comp = 0; comp < EVAL_NUM_COMPARISONS; comp++)
     {
-        pos = strstr (expr2, comparisons[comp]);
+        pos = eval_strstr_level (expr2, comparisons[comp]);
         if (pos > expr2)
         {
             pos_end = pos - 1;
@@ -688,19 +669,33 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
             sub_expr = string_strndup (expr2, pos_end + 1 - expr2);
             if (!sub_expr)
                 goto end;
-            tmp_value = eval_expression_condition (sub_expr, pointers,
-                                                   extra_vars,
-                                                   0, prefix, suffix);
-            free (sub_expr);
             pos += strlen (comparisons[comp]);
             while (pos[0] == ' ')
             {
                 pos++;
             }
-            tmp_value2 = eval_expression_condition (pos, pointers, extra_vars,
-                                                    ((comp == EVAL_COMPARE_REGEX_MATCHING)
-                                                     || (comp == EVAL_COMPARE_REGEX_NOT_MATCHING)) ? 1 : 0,
-                                                    prefix, suffix);
+            if ((comp == EVAL_COMPARE_REGEX_MATCHING)
+                || (comp == EVAL_COMPARE_REGEX_NOT_MATCHING))
+            {
+                /* for regex: just replace vars in both expressions */
+                tmp_value = eval_replace_vars (sub_expr, pointers,
+                                               extra_vars,
+                                               prefix, suffix);
+                tmp_value2 = eval_replace_vars (pos, pointers,
+                                                extra_vars,
+                                                prefix, suffix);
+            }
+            else
+            {
+                /* other comparison: fully evaluate both expressions */
+                tmp_value = eval_expression_condition (sub_expr, pointers,
+                                                       extra_vars,
+                                                       prefix, suffix);
+                tmp_value2 = eval_expression_condition (pos, pointers,
+                                                        extra_vars,
+                                                        prefix, suffix);
+            }
+            free (sub_expr);
             value = eval_compare (tmp_value, comp, tmp_value2);
             if (tmp_value)
                 free (tmp_value);
@@ -708,6 +703,64 @@ eval_expression_condition (const char *expr, struct t_hashtable *pointers,
                 free (tmp_value2);
             goto end;
         }
+    }
+
+    /*
+     * evaluate sub-expressions between parentheses and replace them with their
+     * value
+     */
+    while (expr2[0] == '(')
+    {
+        level = 0;
+        pos = expr2 + 1;
+        while (pos[0])
+        {
+            if (pos[0] == '(')
+                level++;
+            else if (pos[0] == ')')
+            {
+                if (level == 0)
+                    break;
+                level--;
+            }
+            pos++;
+        }
+        /* closing parenthesis not found */
+        if (pos[0] != ')')
+            goto end;
+        sub_expr = string_strndup (expr2 + 1, pos - expr2 - 1);
+        if (!sub_expr)
+            goto end;
+        tmp_value = eval_expression_condition (sub_expr, pointers, extra_vars,
+                                               prefix, suffix);
+        free (sub_expr);
+        if (!pos[1])
+        {
+            /*
+             * nothing around parentheses, then return value of
+             * sub-expression as-is
+             */
+            value = tmp_value;
+            goto end;
+        }
+        length = ((tmp_value) ? strlen (tmp_value) : 0) + 1 +
+            strlen (pos + 1) + 1;
+        tmp_value2 = malloc (length);
+        if (!tmp_value2)
+        {
+            if (tmp_value)
+                free (tmp_value);
+            goto end;
+        }
+        tmp_value2[0] = '\0';
+        if (tmp_value)
+            strcat (tmp_value2, tmp_value);
+        strcat (tmp_value2, " ");
+        strcat (tmp_value2, pos + 1);
+        free (expr2);
+        expr2 = tmp_value2;
+        if (tmp_value)
+            free (tmp_value);
     }
 
     /*
@@ -768,7 +821,7 @@ char *
 eval_expression (const char *expr, struct t_hashtable *pointers,
                  struct t_hashtable *extra_vars, struct t_hashtable *options)
 {
-    int condition, rc;
+    int condition, rc, pointers_allocated;
     char *value;
     const char *prefix, *suffix, *default_prefix = "${", *default_suffix = "}";
     const char *ptr_value;
@@ -778,25 +831,21 @@ eval_expression (const char *expr, struct t_hashtable *pointers,
         return NULL;
 
     condition = 0;
+    pointers_allocated = 0;
     prefix = default_prefix;
     suffix = default_suffix;
 
     /* create hashtable pointers if it's NULL */
     if (!pointers)
     {
-        if (eval_hashtable_pointers)
-            hashtable_remove_all (eval_hashtable_pointers);
-        else
-        {
-            eval_hashtable_pointers = hashtable_new (32,
-                                                     WEECHAT_HASHTABLE_STRING,
-                                                     WEECHAT_HASHTABLE_POINTER,
-                                                     NULL,
-                                                     NULL);
-            if (!eval_hashtable_pointers)
-                return NULL;
-        }
-        pointers = eval_hashtable_pointers;
+        pointers = hashtable_new (32,
+                                  WEECHAT_HASHTABLE_STRING,
+                                  WEECHAT_HASHTABLE_POINTER,
+                                  NULL,
+                                  NULL);
+        if (!pointers)
+            return NULL;
+        pointers_allocated = 1;
     }
 
     /*
@@ -839,7 +888,7 @@ eval_expression (const char *expr, struct t_hashtable *pointers,
     {
         /* evaluate as condition (return a boolean: "0" or "1") */
         value = eval_expression_condition (expr, pointers, extra_vars,
-                                           0, prefix, suffix);
+                                           prefix, suffix);
         rc = eval_is_true (value);
         if (value)
             free (value);
@@ -851,19 +900,8 @@ eval_expression (const char *expr, struct t_hashtable *pointers,
         value = eval_replace_vars (expr, pointers, extra_vars, prefix, suffix);
     }
 
+    if (pointers_allocated)
+        hashtable_free (pointers);
+
     return value;
-}
-
-/*
- * Frees all allocated data.
- */
-
-void
-eval_end ()
-{
-    if (eval_hashtable_pointers)
-    {
-        hashtable_free (eval_hashtable_pointers);
-        eval_hashtable_pointers = NULL;
-    }
 }

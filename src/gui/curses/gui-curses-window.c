@@ -53,6 +53,7 @@
 #include "../gui-layout.h"
 #include "../gui-line.h"
 #include "../gui-main.h"
+#include "../gui-mouse.h"
 #include "../gui-nicklist.h"
 #include "gui-curses.h"
 
@@ -474,7 +475,8 @@ gui_window_set_custom_color_bg (WINDOW *window, int bg)
  */
 
 void
-gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg)
+gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg,
+                                   int reset_attributes)
 {
     int attributes;
 
@@ -502,7 +504,7 @@ gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg)
         }
         else if ((fg & GUI_COLOR_EXTENDED_MASK) < GUI_CURSES_NUM_WEECHAT_COLORS)
         {
-            if (!(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
+            if (reset_attributes && !(fg & GUI_COLOR_EXTENDED_KEEPATTR_FLAG))
                 gui_window_remove_color_style (window, A_ALL_ATTR);
             attributes = gui_color_get_extended_attrs (fg) |
                 gui_weechat_colors[fg & GUI_COLOR_EXTENDED_MASK].attributes;
@@ -843,7 +845,7 @@ gui_window_string_apply_color_fg_bg (unsigned char **string, WINDOW *window)
     }
     if (window && (fg >= 0) && (bg >= 0))
     {
-        gui_window_set_custom_color_fg_bg (window, fg, bg);
+        gui_window_set_custom_color_fg_bg (window, fg, bg, 1);
     }
 
     *string = ptr_string;
@@ -1162,38 +1164,6 @@ gui_window_draw_separators (struct t_gui_window *window)
 }
 
 /*
- * Redraws a buffer.
- */
-
-void
-gui_window_redraw_buffer (struct t_gui_buffer *buffer)
-{
-    if (!gui_init_ok)
-        return;
-
-    gui_chat_draw (buffer, 1);
-}
-
-/*
- * Redraws all buffers.
- */
-
-void
-gui_window_redraw_all_buffers ()
-{
-    struct t_gui_buffer *ptr_buffer;
-
-    if (!gui_init_ok)
-        return;
-
-    for (ptr_buffer = gui_buffers; ptr_buffer;
-         ptr_buffer = ptr_buffer->next_buffer)
-    {
-        gui_window_redraw_buffer (ptr_buffer);
-    }
-}
-
-/*
  * Switches to another buffer in a window.
  */
 
@@ -1249,7 +1219,9 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
     }
 
     window->buffer = buffer;
-    gui_buffer_add_value_num_displayed (buffer, 1);
+
+    gui_buffer_set_active_buffer (buffer);
+    gui_buffer_compute_num_displayed ();
 
     if (!weechat_upgrading && (old_buffer != buffer))
         gui_hotlist_remove_buffer (buffer);
@@ -1293,8 +1265,6 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
         window->scroll->lines_after = 0;
     }
 
-    gui_buffer_set_active_buffer (buffer);
-
     for (ptr_bar_window = window->bar_windows; ptr_bar_window;
          ptr_bar_window = ptr_bar_window->next_bar_window)
     {
@@ -1313,8 +1283,8 @@ gui_window_switch_to_buffer (struct t_gui_window *window,
 
     if (old_buffer != buffer)
     {
-        hook_signal_send ("buffer_switch",
-                          WEECHAT_HOOK_SIGNAL_POINTER, buffer);
+        (void) hook_signal_send ("buffer_switch",
+                                 WEECHAT_HOOK_SIGNAL_POINTER, buffer);
     }
 }
 
@@ -1351,8 +1321,8 @@ gui_window_switch (struct t_gui_window *window)
 
     gui_input_move_to_buffer (old_window->buffer, window->buffer);
 
-    hook_signal_send ("window_switch",
-                      WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
+    (void) hook_signal_send ("window_switch",
+                             WEECHAT_HOOK_SIGNAL_POINTER, gui_current_window);
 }
 
 /*
@@ -1394,8 +1364,8 @@ gui_window_page_up (struct t_gui_window *window)
                 snprintf (scroll, sizeof (scroll), "-%d",
                           num_lines + 1);
                 gui_window_scroll (window, scroll);
-                hook_signal_send ("window_scrolled",
-                                  WEECHAT_HOOK_SIGNAL_POINTER, window);
+                (void) hook_signal_send ("window_scrolled",
+                                         WEECHAT_HOOK_SIGNAL_POINTER, window);
             }
             break;
         case GUI_BUFFER_NUM_TYPES:
@@ -1451,8 +1421,8 @@ gui_window_page_down (struct t_gui_window *window)
             snprintf (scroll, sizeof (scroll), "+%d",
                       num_lines + 1);
             gui_window_scroll (window, scroll);
-            hook_signal_send ("window_scrolled",
-                              WEECHAT_HOOK_SIGNAL_POINTER, window);
+            (void) hook_signal_send ("window_scrolled",
+                                     WEECHAT_HOOK_SIGNAL_POINTER, window);
             break;
         case GUI_BUFFER_NUM_TYPES:
             break;
@@ -1491,8 +1461,8 @@ gui_window_scroll_up (struct t_gui_window *window)
                 snprintf (scroll, sizeof (scroll), "-%d",
                           CONFIG_INTEGER(config_look_scroll_amount));
                 gui_window_scroll (window, scroll);
-                hook_signal_send ("window_scrolled",
-                                  WEECHAT_HOOK_SIGNAL_POINTER, window);
+                (void) hook_signal_send ("window_scrolled",
+                                         WEECHAT_HOOK_SIGNAL_POINTER, window);
             }
             break;
         case GUI_BUFFER_NUM_TYPES:
@@ -1542,8 +1512,8 @@ gui_window_scroll_down (struct t_gui_window *window)
             snprintf (scroll, sizeof (scroll), "+%d",
                       CONFIG_INTEGER(config_look_scroll_amount));
             gui_window_scroll (window, scroll);
-            hook_signal_send ("window_scrolled",
-                              WEECHAT_HOOK_SIGNAL_POINTER, window);
+            (void) hook_signal_send ("window_scrolled",
+                                     WEECHAT_HOOK_SIGNAL_POINTER, window);
             break;
         case GUI_BUFFER_NUM_TYPES:
             break;
@@ -1575,8 +1545,8 @@ gui_window_scroll_top (struct t_gui_window *window)
             {
                 window->scroll->start_line = NULL;
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
-                hook_signal_send ("window_scrolled",
-                                  WEECHAT_HOOK_SIGNAL_POINTER, window);
+                (void) hook_signal_send ("window_scrolled",
+                                         WEECHAT_HOOK_SIGNAL_POINTER, window);
             }
             break;
         case GUI_BUFFER_NUM_TYPES:
@@ -1607,7 +1577,7 @@ gui_window_scroll_bottom (struct t_gui_window *window)
             window->scroll->start_line = NULL;
             if (window->buffer->lines->lines_count > window->win_chat_height)
             {
-                snprintf (scroll, sizeof (scroll), "-%d",
+                snprintf (scroll, sizeof (scroll), "--%d",
                           window->win_chat_height - 1);
                 gui_window_scroll (window, scroll);
             }
@@ -1615,8 +1585,8 @@ gui_window_scroll_bottom (struct t_gui_window *window)
             {
                 gui_buffer_ask_chat_refresh (window->buffer, 2);
             }
-            hook_signal_send ("window_scrolled",
-                              WEECHAT_HOOK_SIGNAL_POINTER, window);
+            (void) hook_signal_send ("window_scrolled",
+                                     WEECHAT_HOOK_SIGNAL_POINTER, window);
             break;
         case GUI_BUFFER_NUM_TYPES:
             break;
@@ -2377,6 +2347,77 @@ gui_window_refresh_screen (int full_refresh)
     }
 
     gui_window_refresh_windows ();
+}
+
+/*
+ * Callback for bare display timer.
+ */
+
+int
+gui_window_bare_display_timer_cb (void *data, int remaining_calls)
+{
+    /* make C compiler happy */
+    (void) data;
+
+    if (gui_window_bare_display)
+        gui_window_bare_display_toggle (NULL);
+
+    if (remaining_calls == 0)
+        gui_window_bare_display_timer = NULL;
+
+    return WEECHAT_RC_OK;
+}
+
+/*
+ * Toggles bare display.
+ */
+
+void
+gui_window_bare_display_toggle (const char *delay)
+{
+    long seconds;
+    char *error;
+
+    gui_window_bare_display ^= 1;
+
+    if (gui_window_bare_display)
+    {
+        /* temporarily disable ncurses */
+        endwin ();
+        if (gui_mouse_enabled)
+            gui_mouse_disable ();
+        if (delay)
+        {
+            error = NULL;
+            seconds = strtol (delay, &error, 10);
+            if (error && !error[0] && (seconds >= 0))
+            {
+                if (gui_window_bare_display_timer)
+                {
+                    unhook (gui_window_bare_display_timer);
+                    gui_window_bare_display_timer = NULL;
+                }
+                gui_window_bare_display_timer = hook_timer (
+                    NULL,
+                    seconds * 1000, 0, 1,
+                    &gui_window_bare_display_timer_cb, NULL);
+            }
+        }
+    }
+    else
+    {
+        /* come back to standard display (with ncurses) */
+        refresh ();
+        if (gui_window_bare_display_timer)
+        {
+            unhook (gui_window_bare_display_timer);
+            gui_window_bare_display_timer = NULL;
+        }
+        if (CONFIG_BOOLEAN(config_look_mouse))
+            gui_mouse_enable ();
+    }
+
+    gui_window_ask_refresh (2);
 }
 
 /*

@@ -391,11 +391,11 @@ weechat_python_exec (struct t_plugin_script *script,
             ret_value = NULL;
         Py_XDECREF(rc);
     }
-    else if ((ret_type == WEECHAT_SCRIPT_EXEC_INT) && (PyLong_Check (rc)))
+    else if ((ret_type == WEECHAT_SCRIPT_EXEC_INT) && (PY_INTEGER_CHECK(rc)))
     {
         ret_int = malloc (sizeof (*ret_int));
         if (ret_int)
-            *ret_int = (int) PyLong_AsLong(rc);
+            *ret_int = (int) PyLong_AsLong (rc);
         ret_value = ret_int;
         Py_XDECREF(rc);
     }
@@ -766,8 +766,9 @@ weechat_python_load (const char *filename)
                                         &weechat_python_api_buffer_input_data_cb,
                                         &weechat_python_api_buffer_close_cb);
 
-    weechat_hook_signal_send ("python_script_loaded", WEECHAT_HOOK_SIGNAL_STRING,
-                              python_current_script->filename);
+    (void) weechat_hook_signal_send ("python_script_loaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING,
+                                     python_current_script->filename);
 
     return 1;
 }
@@ -794,7 +795,6 @@ weechat_python_unload (struct t_plugin_script *script)
 {
     int *rc;
     void *interpreter;
-    PyThreadState *old_interpreter;
     char *filename;
 
     if ((weechat_python_plugin->debug >= 2) || !python_quiet)
@@ -813,12 +813,13 @@ weechat_python_unload (struct t_plugin_script *script)
     }
 
     filename = strdup (script->filename);
-    old_interpreter = PyThreadState_Swap (NULL);
     interpreter = script->interpreter;
 
     if (python_current_script == script)
+    {
         python_current_script = (python_current_script->prev_script) ?
             python_current_script->prev_script : python_current_script->next_script;
+    }
 
     plugin_script_remove (weechat_python_plugin, &python_scripts, &last_python_script,
                           script);
@@ -829,11 +830,11 @@ weechat_python_unload (struct t_plugin_script *script)
         Py_EndInterpreter (interpreter);
     }
 
-    if (old_interpreter)
-        PyThreadState_Swap (old_interpreter);
+    if (python_current_script)
+        PyThreadState_Swap (python_current_script->interpreter);
 
-    weechat_hook_signal_send ("python_script_unloaded",
-                              WEECHAT_HOOK_SIGNAL_STRING, filename);
+    (void) weechat_hook_signal_send ("python_script_unloaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING, filename);
     if (filename)
         free (filename);
 }
@@ -958,6 +959,8 @@ weechat_python_command_cb (void *data, struct t_gui_buffer *buffer,
         {
             weechat_python_unload_all ();
         }
+        else
+            return WEECHAT_RC_ERROR;
     }
     else
     {
@@ -1007,13 +1010,7 @@ weechat_python_command_cb (void *data, struct t_gui_buffer *buffer,
             python_quiet = 0;
         }
         else
-        {
-            weechat_printf (NULL,
-                            weechat_gettext ("%s%s: unknown option for "
-                                             "command \"%s\""),
-                            weechat_prefix ("error"), PYTHON_PLUGIN_NAME,
-                            "python");
-        }
+            return WEECHAT_RC_ERROR;
     }
 
     return WEECHAT_RC_OK;

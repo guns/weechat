@@ -17,18 +17,11 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_IRC_COMMAND_H
-#define __WEECHAT_IRC_COMMAND_H 1
+#ifndef WEECHAT_IRC_COMMAND_H
+#define WEECHAT_IRC_COMMAND_H 1
 
 struct t_irc_server;
 struct t_irc_channel;
-
-#define IRC_COMMAND_TOO_FEW_ARGUMENTS(__buffer, __command)              \
-    weechat_printf (__buffer,                                           \
-                    _("%s%s: too few arguments for \"%s\" command"),    \
-                    weechat_prefix ("error"), IRC_PLUGIN_NAME,          \
-                    __command);                                         \
-    return WEECHAT_RC_OK;
 
 #define IRC_COMMAND_CHECK_SERVER(__command, __check_connection)         \
     if (!ptr_server)                                                    \
@@ -68,4 +61,4 @@ extern void irc_command_quit_server (struct t_irc_server *server,
                                      const char *arguments);
 extern void irc_command_init ();
 
-#endif /* __WEECHAT_IRC_COMMAND_H */
+#endif /* WEECHAT_IRC_COMMAND_H */

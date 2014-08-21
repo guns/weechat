@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_GUI_CURSES_H
-#define __WEECHAT_GUI_CURSES_H 1
+#ifndef WEECHAT_GUI_CURSES_H
+#define WEECHAT_GUI_CURSES_H 1
 
 #include <time.h>
 
@@ -31,6 +31,7 @@
 #endif
 
 struct t_gui_buffer;
+struct t_gui_line;
 struct t_gui_window;
 struct t_gui_bar_window;
 
@@ -80,13 +81,15 @@ extern time_t gui_color_pairs_auto_reset_last;
 extern int gui_color_buffer_refresh_needed;
 extern int gui_window_current_emphasis;
 
+/* main functions */
+extern void gui_main_init ();
+extern void gui_main_loop ();
+
 /* color functions */
 extern int gui_color_get_extended_attrs (int color);
 extern int gui_color_get_pair (int fg, int bg);
 extern int gui_color_weechat_get_pair (int weechat_color);
-extern void gui_color_pre_init ();
-extern void gui_color_init ();
-extern void gui_color_end ();
+extern void gui_color_alloc ();
 
 /* chat functions */
 extern void gui_chat_calculate_line_diff (struct t_gui_window *window,
@@ -99,7 +102,6 @@ extern int gui_key_read_cb (void *data, int fd);
 
 /* window functions */
 extern void gui_window_read_terminal_size ();
-extern void gui_window_redraw_buffer (struct t_gui_buffer *buffer);
 extern void gui_window_clear (WINDOW *window, int fg, int bg);
 extern void gui_window_clrtoeol (WINDOW *window);
 extern void gui_window_save_style (WINDOW *window);
@@ -110,7 +112,8 @@ extern void gui_window_set_color_style (WINDOW *window, int style);
 extern void gui_window_remove_color_style (WINDOW *window, int style);
 extern void gui_window_set_color (WINDOW *window, int fg, int bg);
 extern void gui_window_set_weechat_color (WINDOW *window, int num_color);
-extern void gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg);
+extern void gui_window_set_custom_color_fg_bg (WINDOW *window, int fg, int bg,
+                                               int reset_attributes);
 extern void gui_window_set_custom_color_pair (WINDOW *window, int pair);
 extern void gui_window_set_custom_color_fg (WINDOW *window, int fg);
 extern void gui_window_set_custom_color_bg (WINDOW *window, int bg);
@@ -136,4 +139,4 @@ extern void gui_window_vline (WINDOW *window, int x, int y, int height,
                               const char *string);
 extern void gui_window_set_title (const char *title);
 
-#endif /* __WEECHAT_GUI_CURSES_H */
+#endif /* WEECHAT_GUI_CURSES_H */

@@ -1,4 +1,5 @@
-/* ##########################################################################
+/*
+ * ##########################################################################
  * ##          ___       __         ______________        _____            ##
  * ##          __ |     / /___________  ____/__  /_______ __  /_           ##
  * ##          __ | /| / /_  _ \  _ \  /    __  __ \  __ `/  __/           ##
@@ -10,7 +11,7 @@
  * ##                                                                      ##
  * ##             By Sébastien Helleu <flashcode@flashtux.org>             ##
  * ##                                                                      ##
- * ##                      http://www.weechat.org/                         ##
+ * ##                        http://weechat.org/                           ##
  * ##                                                                      ##
  * ##########################################################################
  *
@@ -161,7 +162,7 @@ weechat_parse_args (int argc, char *argv[])
 {
     int i;
 
-    weechat_argv0 = strdup (argv[0]);
+    weechat_argv0 = (argv && argv[0]) ? strdup (argv[0]) : NULL;
     weechat_upgrading = 0;
     weechat_home = NULL;
     weechat_server_cmd_line = 0;
@@ -385,6 +386,85 @@ weechat_welcome_message ()
 }
 
 /*
+ * Displays warnings about $TERM if it is detected as wrong.
+ *
+ * If $TERM is different from "screen" or "screen-256color" and that $STY is
+ * set (GNU screen) or $TMUX is set (tmux), then a warning is displayed.
+ */
+
+void
+weechat_term_check ()
+{
+    char *term, *sty, *tmux;
+    int is_term_ok, is_screen, is_tmux;
+
+    term = getenv ("TERM");
+    sty = getenv ("STY");
+    tmux = getenv ("TMUX");
+
+    is_term_ok = (term && (strncmp (term, "screen", 6) == 0));
+    is_screen = (sty && sty[0]);
+    is_tmux = (tmux && tmux[0]);
+
+    if ((is_screen || is_tmux) && !is_term_ok)
+    {
+        gui_chat_printf (
+            NULL,
+            /* TRANSLATORS: the "under %s" can be "under screen" or "under tmux" */
+            _("%sWarning: WeeChat is running under %s and $TERM is \"%s\", "
+              "which can cause display bugs; $TERM should be set to "
+              "\"screen-256color\" or \"screen\""),
+            gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+            (is_screen) ? "screen" : "tmux",
+            (term) ? term : "");
+        gui_chat_printf (
+            NULL,
+            _("%sYou should add this line in the file %s:  %s"),
+            gui_chat_prefix[GUI_CHAT_PREFIX_ERROR],
+            (is_screen) ? "~/.screenrc" : "~/.tmux.conf",
+            (is_screen) ?
+            "term screen-256color" :
+            "set -g default-terminal \"screen-256color\"");
+    }
+}
+
+/*
+ * Callback for system signal SIGHUP: quits WeeChat.
+ */
+
+void
+weechat_sighup ()
+{
+    log_printf (_("Signal %s received, exiting WeeChat..."), "SIGHUP");
+    (void) hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    weechat_quit = 1;
+}
+
+/*
+ * Callback for system signal SIGQUIT: quits WeeChat.
+ */
+
+void
+weechat_sigquit ()
+{
+    log_printf (_("Signal %s received, exiting WeeChat..."), "SIGQUIT");
+    (void) hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    weechat_quit = 1;
+}
+
+/*
+ * Callback for system signal SIGTERM: quits WeeChat.
+ */
+
+void
+weechat_sigterm ()
+{
+    log_printf (_("Signal %s received, exiting WeeChat..."), "SIGTERM");
+    (void) hook_signal_send ("quit", WEECHAT_HOOK_SIGNAL_STRING, NULL);
+    weechat_quit = 1;
+}
+
+/*
  * Shutdowns WeeChat.
  */
 
@@ -405,16 +485,16 @@ weechat_shutdown (int return_code, int crash)
 
     if (crash)
         abort();
-    else
+    else if (return_code >= 0)
         exit (return_code);
 }
 
 /*
- * Entry point for WeeChat.
+ * Initializes WeeChat.
  */
 
-int
-main (int argc, char *argv[])
+void
+weechat_init (int argc, char *argv[], void (*gui_init_cb)())
 {
     weechat_first_start_time = time (NULL); /* initialize start time        */
     gettimeofday (&weechat_current_start_timeval, NULL);
@@ -433,15 +513,20 @@ main (int argc, char *argv[])
 #endif
     utf8_init ();
 
-    util_catch_signal (SIGINT, SIG_IGN);  /* ignore SIGINT signal           */
-    util_catch_signal (SIGQUIT, SIG_IGN); /* ignore SIGQUIT signal          */
-    util_catch_signal (SIGPIPE, SIG_IGN); /* ignore SIGPIPE signal          */
-    util_catch_signal (SIGSEGV,
-                       &debug_sigsegv); /* crash dump for SIGSEGV signal    */
+    /* catch signals */
+    util_catch_signal (SIGINT, SIG_IGN);           /* signal ignored        */
+    util_catch_signal (SIGQUIT, SIG_IGN);          /* signal ignored        */
+    util_catch_signal (SIGPIPE, SIG_IGN);          /* signal ignored        */
+    util_catch_signal (SIGSEGV, &debug_sigsegv);   /* crash dump            */
+    util_catch_signal (SIGHUP, &weechat_sighup);   /* exit WeeChat          */
+    util_catch_signal (SIGQUIT, &weechat_sigquit); /* exit WeeChat          */
+    util_catch_signal (SIGTERM, &weechat_sigterm); /* exit WeeChat          */
+
     hdata_init ();                      /* initialize hdata                 */
     hook_init ();                       /* initialize hooks                 */
     debug_init ();                      /* hook signals for debug           */
-    gui_main_pre_init (&argc, &argv);   /* pre-initialize interface         */
+    gui_color_init ();                  /* initialize colors                */
+    gui_chat_init ();                   /* initialize chat                  */
     command_init ();                    /* initialize WeeChat commands      */
     completion_init ();                 /* add core completion hooks        */
     gui_key_init ();                    /* init keys                        */
@@ -457,7 +542,10 @@ main (int argc, char *argv[])
     secure_read ();                     /* read secured data options        */
     config_weechat_read ();             /* read WeeChat options             */
     network_init_gnutls ();             /* init GnuTLS                      */
-    gui_main_init ();                   /* init WeeChat interface           */
+
+    if (gui_init_cb)
+        (*gui_init_cb) ();              /* init WeeChat interface           */
+
     if (weechat_upgrading)
     {
         upgrade_weechat_load ();        /* upgrade with session file        */
@@ -465,6 +553,7 @@ main (int argc, char *argv[])
     }
     weechat_welcome_message ();         /* display WeeChat welcome message  */
     gui_chat_print_lines_waiting_buffer (NULL); /* display lines waiting    */
+    weechat_term_check ();              /* warnings about $TERM (if wrong)  */
     command_startup (0);                /* command executed before plugins  */
     plugin_init (weechat_auto_load_plugins, /* init plugin interface(s)     */
                  argc, argv);
@@ -473,15 +562,24 @@ main (int argc, char *argv[])
         gui_layout_window_apply (gui_layout_current, -1);
     if (weechat_upgrading)
         upgrade_weechat_end ();         /* remove .upgrade files + signal   */
+}
 
-    gui_main_loop ();                   /* WeeChat main loop                */
+/*
+ * Ends WeeChat.
+ */
 
+void
+weechat_end (void (*gui_end_cb)(int clean_exit))
+{
     gui_layout_store_on_exit ();        /* store layout                     */
     plugin_end ();                      /* end plugin interface(s)          */
     if (CONFIG_BOOLEAN(config_look_save_config_on_exit))
         (void) config_weechat_write (); /* save WeeChat config file         */
     (void) secure_write ();             /* save secured data                */
-    gui_main_end (1);                   /* shut down WeeChat GUI            */
+
+    if (gui_end_cb)
+        (*gui_end_cb) (1);              /* shut down WeeChat GUI            */
+
     proxy_free_all ();                  /* free all proxies                 */
     config_weechat_free ();             /* free WeeChat options             */
     secure_free ();                     /* free secured data options        */
@@ -489,10 +587,7 @@ main (int argc, char *argv[])
     gui_key_end ();                     /* remove all keys                  */
     unhook_all ();                      /* remove all hooks                 */
     hdata_end ();                       /* end hdata                        */
-    eval_end ();                        /* end eval                         */
     secure_end ();                      /* end secured data                 */
     string_end ();                      /* end string                       */
-    weechat_shutdown (EXIT_SUCCESS, 0); /* quit WeeChat (oh no, why?)       */
-
-    return EXIT_SUCCESS;                /* make C compiler happy            */
+    weechat_shutdown (-1, 0);           /* end other things                 */
 }

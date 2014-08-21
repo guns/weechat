@@ -17,8 +17,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_RELAY_CONFIG_H
-#define __WEECHAT_RELAY_CONFIG_H 1
+#ifndef WEECHAT_RELAY_CONFIG_H
+#define WEECHAT_RELAY_CONFIG_H 1
 
 #include <regex.h>
 
@@ -38,6 +38,7 @@ extern struct t_config_option *relay_config_color_text_selected;
 
 extern struct t_config_option *relay_config_network_allowed_ips;
 extern struct t_config_option *relay_config_network_bind_address;
+extern struct t_config_option *relay_config_network_clients_purge_delay;
 extern struct t_config_option *relay_config_network_compression_level;
 extern struct t_config_option *relay_config_network_ipv6;
 extern struct t_config_option *relay_config_network_max_clients;
@@ -65,4 +66,4 @@ extern int relay_config_read ();
 extern int relay_config_write ();
 extern void relay_config_free ();
 
-#endif /* __WEECHAT_RELAY_CONFIG_H */
+#endif /* WEECHAT_RELAY_CONFIG_H */

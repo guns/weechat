@@ -17,102 +17,113 @@
 # along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-IF (ENABLE_MAN)
+if(ENABLE_MAN)
   # man page
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat.1
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/weechat.1.ja.txt ${CMAKE_CURRENT_BINARY_DIR}/
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmdline_options.ja.txt ${CMAKE_CURRENT_BINARY_DIR}/
-    COMMAND ${A2X_EXECUTABLE} ARGS -a revision='WeeChat ${VERSION}' -d manpage -f manpage -L ${CMAKE_CURRENT_BINARY_DIR}/weechat.1.ja.txt
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/weechat.1.ja.asciidoc ${CMAKE_CURRENT_BINARY_DIR}/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmdline_options.ja.asciidoc ${CMAKE_CURRENT_BINARY_DIR}/
+    COMMAND ${A2X_EXECUTABLE} ARGS -a revision='WeeChat ${VERSION}' -d manpage -f manpage -L ${CMAKE_CURRENT_BINARY_DIR}/weechat.1.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat.1.ja.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmdline_options.ja.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat.1.ja.asciidoc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdline_options.ja.asciidoc
     COMMENT "Building weechat.1 (ja)"
-    )
-  ADD_CUSTOM_TARGET(doc-man-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat.1)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat.1 DESTINATION ${MANDIR}/ja/man1)
-ENDIF (ENABLE_MAN)
+  )
+  add_custom_target(doc-man-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat.1)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat.1 DESTINATION ${MANDIR}/ja/man1)
+endif()
 
-IF(ENABLE_DOC AND SOURCEHIGHLIGHT_FOUND)
+if(ENABLE_DOC AND SOURCEHIGHLIGHT_FOUND)
 
   # user's guide
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmdline_options.ja.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/autogen/user/*.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_user.ja.asciidoc
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdline_options.ja.asciidoc
+    ${CMAKE_CURRENT_SOURCE_DIR}/autogen/user/*.asciidoc
     COMMENT "Building weechat_user.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-user-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-user-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_user.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
   # plugin API reference
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_plugin_api.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_plugin_api.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_plugin_api.ja.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/autogen/plugin_api/*.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_plugin_api.ja.asciidoc
+    ${CMAKE_CURRENT_SOURCE_DIR}/autogen/plugin_api/*.asciidoc
     COMMENT "Building weechat_plugin_api.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-plugin-api-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-plugin-api-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_plugin_api.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
   # scripting guide
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_scripting.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_scripting.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_scripting.ja.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_scripting.ja.asciidoc
     COMMENT "Building weechat_scripting.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-scripting-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-scripting-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_scripting.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
   # FAQ
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_faq.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_faq.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_faq.ja.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_faq.ja.asciidoc
     COMMENT "Building weechat_faq.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-faq-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-faq-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_faq.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
   # quickstart
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ja.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_quickstart.ja.asciidoc
     COMMENT "Building weechat_quickstart.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-quickstart-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-quickstart-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_quickstart.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
   # tester's guide
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_tester.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_tester.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_tester.ja.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_tester.ja.asciidoc
     COMMENT "Building weechat_tester.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-tester-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-tester-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_tester.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+
+  # relay protocol
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.ja.html
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_relay_protocol.ja.asciidoc
+    DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_relay_protocol.ja.asciidoc
+    COMMENT "Building weechat_relay_protocol.ja.html"
+  )
+  add_custom_target(doc-relay-protocol-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_relay_protocol.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
   # developer's guide
-  ADD_CUSTOM_COMMAND(
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html
-    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_dev.ja.txt
+    COMMAND ${ASCIIDOC_EXECUTABLE} ARGS -a revision="${VERSION}" -a stylesheet=${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.css -f ${CMAKE_CURRENT_SOURCE_DIR}/../asciidoc.conf -n -o ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html ${CMAKE_CURRENT_SOURCE_DIR}/weechat_dev.ja.asciidoc
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_dev.ja.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/weechat_dev.ja.asciidoc
     COMMENT "Building weechat_dev.ja.html"
   )
-  ADD_CUSTOM_TARGET(doc-dev-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
+  add_custom_target(doc-dev-ja ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/weechat_dev.ja.html DESTINATION ${SHAREDIR}/doc/${PROJECT_NAME})
 
-ENDIF(ENABLE_DOC AND SOURCEHIGHLIGHT_FOUND)
+endif()

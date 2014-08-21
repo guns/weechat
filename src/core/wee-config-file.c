@@ -979,6 +979,8 @@ config_file_option_reset (struct t_config_option *option, int run_callback)
                     option->value = malloc (sizeof (int));
                     if (option->value)
                         CONFIG_INTEGER(option) = 0;
+                    else
+                        break;
                 }
                 if (CONFIG_INTEGER(option) == CONFIG_INTEGER_DEFAULT(option))
                     rc = WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
@@ -1009,6 +1011,8 @@ config_file_option_reset (struct t_config_option *option, int run_callback)
                     option->value = malloc (sizeof (int));
                     if (option->value)
                         CONFIG_INTEGER(option) = 0;
+                    else
+                        break;
                 }
                 if (CONFIG_COLOR(option) == CONFIG_COLOR_DEFAULT(option))
                     rc = WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE;
@@ -2065,8 +2069,9 @@ config_file_write_internal (struct t_config_file *config_file,
         }
     }
 
-    log_printf (_("Writing configuration file %s %s"),
+    log_printf (_("Writing configuration file %s%s%s"),
                 config_file->filename,
+                (default_options) ? " " : "",
                 (default_options) ? _("(default options)") : "");
 
     /* open temp file in write mode */
@@ -2247,7 +2252,7 @@ config_file_read_internal (struct t_config_file *config_file, int reload)
             /* encode line to internal charset */
             ptr_line2 = string_iconv_to_internal (NULL, ptr_line);
             if (ptr_line2)
-                snprintf (line, sizeof (line) - 1, "%s", ptr_line2);
+                snprintf (line, sizeof (line), "%s", ptr_line2);
 
             /* skip spaces */
             while (ptr_line[0] == ' ')
@@ -2717,8 +2722,8 @@ config_file_hdata_config_file_cb (void *data, const char *hdata_name)
         HDATA_VAR(struct t_config_file, last_section, POINTER, 0, NULL, "config_section");
         HDATA_VAR(struct t_config_file, prev_config, POINTER, 0, NULL, hdata_name);
         HDATA_VAR(struct t_config_file, next_config, POINTER, 0, NULL, hdata_name);
-        HDATA_LIST(config_files);
-        HDATA_LIST(last_config_file);
+        HDATA_LIST(config_files, WEECHAT_HDATA_LIST_CHECK_POINTERS);
+        HDATA_LIST(last_config_file, 0);
     }
     return hdata;
 }

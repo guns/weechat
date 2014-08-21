@@ -18,8 +18,8 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_H
-#define __WEECHAT_H 1
+#ifndef WEECHAT_H
+#define WEECHAT_H 1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -52,8 +52,8 @@
 
 
 #define WEECHAT_COPYRIGHT_DATE   "(C) 2003-2014"
-#define WEECHAT_WEBSITE          "http://www.weechat.org/"
-#define WEECHAT_WEBSITE_DOWNLOAD "http://www.weechat.org/download"
+#define WEECHAT_WEBSITE          "http://weechat.org/"
+#define WEECHAT_WEBSITE_DOWNLOAD "http://weechat.org/download"
 
 /* log file */
 #define WEECHAT_LOG_NAME "weechat.log"
@@ -106,6 +106,9 @@ extern int weechat_no_gnutls;
 extern int weechat_no_gcrypt;
 extern char *weechat_startup_commands;
 
+extern void weechat_term_check ();
 extern void weechat_shutdown (int return_code, int crash);
+extern void weechat_init (int argc, char *argv[], void (*gui_init_cb)());
+extern void weechat_end (void (*gui_end_cb)(int clean_exit));
 
-#endif /* __WEECHAT_H */
+#endif /* WEECHAT_H */

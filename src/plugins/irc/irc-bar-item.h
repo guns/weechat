@@ -17,9 +17,10 @@
  * along with WeeChat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WEECHAT_IRC_BAR_ITEM_H
-#define __WEECHAT_IRC_BAR_ITEM_H 1
+#ifndef WEECHAT_IRC_BAR_ITEM_H
+#define WEECHAT_IRC_BAR_ITEM_H 1
 
+extern void irc_bar_item_update_channel ();
 extern void irc_bar_item_init ();
 
-#endif /* __WEECHAT_IRC_BAR_ITEM_H */
+#endif /* WEECHAT_IRC_BAR_ITEM_H */

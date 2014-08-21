@@ -46,9 +46,13 @@
 #include "relay-websocket.h"
 
 
-char *relay_client_status_string[] =   /* strings for status                */
+char *relay_client_status_string[] =   /* status strings for display        */
 { N_("connecting"), N_("waiting auth"),
   N_("connected"), N_("auth failed"), N_("disconnected")
+};
+char *relay_client_status_name[] =     /* name of status (for signal/info)  */
+{ "connecting", "waiting_auth",
+  "connected", "auth_failed", "disconnected"
 };
 
 char *relay_client_data_type_string[] = /* strings for data types           */
@@ -131,6 +135,42 @@ relay_client_search_by_id (int id)
 
     /* client not found */
     return NULL;
+}
+
+/*
+ * Searches for a client status.
+ *
+ * Returns index of status in enum t_relay_status, -1 if status is not found.
+ */
+
+int
+relay_client_status_search (const char *name)
+{
+    int i;
+
+    for (i = 0; i < RELAY_NUM_STATUS; i++)
+    {
+        if (strcmp (relay_client_status_name[i], name) == 0)
+            return i;
+    }
+
+    /* status not found */
+    return -1;
+}
+
+/*
+ * Sends a signal with the status of client ("relay_client_xxx").
+ */
+
+void
+relay_client_send_signal (struct t_relay_client *client)
+{
+    char signal[128];
+
+    snprintf (signal, sizeof (signal),
+              "relay_client_%s",
+              relay_client_status_name[client->status]);
+    weechat_hook_signal_send (signal, WEECHAT_HOOK_SIGNAL_POINTER, client);
 }
 
 /*
@@ -348,6 +388,7 @@ relay_client_recv_text (struct t_relay_client *client, const char *data)
                          */
                         free (client->partial_message);
                         client->partial_message = NULL;
+                        weechat_string_free_split (lines);
                         return;
                     }
                 }
@@ -448,7 +489,21 @@ relay_client_recv_cb (void *arg_client, int fd)
                                                (unsigned long long)num_read,
                                                (unsigned char *)decoded,
                                                &decoded_length);
-            if (!rc || (decoded_length == 0))
+            if (decoded_length == 0)
+            {
+                /*
+                 * When decoded length is 0, assume client sent a PONG frame.
+                 *
+                 * RFC 6455 Section 5.5.3:
+                 *
+                 *   "A Pong frame MAY be sent unsolicited.  This serves as a
+                 *   unidirectional heartbeat.  A response to an unsolicited
+                 *   Pong
+                 *   frame is not expected."
+                 */
+                return WEECHAT_RC_OK;
+            }
+            if (!rc)
             {
                 /* error when decoding frame: close connection */
                 weechat_printf_tags (NULL, "relay_client",
@@ -462,7 +517,6 @@ relay_client_recv_cb (void *arg_client, int fd)
                 return WEECHAT_RC_OK;
             }
             ptr_buffer = decoded;
-            num_read = (int)decoded_length;
         }
 
         if ((client->websocket == 1)
@@ -823,18 +877,34 @@ relay_client_send (struct t_relay_client *client, const char *data,
 int
 relay_client_timer_cb (void *data, int remaining_calls)
 {
-    struct t_relay_client *ptr_client;
-    int num_sent, i;
+    struct t_relay_client *ptr_client, *ptr_next_client;
+    int num_sent, i, purge_delay;
     char *buf;
+    time_t current_time;
 
     /* make C compiler happy */
     (void) data;
     (void) remaining_calls;
 
-    for (ptr_client = relay_clients; ptr_client;
-         ptr_client = ptr_client->next_client)
+    purge_delay = weechat_config_integer (relay_config_network_clients_purge_delay);
+
+    current_time = time (NULL);
+
+    ptr_client = relay_clients;
+    while (ptr_client)
     {
-        if (ptr_client->sock >= 0)
+        ptr_next_client = ptr_client->next_client;
+
+        if (RELAY_CLIENT_HAS_ENDED(ptr_client))
+        {
+            if ((purge_delay >= 0)
+                && (current_time >= ptr_client->end_time + (purge_delay * 60)))
+            {
+                relay_client_free (ptr_client);
+                relay_buffer_refresh (NULL);
+            }
+        }
+        else if (ptr_client->sock >= 0)
         {
             while (ptr_client->outqueue)
             {
@@ -961,6 +1031,8 @@ relay_client_timer_cb (void *data, int remaining_calls)
                 }
             }
         }
+
+        ptr_client = ptr_next_client;
     }
 
     return WEECHAT_RC_OK;
@@ -1122,6 +1194,8 @@ relay_client_new (int sock, const char *address, struct t_relay_server *server)
             relay_buffer_open ();
         }
 
+        relay_client_send_signal (new_client);
+
         relay_buffer_refresh (WEECHAT_HOTLIST_PRIVATE);
     }
     else
@@ -1180,9 +1254,9 @@ relay_client_new_with_infolist (struct t_infolist *infolist)
             new_client->hook_fd = NULL;
         new_client->last_activity = weechat_infolist_time (infolist, "last_activity");
         sscanf (weechat_infolist_string (infolist, "bytes_recv"),
-                "%lu", &(new_client->bytes_recv));
+                "%llu", &(new_client->bytes_recv));
         sscanf (weechat_infolist_string (infolist, "bytes_sent"),
-                "%lu", &(new_client->bytes_sent));
+                "%llu", &(new_client->bytes_sent));
         new_client->recv_data_type = weechat_infolist_integer (infolist, "recv_data_type");
         new_client->send_data_type = weechat_infolist_integer (infolist, "send_data_type");
         str = weechat_infolist_string (infolist, "partial_message");
@@ -1300,6 +1374,8 @@ relay_client_set_status (struct t_relay_client *client,
                 gnutls_deinit (client->gnutls_sess);
 #endif
         }
+
+        relay_client_send_signal (client);
     }
 
     relay_buffer_refresh (WEECHAT_HOTLIST_MESSAGE);
@@ -1479,10 +1555,10 @@ relay_client_add_to_infolist (struct t_infolist *infolist,
         return 0;
     if (!weechat_infolist_new_var_time (ptr_item, "last_activity", client->last_activity))
         return 0;
-    snprintf (value, sizeof (value), "%lu", client->bytes_recv);
+    snprintf (value, sizeof (value), "%llu", client->bytes_recv);
     if (!weechat_infolist_new_var_string (ptr_item, "bytes_recv", value))
         return 0;
-    snprintf (value, sizeof (value), "%lu", client->bytes_sent);
+    snprintf (value, sizeof (value), "%llu", client->bytes_sent);
     if (!weechat_infolist_new_var_string (ptr_item, "bytes_sent", value))
         return 0;
     if (!weechat_infolist_new_var_integer (ptr_item, "recv_data_type", client->recv_data_type))
@@ -1547,8 +1623,8 @@ relay_client_print_log ()
         weechat_log_printf ("  end_time. . . . . . . : %ld",   ptr_client->end_time);
         weechat_log_printf ("  hook_fd . . . . . . . : 0x%lx", ptr_client->hook_fd);
         weechat_log_printf ("  last_activity . . . . : %ld",   ptr_client->last_activity);
-        weechat_log_printf ("  bytes_recv. . . . . . : %lu",   ptr_client->bytes_recv);
-        weechat_log_printf ("  bytes_sent. . . . . . : %lu",   ptr_client->bytes_sent);
+        weechat_log_printf ("  bytes_recv. . . . . . : %llu",  ptr_client->bytes_recv);
+        weechat_log_printf ("  bytes_sent. . . . . . : %llu",  ptr_client->bytes_sent);
         weechat_log_printf ("  recv_data_type. . . . : %d (%s)",
                             ptr_client->recv_data_type,
                             relay_client_data_type_string[ptr_client->recv_data_type]);

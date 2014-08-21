@@ -436,8 +436,9 @@ weechat_guile_load (const char *filename)
                                         &weechat_guile_api_buffer_input_data_cb,
                                         &weechat_guile_api_buffer_close_cb);
 
-    weechat_hook_signal_send ("guile_script_loaded", WEECHAT_HOOK_SIGNAL_STRING,
-                              guile_current_script->filename);
+    (void) weechat_hook_signal_send ("guile_script_loaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING,
+                                     guile_current_script->filename);
 
     return 1;
 }
@@ -494,8 +495,11 @@ weechat_guile_unload (struct t_plugin_script *script)
     if (interpreter)
         weechat_guile_catch (scm_gc_unprotect_object, interpreter);
 
-    weechat_hook_signal_send ("guile_script_unloaded",
-                              WEECHAT_HOOK_SIGNAL_STRING, filename);
+    if (guile_current_script)
+        scm_set_current_module ((SCM)(guile_current_script->interpreter));
+
+    (void) weechat_hook_signal_send ("guile_script_unloaded",
+                                     WEECHAT_HOOK_SIGNAL_STRING, filename);
     if (filename)
         free (filename);
 }
@@ -621,6 +625,8 @@ weechat_guile_command_cb (void *data, struct t_gui_buffer *buffer,
         {
             weechat_guile_unload_all ();
         }
+        else
+            return WEECHAT_RC_ERROR;
     }
     else
     {
@@ -681,13 +687,7 @@ weechat_guile_command_cb (void *data, struct t_gui_buffer *buffer,
             weechat_guile_stdout_flush ();
         }
         else
-        {
-            weechat_printf (NULL,
-                            weechat_gettext ("%s%s: unknown option for "
-                                             "command \"%s\""),
-                            weechat_prefix ("error"), GUILE_PLUGIN_NAME,
-                            "guile");
-        }
+            return WEECHAT_RC_ERROR;
     }
 
     return WEECHAT_RC_OK;
