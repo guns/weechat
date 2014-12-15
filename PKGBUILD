@@ -1,17 +1,18 @@
 # Maintainer: Sung Pae <self@sungpae.com>
-pkgname=weechat-guns
+pkgname=weechat-nerv
 pkgver=
 pkgrel=1
-pkgdesc="Sung Pae's weechat build"
+pkgdesc="Custom weechat build"
 arch=('x86_64')
 url="https://github.com/guns/weechat"
 license=('GPL')
-groups=('guns')
+groups=('nerv')
 depends=('gnutls' 'curl' 'libgcrypt')
 makedepends=('git' 'cmake' 'pkg-config' 'perl' 'python2' 'lua' 'tcl' 'ruby' 'aspell' 'guile')
 optdepends=('perl' 'python2' 'lua' 'tcl' 'ruby' 'aspell' 'guile')
 provides=('weechat')
 conflicts=('weechat')
+replaces=('weechat-guns')
 
 pkgver() {
     printf %s "$(git describe --long --tags | tr - .)"
