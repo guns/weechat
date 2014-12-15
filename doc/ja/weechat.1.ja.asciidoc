@@ -51,6 +51,9 @@ $HOME/.weechat/weechat.conf::
 $HOME/.weechat/plugins.conf::
     プラグイン設定ファイル
 
+$HOME/.weechat/sec.conf::
+    保護されたデータを含む設定ファイル
+
 $HOME/.weechat/alias.conf::
     'alias' プラグイン用の設定ファイル
 
@@ -59,6 +62,9 @@ $HOME/.weechat/aspell.conf::
 
 $HOME/.weechat/charset.conf::
     'charset' プラグイン用の設定ファイル
+
+$HOME/.weechat/exec.conf::
+    'exec' プラグイン用の設定ファイル
 
 $HOME/.weechat/irc.conf::
     'irc' プラグイン用の設定ファイル

@@ -53,6 +53,9 @@ $HOME/.weechat/weechat.conf::
 $HOME/.weechat/plugins.conf::
     Konfigurationsdatei für Erweiterungen
 
+$HOME/.weechat/sec.conf::
+    Konfigurationsdatei für sensible Daten
+
 $HOME/.weechat/alias.conf::
     Konfigurationsdatei für 'alias' Erweiterung
 
@@ -61,6 +64,9 @@ $HOME/.weechat/aspell.conf::
 
 $HOME/.weechat/charset.conf::
     Konfigurationsdatei für 'charset' Erweiterung
+
+$HOME/.weechat/exec.conf::
+    Konfigurationsdatei für 'exec' Erweiterung
 
 $HOME/.weechat/irc.conf::
     Konfigurationsdatei für 'irc' Erweiterung

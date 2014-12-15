@@ -24,7 +24,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.56)
-AC_INIT(WeeChat, 1.0, flashcode@flashtux.org)
+AC_INIT(WeeChat, 1.0.1, flashcode@flashtux.org)
 AC_CONFIG_SRCDIR([configure.ac])
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE([foreign])
@@ -102,6 +102,8 @@ AH_VERBATIM([HAVE_GNUTLS], [#undef HAVE_GNUTLS])
 AH_VERBATIM([HAVE_FLOCK], [#undef HAVE_FLOCK])
 AH_VERBATIM([HAVE_EAT_NEWLINE_GLITCH], [#undef HAVE_EAT_NEWLINE_GLITCH])
 AH_VERBATIM([HAVE_ASPELL_VERSION_STRING], [#undef HAVE_ASPELL_VERSION_STRING])
+AH_VERBATIM([HAVE_ENCHANT_GET_VERSION], [#undef HAVE_ENCHANT_GET_VERSION])
+AH_VERBATIM([HAVE_GUILE_GMP_MEMORY_FUNCTIONS], [#undef HAVE_GUILE_GMP_MEMORY_FUNCTIONS])
 AH_VERBATIM([PLUGIN_ALIAS], [#undef PLUGIN_ALIAS])
 AH_VERBATIM([PLUGIN_ASPELL], [#undef PLUGIN_ASPELL])
 AH_VERBATIM([PLUGIN_CHARSET], [#undef PLUGIN_CHARSET])
@@ -307,6 +309,23 @@ if test "x$enable_aspell" = "xyes" ; then
     if test "x$ac_found_enchant_lib" = "xyes" ; then
         CFLAGS="$CFLAGS -DUSE_ENCHANT"
         ASPELL_LIB_USED="enchant"
+
+        # check if function enchant_get_version() exists
+        ac_save_CFLAGS="$CFLAGS"
+        ac_save_LDFLAGS="$LDFLAGS"
+        CFLAGS="$CFLAGS $ENCHANT_CFLAGS"
+        LDFLAGS="$LDFLAGS $ENCHANT_LIBS"
+        AC_CACHE_CHECK([for enchant_get_version() support], ac_cv_have_enchant_get_version, [
+        AC_LINK_IFELSE([AC_LANG_PROGRAM(
+            [[ #include <enchant.h>]],
+            [[ const char *version = enchant_get_version(); ]])],
+            [ ac_have_enchant_get_version="yes" ],
+            [ ac_have_enchant_get_version="no" ])])
+        CFLAGS="$ac_save_CFLAGS"
+        LDFLAGS="$ac_save_LDFLAGS"
+        if test "x$ac_have_enchant_get_version" = "xyes"; then
+            AC_DEFINE(HAVE_ENCHANT_GET_VERSION)
+        fi
     else
         ASPELL_CFLAGS=""
         ASPELL_LFLAGS=""
@@ -327,6 +346,8 @@ if test "x$enable_aspell" = "xyes" ; then
             AC_MSG_RESULT(yes)
             ASPELL_LFLAGS="$ASPELL_LFLAGS -laspell"
             ASPELL_LIB_USED="aspell"
+
+            # check if function aspell_version_string() exists
             ac_save_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS $ASPELL_LFLAGS"
             AC_CACHE_CHECK([for aspell_version_string() support], ac_cv_have_aspell_version_string, [
@@ -444,7 +465,7 @@ if test "x$enable_perl" = "xyes" ; then
         PERL_VERSION=`perl -V:version | sed "s/version='\(.*\)';/\1/"`
         AC_MSG_CHECKING(for Perl headers files)
 
-        PERL_HEADER_TEST=`PT=perltest.c ; echo "#include <EXTERN.h>" > $PT;  echo "#include <perl.h>" >> $PT;  echo "#include <XSUB.h>" >> $PT ;  echo "int main() { return 0; }" >> $PT ; $CC -Wall $PT -o $PT.out $($PERL -MExtUtils::Embed -e ccopts) 1>/dev/null 2>&1; echo $?; rm -f $PT $PT.out 1>/dev/null 2>&1`
+        PERL_HEADER_TEST=`PT=perltest.c ; echo "#include <EXTERN.h>" > $PT;  echo "#include <perl.h>" >> $PT;  echo "#include <XSUB.h>" >> $PT ;  echo "int main() { return 0; }" >> $PT ; $CC -Wall $PT -o $PT.out $($PERL -MExtUtils::Embed -e ccopts -e ldopts) 1>/dev/null 2>&1; echo $?; rm -f $PT $PT.out 1>/dev/null 2>&1`
 
         if test "x$PERL_HEADER_TEST" = "x0" ; then
             PERL_CFLAGS=`$PERL -MExtUtils::Embed -e ccopts`
@@ -794,7 +815,24 @@ if test "x$enable_guile" = "xyes" ; then
         fi
     done
 
-    if test "x$guile_found" = "xno" ; then
+    if test "x$guile_found" = "xyes" ; then
+        # check if variable "scm_install_gmp_memory_functions" exists
+        ac_save_CFLAGS="$CFLAGS"
+        ac_save_LDFLAGS="$LDFLAGS"
+        CFLAGS="$CFLAGS $GUILE_CFLAGS"
+        LDFLAGS="$LDFLAGS $GUILE_LFLAGS"
+        AC_CACHE_CHECK([for variable scm_install_gmp_memory_functions], ac_cv_have_guile_gmp_memory_functions, [
+        AC_LINK_IFELSE([AC_LANG_PROGRAM(
+            [[ #include <libguile.h>]],
+            [[ scm_install_gmp_memory_functions = 0; ]])],
+            [ ac_have_guile_gmp_memory_functions="yes" ],
+            [ ac_have_guile_gmp_memory_functions="no" ])])
+        CFLAGS="$ac_save_CFLAGS"
+        LDFLAGS="$ac_save_LDFLAGS"
+        if test "x$ac_have_guile_gmp_memory_functions" = "xyes"; then
+            AC_DEFINE(HAVE_GUILE_GMP_MEMORY_FUNCTIONS)
+        fi
+    else
         AC_MSG_WARN([
 *** Guile >= 2.0 couldn't be found on your system.
 *** WeeChat will be built without Guile (scheme) support.])
